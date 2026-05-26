@@ -12,10 +12,13 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Filters\SelectFilter;
+use App\Traits\HasMenuPermission;
 use Illuminate\Database\Eloquent\Builder;
 
 class ProjectResource extends Resource
 {
+    use HasMenuPermission;
+
     protected static ?string $model = Project::class;
     protected static ?string $navigationIcon = 'heroicon-o-folder-open';
     protected static ?string $navigationLabel = 'Loyihalar ro\'yxati';
@@ -24,17 +27,36 @@ class ProjectResource extends Resource
     protected static ?string $navigationGroup = 'Loyihalar';
     protected static ?int $navigationSort = 2;
 
+    // Loyihalar ro'yxati menyu — faqat resource_project ruxsati bo'lganda ko'rinadi
+    public static function canAccess(): bool
+    {
+        $user = auth()->user();
+        if (!$user) return false;
+        if ($user->isAdmin()) return true;
+        // Loyiha tahrirlash yoki ro'yxat ruxsati bo'lsa — resource sahifalariga kirish mumkin
+        return $user->hasPermission(static::menuPermissionKey())
+            || $user->hasPermission('loyiha_tahrirlash');
+    }
+
+    // Menyu da "Loyihalar ro'yxati" ko'rinishi faqat resource_project ruxsati bo'lganda
+    public static function canViewAny(): bool
+    {
+        $user = auth()->user();
+        if (!$user) return false;
+        if ($user->isAdmin()) return true;
+        return $user->hasPermission(static::menuPermissionKey());
+    }
+
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
         $user  = auth()->user();
         if ($user && !$user->canSeeAllProjects()) {
-            $query->where(function ($q) use ($user) {
-                $q->where('assigned_user_id', $user->id);
-                if ($user->isHisobchi()) {
-                    $q->orWhere('status', 'tolov_jarayonida');
-                }
-            });
+            if ($user->isHisobchi()) {
+                $query->where('status', '!=', 'yangi');
+            } elseif (!$user->hasPermission('barcha_loyihalar')) {
+                $query->whereHas('assignedUsers', fn($q) => $q->where('users.id', $user->id));
+            }
         }
         return $query;
     }
@@ -100,8 +122,36 @@ class ProjectResource extends Resource
 
             Forms\Components\Section::make('Hujjatlar')
                 ->schema([
+                    Forms\Components\Placeholder::make('existing_files')
+                        ->label('Yuklangan fayllar')
+                        ->content(function ($record) {
+                            if (!$record) return 'Hali fayl yuklangan emas';
+                            $files = $record->files()->orderByDesc('created_at')->get();
+                            if ($files->isEmpty()) return 'Hali fayl yuklangan emas';
+                            $html = '<div style="display:flex;flex-direction:column;gap:6px">';
+                            foreach ($files as $file) {
+                                $url  = asset('storage/' . $file->file_path);
+                                $ext  = strtolower(pathinfo($file->file_name, PATHINFO_EXTENSION));
+                                $icon = in_array($ext, ['jpg','jpeg','png','gif','webp']) ? '🖼️'
+                                      : ($ext === 'pdf' ? '📄'
+                                      : (in_array($ext, ['doc','docx']) ? '📝'
+                                      : (in_array($ext, ['xls','xlsx']) ? '📊' : '📎')));
+                                $size = $file->file_size ? round($file->file_size / 1024) . ' KB' : '';
+                                $target = in_array($ext, ['pdf','jpg','jpeg','png','gif','webp']) ? '_blank' : '_self';
+                                $dl = in_array($ext, ['doc','docx','xls','xlsx']) ? 'download' : '';
+                                $html .= "<a href=\"{$url}\" target=\"{$target}\" {$dl} style=\"display:flex;align-items:center;gap:8px;padding:7px 10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;text-decoration:none;color:#374151;font-size:13px\">
+                                    <span style=\"font-size:16px\">{$icon}</span>
+                                    <span style=\"flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\">{$file->file_name}</span>
+                                    <span style=\"color:#9ca3af;font-size:11px;flex-shrink:0\">{$size}</span>
+                                </a>";
+                            }
+                            $html .= '</div>';
+                            return new \Illuminate\Support\HtmlString($html);
+                        })
+                        ->columnSpanFull()
+                        ->hidden(fn ($record) => !$record),
                     Forms\Components\FileUpload::make('uploaded_files')
-                        ->label('Fayllar yuklash')
+                        ->label('Yangi fayl yuklash')
                         ->multiple()
                         ->disk('public')
                         ->directory('project-files')
@@ -125,19 +175,35 @@ class ProjectResource extends Resource
                         ->label('Kategoriya')
                         ->options(Project::categoryOptions())
                         ->required()
-                        ->default('turar'),
+                        ->default('turar')
+                        ->disabled(fn() => !in_array(auth()->user()?->role, ['admin', 'menejer']))
+                        ->dehydrated(fn() => in_array(auth()->user()?->role, ['admin', 'menejer'])),
 
                     Forms\Components\Select::make('status')
                         ->label('Holat')
-                        ->options(Project::statusOptions())
+                        ->options(function (?Project $record) {
+                            $all = \App\Models\ProjectStatus::asOptions();
+                            $user = auth()->user();
+                            if ($user && !in_array($user->role, ['admin', 'menejer'])) {
+                                $current = $record?->status ?? 'yangi';
+                                $allowed = [];
+                                if (isset($all[$current])) $allowed[$current] = $all[$current];
+                                if (isset($all['tekshirish'])) $allowed['tekshirish'] = $all['tekshirish'];
+                                return $allowed;
+                            }
+                            return $all;
+                        })
                         ->required()
                         ->default('yangi'),
 
-                    Forms\Components\Select::make('assigned_user_id')
-                        ->label("Mas'ul xodim")
-                        ->options(User::pluck('name', 'id'))
+                    Forms\Components\Select::make('assignedUsers')
+                        ->label("Hodimlar (biriktirilganlar)")
+                        ->multiple()
+                        ->relationship('assignedUsers', 'name')
                         ->searchable()
-                        ->nullable(),
+                        ->preload()
+                        ->disabled(fn() => !in_array(auth()->user()?->role, ['admin', 'menejer']))
+                        ->dehydrated(fn() => in_array(auth()->user()?->role, ['admin', 'menejer'])),
                 ]),
         ]);
     }
@@ -183,8 +249,10 @@ class ProjectResource extends Resource
                     ->formatStateUsing(fn($state) => Project::statusOptions()[$state] ?? $state)
                     ->colors($statusColors),
 
-                Tables\Columns\TextColumn::make('assignedUser.name')
-                    ->label("Mas'ul")
+                Tables\Columns\TextColumn::make('assignedUsers.name')
+                    ->label("Hodimlar")
+                    ->listWithLineBreaks()
+                    ->limitList(2)
                     ->default('—'),
 
                 Tables\Columns\TextColumn::make('total_price')
@@ -213,9 +281,9 @@ class ProjectResource extends Resource
                     ->label('Kategoriya')
                     ->options(Project::categoryOptions()),
 
-                SelectFilter::make('assigned_user_id')
-                    ->label("Mas'ul xodim")
-                    ->options(User::pluck('name', 'id')),
+                SelectFilter::make('assignedUsers')
+                    ->label("Hodim")
+                    ->relationship('assignedUsers', 'name'),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make()->label(''),

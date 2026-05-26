@@ -23,11 +23,83 @@ class User extends Authenticatable
         'password',
         'role',
         'phone',
+        'permissions',
     ];
+
+    public static function defaultPermissions(): array
+    {
+        $kanbanKeys = [];
+        try {
+            $kanbanKeys = ProjectStatus::allOrdered()->map(fn($ps) => 'kanban_' . $ps->key)->toArray();
+        } catch (\Throwable) {}
+
+        return array_values(array_merge([
+            'page_kanban_board',   // Loyihalar menyu
+            'page_arxiv_page',     // Arxiv menyu
+            'loyiha_tahrirlash',   // Loyihani tahrirlash
+            'loyiha_otkazish',     // Loyihani bosqichga o'tkazish
+            'tolov_kiritish',      // To'lov kiritish
+            'loyiha_yuborish',     // Loyihani yuborish
+        ], $kanbanKeys));
+    }
+
+    public static function allPermissions(): array
+    {
+        $permissions = [];
+
+        // Sahifalar (Pages) — avtomatik topiladi
+        foreach (glob(app_path('Filament/Pages/*.php')) ?: [] as $file) {
+            $className = basename($file, '.php');
+            $class = "App\\Filament\\Pages\\{$className}";
+            if (!class_exists($class) || !method_exists($class, 'menuPermissionKey')) continue;
+            $permissions[$class::menuPermissionKey()] = 'Menyu: ' . $class::menuPermissionLabel();
+        }
+
+        // Resurslar (Resources) — avtomatik topiladi
+        foreach (glob(app_path('Filament/Resources/*Resource.php')) ?: [] as $file) {
+            $className = basename($file, '.php');
+            $class = "App\\Filament\\Resources\\{$className}";
+            if (!class_exists($class) || !method_exists($class, 'menuPermissionKey')) continue;
+            $permissions[$class::menuPermissionKey()] = 'Menyu: ' . $class::menuPermissionLabel();
+        }
+
+        // Amallar (qo'lda)
+        $permissions += [
+            'yangi_loyiha'      => "Amal: Yangi loyiha yaratish",
+            'loyiha_tahrirlash' => "Amal: Loyihani tahrirlash",
+            'tolov_kiritish'    => "Amal: To'lov kiritish",
+            'loyiha_otkazish'   => "Amal: Loyihani bosqichga o'tkazish",
+            'loyiha_yuborish'   => "Amal: Loyihani yuborish",
+            'barcha_loyihalar'  => "Amal: Barcha loyihalarni ko'rish",
+        ];
+
+        // Kanban ustunlari — bazadan dinamik o'qiladi
+        try {
+            $dbStatuses = \App\Models\ProjectStatus::allOrdered();
+            foreach ($dbStatuses as $ps) {
+                $permissions['kanban_' . $ps->key] = "Kanban ustun: {$ps->label}";
+            }
+        } catch (\Throwable $e) {
+            // Baza tayyor bo'lmagan holat uchun
+        }
+
+        return $permissions;
+    }
+
+    public function hasPermission(string $key): bool
+    {
+        if ($this->isAdmin()) return true;
+        return in_array($key, $this->permissions ?? []);
+    }
 
     public function projects()
     {
         return $this->hasMany(Project::class, 'assigned_user_id');
+    }
+
+    public function assignedProjects()
+    {
+        return $this->belongsToMany(Project::class, 'project_user')->withTimestamps();
     }
 
     public function getRoleNameAttribute(): string
@@ -66,7 +138,8 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'password'          => 'hashed',
+            'permissions'       => 'array',
         ];
     }
 }

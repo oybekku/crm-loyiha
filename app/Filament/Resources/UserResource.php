@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\UserResource\Pages;
 use App\Filament\Resources\UserResource\RelationManagers;
 use App\Models\User;
+use App\Traits\HasMenuPermission;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -15,19 +16,20 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class UserResource extends Resource
 {
-    protected static ?string $model = User::class;
+    use HasMenuPermission;
 
+    protected static ?string $model = User::class;
     protected static ?string $navigationIcon = 'heroicon-o-users';
 
     public static function canViewAny(): bool
     {
-        return auth()->user()?->role === 'admin';
+        return auth()->user()?->hasPermission(static::menuPermissionKey()) ?? false;
     }
     protected static ?string $navigationLabel = 'Xodimlar';
     protected static ?string $modelLabel = 'Xodim';
     protected static ?string $pluralModelLabel = 'Xodimlar';
-    protected static ?string $navigationGroup = 'Xodimlar';
-    protected static ?int $navigationSort = 2;
+    protected static ?string $navigationGroup = 'Sozlamalar';
+    protected static ?int $navigationSort = 4;
 
     public static function form(Form $form): Form
     {

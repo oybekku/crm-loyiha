@@ -14,6 +14,20 @@
 .dark .p-card{background:#111827}
 .p-card:hover{border-color:#3b82f6;box-shadow:0 4px 12px rgba(0,0,0,.12)}
 .p-card.dragging{opacity:.4;cursor:grabbing}
+.p-card.card-overdue{border-color:#fca5a5;box-shadow:0 0 0 2px rgba(239,68,68,.15)}
+.p-card.card-warn{border-color:#fcd34d;box-shadow:0 0 0 2px rgba(245,158,11,.12)}
+/* Avatar */
+.p-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+/* Progress bar */
+.p-bar-wrap{background:#e5e7eb;border-radius:6px;height:7px;margin-bottom:5px;overflow:hidden}
+.dark .p-bar-wrap{background:#374151}
+.p-bar{height:7px;border-radius:6px;transition:width .3s}
+/* Floating button (mobil) */
+.kb-fab{display:none;position:fixed;bottom:24px;right:20px;z-index:500;background:#2563eb;color:#fff;border:none;border-radius:50%;width:54px;height:54px;font-size:26px;cursor:pointer;box-shadow:0 4px 16px rgba(37,99,235,.45);align-items:center;justify-content:center;transition:background .15s}
+.kb-fab:hover{background:#1d4ed8}
+/* Stat yangi */
+.kb-stat-danger .kb-stat-num{color:#ef4444}
+.kb-stat-warn .kb-stat-num{color:#f59e0b}
 /* Move button */
 .p-move-btn{position:relative;display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:3px 8px;border-radius:6px;border:1px solid #e5e7eb;background:#f9fafb;color:#374151;cursor:pointer;white-space:nowrap}
 .p-move-btn:hover{background:#eff6ff;border-color:#93c5fd;color:#2563eb}
@@ -31,9 +45,7 @@
 .p-money{font-size:12px;margin-bottom:3px}
 .p-money-total{color:#2563eb;font-weight:600}
 .p-money-paid{color:#6b7280;font-size:11px}
-.p-bar-wrap{background:#e5e7eb;border-radius:4px;height:4px;margin-bottom:6px;overflow:hidden}
-.dark .p-bar-wrap{background:#374151}
-.p-bar{height:4px;border-radius:4px}
+/* p-bar-wrap va p-bar — yuqorida qayta aniqlangan */
 .p-footer{display:flex;justify-content:space-between;align-items:center;font-size:10px;color:#9ca3af;margin-top:4px}
 /* Top bar */
 .kb-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
@@ -162,29 +174,123 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 .kb-notify{position:fixed;bottom:24px;right:24px;background:#16a34a;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 4px 14px rgba(0,0,0,.2);animation:slideIn .3s ease}
 @keyframes slideIn{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
 [x-cloak]{display:none!important}
+
+/* ===== MOBIL RESPONSIVE ===== */
+@media (max-width: 640px) {
+
+  /* Top bar: 2 qatorga ajratish */
+  .kb-topbar{flex-wrap:wrap;gap:10px}
+  .kb-title{font-size:16px;font-weight:800}
+  .kb-stats{gap:5px;flex-wrap:wrap}
+  .kb-stat{padding:5px 8px}
+  .kb-stat-num{font-size:14px}
+  .kb-stat-lbl{font-size:9px}
+  .btn-new{width:100%;justify-content:center;padding:10px;font-size:13px}
+
+  /* Kanban: to'liq ekran kengligi, bitta ustun ko'rinadi */
+  .kanban-wrap{gap:12px;padding:0 4px 80px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+  .kanban-col{min-width:calc(100vw - 24px);max-width:calc(100vw - 24px);scroll-snap-align:start}
+  /* Floating button */
+  .kb-fab{display:flex}
+  .btn-new{display:none}
+  /* Katta tugmalar */
+  .p-move-btn{padding:7px 12px;font-size:12px}
+
+  /* Karta: yirikroq tap zona */
+  .p-card{padding:12px}
+  .p-owner{font-size:14px}
+  .p-phone{font-size:12px}
+  .p-money{font-size:13px}
+
+  /* Modal: to'liq ekran */
+  .kb-overlay{padding:0;align-items:flex-end}
+  .kb-modal{max-width:100%;width:100%;max-height:96vh;border-radius:20px 20px 0 0}
+
+  /* Modal ichki: ustma-ust */
+  .kb-split{flex-direction:column;gap:12px}
+  .kb-right{width:100%;min-width:0}
+  .kb-body{padding:14px}
+
+  /* Xaritani mobilga moslashtirish */
+  #modal-map{height:220px!important}
+
+  /* Steps: kichikroq */
+  .kb-steps{padding:8px 12px;gap:4px;overflow-x:auto}
+  .kb-step-pill{font-size:11px;padding:4px 10px}
+  .kb-step-line{min-width:16px}
+
+  /* Xizmatlar: 1 ustun */
+  .srv-grid{grid-template-columns:1fr}
+
+  /* Narx tierlari: 1 ustun */
+  .tier-grid{grid-template-columns:1fr}
+
+  /* Footer tugmalar: kattaroq */
+  .kb-footer{padding:10px 14px;gap:8px}
+  .btn-back,.btn-next,.btn-save{padding:11px 18px;font-size:13px;flex:1;text-align:center}
+
+  /* To'lov modal */
+  .kb-stat{min-width:60px}
+
+  /* Karta tugmalari: qulay touch */
+  .p-move-btn{padding:5px 10px;font-size:11px}
+
+  /* Dropdown mobilda pastga emas, tepaga chiqadi - ok */
+  .p-move-dropdown{min-width:160px}
+
+  /* Bildirish (notify) */
+  .kb-notify{left:12px;right:12px;bottom:16px;text-align:center}
+}
+
+@media (max-width: 400px) {
+  .kanban-col{min-width:calc(100vw - 16px);max-width:calc(100vw - 16px)}
+  .kb-modal{max-height:98vh}
+}
 </style>
 
 {{-- TOP BAR --}}
+@php
+    $allProjects   = $projects->flatten();
+    $totalCount    = $allProjects->count();
+    $yangiCount    = $projects->get('yangi', collect())->count();
+    $tugallangan   = $projects->get('tugallangan', collect())->count();
+    $overdueCount  = $allProjects->filter(fn($p) => $p->deadline_days_left !== null && $p->deadline_days_left < 0)->count();
+    $unpaidCount   = $allProjects->filter(fn($p) => $p->total_price > 0 && $p->paid_amount < $p->total_price)->count();
+@endphp
 <div class="kb-topbar">
     <div class="kb-title">BESTHOME CRM</div>
     <div class="kb-stats">
         <div class="kb-stat">
-            <div class="kb-stat-num">{{ $projects->flatten()->count() }}</div>
+            <div class="kb-stat-num">{{ $totalCount }}</div>
             <div class="kb-stat-lbl">Jami</div>
         </div>
         <div class="kb-stat">
-            <div class="kb-stat-num" style="color:#f59e0b">{{ $projects->get('yangi', collect())->count() }}</div>
+            <div class="kb-stat-num" style="color:#f59e0b">{{ $yangiCount }}</div>
             <div class="kb-stat-lbl">Yangi</div>
         </div>
         <div class="kb-stat">
-            <div class="kb-stat-num" style="color:#10b981">{{ $projects->get('tugallangan', collect())->count() }}</div>
+            <div class="kb-stat-num" style="color:#10b981">{{ $tugallangan }}</div>
             <div class="kb-stat-lbl">Tugallangan</div>
         </div>
+        @if($overdueCount > 0)
+        <div class="kb-stat kb-stat-danger">
+            <div class="kb-stat-num">{{ $overdueCount }}</div>
+            <div class="kb-stat-lbl">Kechikkan</div>
+        </div>
+        @endif
+        @if($unpaidCount > 0)
+        <div class="kb-stat kb-stat-warn">
+            <div class="kb-stat-num">{{ $unpaidCount }}</div>
+            <div class="kb-stat-lbl">To'lanmagan</div>
+        </div>
+        @endif
     </div>
+    @if(!auth()->user()?->isHisobchi())
     <button class="btn-new" wire:click="openModal">
         <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
         Yangi loyiha
     </button>
+    @endif
 </div>
 
 {{-- KANBAN --}}
@@ -201,23 +307,39 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
          ondragleave="kbDragLeave(event)"
          ondrop="kbDrop(event,'{{ $statusKey }}')">
         @forelse($projects->get($statusKey, collect()) as $project)
-        <div class="p-card"
+        <div x-data="{ collapsed: JSON.parse(localStorage.getItem('card_collapsed_{{ $project->id }}') || 'false') }"
+             x-effect="localStorage.setItem('card_collapsed_{{ $project->id }}', JSON.stringify(collapsed))"
+             style="position:relative;margin-bottom:8px">
+            <button @click="collapsed = !collapsed"
+                    style="position:absolute;left:-14px;top:50%;transform:translateY(-50%);z-index:10;background:#e5e7eb;border:none;cursor:pointer;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;color:#374151;box-shadow:0 1px 3px rgba(0,0,0,.15)"
+                    :title="collapsed ? 'Ochish' : 'Yig\'ish'">
+                <span x-text="collapsed ? '▶' : '▼'"></span>
+            </button>
+        @php
+            $daysLeft     = $project->deadline_days_left;
+            $isOverdue    = $daysLeft !== null && $daysLeft < 0;
+            $isWarn       = $daysLeft !== null && $daysLeft >= 0 && $daysLeft <= 3;
+            $cardClass    = $isOverdue ? 'card-overdue' : ($isWarn ? 'card-warn' : '');
+            $currentLog   = $project->currentStatusLog;
+            $daysInStatus = $currentLog ? (int)$currentLog->entered_at->diffInDays(now()) : 0;
+            $allocDays    = $currentLog?->allocated_days ?? 0;
+            $statusDelay  = ($allocDays > 0) ? max(0, $daysInStatus - $allocDays) : 0;
+            $payPct       = $project->payment_percent;
+            $barColor     = $payPct >= 100 ? '#10b981' : ($payPct >= 50 ? '#f59e0b' : $status['color']);
+            $ownerInitial = mb_strtoupper(mb_substr($project->owner_name, 0, 1));
+        @endphp
+        <div class="p-card {{ $cardClass }}"
              draggable="true"
              data-id="{{ $project->id }}"
              ondragstart="kbDragStart(event,{{ $project->id }})"
              ondragend="kbDragEnd(event)"
              onclick="if(!window._kbDragged)window.location='/admin/projects/{{ $project->id }}/edit'"
-             >
-            @php
-                $daysLeft = $project->deadline_days_left;
-                $isOverdue = $daysLeft !== null && $daysLeft < 0;
-                $currentLog = $project->currentStatusLog;
-                $daysInStatus = $currentLog ? (int)$currentLog->entered_at->diffInDays(now()) : 0;
-                $allocDays = $currentLog?->allocated_days ?? 0;
-                $statusDelay = ($allocDays > 0) ? max(0, $daysInStatus - $allocDays) : 0;
-            @endphp
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
-                <span class="p-num"># {{ substr($project->number, 1) }}</span>
+             style="margin-bottom:0">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+                <div style="display:flex;align-items:center;gap:6px">
+                    <div class="p-avatar" style="background:{{ $status['color'] }}">{{ $ownerInitial }}</div>
+                    <span class="p-num"># {{ substr($project->number, 1) }}</span>
+                </div>
                 <div style="display:flex;align-items:center;gap:4px">
                     @if($daysLeft !== null)
                         @if($isOverdue)
@@ -241,6 +363,8 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                     <span style="font-size:10px;color:#9ca3af">{{ $project->created_at->format('d-M') }}</span>
                 </div>
             </div>
+            <div class="p-owner" style="margin-top:2px">{{ $project->owner_name }}</div>
+            <div x-show="!collapsed" x-collapse>
             @if($statusDelay > 0)
             <div style="font-size:9px;background:#fee2e2;color:#dc2626;border-radius:4px;padding:2px 6px;margin-bottom:4px;font-weight:600">
                 Bu bosqichda {{ $daysInStatus }} kun ({{ $statusDelay }} kun kechikdi)
@@ -250,7 +374,6 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                 Bu bosqichda {{ $daysInStatus }}/{{ $allocDays }} kun
             </div>
             @endif
-            <div class="p-owner">{{ $project->owner_name }}</div>
             <div class="p-addr">
                 <svg width="11" height="11" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24" style="display:inline;vertical-align:middle;margin-right:2px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>
                 {{ $project->address }}
@@ -276,10 +399,11 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             </div>
             @if($project->total_price > 0)
             <div class="p-bar-wrap">
-                <div class="p-bar" style="width:{{ $project->payment_percent }}%;background:{{ $status['color'] }}"></div>
+                <div class="p-bar" style="width:{{ $payPct }}%;background:{{ $barColor }}"></div>
             </div>
             <div style="font-size:10px;color:#9ca3af">
-                To'langan: {{ number_format($project->paid_amount, 0, '.', ' ') }} so'm ({{ $project->payment_percent }}%)
+                To'langan: {{ number_format($project->paid_amount, 0, '.', ' ') }} so'm
+                <span style="font-weight:600;color:{{ $barColor }}"> ({{ $payPct }}%)</span>
             </div>
             @endif
             <div class="p-footer" style="margin-top:6px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px">
@@ -323,11 +447,13 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                     </button>
                     @endif
                 </div>
-                @if($project->assignedUser)
-                <span style="font-size:10px;color:#6b7280;font-weight:500">{{ $project->assignedUser->name }}</span>
+                @if($project->assignedUsers->count())
+                <span style="font-size:10px;color:#6b7280;font-weight:500">{{ $project->assignedUsers->pluck('name')->join(', ') }}</span>
                 @endif
             </div>
-        </div>
+            </div>{{-- /x-show collapsed --}}
+        </div>{{-- /p-card --}}
+        </div>{{-- /wrapper --}}
         @empty
         <div style="text-align:center;padding:24px 12px;color:#9ca3af;font-size:12px">
             <div style="font-size:22px;margin-bottom:4px">📭</div>
@@ -340,7 +466,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 </div>
 
 {{-- MODAL --}}
-<div class="kb-overlay" style="display:{{ $showModal ? 'flex' : 'none' }}" @click.self="$wire.closeModal()">
+<div class="kb-overlay" style="display:{{ $showModal ? 'flex' : 'none' }}">
 <div class="kb-modal" @click.stop>
 
     {{-- Header --}}
@@ -412,8 +538,9 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                 @foreach($phones as $i => $phone)
                 <div class="kb-phone-row" style="margin-bottom:6px">
                     <input wire:model.live="phones.{{ $i }}"
-                           class="kb-input kb-phone-input"
-                           placeholder="+998 XX XXX XX XX">
+                           class="kb-input kb-phone-input {{ $i === 0 && $errors->has('phones.0') ? 'error' : '' }}"
+                           placeholder="+998XXXXXXXXX"
+                           maxlength="13">
                     @if($i === 0 && count($phones) < 5)
                     <button class="kb-phone-add" wire:click="addPhone" title="Raqam qo'shish">+</button>
                     @elseif($i > 0)
@@ -421,6 +548,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                     @endif
                 </div>
                 @endforeach
+                @error('phones.0')<div style="color:#ef4444;font-size:11px;margin-top:3px">{{ $message }}</div>@enderror
             </div>
 
             <div>
@@ -438,22 +566,44 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                         @endforeach
                     </select>
                 </div>
-                <div>
-                    <label class="kb-label">Mas'ul xodim</label>
-                    <select wire:model.live="assigned_user_id" class="kb-input">
-                        <option value="">— Tanlanmagan —</option>
+                <div style="grid-column:1/-1">
+                    <label class="kb-label">Hodimlar (biriktirilganlar)</label>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px">
                         @foreach($users as $u)
-                        <option value="{{ $u->id }}">{{ $u->name }}</option>
+                        <label style="display:flex;align-items:center;gap:6px;padding:6px 12px;border:1.5px solid #e5e7eb;border-radius:20px;cursor:pointer;font-size:13px;transition:all .15s;{{ in_array($u->id, $assigned_user_ids) ? 'background:#eff6ff;border-color:#3b82f6;color:#2563eb;font-weight:600' : 'background:#fff;color:#374151' }}">
+                            <input type="checkbox" wire:model.live="assigned_user_ids" value="{{ $u->id }}" style="display:none">
+                            {{ in_array($u->id, $assigned_user_ids) ? '✓ ' : '' }}{{ $u->name }}
+                        </label>
                         @endforeach
-                    </select>
+                        @if($users->isEmpty())
+                        <span style="color:#9ca3af;font-size:13px">Hodimlar topilmadi</span>
+                        @endif
+                    </div>
                 </div>
                 <div>
-                    <label class="kb-label">Muddat (srok)</label>
-                    <input wire:model="deadline_date" type="date" class="kb-input"
-                           min="{{ now()->format('Y-m-d') }}"
-                           placeholder="Tugash sanasi">
+                    <label class="kb-label">Muddat (kun)</label>
+                    <input wire:model="deadline_days" type="number" class="kb-input"
+                           min="1" max="9999"
+                           placeholder="Necha kun (masalan: 30)">
                 </div>
             </div>
+
+            @if($showDeadlineConfirm)
+            <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                <span style="font-size:18px">⚠️</span>
+                <span style="flex:1;font-size:13px;color:#92400e;font-weight:500;min-width:180px">Muddat kiritilmagan. Muddat qo'ymasdan davom etasizmi?</span>
+                <div style="display:flex;gap:8px;flex-shrink:0">
+                    <button wire:click="nextStepWithoutDeadline"
+                            style="background:#2563eb;color:#fff;border:none;border-radius:7px;padding:7px 16px;font-size:13px;cursor:pointer;font-weight:500">
+                        Ha, davom et
+                    </button>
+                    <button wire:click="$set('showDeadlineConfirm', false)"
+                            style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;border-radius:7px;padding:7px 16px;font-size:13px;cursor:pointer">
+                        Yo'q, qaytaman
+                    </button>
+                </div>
+            </div>
+            @endif
 
             {{-- Fayl yuklash --}}
             <div>
@@ -567,11 +717,18 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                         <span style="font-size:14px;font-weight:600;color:#111827">{{ $srv['label'] }}</span>
                         <span style="font-size:10px;color:#9ca3af;background:#f3f4f6;border-radius:4px;padding:2px 6px">Narxlar</span>
                     </div>
-                    <div style="display:flex;align-items:center;gap:10px">
+                    <div style="display:flex;align-items:center;gap:8px">
                         @if($hasSelectedTiers && !empty($srv['price']))
+                        @php $hasArea = !empty($srv['area_m2']); @endphp
                         <span style="font-size:12px;font-weight:700;background:#111827;color:#fff;border-radius:6px;padding:3px 10px">
                             {{ number_format((float)$srv['price'], 0, '.', ' ') }} so'm
+                            @if($hasArea)<span style="font-weight:400;opacity:.7;font-size:11px"> ({{ (float)$srv['area_m2'] }}m²)</span>@endif
                         </span>
+                        <button wire:click.stop="openAreaModal('{{ $key }}')"
+                                title="kv.m kiritish"
+                                style="width:28px;height:28px;border-radius:6px;border:1.5px solid {{ $hasArea ? '#2563eb' : '#e5e7eb' }};background:{{ $hasArea ? '#eff6ff' : '#f9fafb' }};cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:{{ $hasArea ? '#2563eb' : '#6b7280' }};transition:all .15s">
+                            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2a2 2 0 0 1 1.93 1.47l.3 1.11a7 7 0 0 1 .87.51l1.09-.4a2 2 0 0 1 2.29.9l1 1.72a2 2 0 0 1-.34 2.39l-.81.72a7 7 0 0 1 0 1l.81.72a2 2 0 0 1 .34 2.39l-1 1.72a2 2 0 0 1-2.29.9l-1.09-.4a7 7 0 0 1-.87.51l-.3 1.11A2 2 0 0 1 12 22a2 2 0 0 1-1.93-1.47l-.3-1.11a7 7 0 0 1-.87-.51l-1.09.4a2 2 0 0 1-2.29-.9l-1-1.72a2 2 0 0 1 .34-2.39l.81-.72a7 7 0 0 1 0-1l-.81-.72a2 2 0 0 1-.34-2.39l1-1.72a2 2 0 0 1 2.29-.9l1.09.4a7 7 0 0 1 .87-.51l.3-1.11A2 2 0 0 1 12 2z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
                         @endif
                         <svg width="16" height="16" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24" :style="open ? 'transform:rotate(180deg)' : ''" style="transition:transform .2s"><path d="M6 9l6 6 6-6"/></svg>
                     </div>
@@ -666,10 +823,11 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             @if($proj_title)<div class="confirm-row"><span class="confirm-key">Nomi:</span><span class="confirm-val">{{ $proj_title }}</span></div>@endif
             <div class="confirm-row"><span class="confirm-key">Manzil:</span><span class="confirm-val">{{ $address }}</span></div>
             <div class="confirm-row"><span class="confirm-key">Kategoriya:</span><span class="confirm-val">{{ $categoryOptions[$category] ?? $category }}</span></div>
-            @if($assigned_user_id)<div class="confirm-row"><span class="confirm-key">Mas'ul:</span><span class="confirm-val">{{ $users->find($assigned_user_id)?->name }}</span></div>@endif
+            @if(!empty($assigned_user_ids))<div class="confirm-row"><span class="confirm-key">Hodimlar:</span><span class="confirm-val">{{ $users->whereIn('id', $assigned_user_ids)->pluck('name')->join(', ') }}</span></div>@endif
             @foreach($phones as $phone)@if(strlen($phone) > 4)
             <div class="confirm-row"><span class="confirm-key">Telefon:</span><span class="confirm-val">{{ $phone }}</span></div>
             @endif@endforeach
+            @if($deadline_days > 0)<div class="confirm-row"><span class="confirm-key">Muddat:</span><span class="confirm-val">{{ $deadline_days }} kun</span></div>@endif
             @if(count($uploadedFiles) > 0)<div class="confirm-row"><span class="confirm-key">Fayllar:</span><span class="confirm-val">{{ count($uploadedFiles) }} ta fayl</span></div>@endif
         </div>
 
@@ -697,18 +855,32 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 
                 {{-- Selected tiers list --}}
                 @if(!empty($srv['selected_tiers']) && isset($priceTiers[$key]))
+                @php $srvArea = (float)($srv['area_m2'] ?? 0); @endphp
                 <div style="background:#f8fafc;border-radius:8px;padding:10px;margin-bottom:10px">
                     @foreach($srv['selected_tiers'] as $subKey => $tierId)
                     @php
                         $tierData = collect($priceTiers[$key][$subKey] ?? [])->firstWhere('id', $tierId);
                     @endphp
                     @if($tierData)
-                    <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;{{ !$loop->last ? 'border-bottom:1px solid #e5e7eb;margin-bottom:4px' : '' }}">
-                        <span style="font-size:12px;color:#374151">{{ $tierData['label'] }}</span>
-                        <span style="font-size:12px;font-weight:600;color:#111827">{{ number_format($tierData['price'], 0, '.', ' ') }} so'm</span>
+                    <div style="padding:4px 0;{{ !$loop->last ? 'border-bottom:1px solid #e5e7eb;margin-bottom:4px' : '' }}">
+                        <div style="display:flex;justify-content:space-between;align-items:center">
+                            <span style="font-size:12px;color:#374151">{{ $tierData['label'] }}</span>
+                            <span style="font-size:12px;font-weight:600;color:#111827">{{ number_format($tierData['price'], 0, '.', ' ') }} so'm/m²</span>
+                        </div>
+                        @if($srvArea > 0)
+                        <div style="font-size:11px;color:#2563eb;margin-top:3px;text-align:right">
+                            {{ number_format($tierData['price'], 0, '.', ' ') }} × {{ $srvArea }}m² = {{ number_format($tierData['price'] * $srvArea, 0, '.', ' ') }} so'm
+                        </div>
+                        @endif
                     </div>
                     @endif
                     @endforeach
+                    @if($srvArea > 0)
+                    <div style="margin-top:6px;padding-top:6px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center">
+                        <span style="font-size:11px;color:#6b7280">Maydon:</span>
+                        <span style="font-size:12px;font-weight:600;color:#2563eb">{{ $srvArea }} m²</span>
+                    </div>
+                    @endif
                 </div>
                 @endif
 
@@ -832,7 +1004,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                 <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Yuborilayotgan bosqich *</label>
                 <select wire:model="routeNewStatus" style="width:100%;padding:10px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;background:#fff;box-sizing:border-box">
                     <option value="">— Tanlang —</option>
-                    @foreach($statuses as $sk => $st)
+                    @foreach($routeStatuses as $sk => $st)
                     @if($routeProj && $sk !== $routeProj->status)
                     <option value="{{ $sk }}">{{ $st['label'] }}</option>
                     @endif
@@ -961,6 +1133,88 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             </button>
         </div>
     </div>
+</div>
+@endif
+
+{{-- KV.M AREA MODAL --}}
+@if($showAreaModal)
+@php
+    $ak       = $areaServiceKey;
+    $aSrv     = $services[$ak] ?? [];
+    $aRate    = 0;
+    $aTierLbl = '';
+    if (!empty($aSrv['selected_tiers']) && isset($priceTiers[$ak])) {
+        foreach ($aSrv['selected_tiers'] as $subKey => $tierId) {
+            $td = collect($priceTiers[$ak][$subKey] ?? [])->firstWhere('id', $tierId);
+            if ($td) { $aRate += $td['price']; $aTierLbl = $td['label']; break; }
+        }
+    }
+    $aPreview = (float)$areaValue > 0 ? (int)round($aRate * (float)$areaValue) : 0;
+@endphp
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1200;display:flex;align-items:center;justify-content:center;padding:16px"
+     wire:click.self="closeAreaModal">
+<div style="background:#fff;border-radius:16px;width:100%;max-width:420px;padding:24px;box-shadow:0 25px 80px rgba(0,0,0,.3)" wire:click.stop>
+
+    {{-- Header --}}
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px">
+        <div style="display:flex;align-items:center;gap:8px">
+            <svg width="20" height="20" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2a2 2 0 0 1 1.93 1.47l.3 1.11a7 7 0 0 1 .87.51l1.09-.4a2 2 0 0 1 2.29.9l1 1.72a2 2 0 0 1-.34 2.39l-.81.72a7 7 0 0 1 0 1l.81.72a2 2 0 0 1 .34 2.39l-1 1.72a2 2 0 0 1-2.29.9l-1.09-.4a7 7 0 0 1-.87.51l-.3 1.11A2 2 0 0 1 12 22a2 2 0 0 1-1.93-1.47l-.3-1.11a7 7 0 0 1-.87-.51l-1.09.4a2 2 0 0 1-2.29-.9l-1-1.72a2 2 0 0 1 .34-2.39l.81-.72a7 7 0 0 1 0-1l-.81-.72a2 2 0 0 1-.34-2.39l1-1.72a2 2 0 0 1 2.29-.9l1.09.4a7 7 0 0 1 .87-.51l.3-1.11A2 2 0 0 1 12 2z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span style="font-size:15px;font-weight:700;color:#111827">Maydon kiritish</span>
+        </div>
+        <button wire:click="closeAreaModal" style="background:none;border:none;cursor:pointer;color:#6b7280;font-size:20px;padding:0;line-height:1">✕</button>
+    </div>
+    <p style="font-size:12px;color:#6b7280;margin-bottom:16px">
+        {{ $aSrv['label'] ?? '' }}{{ $aTierLbl ? ' — ' . $aTierLbl : '' }}
+    </p>
+
+    {{-- Rate info --}}
+    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:13px;font-weight:500;color:#1d4ed8">Narx (1 m² uchun):</span>
+        <span style="font-size:13px;font-weight:700;color:#1d4ed8">{{ number_format($aRate, 0, '.', ' ') }} so'm</span>
+    </div>
+
+    {{-- Area input --}}
+    <div style="margin-bottom:14px">
+        <label style="font-size:12px;font-weight:500;color:#374151;margin-bottom:6px;display:block">Kvadrat metr (m²)</label>
+        <div style="position:relative">
+            <input wire:model.live="areaValue"
+                   class="kb-input"
+                   style="padding-right:50px;font-size:16px"
+                   type="number"
+                   min="0.1"
+                   step="0.1"
+                   placeholder="Masalan: 120"
+                   autofocus>
+            <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:13px;font-weight:600;color:#2563eb">m²</span>
+        </div>
+        <p style="font-size:11px;color:#9ca3af;margin-top:4px">Umumiy narx = narx × m²</p>
+    </div>
+
+    {{-- Live preview --}}
+    @if((float)$areaValue > 0 && $aRate > 0)
+    <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px 14px;margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px">
+            <span style="color:#166534;font-weight:500">Umumiy narx:</span>
+            <span style="color:#16a34a;font-weight:700;font-size:15px">{{ number_format($aPreview, 0, '.', ' ') }} so'm</span>
+        </div>
+        <div style="font-size:11px;color:#6b7280;margin-top:4px;text-align:right">
+            {{ number_format($aRate, 0, '.', ' ') }} × {{ (float)$areaValue }} m²
+        </div>
+    </div>
+    @endif
+
+    {{-- Buttons --}}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <button wire:click="closeAreaModal"
+                style="padding:12px;border-radius:10px;border:1.5px solid #e5e7eb;background:#fff;font-size:14px;font-weight:600;color:#374151;cursor:pointer">
+            Bekor qilish
+        </button>
+        <button wire:click="saveArea"
+                style="padding:12px;border-radius:10px;border:none;background:#16a34a;color:#fff;font-size:14px;font-weight:600;cursor:pointer">
+            Saqlash
+        </button>
+    </div>
+</div>
 </div>
 @endif
 
@@ -1246,5 +1500,9 @@ function kbDrop(e, status) {
     }
 }
 </script>
+
+@if(!auth()->user()?->isHisobchi())
+<button class="kb-fab" wire:click="openModal" title="Yangi loyiha">+</button>
+@endif
 
 </x-filament-panels::page>

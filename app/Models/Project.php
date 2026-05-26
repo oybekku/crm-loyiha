@@ -36,6 +36,11 @@ class Project extends Model
         return $this->belongsTo(User::class, 'assigned_user_id');
     }
 
+    public function assignedUsers()
+    {
+        return $this->belongsToMany(User::class, 'project_user')->withTimestamps();
+    }
+
     public function services()
     {
         return $this->hasMany(ProjectService::class);
@@ -103,30 +108,16 @@ class Project extends Model
     {
         return [
             'turar'   => 'Turar joy',
-            'tijorat' => 'Tijorat',
-            'qishloq' => "Qishloq xo'jaligi",
-            'sanoat'  => 'Sanoat',
-            'boshqa'  => 'Boshqa',
+            'noturar' => 'Noturar joy',
         ];
     }
 
     public static function serviceOptions(): array
     {
         return [
-            'toposyomka'          => 'Toposyomka',
-            'geologiya'           => 'Geologiya',
-            'eskiz_loyiha'        => 'Eskiz loyiha',
-            'texnik_korik'        => "Texnik ko'rik",
-            'ariza'               => 'Ariza',
-            'konstruksiya'        => 'Konstruksiya (K/R)',
-            'arxitektura'         => 'Arxitektura (A/R)',
-            'smeta'               => 'Smeta',
-            'ichki_dizayn'        => 'Ichki dizayn',
-            'tashqi_dizayn'       => 'Tashqi dizayn',
-            'mualliflik_nazorati' => 'Mualliflik nazorati',
-            'laboratoriya'        => 'Laboratoriya',
-            'kadastr'             => 'Kadastr',
-            'maxsus_xizmat'       => 'Maxsus xizmat',
+            'toposyomka'  => 'Toposyomka',
+            'eskiz_loyiha'=> 'Eskiz loyiha',
+            'ariza'       => 'Ariza',
         ];
     }
 }

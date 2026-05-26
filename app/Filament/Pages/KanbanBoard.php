@@ -7,13 +7,14 @@ use App\Models\ProjectFile;
 use App\Models\ProjectService;
 use App\Models\ServicePriceTier;
 use App\Models\User;
+use App\Traits\HasMenuPermission;
 use Filament\Pages\Page;
 use Livewire\Attributes\Computed;
 use Livewire\WithFileUploads;
 
 class KanbanBoard extends Page
 {
-    use WithFileUploads;
+    use WithFileUploads, HasMenuPermission;
 
     protected static string $view = 'filament.pages.kanban-board';
     protected static ?string $navigationIcon = 'heroicon-o-view-columns';
@@ -25,15 +26,16 @@ class KanbanBoard extends Page
     public bool  $showModal = false;
     public int   $step      = 1;
 
-    public string $owner_name       = '';
-    public string $proj_title       = '';
-    public string $address          = '';
-    public array  $phones           = ['+998'];
-    public string $description      = '';
-    public string $category         = 'turar';
-    public ?int   $assigned_user_id = null;
-    public string $deadline_date    = '';
-    public array  $uploadedFiles    = [];
+    public string $owner_name        = '';
+    public string $proj_title        = '';
+    public string $address           = '';
+    public array  $phones            = ['+998'];
+    public string $description       = '';
+    public string $category          = 'turar';
+    public array  $assigned_user_ids = [];
+    public string $deadline_days     = '';
+    public bool   $showDeadlineConfirm   = false;
+    public array  $uploadedFiles         = [];
 
     // Route to department modal
     public bool   $showRouteModal      = false;
@@ -53,6 +55,11 @@ class KanbanBoard extends Page
     public string $paymentMethod        = 'naqd';
     public string $paymentNote          = '';
     public bool   $paymentMoveToEskiz   = true;
+
+    // Area (kv.m) modal state
+    public bool   $showAreaModal  = false;
+    public string $areaServiceKey = '';
+    public string $areaValue      = '';
 
     // Discount modal state
     public bool   $showDiscountModal  = false;
@@ -100,6 +107,7 @@ class KanbanBoard extends Page
         return [
             'owner_name' => 'required|min:2',
             'address'    => 'required|min:3',
+            'phones.0'   => ['required', 'regex:/^\+998\d{9}$/'],
         ];
     }
 
@@ -110,6 +118,8 @@ class KanbanBoard extends Page
             'owner_name.min'      => "Ismi kamida 2 ta harf bo'lishi kerak",
             'address.required'    => 'Manzil kiritilishi shart',
             'address.min'         => "Manzil kamida 3 ta harf bo'lishi kerak",
+            'phones.0.required' => 'Telefon raqam kiritilishi shart',
+            'phones.0.regex'    => 'Noto\'g\'ri format. To\'g\'ri: +998901234567 (12 ta raqam)',
         ];
     }
 
@@ -133,6 +143,7 @@ class KanbanBoard extends Page
                 'price'           => '',
                 'has_tiers'       => $hasTiers,
                 'selected_tiers'  => [],
+                'area_m2'         => '',
                 'discount_type'   => 'none',
                 'discount_value'  => '',
                 'discount_amount' => '0',
@@ -147,7 +158,8 @@ class KanbanBoard extends Page
     // ── Modal ─────────────────────────────────────────────────────────────
     public function openModal(): void
     {
-        $this->reset(['owner_name', 'proj_title', 'address', 'description', 'assigned_user_id', 'deadline_date']);
+        if (auth()->user()?->isHisobchi()) return;
+        $this->reset(['owner_name', 'proj_title', 'address', 'description', 'assigned_user_ids', 'deadline_days', 'showDeadlineConfirm']);
         $this->phones             = ['+998'];
         $this->category           = 'turar';
         $this->uploadedFiles      = [];
@@ -180,7 +192,25 @@ class KanbanBoard extends Page
     // ── Steps ─────────────────────────────────────────────────────────────
     public function nextStep(): void
     {
-        if ($this->step === 1) $this->validate();
+        if ($this->step === 1) {
+            $this->validate();
+            $phone = trim($this->phones[0] ?? '');
+            if (!preg_match('/^\+998\d{9}$/', $phone)) {
+                $this->addError('phones.0', "Noto'g'ri format. To'g'ri: +998901234567 (12 ta raqam)");
+                return;
+            }
+            if (empty($this->deadline_days)) {
+                $this->showDeadlineConfirm = true;
+                return;
+            }
+        }
+        $this->showDeadlineConfirm = false;
+        $this->step++;
+    }
+
+    public function nextStepWithoutDeadline(): void
+    {
+        $this->showDeadlineConfirm = false;
         $this->step++;
     }
 
@@ -203,12 +233,15 @@ class KanbanBoard extends Page
     private function recalcPrice(string $serviceKey): void
     {
         $tiers = $this->priceTiers;
-        $total = 0;
+        $rateTotal = 0;
         foreach ($this->services[$serviceKey]['selected_tiers'] as $sub => $id) {
             foreach ($tiers[$serviceKey][$sub] ?? [] as $tier) {
-                if ($tier['id'] === $id) { $total += $tier['price']; break; }
+                if ($tier['id'] === $id) { $rateTotal += $tier['price']; break; }
             }
         }
+        $area  = (float)($this->services[$serviceKey]['area_m2'] ?? 0);
+        $total = ($area > 0) ? (int) round($rateTotal * $area) : (int) $rateTotal;
+
         $this->services[$serviceKey]['price']           = (string) $total;
         $this->services[$serviceKey]['discount_type']   = 'none';
         $this->services[$serviceKey]['discount_value']  = '';
@@ -230,6 +263,7 @@ class KanbanBoard extends Page
             $this->services[$serviceKey]['selected']        = false;
             $this->services[$serviceKey]['price']           = '';
             $this->services[$serviceKey]['final_price']     = '';
+            $this->services[$serviceKey]['area_m2']         = '';
             $this->services[$serviceKey]['discount_type']   = 'none';
             $this->services[$serviceKey]['discount_value']  = '';
             $this->services[$serviceKey]['discount_amount'] = '0';
@@ -253,6 +287,32 @@ class KanbanBoard extends Page
         $this->showDiscountModal  = false;
         $this->discountServiceKey = '';
         $this->discountValue      = '';
+    }
+
+    // ── Area (kv.m) modal ─────────────────────────────────────────────────
+    public function openAreaModal(string $key): void
+    {
+        if (!isset($this->services[$key])) return;
+        $this->areaServiceKey = $key;
+        $this->areaValue      = $this->services[$key]['area_m2'] ?? '';
+        $this->showAreaModal  = true;
+    }
+
+    public function saveArea(): void
+    {
+        $key = $this->areaServiceKey;
+        if (!isset($this->services[$key])) { $this->showAreaModal = false; return; }
+        $area = max(0, (float) str_replace(',', '.', $this->areaValue));
+        $this->services[$key]['area_m2'] = $area > 0 ? (string)$area : '';
+        $this->recalcPrice($key);
+        $this->showAreaModal = false;
+    }
+
+    public function closeAreaModal(): void
+    {
+        $this->showAreaModal  = false;
+        $this->areaServiceKey = '';
+        $this->areaValue      = '';
     }
 
     public function applyDiscount(): void
@@ -356,7 +416,9 @@ class KanbanBoard extends Page
         $this->routeProjectId      = $projectId;
         $this->routeNewStatus      = '';
         $this->routeAllocDays      = 3;
-        $this->routeAssignedUserId = Project::find($projectId)?->assigned_user_id;
+        $project = Project::with('assignedUsers')->find($projectId);
+        $this->routeAssignedUserId = $project?->assignedUsers->first()?->id
+            ?? $project?->assigned_user_id;
         $this->showRouteModal      = true;
     }
 
@@ -383,6 +445,7 @@ class KanbanBoard extends Page
         $update = ['status' => $this->routeNewStatus];
         if ($this->routeAssignedUserId) {
             $update['assigned_user_id'] = $this->routeAssignedUserId;
+            $project->assignedUsers()->syncWithoutDetaching([$this->routeAssignedUserId]);
         }
         $project->update($update);
 
@@ -410,7 +473,7 @@ class KanbanBoard extends Page
     // ── Move project between statuses ────────────────────────────────────
     public function moveProject(int $projectId, string $newStatus): void
     {
-        $valid = ['yangi','tolov_jarayonida','tekshirish','tolangan','tugallangan','taqdim_etilgan','bekor_qilingan'];
+        $valid = \App\Models\ProjectStatus::pluck('key')->toArray();
         if (!in_array($newStatus, $valid)) return;
 
         $project = Project::find($projectId);
@@ -433,6 +496,8 @@ class KanbanBoard extends Page
         );
         if (empty($phones)) $phones = [['phone' => '+998']];
 
+        $primaryUserId = !empty($this->assigned_user_ids) ? $this->assigned_user_ids[0] : null;
+
         $project = Project::create([
             'owner_name'       => trim($this->owner_name),
             'title'            => trim($this->proj_title) ?: null,
@@ -441,9 +506,13 @@ class KanbanBoard extends Page
             'description'      => trim($this->description) ?: null,
             'category'         => $this->category,
             'status'           => 'yangi',
-            'assigned_user_id' => $this->assigned_user_id ?: null,
-            'deadline_date'    => $this->deadline_date ?: null,
+            'assigned_user_id' => $primaryUserId,
+            'deadline_date'    => ($this->deadline_days > 0) ? now()->addDays((int)$this->deadline_days)->toDateString() : null,
         ]);
+
+        if (!empty($this->assigned_user_ids)) {
+            $project->assignedUsers()->sync($this->assigned_user_ids);
+        }
 
         // Initial status log
         \App\Models\ProjectStatusLog::create([
@@ -451,7 +520,7 @@ class KanbanBoard extends Page
             'status'           => 'yangi',
             'entered_at'       => now(),
             'allocated_days'   => 0,
-            'assigned_user_id' => $this->assigned_user_id ?: null,
+            'assigned_user_id' => $primaryUserId,
         ]);
 
         foreach ($this->services as $key => $srv) {
@@ -497,28 +566,36 @@ class KanbanBoard extends Page
     // ── View data ─────────────────────────────────────────────────────────
     public function getViewData(): array
     {
-        $statuses = [
-            'yangi'            => ['label' => 'Yangi',              'color' => '#3b82f6'],
-            'tolov_jarayonida' => ['label' => "To'lov jarayonida",  'color' => '#f59e0b'],
-            'eskiz_loyiha'     => ['label' => 'Eskiz loyiha',       'color' => '#8b5cf6'],
-            'tekshirish'       => ['label' => 'Tekshirish',         'color' => '#6366f1'],
-            'tolangan'         => ['label' => "To'langan",          'color' => '#10b981'],
-            'tugallangan'      => ['label' => 'Tugallangan',        'color' => '#6b7280'],
-            'taqdim_etilgan'   => ['label' => 'Taqdim etilgan',     'color' => '#0ea5e9'],
-            'bekor_qilingan'   => ['label' => 'Bekor qilingan',     'color' => '#ef4444'],
-        ];
+        $authUser  = auth()->user();
+        $dbStatuses = \App\Models\ProjectStatus::allOrdered();
 
-        $projectQuery = Project::with(['assignedUser', 'services', 'currentStatusLog'])
+        $statuses      = [];
+        $routeStatuses = [];
+        $isPrivileged  = $authUser?->isAdmin() || in_array($authUser?->role, ['menejer']);
+
+        foreach ($dbStatuses as $ps) {
+            $data = ['label' => $ps->label, 'color' => $ps->color, 'is_archive' => $ps->is_archive];
+
+            // Route modal: admin/menejer — barchasi, boshqalar — faqat "tekshirish"
+            if ($isPrivileged || $ps->key === 'tekshirish') {
+                $routeStatuses[$ps->key] = $data;
+            }
+
+            if ($authUser?->isAdmin() || $authUser?->hasPermission('kanban_' . $ps->key)) {
+                $statuses[$ps->key] = $data;
+            }
+        }
+
+        $projectQuery = Project::with(['assignedUsers', 'services', 'currentStatusLog'])
             ->orderBy('created_at', 'desc');
 
-        $user = auth()->user();
-        if ($user && !$user->canSeeAllProjects()) {
-            $projectQuery->where(function ($q) use ($user) {
-                $q->where('assigned_user_id', $user->id);
-                if ($user->isHisobchi()) {
-                    $q->orWhere('status', 'tolov_jarayonida');
-                }
-            });
+        if ($authUser && !$authUser->canSeeAllProjects()) {
+            if ($authUser->isHisobchi()) {
+                $projectQuery->where('status', '!=', 'yangi');
+            } elseif (!$authUser->hasPermission('barcha_loyihalar')) {
+                $projectQuery->whereHas('assignedUsers', fn($q) => $q->where('users.id', $authUser->id));
+            }
+            // barcha_loyihalar ruxsati bo'lsa — filtrsiz barcha loyihalarni ko'radi
         }
 
         $projects = $projectQuery->get()->groupBy('status');
@@ -529,6 +606,6 @@ class KanbanBoard extends Page
 
         $priceTiers = $this->priceTiers;
 
-        return compact('statuses', 'projects', 'users', 'serviceOptions', 'categoryOptions', 'priceTiers');
+        return compact('statuses', 'routeStatuses', 'projects', 'users', 'serviceOptions', 'categoryOptions', 'priceTiers');
     }
 }
