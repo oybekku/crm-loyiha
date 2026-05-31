@@ -167,13 +167,48 @@ $getBadgeStyle = function(string $status) use ($archiveBadgeColors): string {
                 Arxivlangan{{ $catLabel ? ' '.mb_strtolower($catLabel) : '' }} loyihalar
             </span>
             <span class="arx-count">{{ number_format($total, 0, '.', ' ') }} ta loyiha</span>
+            <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+                @if(!empty($checkedIds))
+                <span style="font-size:12px;color:#6b7280">{{ count($checkedIds) }} ta tanlandi</span>
+                <button wire:click="clearChecked"
+                        style="font-size:11px;color:#9ca3af;background:none;border:none;cursor:pointer">Tozalash</button>
+                @endif
+            </div>
         </div>
+
+        {{-- Backup tugmalari --}}
+        @if(auth()->user()?->isAdmin())
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:#f8fafc;border-bottom:1px solid #e5e7eb;flex-wrap:wrap">
+            <div class="dark" style="font-size:12px;font-weight:600;color:#6b7280">📦 Zaxira:</div>
+            <button wire:click="exportSelected" wire:loading.attr="disabled"
+                    style="display:inline-flex;align-items:center;gap:6px;background:#2563eb;color:#fff;border:none;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Tanlanganlarni yuklab olish
+            </button>
+            <button wire:click="exportAll" wire:loading.attr="disabled"
+                    style="display:inline-flex;align-items:center;gap:6px;background:#059669;color:#fff;border:none;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Butun arxivni yuklab olish
+            </button>
+            <button wire:click="openImportModal"
+                    style="display:inline-flex;align-items:center;gap:6px;background:#7c3aed;color:#fff;border:none;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Tiklash (import)
+            </button>
+            <span wire:loading style="font-size:12px;color:#6b7280">Tayyorlanmoqda...</span>
+        </div>
+        @endif
 
         {{-- Table --}}
         <div style="overflow-x:auto">
             <table class="arx-table">
                 <thead>
                     <tr>
+                        <th style="width:36px;text-align:center">
+                            <input type="checkbox"
+                                   @change="$wire.call('selectAllVisible', {{ json_encode($projects->pluck('id')->toArray()) }})"
+                                   style="cursor:pointer">
+                        </th>
                         <th style="width:46px;text-align:center">No</th>
                         <th wire:click="sortBy('owner_name')"
                             class="sortable {{ $sortField==='owner_name'?'sort-active':'' }}">
@@ -208,6 +243,12 @@ $getBadgeStyle = function(string $status) use ($archiveBadgeColors): string {
                     @endphp
                     <tr wire:click="selectProject({{ $project->id }})"
                         class="{{ $isSelected ? 'row-active' : '' }}">
+                        <td style="text-align:center;padding:8px" onclick="event.stopPropagation()">
+                            <input type="checkbox"
+                                   wire:click.stop="toggleCheck({{ $project->id }})"
+                                   @checked(in_array($project->id, $checkedIds))
+                                   style="width:15px;height:15px;cursor:pointer">
+                        </td>
                         <td class="arx-no">{{ $projects->firstItem() + $i }}</td>
 
                         {{-- Egasi --}}
@@ -467,4 +508,98 @@ $getBadgeStyle = function(string $status) use ($archiveBadgeColors): string {
     @endif
 
 </div>
+{{-- IMPORT MODAL --}}
+@if($showImportModal)
+<div style="position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px">
+<div style="background:#fff;border-radius:16px;width:100%;max-width:640px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
+
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid #e5e7eb">
+        <h3 style="font-size:16px;font-weight:800;color:#111827">📦 Arxivni tiklash (Import)</h3>
+        <button wire:click="closeImportModal" style="background:none;border:none;cursor:pointer;font-size:22px;color:#9ca3af">×</button>
+    </div>
+
+    <div style="padding:20px;display:flex;flex-direction:column;gap:16px">
+
+        {{-- Fayl yuklash --}}
+        <div>
+            <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:8px">
+                ZIP faylni tanlang (avval yuklagan zaxira fayl):
+            </label>
+            <input type="file" wire:model="backupFile" accept=".zip"
+                   style="width:100%;border:2px dashed #d1d5db;border-radius:8px;padding:10px;font-size:13px;cursor:pointer">
+            <div wire:loading wire:target="backupFile" style="font-size:12px;color:#6b7280;margin-top:4px">Yuklanmoqda...</div>
+        </div>
+
+        {{-- Konflikt strategiya --}}
+        <div>
+            <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:8px">
+                Mavjud loyiha bo'lsa:
+            </label>
+            <div style="display:flex;gap:12px">
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px">
+                    <input type="radio" wire:model="importConflict" value="skip"> O'tkazib yuborish
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px">
+                    <input type="radio" wire:model="importConflict" value="overwrite"> Ustiga yozish
+                </label>
+            </div>
+        </div>
+
+        {{-- Preview tugmasi --}}
+        <button wire:click="previewImport" wire:loading.attr="disabled"
+                style="background:#f3f4f6;color:#374151;border:1.5px solid #e5e7eb;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer">
+            Ko'rib chiqish (preview)
+        </button>
+
+        {{-- Preview natija --}}
+        @if(!empty($importPreview))
+        <div style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;max-height:250px;overflow-y:auto">
+            <table style="width:100%;border-collapse:collapse;font-size:12px">
+                <thead>
+                    <tr style="background:#f8fafc">
+                        <th style="padding:7px 10px;text-align:left;font-weight:600;color:#6b7280">Raqam</th>
+                        <th style="padding:7px 10px;text-align:left;font-weight:600;color:#6b7280">Egasi</th>
+                        <th style="padding:7px 10px;text-align:center;font-weight:600;color:#6b7280">Fayllar</th>
+                        <th style="padding:7px 10px;text-align:center;font-weight:600;color:#6b7280">Holat</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($importPreview as $row)
+                    <tr style="border-top:1px solid #f1f5f9">
+                        <td style="padding:6px 10px;font-family:monospace;font-size:11px">{{ $row['number'] }}</td>
+                        <td style="padding:6px 10px;font-weight:600">{{ $row['owner_name'] }}</td>
+                        <td style="padding:6px 10px;text-align:center;color:#6b7280">{{ $row['files'] }}</td>
+                        <td style="padding:6px 10px;text-align:center">
+                            @if($row['exists'])
+                            <span style="background:#fef3c7;color:#d97706;font-size:10px;font-weight:700;border-radius:4px;padding:2px 7px">Mavjud</span>
+                            @else
+                            <span style="background:#dcfce7;color:#16a34a;font-size:10px;font-weight:700;border-radius:4px;padding:2px 7px">Yangi</span>
+                            @endif
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+
+        {{-- Import tugmasi --}}
+        <button wire:click="runImport" wire:loading.attr="disabled"
+                wire:confirm="Importni boshlashni tasdiqlaysizmi? Bu amalni qaytarib bo'lmaydi."
+                style="background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;width:100%">
+            ✅ Importni boshlash
+        </button>
+        @endif
+
+        {{-- Import natija --}}
+        @if($importResult)
+        <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px;font-size:13px;color:#15803d;font-weight:600">
+            {{ $importResult }}
+        </div>
+        @endif
+
+    </div>
+</div>
+</div>
+@endif
+
 </x-filament-panels::page>

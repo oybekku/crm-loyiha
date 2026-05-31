@@ -13,7 +13,10 @@ class ListUsers extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+                ->label('Yangi xodim')
+                ->icon('heroicon-o-user-plus')
+                ->visible(fn() => auth()->user()?->isAdmin()),
         ];
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class ProjectStatus extends Model
 {
@@ -10,9 +11,18 @@ class ProjectStatus extends Model
 
     protected $casts = ['is_archive' => 'boolean'];
 
+    protected static function booted(): void
+    {
+        // Statuslar o'zgarganda cache tozalanadi
+        static::saved(fn()   => Cache::forget('project_statuses_ordered'));
+        static::deleted(fn() => Cache::forget('project_statuses_ordered'));
+    }
+
     public static function allOrdered(): \Illuminate\Database\Eloquent\Collection
     {
-        return static::orderBy('sort_order')->orderBy('id')->get();
+        return Cache::remember('project_statuses_ordered', 600, function () {
+            return static::orderBy('sort_order')->orderBy('id')->get();
+        });
     }
 
     public static function asOptions(): array

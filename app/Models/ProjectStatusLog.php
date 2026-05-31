@@ -28,13 +28,14 @@ class ProjectStatusLog extends Model
 
     public function getDaysInStatusAttribute(): int
     {
+        if (! $this->entered_at) return 0;
         $end = $this->left_at ?? now();
         return (int) $this->entered_at->diffInDays($end);
     }
 
     public function getDelayDaysAttribute(): int
     {
-        if ($this->allocated_days === 0) return 0;
+        if (! $this->allocated_days) return 0;
         return max(0, $this->days_in_status - $this->allocated_days);
     }
 

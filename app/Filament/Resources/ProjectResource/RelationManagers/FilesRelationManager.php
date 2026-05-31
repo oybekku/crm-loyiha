@@ -21,7 +21,7 @@ class FilesRelationManager extends RelationManager
                 ->label('Fayl')
                 ->required()
                 ->disk('public')
-                ->directory('project-files')
+                ->directory(fn() => 'project-files/' . $this->getOwnerRecord()->id)
                 ->acceptedFileTypes(['application/pdf', 'image/*', 'application/msword',
                     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                     'application/vnd.ms-excel',

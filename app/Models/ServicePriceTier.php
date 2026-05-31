@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class ServicePriceTier extends Model
 {
@@ -18,6 +19,12 @@ class ServicePriceTier extends Model
     protected $casts = [
         'price' => 'decimal:2',
     ];
+
+    protected static function booted(): void
+    {
+        static::saved(fn()   => Cache::forget('price_tiers_grouped'));
+        static::deleted(fn() => Cache::forget('price_tiers_grouped'));
+    }
 
     public static function forService(string $serviceKey): array
     {

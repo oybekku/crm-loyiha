@@ -3,14 +3,22 @@
 <style>
 /* ===== KANBAN ===== */
 .kanban-wrap{display:flex;gap:14px;overflow-x:auto;padding-bottom:16px;align-items:flex-start;min-height:200px}
-.kanban-col{min-width:280px;max-width:280px;flex-shrink:0}
-.col-head{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px 8px 0 0;color:#fff;font-weight:700;font-size:13px}
-.col-count{background:rgba(255,255,255,.3);border-radius:12px;padding:1px 8px;font-size:11px}
-.col-body{background:#f3f4f6;border-radius:0 0 8px 8px;min-height:80px;padding:8px;display:flex;flex-direction:column;gap:8px;transition:background .15s}
-.dark .col-body{background:#1f2937}
+.kanban-col{min-width:280px;max-width:280px;flex-shrink:0;border-radius:10px;overflow:hidden}
+.col-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;font-weight:700;font-size:13px;letter-spacing:0.01em}
+.col-count{background:rgba(255,255,255,.15);border-radius:12px;padding:2px 9px;font-size:11px;font-weight:600;color:#cbd5e1}
+.col-body{background:transparent;min-height:80px;padding:8px;display:flex;flex-direction:column;gap:8px;transition:background .15s}
+
+/* ===== GRID REJIM (bitta status filtri) ===== */
+.kanban-grid-mode .kanban-wrap{display:block;overflow-x:visible;padding-bottom:0}
+.kanban-grid-mode .kanban-col{min-width:100%;max-width:100%;border-radius:12px}
+.kanban-grid-mode .col-body{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:14px;flex-direction:unset}
+.kanban-grid-mode .col-body > div{margin-bottom:0 !important}
+@media(max-width:1200px){.kanban-grid-mode .col-body{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:700px){.kanban-grid-mode .col-body{grid-template-columns:1fr}}
+.dark .col-body{background:transparent}
 .col-body.drag-over{background:#dbeafe;outline:2px dashed #3b82f6;outline-offset:-4px}
 /* Card */
-.p-card{background:#fff;border-radius:10px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,.07);cursor:grab;border:2px solid transparent;transition:border-color .15s,box-shadow .15s,opacity .15s}
+.p-card{background:#fff;border-radius:12px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.08);cursor:grab;border:2px solid transparent;transition:border-color .15s,box-shadow .15s,opacity .15s}
 .dark .p-card{background:#111827}
 .p-card:hover{border-color:#3b82f6;box-shadow:0 4px 12px rgba(0,0,0,.12)}
 .p-card.dragging{opacity:.4;cursor:grabbing}
@@ -246,58 +254,113 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
   .kanban-col{min-width:calc(100vw - 16px);max-width:calc(100vw - 16px)}
   .kb-modal{max-height:98vh}
 }
+
+/* ===== CARD DARK MODE ===== */
+.p-owner{font-weight:700;font-size:15px;margin-bottom:9px;line-height:1.3;color:#111827}
+.dark .p-owner{color:#f1f5f9}
+.p-info-text{font-size:12px;color:#4b5563;line-height:1.45}
+.dark .p-info-text{color:#94a3b8}
+.p-money-label{font-size:12px;color:#6b7280}
+.dark .p-money-label{color:#94a3b8}
+.p-money-main{font-size:14px;font-weight:700;color:#2563eb}
+.dark .p-money-main{color:#60a5fa}
+.p-money-paid-amt{font-size:13px;font-weight:600;color:#16a34a}
+.dark .p-money-paid-amt{color:#4ade80}
+.p-srv-tag-v2{background:#fff4ed;color:#c2410c;font-size:11px;padding:2px 7px;border-radius:4px;font-weight:500;border:1px solid #fed7aa}
+.dark .p-srv-tag-v2{background:#431407;color:#fb923c;border-color:#7c2d12}
+.p-card-divider{border-top:1px solid #f1f5f9;margin-bottom:9px}
+@keyframes blink-warn{0%,100%{opacity:1}50%{opacity:.5}}
+.dark .p-card-divider{border-top-color:#374151}
+.p-status-pill{font-size:11px;font-weight:600;color:#374151;background:#f1f5f9;border-radius:5px;padding:3px 9px;display:inline-block}
+.dark .p-status-pill{color:#d1d5db;background:#1e293b}
+.p-worker-name{font-size:11px;color:#6b7280;font-weight:500}
+.dark .p-worker-name{color:#94a3b8}
+.p-pct-txt{font-size:11px;color:#9ca3af;margin-bottom:4px}
+.dark .p-pct-txt{color:#64748b}
+.p-date-txt{font-size:11px;color:#9ca3af}
+.dark .p-date-txt{color:#64748b}
+.p-delay-warn{font-size:10px;background:#fee2e2;color:#dc2626;border-radius:5px;padding:3px 7px;margin-bottom:7px;font-weight:600;display:inline-block}
+.dark .p-delay-warn{background:#4c0519;color:#f87171}
+.p-delay-info{font-size:10px;color:#6b7280;background:#f3f4f6;border-radius:5px;padding:3px 7px;margin-bottom:7px;display:inline-block}
+.dark .p-delay-info{color:#94a3b8;background:#1e293b}
 </style>
 
-{{-- TOP BAR --}}
-@php
-    $allProjects   = $projects->flatten();
-    $totalCount    = $allProjects->count();
-    $yangiCount    = $projects->get('yangi', collect())->count();
-    $tugallangan   = $projects->get('tugallangan', collect())->count();
-    $overdueCount  = $allProjects->filter(fn($p) => $p->deadline_days_left !== null && $p->deadline_days_left < 0)->count();
-    $unpaidCount   = $allProjects->filter(fn($p) => $p->total_price > 0 && $p->paid_amount < $p->total_price)->count();
-@endphp
-<div class="kb-topbar">
-    <div class="kb-title">BESTHOME CRM</div>
-    <div class="kb-stats">
-        <div class="kb-stat">
-            <div class="kb-stat-num">{{ $totalCount }}</div>
-            <div class="kb-stat-lbl">Jami</div>
+
+{{-- TO'LOV NAVBATI (KASSIR — tepaда) --}}
+@if(auth()->user()?->isHisobchi() && $paymentQueue->count() > 0)
+<div style="margin-bottom:20px;background:#fff;border-radius:10px;padding:14px 18px;box-shadow:0 1px 6px rgba(0,0,0,.07)">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <svg width="15" height="15" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        <span style="font-size:13px;font-weight:700;color:#111827">To'lov navbati</span>
+        <span style="background:#dcfce7;color:#16a34a;font-size:11px;font-weight:700;border-radius:10px;padding:1px 8px">{{ $paymentQueue->count() }} ta</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+        @foreach($paymentQueue as $qp)
+        @php $remaining = $qp->total_price - $qp->paid_amount; @endphp
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:10px 14px;border-radius:8px;background:#f0fdf4;border:1px solid #bbf7d0">
+            <div style="flex:1;min-width:180px">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+                    <span style="font-size:11px;color:#9ca3af;font-family:monospace">{{ $qp->number }}</span>
+                    <span style="font-size:13px;font-weight:600;color:#111827">{{ $qp->owner_name }}</span>
+                    <span style="font-size:11px;color:#6b7280">— {{ $qp->address }}</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;font-size:11px;color:#9ca3af">
+                    <span style="color:#dc2626;font-weight:600">Qoldiq: {{ number_format($remaining, 0, '.', ' ') }} so'm</span>
+                    @if($qp->paymentRequester)
+                    <span>{{ $qp->paymentRequester->name }} yubordi</span>
+                    @endif
+                    <span>{{ $qp->payment_requested_at?->format('d/m H:i') }}</span>
+                </div>
+            </div>
+            <button class="p-move-btn" style="background:#16a34a;border-color:#16a34a;color:#fff;font-size:11px;padding:6px 14px;font-weight:600"
+                    onclick="event.stopPropagation()"
+                    wire:click.stop="openPaymentModal({{ $qp->id }}, true)">
+                To'lovni qabul qilish
+            </button>
         </div>
-        <div class="kb-stat">
-            <div class="kb-stat-num" style="color:#f59e0b">{{ $yangiCount }}</div>
-            <div class="kb-stat-lbl">Yangi</div>
-        </div>
-        <div class="kb-stat">
-            <div class="kb-stat-num" style="color:#10b981">{{ $tugallangan }}</div>
-            <div class="kb-stat-lbl">Tugallangan</div>
-        </div>
-        @if($overdueCount > 0)
-        <div class="kb-stat kb-stat-danger">
-            <div class="kb-stat-num">{{ $overdueCount }}</div>
-            <div class="kb-stat-lbl">Kechikkan</div>
-        </div>
-        @endif
-        @if($unpaidCount > 0)
-        <div class="kb-stat kb-stat-warn">
-            <div class="kb-stat-num">{{ $unpaidCount }}</div>
-            <div class="kb-stat-lbl">To'lanmagan</div>
-        </div>
+        @endforeach
+    </div>
+</div>
+@endif
+
+{{-- Qidiruv + Yangi loyiha --}}
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+    <div style="position:relative;flex:1;max-width:360px">
+        <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none" width="15" height="15" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input wire:model.live.debounce.300ms="search"
+               type="text"
+               placeholder="Ism, raqam yoki manzil..."
+               style="width:100%;padding:8px 12px 8px 34px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;background:#fff;transition:border-color .15s"
+               onfocus="this.style.borderColor='#2563eb'"
+               onblur="this.style.borderColor='#e5e7eb'">
+        @if($search)
+        <button wire:click="$set('search','')"
+                style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9ca3af;font-size:16px;line-height:1;padding:2px">×</button>
         @endif
     </div>
-    @if(!auth()->user()?->isHisobchi())
-    <button class="btn-new" wire:click="openModal">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-        Yangi loyiha
-    </button>
+
+    @if($search)
+    <span style="font-size:12px;color:#6b7280;white-space:nowrap">
+        {{ collect($projects->all())->sum(fn($c) => $c->count()) }} natija
+    </span>
     @endif
+
+    <div style="margin-left:auto">
+        @if(!auth()->user()?->isHisobchi() && !auth()->user()?->isBajaruvchi())
+        <button class="btn-new" wire:click="openModal">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            Yangi loyiha
+        </button>
+        @endif
+    </div>
 </div>
 
 {{-- KANBAN --}}
+<div class="{{ $filterStatus ? 'kanban-grid-mode' : '' }}">
 <div class="kanban-wrap">
 @foreach($statuses as $statusKey => $status)
 <div class="kanban-col">
-    <div class="col-head" style="background:{{ $status['color'] }}">
+    <div class="col-head" style="background:{{ $status['head_bg'] ?? 'rgba(30,41,59,1)' }};color:{{ $status['head_text'] ?? '#f1f5f9' }}">
         <span>{{ $status['label'] }}</span>
         <span class="col-count">{{ $projects->get($statusKey, collect())->count() }}</span>
     </div>
@@ -327,143 +390,283 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             $payPct       = $project->payment_percent;
             $barColor     = $payPct >= 100 ? '#10b981' : ($payPct >= 50 ? '#f59e0b' : $status['color']);
             $ownerInitial = mb_strtoupper(mb_substr($project->owner_name, 0, 1));
+            // Xizmatda hodim biriktirilmagan tekshiruvi
+            $svcCount     = $project->services->count();
+            $unassigned   = $project->services->whereNull('assigned_user_id')->count();
+            $hasUnassigned = $svcCount > 0 && $unassigned > 0 && $project->paid_amount > 0;
         @endphp
         <div class="p-card {{ $cardClass }}"
              draggable="true"
              data-id="{{ $project->id }}"
              ondragstart="kbDragStart(event,{{ $project->id }})"
              ondragend="kbDragEnd(event)"
-             onclick="if(!window._kbDragged)window.location='/admin/projects/{{ $project->id }}/edit'"
-             style="margin-bottom:0">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-                <div style="display:flex;align-items:center;gap:6px">
-                    <div class="p-avatar" style="background:{{ $status['color'] }}">{{ $ownerInitial }}</div>
-                    <span class="p-num"># {{ substr($project->number, 1) }}</span>
+             onclick="if(!window._kbDragged && !event.target.closest('button,a,input,select,label'))window.location='/admin/projects/{{ $project->id }}/edit'"
+             style="margin-bottom:0;padding:14px">
+
+            {{-- TOP ROW: number + deadline + date --}}
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px">
+                <div style="display:flex;align-items:center;gap:7px">
+                    <span style="background:{{ $status['color'] }};color:#fff;border-radius:6px;font-size:11px;font-weight:800;padding:2px 9px;letter-spacing:0.02em">
+                        {{ $project->number }}
+                    </span>
                 </div>
-                <div style="display:flex;align-items:center;gap:4px">
+                <div style="display:flex;align-items:center;gap:5px">
                     @if($daysLeft !== null)
                         @if($isOverdue)
-                        <span style="font-size:9px;font-weight:700;background:#fee2e2;color:#dc2626;border-radius:4px;padding:1px 5px">
-                            {{ abs($daysLeft) }} kun kechikdi
-                        </span>
+                        <span class="p-delay-warn" style="margin-bottom:0">{{ abs($daysLeft) }} kun kechikdi</span>
                         @elseif($daysLeft === 0)
-                        <span style="font-size:9px;font-weight:700;background:#fef3c7;color:#d97706;border-radius:4px;padding:1px 5px">
-                            Bugun tugaydi
-                        </span>
+                        <span style="font-size:10px;font-weight:700;background:#fef3c7;color:#d97706;border-radius:5px;padding:2px 7px">Bugun tugaydi</span>
                         @elseif($daysLeft <= 3)
-                        <span style="font-size:9px;font-weight:700;background:#fef3c7;color:#d97706;border-radius:4px;padding:1px 5px">
-                            {{ $daysLeft }} kun qoldi
-                        </span>
+                        <span style="font-size:10px;font-weight:700;background:#fef3c7;color:#d97706;border-radius:5px;padding:2px 7px">{{ $daysLeft }} kun qoldi</span>
                         @else
-                        <span style="font-size:9px;color:#6b7280;background:#f3f4f6;border-radius:4px;padding:1px 5px">
-                            {{ $daysLeft }} kun qoldi
-                        </span>
+                        <span class="p-date-txt">{{ $daysLeft }} kun qoldi</span>
                         @endif
                     @endif
-                    <span style="font-size:10px;color:#9ca3af">{{ $project->created_at->format('d-M') }}</span>
+                    <span class="p-date-txt">{{ $project->created_at->format('d-M') }}</span>
                 </div>
             </div>
-            <div class="p-owner" style="margin-top:2px">{{ $project->owner_name }}</div>
+
+            {{-- NAME --}}
+            <div class="p-owner">{{ $project->owner_name }}</div>
+
             <div x-show="!collapsed" x-collapse>
+
+            {{-- Status delay badge --}}
             @if($statusDelay > 0)
-            <div style="font-size:9px;background:#fee2e2;color:#dc2626;border-radius:4px;padding:2px 6px;margin-bottom:4px;font-weight:600">
-                Bu bosqichda {{ $daysInStatus }} kun ({{ $statusDelay }} kun kechikdi)
-            </div>
+            <div class="p-delay-warn">Bu bosqichda {{ $daysInStatus }} kun ({{ $statusDelay }} kun kechikdi)</div>
             @elseif($allocDays > 0)
-            <div style="font-size:9px;color:#6b7280;background:#f3f4f6;border-radius:4px;padding:2px 6px;margin-bottom:4px">
-                Bu bosqichda {{ $daysInStatus }}/{{ $allocDays }} kun
-            </div>
+            <div class="p-delay-info">Bu bosqichda {{ $daysInStatus }}/{{ $allocDays }} kun</div>
             @endif
-            <div class="p-addr">
-                <svg width="11" height="11" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24" style="display:inline;vertical-align:middle;margin-right:2px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>
-                {{ $project->address }}
+
+            {{-- ADDRESS --}}
+            <div style="display:flex;align-items:flex-start;gap:7px;margin-bottom:6px">
+                <svg width="14" height="14" fill="none" stroke="#f97316" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;margin-top:1px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5" fill="#f97316" stroke="none"/></svg>
+                <span class="p-info-text" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">{{ $project->address }}</span>
             </div>
+
+            {{-- SERVICES --}}
             @if($project->services->count())
-            <div class="p-services">
-                @foreach($project->services->take(4) as $srv)
-                <span class="p-srv-tag">{{ $serviceOptions[$srv->service_name] ?? $srv->service_name }}</span>
-                @endforeach
-                @if($project->services->count() > 4)
-                <span class="p-srv-tag">+{{ $project->services->count() - 4 }}</span>
-                @endif
+            <div style="display:flex;align-items:flex-start;gap:7px;margin-bottom:6px">
+                <svg width="14" height="14" fill="none" stroke="#f97316" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;margin-top:2px"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                <div style="display:flex;flex-wrap:wrap;gap:3px">
+                    @foreach($project->services->take(4) as $srv)
+                    <span class="p-srv-tag-v2">{{ $serviceOptions[$srv->service_name] ?? $srv->service_name }}</span>
+                    @endforeach
+                    @if($project->services->count() > 4)
+                    <span class="p-srv-tag-v2">+{{ $project->services->count() - 4 }}</span>
+                    @endif
+                </div>
             </div>
             @endif
+
+            {{-- PHONE --}}
             @if(!empty($project->phones[0]['phone']))
-            <div class="p-phone">
-                <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 11.5 19.79 19.79 0 012 2.84 2 2 0 014 2.68h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 10.18a16 16 0 006.29 6.29l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
-                {{ $project->phones[0]['phone'] }}
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:10px">
+                <svg width="14" height="14" fill="none" stroke="#8b5cf6" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 11.5 19.79 19.79 0 012 2.84 2 2 0 014 2.68h3a2 2 0 012 1.72 12.05 12.05 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 10.18a16 16 0 006.29 6.29l1.27-1.27a2 2 0 012.11-.45 12.05 12.05 0 002.81.7A2 2 0 0122 16.92z"/></svg>
+                <span class="p-info-text" style="font-weight:500">{{ $project->phones[0]['phone'] }}</span>
             </div>
             @endif
-            <div class="p-money">
-                <span class="p-money-total">{{ number_format($project->total_price, 0, '.', ' ') }} so'm</span>
+
+            {{-- DIVIDER --}}
+            <div class="p-card-divider"></div>
+
+            {{-- MONEY: Umumiy --}}
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+                <div style="display:flex;align-items:center;gap:7px">
+                    <svg width="14" height="14" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M9 10h4.5a1.5 1.5 0 010 3H9m0 1h6"/></svg>
+                    <span class="p-money-label">Umumiy:</span>
+                </div>
+                <span class="p-money-main">{{ number_format($project->total_price, 0, '.', ' ') }} so'm</span>
             </div>
+
+            {{-- MONEY: To'langan --}}
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                <div style="display:flex;align-items:center;gap:7px">
+                    <svg width="14" height="14" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                    <span class="p-money-label">To'langan:</span>
+                </div>
+                <span class="p-money-paid-amt">{{ number_format($project->paid_amount, 0, '.', ' ') }} so'm</span>
+            </div>
+
+            {{-- PROGRESS --}}
             @if($project->total_price > 0)
-            <div class="p-bar-wrap">
+            <div class="p-pct-txt">{{ $payPct }}%</div>
+            <div class="p-bar-wrap" style="margin-bottom:10px">
                 <div class="p-bar" style="width:{{ $payPct }}%;background:{{ $barColor }}"></div>
             </div>
-            <div style="font-size:10px;color:#9ca3af">
-                To'langan: {{ number_format($project->paid_amount, 0, '.', ' ') }} so'm
-                <span style="font-weight:600;color:{{ $barColor }}"> ({{ $payPct }}%)</span>
+            @endif
+
+            {{-- OGOHLANTIRISH: xizmatda hodim biriktirilmagan --}}
+            @if($hasUnassigned)
+            <div style="display:flex;align-items:center;gap:5px;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:4px 8px;margin-bottom:8px;animation:blink-warn 1.5s ease-in-out infinite">
+                <svg width="12" height="12" fill="none" stroke="#dc2626" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <span style="font-size:11px;font-weight:700;color:#dc2626">
+                    {{ $unassigned }} ta xizmatda hodim biriktirilmagan
+                </span>
             </div>
             @endif
-            <div class="p-footer" style="margin-top:6px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px">
-                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-                    @if(auth()->user()?->canSeeAllProjects())
-                    <div x-data="{ open: false }" style="position:relative" @click.outside="open=false">
-                        <button class="p-move-btn" @click.stop="open=!open" ondragstart="event.stopPropagation();event.preventDefault()">
-                            <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                            O'tkazish
-                            <svg width="9" height="9" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-                        </button>
-                        <div class="p-move-dropdown" x-show="open" x-cloak>
-                            @foreach($statuses as $sk => $st)
-                            @if($sk !== $statusKey)
-                            <button class="p-move-item"
-                                    onclick="event.stopPropagation()"
-                                    wire:click.stop="moveProject({{ $project->id }},'{{ $sk }}')"
-                                    @click="open=false">
-                                <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:{{ $st['color'] }};margin-right:6px;vertical-align:middle"></span>
-                                {{ $st['label'] }}
-                            </button>
-                            @endif
-                            @endforeach
-                        </div>
+
+            {{-- FOOTER: status label + per-service workers --}}
+            @php
+                $srvWorkers = $project->services
+                    ->filter(fn($s) => $s->assignedUser)
+                    ->map(fn($s) => [
+                        'label' => $serviceOptions[$s->service_name] ?? $s->service_name,
+                        'name'  => $s->assignedUser->name,
+                    ]);
+            @endphp
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;gap:8px">
+                <span class="p-status-pill" style="flex-shrink:0">{{ $status['label'] }}</span>
+                @if($srvWorkers->count() > 0)
+                <div style="text-align:right">
+                    @foreach($srvWorkers as $sw)
+                    <div style="font-size:10px;line-height:1.5">
+                        <span style="color:#9ca3af">{{ $sw['label'] }}:</span>
+                        <span style="font-weight:600;color:#374151;margin-left:3px">{{ $sw['name'] }}</span>
                     </div>
-                    @endif
-                    @if(auth()->user()?->isHisobchi() || auth()->user()?->canSeeAllProjects())
-                    <button class="p-move-btn" style="background:#f0fdf4;border-color:#86efac;color:#16a34a"
-                            onclick="event.stopPropagation()"
-                            wire:click.stop="openPaymentModal({{ $project->id }})">
-                        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-                        To'lov
-                    </button>
-                    @endif
-                    @if(auth()->user()?->canSeeAllProjects())
-                    <button class="p-move-btn" style="background:#eff6ff;border-color:#93c5fd;color:#2563eb"
-                            onclick="event.stopPropagation()"
-                            wire:click.stop="openRouteModal({{ $project->id }},'{{ $statusKey }}')">
-                        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-                        Yuborish
-                    </button>
-                    @endif
+                    @endforeach
                 </div>
-                @if($project->assignedUsers->count())
-                <span style="font-size:10px;color:#6b7280;font-weight:500">{{ $project->assignedUsers->pluck('name')->join(', ') }}</span>
+                @elseif($project->assignedUsers->count())
+                <span class="p-worker-name">{{ $project->assignedUsers->pluck('name')->join(', ') }}</span>
                 @endif
             </div>
+
+            {{-- ACTION BUTTONS --}}
+            <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center">
+                @if(auth()->user()?->canSeeAllProjects())
+                <div x-data="{ open: false }" style="position:relative" @click.outside="open=false">
+                    <button class="p-move-btn" @click.stop="open=!open" ondragstart="event.stopPropagation();event.preventDefault()">
+                        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                        O'tkazish
+                        <svg width="9" height="9" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+                    </button>
+                    <div class="p-move-dropdown" x-show="open" x-cloak>
+                        @foreach($statuses as $sk => $st)
+                        @if($sk !== $statusKey)
+                        <button class="p-move-item"
+                                onclick="event.stopPropagation()"
+                                wire:click.stop="moveProject({{ $project->id }},'{{ $sk }}')"
+                                @click="open=false">
+                            <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:{{ $st['color'] }};margin-right:6px;vertical-align:middle"></span>
+                            {{ $st['label'] }}
+                        </button>
+                        @endif
+                        @endforeach
+                    </div>
+                </div>
+                @endif
+                @if(auth()->user()?->isHisobchi() || auth()->user()?->canSeeAllProjects())
+                <button class="p-move-btn" style="background:#f0fdf4;border-color:#86efac;color:#16a34a"
+                        onclick="event.stopPropagation()"
+                        wire:click.stop="openPaymentModal({{ $project->id }})">
+                    <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                    To'lov
+                </button>
+                @endif
+                @if(auth()->user()?->canSeeAllProjects())
+                    @if($project->payment_requested_at)
+                    <span style="font-size:10px;background:#fef3c7;color:#d97706;border-radius:5px;padding:3px 8px;font-weight:600;display:inline-flex;align-items:center;gap:4px;cursor:pointer"
+                          onclick="event.stopPropagation()"
+                          wire:click.stop="cancelPaymentRequest({{ $project->id }})"
+                          title="Bekor qilish uchun bosing">
+                        <svg width="9" height="9" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        Navbatda
+                    </span>
+                    @else
+                    <button class="p-move-btn" style="background:#fef3c7;border-color:#fcd34d;color:#b45309"
+                            onclick="event.stopPropagation()"
+                            wire:click.stop="requestPayment({{ $project->id }})">
+                        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M12 10v4M10 12h4"/></svg>
+                        To'lovga
+                    </button>
+                    @endif
+                @endif
+                @if(!auth()->user()?->isHisobchi())
+                <button class="p-move-btn" style="background:#eff6ff;border-color:#93c5fd;color:#2563eb"
+                        onclick="event.stopPropagation()"
+                        wire:click.stop="openRouteModal({{ $project->id }},'{{ $statusKey }}')">
+                    <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                    Yuborish
+                </button>
+                @endif
+                <a href="{{ route('print.project.ariza', $project) }}"
+                   target="_blank"
+                   onclick="event.stopPropagation()"
+                   style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:5px;border:1px solid #d1d5db;background:#fff;color:#374151;font-size:11px;font-weight:500;text-decoration:none;cursor:pointer;transition:background .15s"
+                   onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='#fff'">
+                    <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    Ariza
+                </a>
+            </div>
+
             </div>{{-- /x-show collapsed --}}
         </div>{{-- /p-card --}}
         </div>{{-- /wrapper --}}
         @empty
-        <div style="text-align:center;padding:24px 12px;color:#9ca3af;font-size:12px">
-            <div style="font-size:22px;margin-bottom:4px">📭</div>
-            Loyihalar yo'q
-        </div>
+        @if(!auth()->user()?->isHisobchi() && !auth()->user()?->isBajaruvchi())
+        <button wire:click="openModal"
+                style="width:100%;padding:28px 12px;background:transparent;border:2px dashed #d1d5db;border-radius:10px;cursor:pointer;color:#9ca3af;font-size:28px;font-weight:300;transition:all .15s;display:flex;align-items:center;justify-content:center"
+                onmouseover="this.style.borderColor='#6b7280';this.style.color='#374151';this.style.background='rgba(0,0,0,0.03)'"
+                onmouseout="this.style.borderColor='#d1d5db';this.style.color='#9ca3af';this.style.background='transparent'">
+            +
+        </button>
+        @else
+        <div style="text-align:center;padding:28px 12px;color:#d1d5db;font-size:22px">+</div>
+        @endif
         @endforelse
     </div>
 </div>
 @endforeach
 </div>
+</div>{{-- /kanban-grid-mode wrapper --}}
+
+{{-- TO'LOV NAVBATI (ADMIN/MENEJER — pastda) --}}
+@if(auth()->user()?->canSeeAllProjects() && $paymentQueue->count() > 0)
+<div style="margin-top:28px;padding-top:20px;border-top:1px solid #e5e7eb">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <svg width="15" height="15" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        <span style="font-size:13px;font-weight:600;color:#374151">To'lov navbati</span>
+        <span style="font-size:12px;color:#9ca3af">({{ $paymentQueue->count() }} ta)</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+        @foreach($paymentQueue as $qp)
+        @php $remaining = $qp->total_price - $qp->paid_amount; @endphp
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:10px 14px;border-radius:8px;background:#f9fafb">
+            <div style="flex:1;min-width:200px">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+                    <span style="font-size:11px;color:#9ca3af;font-family:monospace">{{ $qp->number }}</span>
+                    <span style="font-size:13px;font-weight:600;color:#111827">{{ $qp->owner_name }}</span>
+                    <span style="font-size:11px;color:#6b7280">— {{ $qp->address }}</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;font-size:11px;color:#9ca3af">
+                    <span style="color:#dc2626;font-weight:600">Qoldiq: {{ number_format($remaining, 0, '.', ' ') }} so'm</span>
+                    @if($qp->paymentRequester)
+                    <span>{{ $qp->paymentRequester->name }} yubordi</span>
+                    @endif
+                    <span>{{ $qp->payment_requested_at?->format('d/m H:i') }}</span>
+                </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+                @if(auth()->user()?->isHisobchi())
+                <button class="p-move-btn" style="background:#16a34a;border-color:#16a34a;color:#fff;font-size:11px;padding:5px 12px"
+                        onclick="event.stopPropagation()"
+                        wire:click.stop="openPaymentModal({{ $qp->id }}, true)">
+                    To'lovni qabul qilish
+                </button>
+                @endif
+                @if(auth()->user()?->canSeeAllProjects())
+                <button class="p-move-btn" style="font-size:11px;color:#9ca3af;padding:4px 9px"
+                        onclick="event.stopPropagation()"
+                        wire:click.stop="cancelPaymentRequest({{ $qp->id }})">
+                    Bekor
+                </button>
+                @endif
+            </div>
+        </div>
+        @endforeach
+    </div>
+</div>
+@endif
 
 {{-- MODAL --}}
 <div class="kb-overlay" style="display:{{ $showModal ? 'flex' : 'none' }}">
@@ -531,6 +734,32 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                     <button class="addr-clear-btn" wire:click="$set('address','')">Tozalash</button>
                 </div>
                 @endif
+            </div>
+
+            {{-- Koordinatalar --}}
+            <div>
+                <label class="kb-label" style="display:flex;align-items:center;gap:6px;">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
+                    Koordinatalar
+                </label>
+                {{-- Yashirin Livewire fieldlari --}}
+                <input wire:model.live="latitude"  id="kb-lat-input" type="hidden">
+                <input wire:model.live="longitude" id="kb-lng-input" type="hidden">
+                {{-- Ko'rinadigan birlashgan input + copy tugmasi --}}
+                <div style="display:flex;gap:6px;align-items:center">
+                    <input id="kb-coords-combined"
+                           class="kb-input"
+                           placeholder="Masalan: 41.299800, 69.240100"
+                           oninput="kbOnCombinedCoord(this.value)"
+                           style="flex:1;font-family:monospace">
+                    <button type="button" onclick="kbCopyCoords(this)"
+                            title="Koordinatalarni nusxalash"
+                            style="flex-shrink:0;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:7px;padding:7px 10px;cursor:pointer;color:#6b7280;font-size:12px;display:flex;align-items:center;gap:4px;white-space:nowrap">
+                        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        Nusxalash
+                    </button>
+                </div>
+                <div style="font-size:11px;color:#9ca3af;margin-top:3px">Koordinata kiriting — xarita avtomatik yangilanadi</div>
             </div>
 
             <div>
@@ -644,10 +873,28 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 
             <div wire:ignore>
                 <div style="display:flex;gap:6px;margin-bottom:6px">
+                    <input id="kb-yandex-url" type="text"
+                           placeholder="Yandex Maps havolasini joylashtiring..."
+                           style="flex:1;border:1px solid #e2e8f0;border-radius:8px;padding:7px 11px;font-size:13px;outline:none"
+                           onkeydown="if(event.key==='Enter'){kbLoadYandexUrl();event.preventDefault()}">
+                    <button onclick="kbLoadYandexUrl()"
+                            style="background:#e53e3e;color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:5px">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M21 10.5c0-3.87-3.13-7-7-7A7 7 0 0 0 9.13 14.5L3 20.5l1.5 1.5 6.01-6.01A7 7 0 0 0 21 10.5zm-7 5a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/></svg>
+                        Yuklash
+                    </button>
+                </div>
+                <div style="display:flex;gap:6px;margin-bottom:6px">
                     <input id="kb-map-search" type="text" placeholder="Ko'cha, mahalla yoki joy nomini kiriting..."
                            style="flex:1;border:1px solid #e2e8f0;border-radius:8px;padding:7px 11px;font-size:13px;outline:none"
                            onkeydown="if(event.key==='Enter'){kbSearchOnMap();event.preventDefault()}">
                     <button onclick="kbSearchOnMap()" style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:13px;cursor:pointer;white-space:nowrap">Qidirish</button>
+                    <button onclick="kbLocateMe()" id="kb-locate-btn" title="Joylashuvimni aniqlash"
+                            style="background:#059669;color:#fff;border:none;border-radius:8px;padding:7px 10px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap;flex-shrink:0">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/>
+                        </svg>
+                        Mening joyim
+                    </button>
                 </div>
                 <div id="modal-map" style="width:100%;height:340px;border-radius:10px;border:1px solid #e2e8f0;background:#f3f4f6;overflow:hidden"></div>
                 <div style="display:flex;gap:8px;margin-top:8px">
@@ -724,16 +971,20 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                             {{ number_format((float)$srv['price'], 0, '.', ' ') }} so'm
                             @if($hasArea)<span style="font-weight:400;opacity:.7;font-size:11px"> ({{ (float)$srv['area_m2'] }}m²)</span>@endif
                         </span>
-                        <button wire:click.stop="openAreaModal('{{ $key }}')"
-                                title="kv.m kiritish"
-                                style="width:28px;height:28px;border-radius:6px;border:1.5px solid {{ $hasArea ? '#2563eb' : '#e5e7eb' }};background:{{ $hasArea ? '#eff6ff' : '#f9fafb' }};cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:{{ $hasArea ? '#2563eb' : '#6b7280' }};transition:all .15s">
-                            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2a2 2 0 0 1 1.93 1.47l.3 1.11a7 7 0 0 1 .87.51l1.09-.4a2 2 0 0 1 2.29.9l1 1.72a2 2 0 0 1-.34 2.39l-.81.72a7 7 0 0 1 0 1l.81.72a2 2 0 0 1 .34 2.39l-1 1.72a2 2 0 0 1-2.29.9l-1.09-.4a7 7 0 0 1-.87.51l-.3 1.11A2 2 0 0 1 12 22a2 2 0 0 1-1.93-1.47l-.3-1.11a7 7 0 0 1-.87-.51l-1.09.4a2 2 0 0 1-2.29-.9l-1-1.72a2 2 0 0 1 .34-2.39l.81-.72a7 7 0 0 1 0-1l-.81-.72a2 2 0 0 1-.34-2.39l1-1.72a2 2 0 0 1 2.29-.9l1.09.4a7 7 0 0 1 .87-.51l.3-1.11A2 2 0 0 1 12 2z"/><circle cx="12" cy="12" r="3"/></svg>
-                        </button>
                         @endif
                         <svg width="16" height="16" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24" :style="open ? 'transform:rotate(180deg)' : ''" style="transition:transform .2s"><path d="M6 9l6 6 6-6"/></svg>
                     </div>
                 </div>
                 <div x-show="open" style="padding:12px 16px;border-top:1px solid #bbf7d0;background:#fff" wire:click.stop x-cloak>
+                    <div style="margin-bottom:10px">
+                        <label style="font-size:12px;color:#6b7280;font-weight:500;margin-bottom:5px;display:block">Mas'ul hodim</label>
+                        <select wire:model="services.{{ $key }}.assigned_user_id" class="kb-input" style="max-width:260px">
+                            <option value="">— Tanlang —</option>
+                            @foreach($users as $u)
+                            <option value="{{ $u->id }}">{{ $u->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                     @if($activeSub)
                     {{-- Sub-service tabs --}}
                     <div class="tier-tabs">
@@ -752,7 +1003,9 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                     <div class="tier-grid">
                         @foreach($priceTiers[$key][$activeSub] as $tier)
                         @php $tierSel = isset($srv['selected_tiers'][$activeSub]) && $srv['selected_tiers'][$activeSub] === $tier['id']; @endphp
+                        <div style="display:flex;align-items:center;gap:4px">
                         <div class="tier-item {{ $tierSel ? 'selected' : '' }}"
+                             style="flex:1"
                              wire:click.stop="{{ $tierSel ? 'deselectTier(\''.$key.'\', \''.$activeSub.'\')' : 'selectTier(\''.$key.'\', \''.$activeSub.'\', '.$tier['id'].')' }}">
                             <div class="tier-radio">
                                 @if($tierSel)<svg width="8" height="8" viewBox="0 0 8 8" fill="#fff"><circle cx="4" cy="4" r="3"/></svg>@endif
@@ -760,8 +1013,18 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                             <span class="tier-label">{{ $tier['label'] }}</span>
                             <span class="tier-price">{{ number_format($tier['price'], 0, '.', ' ') }}</span>
                         </div>
+                        @if($tierSel)
+                        @php $hasArea = !empty($srv['area_m2']); @endphp
+                        <button wire:click.stop="openAreaModal('{{ $key }}')"
+                                title="kv.m kiritish"
+                                style="width:28px;height:28px;border-radius:6px;border:1.5px solid {{ $hasArea ? '#2563eb' : '#e5e7eb' }};background:{{ $hasArea ? '#eff6ff' : '#f9fafb' }};cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:{{ $hasArea ? '#2563eb' : '#9ca3af' }};transition:all .15s">
+                            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2a2 2 0 0 1 1.93 1.47l.3 1.11a7 7 0 0 1 .87.51l1.09-.4a2 2 0 0 1 2.29.9l1 1.72a2 2 0 0 1-.34 2.39l-.81.72a7 7 0 0 1 0 1l.81.72a2 2 0 0 1 .34 2.39l-1 1.72a2 2 0 0 1-2.29.9l-1.09-.4a7 7 0 0 1-.87.51l-.3 1.11A2 2 0 0 1 12 22a2 2 0 0 1-1.93-1.47l-.3-1.11a7 7 0 0 1-.87-.51l-1.09.4a2 2 0 0 1-2.29-.9l-1-1.72a2 2 0 0 1 .34-2.39l.81-.72a7 7 0 0 1 0-1l-.81-.72a2 2 0 0 1-.34-2.39l1-1.72a2 2 0 0 1 2.29-.9l1.09.4a7 7 0 0 1 .87-.51l.3-1.11A2 2 0 0 1 12 2z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                        @endif
+                        </div>
                         @endforeach
                     </div>
+
                     @endif
                 </div>
             </div>
@@ -792,10 +1055,23 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                 </div>
                 @if($sel)
                 <div style="padding:12px 16px;border-top:1px solid #bbf7d0;background:#fff" wire:click.stop>
-                    <label style="font-size:12px;color:#6b7280;font-weight:500;margin-bottom:6px;display:block">Narxini kiriting (so'm)</label>
-                    <input wire:model.live="services.{{ $key }}.price"
-                           class="kb-input" style="max-width:260px"
-                           placeholder="0" type="number" min="0">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:end">
+                        <div>
+                            <label style="font-size:12px;color:#6b7280;font-weight:500;margin-bottom:6px;display:block">Narxini kiriting (so'm)</label>
+                            <input wire:model.live="services.{{ $key }}.price"
+                                   class="kb-input"
+                                   placeholder="0" type="number" min="0">
+                        </div>
+                        <div>
+                            <label style="font-size:12px;color:#6b7280;font-weight:500;margin-bottom:6px;display:block">Mas'ul hodim</label>
+                            <select wire:model="services.{{ $key }}.assigned_user_id" class="kb-input">
+                                <option value="">— Tanlang —</option>
+                                @foreach($users as $u)
+                                <option value="{{ $u->id }}">{{ $u->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
                 </div>
                 @endif
             </div>
@@ -1113,12 +1389,92 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                           style="width:100%;padding:10px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;resize:none;box-sizing:border-box"
                           placeholder="Ixtiyoriy..."></textarea>
             </div>
-            @if($payProj && $payProj->status === 'tolov_jarayonida')
-            <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#eff6ff;border-radius:8px;cursor:pointer">
-                <input type="checkbox" wire:model="paymentMoveToEskiz" style="width:16px;height:16px;accent-color:#3b82f6">
-                <span style="font-size:13px;font-weight:500;color:#1d4ed8">To'lovdan keyin → Eskiz loyiha bo'limiga o'tkazish</span>
+            {{-- Xizmat mas'ullari --}}
+            <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:12px 14px">
+                <div style="font-size:12px;font-weight:600;color:#374151;margin-bottom:10px;display:flex;align-items:center;gap:6px">
+                    <svg width="13" height="13" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    Xizmat mas'ullari
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                    <div>
+                        <label style="font-size:11px;color:#6b7280;display:block;margin-bottom:4px;font-weight:500">Toposyomka</label>
+                        <select wire:model="paymentToposyomkaUserId"
+                                style="width:100%;padding:7px 10px;border:1.5px solid #e5e7eb;border-radius:7px;font-size:12px;background:#fff;box-sizing:border-box;color:#111827">
+                            <option value="">— Tanlang —</option>
+                            @foreach($users as $u)
+                            <option value="{{ $u->id }}">{{ $u->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:11px;color:#6b7280;display:block;margin-bottom:4px;font-weight:500">Eskiz loyiha</label>
+                        <select wire:model="paymentEskizUserId"
+                                style="width:100%;padding:7px 10px;border:1.5px solid #e5e7eb;border-radius:7px;font-size:12px;background:#fff;box-sizing:border-box;color:#111827">
+                            <option value="">— Tanlang —</option>
+                            @foreach($users as $u)
+                            <option value="{{ $u->id }}">{{ $u->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+            </div>
+            @if($paymentFromQueue)
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px">
+                <svg width="16" height="16" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>
+                <span style="font-size:13px;font-weight:500;color:#166534">To'lov saqlanadi va loyiha <strong>To'langan</strong> bo'limiga o'tkaziladi</span>
+            </div>
+            @elseif($payProj && $payProj->status === 'tolov_jarayonida')
+            <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f5f3ff;border-radius:8px;cursor:pointer;border:1px solid #ddd6fe">
+                <input type="checkbox" wire:model="paymentMoveToEskiz" style="width:16px;height:16px;accent-color:#7c3aed">
+                <span style="font-size:13px;font-weight:500;color:#5b21b6">To'lovdan keyin → <strong>Toposyomka</strong> bo'limiga o'tkazish</span>
             </label>
             @endif
+        </div>
+        @endif
+
+        {{-- Existing payments list --}}
+        @if($payProj && $payProj->payments->count() > 0)
+        <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px">
+            <div style="font-size:11px;font-weight:600;color:#6b7280;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">
+                Kiritilgan to'lovlar
+            </div>
+            @foreach($payProj->payments->sortByDesc('payment_date') as $pmt)
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;{{ !$loop->last ? 'border-bottom:1px solid #f1f5f9' : '' }}">
+                <div style="font-size:12px;color:#374151">
+                    <span style="font-weight:600;color:#111827">{{ number_format((float)$pmt->amount, 0, '.', ' ') }} so'm</span>
+                    <span style="color:#9ca3af;margin-left:6px">{{ $pmt->payment_date?->format('d/m/Y') }}</span>
+                    @if($pmt->createdBy)
+                    <span style="color:#9ca3af;margin-left:4px">· {{ $pmt->createdBy->name }}</span>
+                    @endif
+                </div>
+                <button onclick="event.stopPropagation()"
+                        wire:click.stop="openEditPayment({{ $pmt->id }})"
+                        style="font-size:10px;padding:3px 8px;border-radius:5px;border:1px solid #e5e7eb;background:#fff;color:#2563eb;cursor:pointer;white-space:nowrap">
+                    ✏️ Tahrirlash
+                </button>
+            </div>
+            @endforeach
+        </div>
+        @endif
+
+        {{-- Amount confirm warning --}}
+        @if($paymentAmountConfirm)
+        <div style="background:#fffbeb;border:1.5px solid #fcd34d;border-radius:8px;padding:14px 16px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                <span style="font-size:18px">⚠️</span>
+                <span style="font-size:13px;font-weight:600;color:#92400e">Summa kiritilmadi!</span>
+            </div>
+            <p style="font-size:13px;color:#78350f;margin:0 0 12px">Summasisiz faqat hodim biriktirma ma'lumotlari saqlanadi. Davom etasizmi?</p>
+            <div style="display:flex;gap:8px">
+                <button wire:click="savePayment"
+                        style="flex:1;padding:9px;border-radius:7px;border:none;background:#16a34a;color:#fff;font-size:13px;font-weight:600;cursor:pointer">
+                    Ha, saqlash
+                </button>
+                <button wire:click="cancelPaymentAmountConfirm"
+                        style="flex:1;padding:9px;border-radius:7px;border:1px solid #d1d5db;background:#fff;color:#374151;font-size:13px;cursor:pointer">
+                    Yo'q, qaytish
+                </button>
+            </div>
         </div>
         @endif
 
@@ -1127,8 +1483,54 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                     style="flex:1;padding:11px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;color:#374151;cursor:pointer;font-size:13px;font-weight:500">
                 Bekor qilish
             </button>
+            @if(!$paymentAmountConfirm)
             <button wire:click="savePayment"
                     style="flex:2;padding:11px;border-radius:8px;border:none;background:#16a34a;color:#fff;cursor:pointer;font-size:13px;font-weight:600">
+                Saqlash
+            </button>
+            @endif
+        </div>
+    </div>
+</div>
+@endif
+
+{{-- TAHRIRLASH MODAL (to'lov summasi) --}}
+@if($showEditPaymentModal)
+@php $editPmt = \App\Models\Payment::with('project')->find($editPaymentId); @endphp
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1400;display:flex;align-items:center;justify-content:center;padding:16px">
+    <div style="background:#fff;border-radius:14px;width:100%;max-width:380px;padding:24px;box-shadow:0 25px 80px rgba(0,0,0,.3)" wire:click.stop>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <div style="display:flex;align-items:center;gap:8px">
+                <svg width="18" height="18" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                <span style="font-size:15px;font-weight:700;color:#111827">Summani tahrirlash</span>
+            </div>
+            <button wire:click="closeEditPayment" style="background:none;border:none;cursor:pointer;color:#6b7280;font-size:20px;line-height:1">✕</button>
+        </div>
+        @if($editPmt)
+        <div style="background:#f9fafb;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#374151">
+            <strong>{{ $editPmt->project?->owner_name }}</strong>
+            <span style="color:#9ca3af;margin-left:8px">{{ $editPmt->payment_date?->format('d/m/Y') }}</span>
+        </div>
+        <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:12px;color:#c2410c">Hozirgi summa:</span>
+            <span style="font-size:13px;font-weight:700;color:#c2410c">{{ number_format((float)$editPmt->amount, 0, '.', ' ') }} so'm</span>
+        </div>
+        @endif
+        <div style="margin-bottom:14px">
+            <label style="font-size:12px;font-weight:500;color:#374151;display:block;margin-bottom:6px">Yangi summa (so'm)</label>
+            <input wire:model.live="editPaymentAmount" type="number" min="1"
+                   style="width:100%;padding:10px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box"
+                   placeholder="Yangi summa kiriting"
+                   onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#e5e7eb'">
+            @error('editPaymentAmount')<span style="font-size:11px;color:#dc2626">{{ $message }}</span>@enderror
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <button wire:click="closeEditPayment"
+                    style="padding:11px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;color:#374151;cursor:pointer;font-size:13px;font-weight:500">
+                Bekor qilish
+            </button>
+            <button wire:click="saveEditPayment"
+                    style="padding:11px;border-radius:8px;border:none;background:#2563eb;color:#fff;cursor:pointer;font-size:13px;font-weight:600">
                 Saqlash
             </button>
         </div>
@@ -1316,6 +1718,51 @@ var kbMap = null;
 var kbMarker = null;
 var kbWireId = '{{ $this->getId() }}';
 
+function kbSetCoords(lat, lng) {
+    var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+    var latEl = document.getElementById('kb-lat-input');
+    var lngEl = document.getElementById('kb-lng-input');
+    if (latEl) { setter.call(latEl, lat.toFixed(6)); latEl.dispatchEvent(new Event('input',{bubbles:true})); }
+    if (lngEl) { setter.call(lngEl, lng.toFixed(6)); lngEl.dispatchEvent(new Event('input',{bubbles:true})); }
+    // Birlashgan ko'rinadigan inputni yangilash
+    var comb = document.getElementById('kb-coords-combined');
+    if (comb) { setter.call(comb, lat.toFixed(6) + ', ' + lng.toFixed(6)); }
+}
+
+var _coordTimer = null;
+function kbOnCombinedCoord(val) {
+    clearTimeout(_coordTimer);
+    _coordTimer = setTimeout(function() {
+        var parts = val.split(',');
+        if (parts.length !== 2) return;
+        var lat = parseFloat(parts[0].trim());
+        var lng = parseFloat(parts[1].trim());
+        if (isNaN(lat) || isNaN(lng)) return;
+        if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return;
+        var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+        var latEl = document.getElementById('kb-lat-input');
+        var lngEl = document.getElementById('kb-lng-input');
+        if (latEl) { setter.call(latEl, lat.toFixed(6)); latEl.dispatchEvent(new Event('input',{bubbles:true})); }
+        if (lngEl) { setter.call(lngEl, lng.toFixed(6)); lngEl.dispatchEvent(new Event('input',{bubbles:true})); }
+        if (!kbMap) return;
+        var coords = [lat, lng];
+        kbMap.setCenter(coords, 17);
+        if (kbMarker) { kbMarker.geometry.setCoordinates(coords); }
+        else { kbMarker = new ymaps.Placemark(coords, {}, {preset:'islands#blueDotIcon'}); kbMap.geoObjects.add(kbMarker); }
+    }, 600);
+}
+
+function kbCopyCoords(btn) {
+    var comb = document.getElementById('kb-coords-combined');
+    if (!comb || !comb.value) return;
+    navigator.clipboard.writeText(comb.value).then(function() {
+        var orig = btn.innerHTML;
+        btn.innerHTML = '<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Nusxalandi!';
+        btn.style.color = '#16a34a';
+        setTimeout(function(){ btn.innerHTML = orig; btn.style.color = '#6b7280'; }, 2000);
+    });
+}
+
 function kbSetAddress(addr) {
     if (window.Livewire) {
         try {
@@ -1348,6 +1795,86 @@ function kbSearchOnMap() {
         if (btn) btn.textContent = 'Qidirish';
         alert('Qidirishda xatolik');
     });
+}
+
+function kbParseYandexCoords(url) {
+    var lat = null, lng = null;
+    // whatshere[point]=lng,lat
+    var m = url.match(/whatshere(?:%5B|\[)point(?:%5D|\])=([0-9.\-]+)%2C([0-9.\-]+)/i)
+           || url.match(/whatshere\[point\]=([0-9.\-]+),([0-9.\-]+)/i);
+    if (m) { lng = parseFloat(m[1]); lat = parseFloat(m[2]); }
+    // ll=lng,lat
+    if (!lat) {
+        m = url.match(/[?&]ll=([0-9.\-]+)%2C([0-9.\-]+)/i) || url.match(/[?&]ll=([0-9.\-]+),([0-9.\-]+)/i);
+        if (m) { lng = parseFloat(m[1]); lat = parseFloat(m[2]); }
+    }
+    return (lat && lng && !isNaN(lat) && !isNaN(lng)) ? [lat, lng] : null;
+}
+
+function kbLoadYandexUrl() {
+    var input = document.getElementById('kb-yandex-url');
+    if (!input) return;
+    var url = input.value.trim();
+    if (!url) return;
+    var coords = kbParseYandexCoords(url);
+    if (!coords) { alert("URL dan koordinata topilmadi. Yandex Maps havolasini tekshiring."); return; }
+    input.value = '';
+    if (!kbMap) {
+        loadAndInitMap();
+        setTimeout(function(){ kbLocatePlaceAt(coords[0], coords[1]); }, 1200);
+    } else {
+        kbLocatePlaceAt(coords[0], coords[1]);
+    }
+}
+
+function kbLocateMe() {
+    if (!navigator.geolocation) { alert("Brauzer geolokatsiyani qo'llab-quvvatlamaydi"); return; }
+    var btn = document.getElementById('kb-locate-btn');
+    if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+
+    navigator.geolocation.getCurrentPosition(function(pos) {
+        if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+        var lat = pos.coords.latitude, lng = pos.coords.longitude;
+        var coords = [lat, lng];
+
+        if (!kbMap) { loadAndInitMap(); setTimeout(function(){ kbLocatePlaceAt(lat, lng); }, 1200); return; }
+        kbLocatePlaceAt(lat, lng);
+    }, function(err) {
+        if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+        var msg = err.code === 1 ? "Ruxsat berilmadi — brauzer sozlamalarini tekshiring"
+                : err.code === 2 ? "Joylashuv aniqlanmadi"
+                : "Vaqt tugadi";
+        alert(msg);
+    }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+}
+
+function kbLocatePlaceAt(lat, lng) {
+    var coords = [lat, lng];
+    kbMap.setCenter(coords, 17);
+    if (kbMarker) { kbMarker.geometry.setCoordinates(coords); }
+    else { kbMarker = new ymaps.Placemark(coords, {}, { preset: 'islands#blueDotIcon' }); kbMap.geoObjects.add(kbMarker); }
+    kbSetCoords(lat, lng);
+
+    fetch('https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lng + '&format=json&accept-language=uz&addressdetails=1')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            var a = d.address || {}, parts = [];
+            if (a.road && a.house_number) parts.push(a.road + ' ' + a.house_number);
+            else if (a.road) parts.push(a.road);
+            else if (a.neighbourhood || a.suburb) parts.push(a.neighbourhood || a.suburb);
+            var city = a.city || a.town || a.village || '';
+            if (city) parts.push(city);
+            if (a.state) parts.push(a.state);
+            var addr = parts.length ? parts.join(', ') : (d.display_name || (lat.toFixed(6)+', '+lng.toFixed(6)));
+            kbSetAddress(addr);
+            var box = document.getElementById('selected-location-box');
+            if (box) {
+                document.getElementById('selected-location-text').textContent = addr;
+                document.getElementById('selected-location-coords').textContent = 'Koordinatalar: '+lat.toFixed(6)+', '+lng.toFixed(6);
+                box.style.display = 'block';
+            }
+        })
+        .catch(function() { kbSetAddress(lat.toFixed(6)+', '+lng.toFixed(6)); });
 }
 
 function kbSetMapType(type) {
@@ -1388,6 +1915,7 @@ function initKbMap() {
             kbMap.geoObjects.add(kbMarker);
         }
 
+        kbSetCoords(lat, lng);
         fetch('https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lng + '&format=json&accept-language=uz&addressdetails=1')
             .then(function(r) { return r.json(); })
             .then(function(d) {
@@ -1442,6 +1970,7 @@ document.addEventListener('livewire:initialized', function () {
         var box = document.getElementById('selected-location-box');
         if (box) box.style.display = 'none';
         setTimeout(loadAndInitMap, 250);
+
     });
 
     Livewire.on('notify', function (data) {
@@ -1501,7 +2030,7 @@ function kbDrop(e, status) {
 }
 </script>
 
-@if(!auth()->user()?->isHisobchi())
+@if(!auth()->user()?->isHisobchi() && !auth()->user()?->isBajaruvchi())
 <button class="kb-fab" wire:click="openModal" title="Yangi loyiha">+</button>
 @endif
 

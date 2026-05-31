@@ -95,11 +95,25 @@ class ProjectResource extends Resource
                         ->label('Manzil')
                         ->required()
                         ->columnSpanFull()
+                        ->extraInputAttributes(['data-map-address' => '1'])
                         ->hint("Quyidagi xaritadan bosib manzilni tanlang"),
 
                     Forms\Components\View::make('filament.forms.components.map-picker')
-                        ->columnSpanFull()
-                        ->hidden(fn($operation) => $operation === 'edit'),
+                        ->columnSpanFull(),
+
+                    Forms\Components\View::make('filament.forms.components.coord-picker')
+                        ->columnSpanFull(),
+
+                    // Yashirin fieldlar — DB ga saqlanadi, coord-picker boshqaradi
+                    Forms\Components\TextInput::make('latitude')
+                        ->hiddenLabel()->extraInputAttributes(['data-map-address' => '0', 'id' => 'fp-lat-input'])
+                        ->numeric()->step(0.000001)->columnSpanFull()
+                        ->extraAttributes(['style' => 'display:none']),
+
+                    Forms\Components\TextInput::make('longitude')
+                        ->hiddenLabel()->extraInputAttributes(['id' => 'fp-lng-input'])
+                        ->numeric()->step(0.000001)->columnSpanFull()
+                        ->extraAttributes(['style' => 'display:none']),
 
                     Forms\Components\Repeater::make('phones')
                         ->label('Telefon raqamlar')
@@ -154,7 +168,9 @@ class ProjectResource extends Resource
                         ->label('Yangi fayl yuklash')
                         ->multiple()
                         ->disk('public')
-                        ->directory('project-files')
+                        ->directory(fn($record) => $record
+                            ? 'project-files/' . $record->id
+                            : 'project-files/tmp')
                         ->acceptedFileTypes([
                             'application/pdf',
                             'image/*',
@@ -196,14 +212,6 @@ class ProjectResource extends Resource
                         ->required()
                         ->default('yangi'),
 
-                    Forms\Components\Select::make('assignedUsers')
-                        ->label("Hodimlar (biriktirilganlar)")
-                        ->multiple()
-                        ->relationship('assignedUsers', 'name')
-                        ->searchable()
-                        ->preload()
-                        ->disabled(fn() => !in_array(auth()->user()?->role, ['admin', 'menejer']))
-                        ->dehydrated(fn() => in_array(auth()->user()?->role, ['admin', 'menejer'])),
                 ]),
         ]);
     }
@@ -286,6 +294,12 @@ class ProjectResource extends Resource
                     ->relationship('assignedUsers', 'name'),
             ])
             ->actions([
+                Tables\Actions\Action::make('print_ariza')
+                    ->label('Ariza')
+                    ->icon('heroicon-o-printer')
+                    ->color('info')
+                    ->url(fn (Project $record) => route('print.project.ariza', $record))
+                    ->openUrlInNewTab(),
                 Tables\Actions\ViewAction::make()->label(''),
                 Tables\Actions\EditAction::make()->label(''),
                 Tables\Actions\DeleteAction::make()->label(''),

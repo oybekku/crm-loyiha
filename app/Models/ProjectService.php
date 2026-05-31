@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class ProjectService extends Model
 {
     protected $fillable = [
-        'project_id', 'service_name', 'price',
+        'project_id', 'assigned_user_id', 'service_name', 'price',
         'discount_type', 'discount_value', 'final_price', 'note',
     ];
 
@@ -42,6 +42,11 @@ class ProjectService extends Model
     public function project()
     {
         return $this->belongsTo(Project::class);
+    }
+
+    public function assignedUser()
+    {
+        return $this->belongsTo(User::class, 'assigned_user_id');
     }
 
     public function getServiceLabelAttribute(): string

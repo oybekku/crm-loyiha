@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\ProjectResource\RelationManagers;
 
 use App\Models\Project;
+use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
@@ -58,6 +59,17 @@ class ServicesRelationManager extends RelationManager
                 ->readOnly()
                 ->default(0),
 
+            Forms\Components\Select::make('assigned_user_id')
+                ->label('Mas\'ul hodim')
+                ->options(
+                    User::whereIn('role', ['menejer', 'bajaruvchi', 'admin'])
+                        ->orderBy('name')
+                        ->pluck('name', 'id')
+                )
+                ->searchable()
+                ->nullable()
+                ->placeholder('— Tanlang —'),
+
             Forms\Components\Textarea::make('note')
                 ->label('Izoh')
                 ->rows(2)
@@ -104,6 +116,12 @@ class ServicesRelationManager extends RelationManager
                     ->formatStateUsing(fn($state) => number_format($state, 0, '.', ' ') . " so'm")
                     ->color('success')
                     ->weight('bold'),
+
+                Tables\Columns\TextColumn::make('assignedUser.name')
+                    ->label('Mas\'ul hodim')
+                    ->default('—')
+                    ->badge()
+                    ->color('info'),
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()->label('Xizmat qo\'shish'),

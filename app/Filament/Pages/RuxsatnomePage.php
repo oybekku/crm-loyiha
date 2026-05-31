@@ -31,9 +31,16 @@ class RuxsatnomePage extends Page
     public function savePermissions(): void
     {
         if (!$this->selectedUserId) return;
+        if (!auth()->user()?->isAdmin()) return;
+
+        $validKeys = array_keys(User::allPermissions());
+        $filtered  = array_values(array_filter(
+            $this->userPermissions,
+            fn($p) => in_array($p, $validKeys)
+        ));
 
         User::where('id', $this->selectedUserId)
-            ->update(['permissions' => array_values($this->userPermissions)]);
+            ->update(['permissions' => $filtered]);
 
         Notification::make()
             ->title('Ruxsatnomalar saqlandi')
@@ -43,6 +50,9 @@ class RuxsatnomePage extends Page
 
     public function togglePermission(string $key): void
     {
+        $validKeys = array_keys(User::allPermissions());
+        if (!in_array($key, $validKeys)) return;
+
         if (in_array($key, $this->userPermissions)) {
             $this->userPermissions = array_values(
                 array_filter($this->userPermissions, fn($p) => $p !== $key)

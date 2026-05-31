@@ -10,16 +10,20 @@ class Project extends Model
     use HasFactory;
 
     protected $fillable = [
-        'number', 'owner_name', 'title', 'address', 'phones',
+        'number', 'owner_name', 'title', 'address', 'latitude', 'longitude', 'phones',
         'description', 'category', 'status', 'assigned_user_id',
         'total_price', 'paid_amount', 'deadline_date',
+        'payment_requested_at', 'payment_requested_by',
     ];
 
     protected $casts = [
-        'phones'        => 'array',
-        'total_price'   => 'float',
-        'paid_amount'   => 'float',
-        'deadline_date' => 'date',
+        'phones'                => 'array',
+        'total_price'           => 'float',
+        'paid_amount'           => 'float',
+        'latitude'              => 'float',
+        'longitude'             => 'float',
+        'deadline_date'         => 'date',
+        'payment_requested_at'  => 'datetime',
     ];
 
     protected static function booted(): void
@@ -34,6 +38,11 @@ class Project extends Model
     public function assignedUser()
     {
         return $this->belongsTo(User::class, 'assigned_user_id');
+    }
+
+    public function paymentRequester()
+    {
+        return $this->belongsTo(User::class, 'payment_requested_by');
     }
 
     public function assignedUsers()
@@ -54,6 +63,11 @@ class Project extends Model
     public function files()
     {
         return $this->hasMany(ProjectFile::class);
+    }
+
+    public function paymentLogs()
+    {
+        return $this->hasMany(\App\Models\PaymentLog::class)->with('user')->orderByDesc('created_at');
     }
 
     public function statusLogs()
@@ -88,6 +102,48 @@ class Project extends Model
         $this->total_price = $this->services()->sum('final_price');
         $this->paid_amount = $this->payments()->sum('amount');
         $this->saveQuietly();
+
+        if ($this->total_price <= 0) return;
+
+        $archiveStatuses = ['tugallangan', 'taqdim_etilgan', 'bekor_qilingan'];
+        if (in_array($this->status, $archiveStatuses)) return;
+
+        $newStatus = null;
+
+        if ($this->paid_amount >= $this->total_price) {
+            // To'liq to'langan
+            if ($this->status === 'yangi') {
+                // Yangi loyihada xizmatlar hali boshlanmagan → toposyomka (ish boshlash kerak)
+                $newStatus = 'toposyomka';
+            } elseif (in_array($this->status, ['tolov_jarayonida'])) {
+                // To'lov jarayonida edi, to'liq to'landi → toposyomka (ish boshlash kerak)
+                $newStatus = 'toposyomka';
+            } elseif (!in_array($this->status, ['tolangan', 'toposyomka'])) {
+                // Ish allaqachon boshlangan (eskiz, tekshirish...) + to'liq to'lov → tolangan
+                $newStatus = 'tolangan';
+            }
+        } elseif ($this->paid_amount > 0) {
+            // Qisman to'langan → toposyomka (agar yangi yoki tolov_jarayonida bo'lsa)
+            if (in_array($this->status, ['yangi', 'tolov_jarayonida'])) {
+                $newStatus = 'toposyomka';
+            }
+        }
+
+        if ($newStatus) {
+            $this->status = $newStatus;
+            $this->saveQuietly();
+
+            ProjectStatusLog::where('project_id', $this->id)
+                ->whereNull('left_at')
+                ->update(['left_at' => now()]);
+
+            ProjectStatusLog::create([
+                'project_id' => $this->id,
+                'status'     => $newStatus,
+                'entered_at' => now(),
+                'changed_by' => auth()->id(),
+            ]);
+        }
     }
 
     public static function statusOptions(): array

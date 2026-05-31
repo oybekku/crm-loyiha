@@ -3,13 +3,16 @@
 namespace App\Filament\Pages;
 
 use App\Models\Project;
+use App\Services\ArxivBackupService;
 use App\Traits\HasMenuPermission;
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 
 class ArxivPage extends Page
 {
-    use HasMenuPermission, WithPagination;
+    use HasMenuPermission, WithPagination, WithFileUploads;
 
     protected static string  $view            = 'filament.pages.arxiv';
     protected static ?string $navigationIcon  = 'heroicon-o-archive-box';
@@ -24,6 +27,14 @@ class ArxivPage extends Page
     public string  $sortField      = 'updated_at';
     public string  $sortDir        = 'desc';
     public ?int    $selectedId     = null;
+
+    // Backup/Restore
+    public array   $checkedIds      = [];
+    public bool    $showImportModal = false;
+    public string  $importConflict  = 'skip';
+    public ?string $importResult    = null;
+    public array   $importPreview   = [];
+    public         $backupFile      = null; // uploaded zip
 
     public const ARCHIVE_STATUSES = ['tugallangan', 'taqdim_etilgan', 'bekor_qilingan'];
 
@@ -79,10 +90,103 @@ class ArxivPage extends Page
         $this->selectedId = ($this->selectedId === $id) ? null : $id;
     }
 
+    public function toggleCheck(int $id): void
+    {
+        if (in_array($id, $this->checkedIds)) {
+            $this->checkedIds = array_values(array_diff($this->checkedIds, [$id]));
+        } else {
+            $this->checkedIds[] = $id;
+        }
+    }
+
+    public function selectAllVisible(array $ids): void
+    {
+        $this->checkedIds = array_unique(array_merge($this->checkedIds, $ids));
+    }
+
+    public function clearChecked(): void
+    {
+        $this->checkedIds = [];
+    }
+
+    public function exportSelected(): mixed
+    {
+        if (!auth()->user()?->isAdmin()) return null;
+        if (empty($this->checkedIds)) {
+            Notification::make()->title("Hech narsa tanlanmagan")->warning()->send();
+            return null;
+        }
+        return $this->doExport($this->checkedIds);
+    }
+
+    public function exportAll(): mixed
+    {
+        if (!auth()->user()?->isAdmin()) return null;
+        $archiveKeys = \App\Models\ProjectStatus::allOrdered()
+            ->where('is_archive', true)->pluck('key')->toArray();
+        if (empty($archiveKeys)) $archiveKeys = self::ARCHIVE_STATUSES;
+        $ids = Project::whereIn('status', $archiveKeys)->pluck('id')->toArray();
+        if (empty($ids)) {
+            Notification::make()->title("Arxivda loyiha yo'q")->warning()->send();
+            return null;
+        }
+        return $this->doExport($ids);
+    }
+
+    private function doExport(array $ids): \Symfony\Component\HttpFoundation\BinaryFileResponse
+    {
+        $zipPath  = ArxivBackupService::export($ids);
+        $filename = 'arxiv-backup-' . now()->format('Y-m-d') . '.zip';
+        return response()->download($zipPath, $filename)->deleteFileAfterSend(true);
+    }
+
+    public function openImportModal(): void
+    {
+        $this->showImportModal = true;
+        $this->importPreview   = [];
+        $this->importResult    = null;
+        $this->backupFile      = null;
+        $this->importConflict  = 'skip';
+    }
+
+    public function closeImportModal(): void
+    {
+        $this->showImportModal = false;
+    }
+
+    public function previewImport(): void
+    {
+        if (!$this->backupFile) return;
+        $path = $this->backupFile->getRealPath();
+        try {
+            $result = ArxivBackupService::importPreview($path);
+            $this->importPreview = $result['preview'];
+            Notification::make()->title("Fayl o'qildi: {$result['total']} ta loyiha")->success()->send();
+        } catch (\Exception $e) {
+            Notification::make()->title("Xato: " . $e->getMessage())->danger()->send();
+        }
+    }
+
+    public function runImport(): void
+    {
+        if (!auth()->user()?->isAdmin() || !$this->backupFile) return;
+        $path = $this->backupFile->getRealPath();
+        try {
+            $result = ArxivBackupService::import($path, $this->importConflict);
+            $this->importResult = "✅ Import tugadi: {$result['imported']} ta yangi, {$result['updated']} ta yangilandi, {$result['skipped']} ta o'tkazib yuborildi.";
+            $this->importPreview = [];
+            Notification::make()->title("Import muvaffaqiyatli!")->success()->send();
+        } catch (\Exception $e) {
+            Notification::make()->title("Import xatosi: " . $e->getMessage())->danger()->send();
+        }
+    }
+
     public function getViewData(): array
     {
-        $archiveKeys = \App\Models\ProjectStatus::where('is_archive', true)
-            ->pluck('key')->toArray();
+        $archiveKeys = \App\Models\ProjectStatus::allOrdered()
+            ->where('is_archive', true)
+            ->pluck('key')
+            ->toArray();
         if (empty($archiveKeys)) {
             $archiveKeys = self::ARCHIVE_STATUSES;
         }

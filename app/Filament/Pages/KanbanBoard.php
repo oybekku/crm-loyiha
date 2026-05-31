@@ -2,6 +2,8 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\Payment;
+use App\Models\PaymentLog;
 use App\Models\Project;
 use App\Models\ProjectFile;
 use App\Models\ProjectService;
@@ -23,12 +25,17 @@ class KanbanBoard extends Page
     protected static ?int $navigationSort = 1;
     protected static ?string $title = '';
 
+    public string $filterStatus = '';  // URL ?status= parametridan o'qiladi
+    public string $search      = '';  // Kanban qidiruv
+
     public bool  $showModal = false;
     public int   $step      = 1;
 
     public string $owner_name        = '';
     public string $proj_title        = '';
     public string $address           = '';
+    public string $latitude          = '';
+    public string $longitude         = '';
     public array  $phones            = ['+998'];
     public string $description       = '';
     public string $category          = 'turar';
@@ -55,6 +62,15 @@ class KanbanBoard extends Page
     public string $paymentMethod        = 'naqd';
     public string $paymentNote          = '';
     public bool   $paymentMoveToEskiz   = true;
+    public bool   $paymentFromQueue     = false;
+    public ?int   $paymentToposyomkaUserId = null;
+    public ?int   $paymentEskizUserId      = null;
+    public bool   $paymentAmountConfirm    = false;
+
+    // Edit payment modal state
+    public bool   $showEditPaymentModal = false;
+    public int    $editPaymentId        = 0;
+    public string $editPaymentAmount    = '';
 
     // Area (kv.m) modal state
     public bool   $showAreaModal  = false;
@@ -75,39 +91,42 @@ class KanbanBoard extends Page
     #[Computed]
     public function priceTiers(): array
     {
-        $rows   = ServicePriceTier::orderBy('sort_order')->get();
-        $result = [];
-        foreach ($rows as $row) {
-            $result[$row->service_key][$row->sub_service][] = [
-                'id'                => $row->id,
-                'label'             => $row->label,
-                'price'             => (float) $row->price,
-                'sub_service_label' => $row->sub_service_label,
-            ];
-        }
-        foreach (self::SUB_SERVICE_ORDER as $serviceKey => $order) {
-            if (!isset($result[$serviceKey])) continue;
-            $sorted = [];
-            foreach ($order as $sub) {
-                if (isset($result[$serviceKey][$sub])) {
-                    $sorted[$sub] = $result[$serviceKey][$sub];
+        return \Illuminate\Support\Facades\Cache::remember('price_tiers_grouped', 600, function () {
+            $rows   = ServicePriceTier::orderBy('sort_order')->get();
+            $result = [];
+            foreach ($rows as $row) {
+                $result[$row->service_key][$row->sub_service][] = [
+                    'id'                => $row->id,
+                    'label'             => $row->label,
+                    'price'             => (float) $row->price,
+                    'sub_service_label' => $row->sub_service_label,
+                ];
+            }
+            foreach (self::SUB_SERVICE_ORDER as $serviceKey => $order) {
+                if (!isset($result[$serviceKey])) continue;
+                $sorted = [];
+                foreach ($order as $sub) {
+                    if (isset($result[$serviceKey][$sub])) {
+                        $sorted[$sub] = $result[$serviceKey][$sub];
+                    }
                 }
+                foreach ($result[$serviceKey] as $sub => $tiers) {
+                    if (!isset($sorted[$sub])) $sorted[$sub] = $tiers;
+                }
+                $result[$serviceKey] = $sorted;
             }
-            foreach ($result[$serviceKey] as $sub => $tiers) {
-                if (!isset($sorted[$sub])) $sorted[$sub] = $tiers;
-            }
-            $result[$serviceKey] = $sorted;
-        }
-        return $result;
+            return $result;
+        });
     }
 
     // ── Rules ─────────────────────────────────────────────────────────────
     protected function rules(): array
     {
         return [
-            'owner_name' => 'required|min:2',
-            'address'    => 'required|min:3',
-            'phones.0'   => ['required', 'regex:/^\+998\d{9}$/'],
+            'owner_name'       => 'required|min:2',
+            'address'          => 'required|min:3',
+            'phones.0'         => ['required', 'regex:/^\+998\d{9}$/'],
+            'uploadedFiles.*'  => 'file|max:20480|mimes:pdf,jpg,jpeg,png,gif,doc,docx,xls,xlsx',
         ];
     }
 
@@ -126,6 +145,7 @@ class KanbanBoard extends Page
     // ── Lifecycle ─────────────────────────────────────────────────────────
     public function mount(): void
     {
+        $this->filterStatus = request()->get('status', '');
         $this->initServices();
     }
 
@@ -138,28 +158,36 @@ class KanbanBoard extends Page
             $hasTiers = isset($tiers[$key]);
             $firstSub = $hasTiers ? array_key_first($tiers[$key]) : null;
             $this->services[$key] = [
-                'label'           => $label,
-                'selected'        => false,
-                'price'           => '',
-                'has_tiers'       => $hasTiers,
-                'selected_tiers'  => [],
-                'area_m2'         => '',
-                'discount_type'   => 'none',
-                'discount_value'  => '',
-                'discount_amount' => '0',
-                'final_price'     => '',
+                'label'            => $label,
+                'selected'         => false,
+                'price'            => '',
+                'has_tiers'        => $hasTiers,
+                'selected_tiers'   => [],
+                'area_m2'          => '',
+                'discount_type'    => 'none',
+                'discount_value'   => '',
+                'discount_amount'  => '0',
+                'final_price'      => '',
+                'assigned_user_id' => null,
             ];
             if ($hasTiers && $firstSub) {
                 $this->activeSubTab[$key] = $firstSub;
             }
+        }
+
+        // Ariza xizmatini avtomatik ravishda birinchi adminga biriktirish
+        $adminUser = User::where('role', 'admin')->orderBy('id')->first();
+        if (isset($this->services['ariza'])) {
+            $this->services['ariza']['assigned_user_id'] = $adminUser?->id;
         }
     }
 
     // ── Modal ─────────────────────────────────────────────────────────────
     public function openModal(): void
     {
-        if (auth()->user()?->isHisobchi()) return;
-        $this->reset(['owner_name', 'proj_title', 'address', 'description', 'assigned_user_ids', 'deadline_days', 'showDeadlineConfirm']);
+        $user = auth()->user();
+        if ($user?->isHisobchi() || $user?->isBajaruvchi()) return;
+        $this->reset(['owner_name', 'proj_title', 'address', 'latitude', 'longitude', 'description', 'assigned_user_ids', 'deadline_days', 'showDeadlineConfirm']);
         $this->phones             = ['+998'];
         $this->category           = 'turar';
         $this->uploadedFiles      = [];
@@ -176,6 +204,7 @@ class KanbanBoard extends Page
         $this->showModal = false;
         $this->resetErrorBag();
     }
+
 
     // ── Phone ─────────────────────────────────────────────────────────────
     public function addPhone(): void
@@ -358,56 +387,214 @@ class KanbanBoard extends Page
         return ['amount' => $amount, 'final' => $price - $amount];
     }
 
+    // ── Payment request (admin/menejer → kassir) ──────────────────────────
+    public function requestPayment(int $projectId): void
+    {
+        if (!auth()->user()?->canSeeAllProjects()) return;
+
+        $project = Project::find($projectId);
+        if (!$project) return;
+
+        $project->update([
+            'payment_requested_at' => now(),
+            'payment_requested_by' => auth()->id(),
+        ]);
+
+        $this->dispatch('notify', type: 'success', message: "Loyiha kassirga to'lovga yuborildi!");
+    }
+
+    public function cancelPaymentRequest(int $projectId): void
+    {
+        $project = Project::find($projectId);
+        if (!$project) return;
+
+        $project->update([
+            'payment_requested_at' => null,
+            'payment_requested_by' => null,
+        ]);
+
+        $this->dispatch('notify', type: 'info', message: "To'lov so'rovi bekor qilindi");
+    }
+
     // ── Payment modal ─────────────────────────────────────────────────────
-    public function openPaymentModal(int $projectId): void
+    public function openPaymentModal(int $projectId, bool $fromQueue = false): void
     {
         $this->paymentProjectId = $projectId;
         $this->paymentAmount    = '';
         $this->paymentDate      = now()->format('Y-m-d');
         $this->paymentMethod    = 'naqd';
         $this->paymentNote      = '';
+        $this->paymentFromQueue = $fromQueue;
+
+        $project = Project::with('services')->find($projectId);
+        $this->paymentToposyomkaUserId = $project?->services->where('service_name', 'toposyomka')->first()?->assigned_user_id;
+        $this->paymentEskizUserId      = $project?->services->where('service_name', 'eskiz_loyiha')->first()?->assigned_user_id;
+
         $this->showPaymentModal = true;
     }
 
     public function closePaymentModal(): void
     {
-        $this->showPaymentModal = false;
-        $this->paymentProjectId = 0;
+        $this->showPaymentModal        = false;
+        $this->paymentProjectId        = 0;
+        $this->paymentToposyomkaUserId = null;
+        $this->paymentEskizUserId      = null;
+        $this->paymentAmountConfirm    = false;
     }
 
     public function savePayment(): void
     {
-        $this->validate([
-            'paymentAmount' => 'required|numeric|min:1',
-            'paymentDate'   => 'required|date',
-            'paymentMethod' => 'required|in:naqd,bank,karta',
-        ], [
-            'paymentAmount.required' => 'Summa kiritilishi shart',
-            'paymentAmount.min'      => 'Summa 0 dan katta bo\'lishi kerak',
-            'paymentDate.required'   => 'Sana kiritilishi shart',
-        ]);
-
-        $project = \App\Models\Project::find($this->paymentProjectId);
+        $project = Project::find($this->paymentProjectId);
         if (!$project) return;
 
-        \App\Models\Payment::create([
-            'project_id'   => $project->id,
-            'amount'       => (float) $this->paymentAmount,
-            'payment_date' => $this->paymentDate,
-            'method'       => $this->paymentMethod,
-            'note'         => trim($this->paymentNote) ?: null,
-            'created_by'   => auth()->id(),
-        ]);
+        $hasAmount = filled($this->paymentAmount) && (float)$this->paymentAmount > 0;
 
-        $project->updateTotals();
+        // Summa kiritilmagan — tasdiq so'rash
+        if (!$hasAmount && !$this->paymentAmountConfirm) {
+            $this->paymentAmountConfirm = true;
+            return;
+        }
 
-        if ($this->paymentMoveToEskiz && $project->status === 'tolov_jarayonida') {
-            $this->logStatusChange($project, 'eskiz_loyiha');
-            $project->update(['status' => 'eskiz_loyiha']);
+        // Summali yo'l
+        if ($hasAmount) {
+            $this->validate([
+                'paymentAmount' => 'required|numeric|min:1',
+                'paymentDate'   => 'required|date',
+                'paymentMethod' => 'required|in:naqd,bank,karta',
+            ], [
+                'paymentAmount.min'    => 'Summa 0 dan katta bo\'lishi kerak',
+                'paymentDate.required' => 'Sana kiritilishi shart',
+            ]);
+
+            $payment = Payment::create([
+                'project_id'   => $project->id,
+                'amount'       => (float) $this->paymentAmount,
+                'payment_date' => $this->paymentDate,
+                'method'       => $this->paymentMethod,
+                'note'         => trim($this->paymentNote) ?: null,
+                'created_by'   => auth()->id(),
+            ]);
+
+            PaymentLog::create([
+                'project_id' => $project->id,
+                'payment_id' => $payment->id,
+                'user_id'    => auth()->id(),
+                'action'     => 'created',
+                'amount'     => $payment->amount,
+                'description'=> number_format($payment->amount, 0, '.', ' ') . " so'm qo'shildi",
+            ]);
+
+            $project->updateTotals();
+        }
+
+        // Xizmat mas'ullarini saqlash
+        $this->applyServiceAssignments($project);
+
+        if ($hasAmount) {
+            $validKeys = \App\Models\ProjectStatus::allOrdered()->pluck('key')->toArray();
+            if ($this->paymentFromQueue && in_array('tolangan', $validKeys)) {
+                $this->logStatusChange($project, 'tolangan');
+                $project->update([
+                    'status'               => 'tolangan',
+                    'payment_requested_at' => null,
+                    'payment_requested_by' => null,
+                ]);
+            } elseif ($this->paymentMoveToEskiz
+                && $project->status === 'tolov_jarayonida'
+                && in_array('toposyomka', $validKeys)
+            ) {
+                $this->logStatusChange($project, 'toposyomka');
+                $project->update(['status' => 'toposyomka']);
+            }
         }
 
         $this->closePaymentModal();
-        $this->dispatch('notify', type: 'success', message: "To'lov saqlandi!");
+        $this->dispatch('notify', type: 'success', message: $hasAmount ? "To'lov saqlandi!" : 'Hodimlar biriktirildi!');
+    }
+
+    public function cancelPaymentAmountConfirm(): void
+    {
+        $this->paymentAmountConfirm = false;
+    }
+
+    private function applyServiceAssignments(Project $project): void
+    {
+        $assignIds = array_values(array_filter([
+            $this->paymentToposyomkaUserId,
+            $this->paymentEskizUserId,
+        ]));
+        if ($assignIds) {
+            $project->assignedUsers()->syncWithoutDetaching($assignIds);
+        }
+        if ($this->paymentToposyomkaUserId) {
+            $project->services()->where('service_name', 'toposyomka')
+                ->update(['assigned_user_id' => $this->paymentToposyomkaUserId]);
+        }
+        if ($this->paymentEskizUserId) {
+            $project->services()->where('service_name', 'eskiz_loyiha')
+                ->update(['assigned_user_id' => $this->paymentEskizUserId]);
+        }
+        if ($assignIds) {
+            $names = User::whereIn('id', $assignIds)->pluck('name')->join(', ');
+            PaymentLog::create([
+                'project_id'  => $project->id,
+                'user_id'     => auth()->id(),
+                'action'      => 'employee_assigned',
+                'description' => "Hodim biriktirildi: {$names}",
+            ]);
+        }
+    }
+
+    // ── Edit payment ──────────────────────────────────────────────────────
+    public function openEditPayment(int $paymentId): void
+    {
+        $payment = Payment::find($paymentId);
+        if (!$payment) return;
+        $this->editPaymentId     = $paymentId;
+        $this->editPaymentAmount = (string)(float)$payment->amount;
+        $this->showEditPaymentModal = true;
+    }
+
+    public function closeEditPayment(): void
+    {
+        $this->showEditPaymentModal = false;
+        $this->editPaymentId        = 0;
+        $this->editPaymentAmount    = '';
+    }
+
+    public function saveEditPayment(): void
+    {
+        $this->validate(
+            ['editPaymentAmount' => 'required|numeric|min:1'],
+            ['editPaymentAmount.required' => 'Summa kiritilishi shart',
+             'editPaymentAmount.min'      => 'Summa 0 dan katta bo\'lishi kerak']
+        );
+
+        $payment = Payment::find($this->editPaymentId);
+        if (!$payment) return;
+
+        $oldAmount = (float) $payment->amount;
+        $newAmount = (float) $this->editPaymentAmount;
+
+        if ($oldAmount === $newAmount) {
+            $this->closeEditPayment();
+            return;
+        }
+
+        $payment->update(['amount' => $newAmount]);
+
+        PaymentLog::create([
+            'project_id'  => $payment->project_id,
+            'payment_id'  => $payment->id,
+            'user_id'     => auth()->id(),
+            'action'      => 'edited',
+            'amount'      => $newAmount,
+            'old_amount'  => $oldAmount,
+            'description' => number_format($oldAmount, 0, '.', ' ') . " → " . number_format($newAmount, 0, '.', ' ') . " so'm",
+        ]);
+
+        $this->closeEditPayment();
+        $this->dispatch('notify', type: 'success', message: "To'lov summasi yangilandi!");
     }
 
     // ── Route to department modal ─────────────────────────────────────────
@@ -449,6 +636,14 @@ class KanbanBoard extends Page
         }
         $project->update($update);
 
+        // Toposyomka / Eskiz loyiha ga yuborilganda xizmat mas'ulini yangilash
+        if ($this->routeAssignedUserId && in_array($this->routeNewStatus, ['toposyomka', 'eskiz_loyiha', 'ariza'])) {
+            $service = $project->services()->where('service_name', $this->routeNewStatus)->first();
+            if ($service) {
+                $service->update(['assigned_user_id' => $this->routeAssignedUserId]);
+            }
+        }
+
         $this->closeRouteModal();
         $this->dispatch('notify', type: 'success', message: 'Loyiha muvaffaqiyatli yo\'naltirildi!');
     }
@@ -486,6 +681,11 @@ class KanbanBoard extends Page
     // ── Save ─────────────────────────────────────────────────────────────
     public function createProject(): void
     {
+        $user = auth()->user();
+        if ($user?->isHisobchi() || $user?->isBajaruvchi()) {
+            $this->showModal = false;
+            return;
+        }
         $this->validate();
 
         $phones = array_values(
@@ -537,23 +737,30 @@ class KanbanBoard extends Page
             $finalPrice     = ($discountType !== 'none') ? ($price - $discountAmount) : $price;
 
             ProjectService::create([
-                'project_id'     => $project->id,
-                'service_name'   => $key,
-                'price'          => $price,
-                'discount_type'  => $discountType,  // 'none' | 'percent' | 'fixed'
-                'discount_value' => $discountValue,
-                'final_price'    => max(0, $finalPrice),
+                'project_id'       => $project->id,
+                'assigned_user_id' => $srv['assigned_user_id'] ?: null,
+                'service_name'     => $key,
+                'price'            => $price,
+                'discount_type'    => $discountType,
+                'discount_value'   => $discountValue,
+                'final_price'      => max(0, $finalPrice),
             ]);
         }
 
+        $allowedMimes = ['application/pdf','image/jpeg','image/png','image/gif',
+            'application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
         foreach ($this->uploadedFiles as $file) {
-            $path = $file->store('project-files', 'public');
+            if ($file->getSize() > 20 * 1024 * 1024) continue;
+            if (!in_array($file->getMimeType(), $allowedMimes)) continue;
+            $path = $file->store('project-files/' . $project->id, 'public');
             ProjectFile::create([
                 'project_id' => $project->id,
                 'file_name'  => $file->getClientOriginalName(),
                 'file_path'  => $path,
                 'file_type'  => $file->getMimeType(),
                 'file_size'  => $file->getSize(),
+                'uploaded_by'=> auth()->id(),
             ]);
         }
 
@@ -573,29 +780,55 @@ class KanbanBoard extends Page
         $routeStatuses = [];
         $isPrivileged  = $authUser?->isAdmin() || in_array($authUser?->role, ['menejer']);
 
-        foreach ($dbStatuses as $ps) {
-            $data = ['label' => $ps->label, 'color' => $ps->color, 'is_archive' => $ps->is_archive];
+        $ds = \App\Services\DesignSettingsService::get();
 
-            // Route modal: admin/menejer — barchasi, boshqalar — faqat "tekshirish"
-            if ($isPrivileged || $ps->key === 'tekshirish') {
+        foreach ($dbStatuses as $ps) {
+            $rawBg   = $ds["kanban_col_{$ps->key}_bg"]      ?? '#1e293b';
+            $opacity = max(0, min(100, (int)($ds["kanban_col_{$ps->key}_opacity"] ?? 100))) / 100;
+            $text    = $ds["kanban_col_{$ps->key}_text"]    ?? '#f1f5f9';
+            $headBg  = \App\Services\DesignSettingsService::hexToRgba($rawBg ?: '#1e293b', $opacity);
+
+            $data = ['label' => $ps->label, 'color' => $ps->color, 'is_archive' => $ps->is_archive, 'head_bg' => $headBg, 'head_text' => $text];
+
+            // Route modal: admin/menejer — barchasi; hodimlar — eskiz_loyiha + tekshirish
+            if ($isPrivileged || in_array($ps->key, ['eskiz_loyiha', 'tekshirish'])) {
                 $routeStatuses[$ps->key] = $data;
             }
 
-            if ($authUser?->isAdmin() || $authUser?->hasPermission('kanban_' . $ps->key)) {
+            // Faol ustunlar (is_archive=false) — barcha hodimlar ko'radi;
+            // Arxiv ustunlar — faqat admin yoki maxsus ruxsat bo'lsa ko'rinadi
+            if (!$ps->is_archive || $authUser?->isAdmin() || $authUser?->hasPermission('kanban_' . $ps->key)) {
                 $statuses[$ps->key] = $data;
             }
         }
 
-        $projectQuery = Project::with(['assignedUsers', 'services', 'currentStatusLog'])
+        // URL ?status= filtri — faqat bitta holat ko'rsatiladi
+        if ($this->filterStatus && isset($statuses[$this->filterStatus])) {
+            $statuses = [$this->filterStatus => $statuses[$this->filterStatus]];
+        }
+
+        $projectQuery = Project::with(['assignedUsers', 'services.assignedUser', 'currentStatusLog', 'payments'])
             ->orderBy('created_at', 'desc');
+
+        // Qidiruv filtri
+        if (!empty($this->search)) {
+            $q = trim($this->search);
+            $projectQuery->where(function ($query) use ($q) {
+                $query->where('owner_name', 'like', "%{$q}%")
+                      ->orWhere('number', 'like', "%{$q}%")
+                      ->orWhere('address', 'like', "%{$q}%");
+            });
+        }
 
         if ($authUser && !$authUser->canSeeAllProjects()) {
             if ($authUser->isHisobchi()) {
                 $projectQuery->where('status', '!=', 'yangi');
             } elseif (!$authUser->hasPermission('barcha_loyihalar')) {
+                // Faqat assignedUsers bo'yicha filtr — ProjectResource bilan bir xil mantiq.
+                // Services filtrini olib tashladik: agar admin assignedUsers dan olib tashlasa,
+                // hodim loyihani ko'rmasligi kerak.
                 $projectQuery->whereHas('assignedUsers', fn($q) => $q->where('users.id', $authUser->id));
             }
-            // barcha_loyihalar ruxsati bo'lsa — filtrsiz barcha loyihalarni ko'radi
         }
 
         $projects = $projectQuery->get()->groupBy('status');
@@ -606,6 +839,14 @@ class KanbanBoard extends Page
 
         $priceTiers = $this->priceTiers;
 
-        return compact('statuses', 'routeStatuses', 'projects', 'users', 'serviceOptions', 'categoryOptions', 'priceTiers');
+        $paymentQueue = collect();
+        if ($authUser?->isHisobchi() || $authUser?->canSeeAllProjects()) {
+            $paymentQueue = Project::with(['assignedUsers', 'paymentRequester'])
+                ->whereNotNull('payment_requested_at')
+                ->orderBy('payment_requested_at', 'asc')
+                ->get();
+        }
+
+        return compact('statuses', 'routeStatuses', 'projects', 'users', 'serviceOptions', 'categoryOptions', 'priceTiers', 'paymentQueue');
     }
 }

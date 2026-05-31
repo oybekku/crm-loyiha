@@ -25,6 +25,21 @@ class UserResource extends Resource
     {
         return auth()->user()?->hasPermission(static::menuPermissionKey()) ?? false;
     }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->isAdmin() ?? false;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()?->isAdmin() ?? false;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()?->isAdmin() && $record->id !== auth()->id();
+    }
     protected static ?string $navigationLabel = 'Xodimlar';
     protected static ?string $modelLabel = 'Xodim';
     protected static ?string $pluralModelLabel = 'Xodimlar';
@@ -47,7 +62,9 @@ class UserResource extends Resource
                 Forms\Components\TextInput::make('email')
                     ->label('Email')
                     ->email()
-                    ->required(),
+                    ->required()
+                    ->unique(ignoreRecord: true)
+                    ->validationMessages(['unique' => 'Bu email allaqachon ro\'yxatda bor.']),
 
                 Forms\Components\Select::make('role')
                     ->label('Lavozimi')
@@ -67,6 +84,16 @@ class UserResource extends Resource
                     ->dehydrated(fn($state) => filled($state))
                     ->dehydrateStateUsing(fn($state) => bcrypt($state))
                     ->placeholder('Yangi parol kiriting'),
+
+                Forms\Components\TextInput::make('commission_rate')
+                    ->label('Komissiya foizi (%)')
+                    ->numeric()
+                    ->default(20)
+                    ->minValue(0)
+                    ->maxValue(100)
+                    ->suffix('%')
+                    ->step(0.5)
+                    ->helperText('Har bir xizmat narxidan necha % hodimga tegishli'),
             ]),
         ]);
     }
@@ -104,6 +131,11 @@ class UserResource extends Resource
                         'success' => 'bajaruvchi',
                     ]),
 
+                Tables\Columns\TextColumn::make('commission_rate')
+                    ->label('Komissiya')
+                    ->formatStateUsing(fn($state) => $state . '%')
+                    ->sortable(),
+
                 Tables\Columns\TextColumn::make('projects_count')
                     ->label('Loyihalar')
                     ->counts('projects')
@@ -114,6 +146,8 @@ class UserResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make()
+                    ->visible(fn($record) => $record->id !== auth()->id()),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

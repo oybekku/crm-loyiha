@@ -24,6 +24,7 @@ class User extends Authenticatable
         'role',
         'phone',
         'permissions',
+        'commission_rate',
     ];
 
     public static function defaultPermissions(): array
@@ -116,7 +117,7 @@ class User extends Authenticatable
     public function isAdmin(): bool      { return $this->role === 'admin'; }
     public function isMenejer(): bool    { return $this->role === 'menejer'; }
     public function isHisobchi(): bool   { return $this->role === 'hisobchi'; }
-    public function isBarjaruvchi(): bool { return $this->role === 'bajaruvchi'; }
+    public function isBajaruvchi(): bool  { return $this->role === 'bajaruvchi'; }
     public function canSeeAllProjects(): bool { return in_array($this->role, ['admin', 'menejer']); }
 
     /**
