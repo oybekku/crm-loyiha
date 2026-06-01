@@ -11,10 +11,11 @@
 /* ===== GRID REJIM (bitta status filtri) ===== */
 .kanban-grid-mode .kanban-wrap{display:block;overflow-x:visible;padding-bottom:0}
 .kanban-grid-mode .kanban-col{min-width:100%;max-width:100%;border-radius:12px}
-.kanban-grid-mode .col-body{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:14px;flex-direction:unset}
+.kanban-grid-mode .col-body{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:12px;flex-direction:unset}
 .kanban-grid-mode .col-body > div{margin-bottom:0 !important}
-@media(max-width:1200px){.kanban-grid-mode .col-body{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:700px){.kanban-grid-mode .col-body{grid-template-columns:1fr}}
+@media(max-width:1400px){.kanban-grid-mode .col-body{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:900px){.kanban-grid-mode .col-body{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.kanban-grid-mode .col-body{grid-template-columns:1fr}}
 .dark .col-body{background:transparent}
 .col-body.drag-over{background:#dbeafe;outline:2px dashed #3b82f6;outline-offset:-4px}
 /* Card */
@@ -359,12 +360,21 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 <div class="{{ $filterStatus ? 'kanban-grid-mode' : '' }}">
 <div class="kanban-wrap">
 @foreach($statuses as $statusKey => $status)
-<div class="kanban-col">
-    <div class="col-head" style="background:{{ $status['head_bg'] ?? 'rgba(30,41,59,1)' }};color:{{ $status['head_text'] ?? '#f1f5f9' }}">
-        <span>{{ $status['label'] }}</span>
-        <span class="col-count">{{ $projects->get($statusKey, collect())->count() }}</span>
+<div class="kanban-col" x-data="{ colCollapsed: localStorage.getItem('col_v1_{{ $statusKey }}') === 'true' }"
+     x-effect="localStorage.setItem('col_v1_{{ $statusKey }}', colCollapsed ? 'true' : 'false')"
+     :style="colCollapsed ? 'min-width:48px;max-width:48px' : ''">
+    <div class="col-head" style="background:{{ $status['head_bg'] ?? 'rgba(30,41,59,1)' }};color:{{ $status['head_text'] ?? '#f1f5f9' }};cursor:pointer;user-select:none"
+         @click="colCollapsed=!colCollapsed">
+        <button style="background:rgba(255,255,255,0.15);border:none;border-radius:6px;cursor:pointer;padding:3px 5px;display:flex;align-items:center;color:inherit;flex-shrink:0">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"
+                 :style="colCollapsed ? 'transform:rotate(-90deg)' : ''" style="transition:transform .2s">
+                <path d="M6 9l6 6 6-6"/>
+            </svg>
+        </button>
+        <span x-show="!colCollapsed">{{ $status['label'] }}</span>
+        <span class="col-count" x-show="!colCollapsed">{{ $projects->get($statusKey, collect())->count() }}</span>
     </div>
-    <div class="col-body"
+    <div class="col-body" x-show="!colCollapsed"
          id="col-{{ $statusKey }}"
          ondragover="kbDragOver(event)"
          ondragleave="kbDragLeave(event)"
@@ -401,10 +411,10 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             {{-- TOP ROW: barmoq + ism + muddat + sana --}}
             <div style="display:flex;align-items:center;gap:5px;margin-bottom:5px">
                 <button @click.stop="collapsed=!collapsed"
-                        style="flex-shrink:0;background:none;border:none;cursor:pointer;padding:2px 4px;line-height:1;color:#9ca3af;font-size:16px;letter-spacing:1px;transition:color .15s"
-                        :style="collapsed ? 'color:#6b7280' : 'color:#374151'"
+                        style="flex-shrink:0;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:6px;cursor:pointer;padding:4px 6px;line-height:1;transition:all .15s;display:flex;align-items:center;justify-content:center"
+                        :style="collapsed ? 'color:#6b7280' : 'color:#374151;background:#e5e7eb'"
                         :title="collapsed ? 'Ochish' : 'Yopish'">
-                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" :style="collapsed ? 'transform:rotate(-90deg)' : 'transform:rotate(0deg)'" style="transition:transform .2s">
+                    <svg width="27" height="27" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" :style="collapsed ? 'transform:rotate(-90deg)' : 'transform:rotate(0deg)'" style="transition:transform .2s">
                         <path d="M6 9l6 6 6-6"/>
                     </svg>
                 </button>
@@ -465,9 +475,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             {{-- DIVIDER --}}
             <div class="p-card-divider"></div>
 
-            </div>{{-- /collapsed section end --}}
-
-            {{-- MONEY: doim ko'rinadigan --}}
+            {{-- MONEY --}}
             @if($project->total_price > 0)
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
                 <span style="font-size:11px;color:#9ca3af">Umumiy</span>
@@ -591,6 +599,8 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                     Ariza
                 </a>
             </div>
+
+            </div>{{-- /collapsed section end --}}
 
         </div>{{-- /p-card --}}
         </div>{{-- /wrapper --}}
