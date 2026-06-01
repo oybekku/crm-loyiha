@@ -59,7 +59,7 @@ body { font-family: Arial, sans-serif; background: #f3f4f6; color: #111827; min-
 
     <div class="header">
         <div class="brand">BestHome CRM</div>
-        <div class="num-badge">#{{ $project->number }}</div>
+        <div class="num-badge">{{ $project->number }}</div>
         <div class="owner">{{ $project->owner_name }}</div>
         <div class="meta">{{ $project->address }}</div>
     </div>
