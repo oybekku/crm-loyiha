@@ -18,9 +18,9 @@
 .dark .col-body{background:transparent}
 .col-body.drag-over{background:#dbeafe;outline:2px dashed #3b82f6;outline-offset:-4px}
 /* Card */
-.p-card{background:#fff;border-radius:12px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.08);cursor:grab;border:2px solid transparent;transition:border-color .15s,box-shadow .15s,opacity .15s}
-.dark .p-card{background:#111827}
-.p-card:hover{border-color:#3b82f6;box-shadow:0 4px 12px rgba(0,0,0,.12)}
+.p-card{background:#fff;border-radius:12px;padding:12px 14px;box-shadow:0 1px 4px rgba(0,0,0,.07);cursor:grab;border:1.5px solid #e5e7eb;transition:border-color .15s,box-shadow .15s,opacity .15s}
+.dark .p-card{background:#1e2533;border-color:#2d3748}
+.p-card:hover{border-color:#93c5fd;box-shadow:0 3px 10px rgba(0,0,0,.10)}
 .p-card.dragging{opacity:.4;cursor:grabbing}
 .p-card.card-overdue{border-color:#fca5a5;box-shadow:0 0 0 2px rgba(239,68,68,.15)}
 .p-card.card-warn{border-color:#fcd34d;box-shadow:0 0 0 2px rgba(245,158,11,.12)}
@@ -43,7 +43,7 @@
 .p-move-item{display:block;width:100%;text-align:left;padding:6px 10px;font-size:11px;font-weight:500;border-radius:6px;border:none;background:none;cursor:pointer;color:#374151}
 .p-move-item:hover{background:#f3f4f6}
 .p-num{font-size:11px;color:#6b7280;font-family:monospace}
-.p-owner{font-weight:600;font-size:13px;margin:4px 0 2px;color:#111827}
+.p-owner{font-weight:400;font-size:13px;margin:4px 0 8px;color:#374151;letter-spacing:0.01em}
 .dark .p-owner{color:#f9fafb}
 .p-addr{font-size:11px;color:#6b7280;margin-bottom:6px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .p-services{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:6px}
@@ -370,14 +370,9 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
          ondragleave="kbDragLeave(event)"
          ondrop="kbDrop(event,'{{ $statusKey }}')">
         @forelse($projects->get($statusKey, collect()) as $project)
-        <div x-data="{ collapsed: JSON.parse(localStorage.getItem('card_collapsed_{{ $project->id }}') || 'false') }"
-             x-effect="localStorage.setItem('card_collapsed_{{ $project->id }}', JSON.stringify(collapsed))"
+        <div x-data="{ collapsed: localStorage.getItem('card_v2_{{ $project->id }}') === null ? true : localStorage.getItem('card_v2_{{ $project->id }}') === 'true' }"
+             x-effect="localStorage.setItem('card_v2_{{ $project->id }}', collapsed ? 'true' : 'false')"
              style="position:relative;margin-bottom:8px">
-            <button @click="collapsed = !collapsed"
-                    style="position:absolute;left:-14px;top:50%;transform:translateY(-50%);z-index:10;background:#e5e7eb;border:none;cursor:pointer;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;color:#374151;box-shadow:0 1px 3px rgba(0,0,0,.15)"
-                    :title="collapsed ? 'Ochish' : 'Yig\'ish'">
-                <span x-text="collapsed ? '▶' : '▼'"></span>
-            </button>
         @php
             $daysLeft     = $project->deadline_days_left;
             $isOverdue    = $daysLeft !== null && $daysLeft < 0;
@@ -401,35 +396,63 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
              ondragstart="kbDragStart(event,{{ $project->id }})"
              ondragend="kbDragEnd(event)"
              onclick="if(!window._kbDragged && !event.target.closest('button,a,input,select,label'))window.location='/admin/projects/{{ $project->id }}/edit'"
-             style="margin-bottom:0;padding:14px">
+             style="margin-bottom:0;padding:8px 10px">
 
-            {{-- TOP ROW: number + deadline + date --}}
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px">
-                <div style="display:flex;align-items:center;gap:7px">
-                    <span style="background:{{ $status['color'] }};color:#fff;border-radius:6px;font-size:11px;font-weight:800;padding:2px 9px;letter-spacing:0.02em">
-                        {{ $project->number }}
-                    </span>
-                </div>
-                <div style="display:flex;align-items:center;gap:5px">
-                    @if($daysLeft !== null)
-                        @if($isOverdue)
-                        <span class="p-delay-warn" style="margin-bottom:0">{{ abs($daysLeft) }} kun kechikdi</span>
-                        @elseif($daysLeft === 0)
-                        <span style="font-size:10px;font-weight:700;background:#fef3c7;color:#d97706;border-radius:5px;padding:2px 7px">Bugun tugaydi</span>
-                        @elseif($daysLeft <= 3)
-                        <span style="font-size:10px;font-weight:700;background:#fef3c7;color:#d97706;border-radius:5px;padding:2px 7px">{{ $daysLeft }} kun qoldi</span>
-                        @else
-                        <span class="p-date-txt">{{ $daysLeft }} kun qoldi</span>
-                        @endif
+            {{-- TOP ROW: barmoq + ism + muddat + sana --}}
+            <div style="display:flex;align-items:center;gap:5px;margin-bottom:5px">
+                <button @click.stop="collapsed=!collapsed"
+                        style="flex-shrink:0;background:none;border:none;cursor:pointer;padding:2px 4px;line-height:1;color:#9ca3af;font-size:16px;letter-spacing:1px;transition:color .15s"
+                        :style="collapsed ? 'color:#6b7280' : 'color:#374151'"
+                        :title="collapsed ? 'Ochish' : 'Yopish'">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" :style="collapsed ? 'transform:rotate(-90deg)' : 'transform:rotate(0deg)'" style="transition:transform .2s">
+                        <path d="M6 9l6 6 6-6"/>
+                    </svg>
+                </button>
+                <div class="p-owner" style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0;font-size:11px">{{ $project->owner_name }}</div>
+                <div style="flex-shrink:0;display:flex;align-items:center;gap:3px">
+                    @if($daysLeft !== null && ($isOverdue || $daysLeft <= 3))
+                        <span style="font-size:9px;font-weight:700;background:{{ $isOverdue ? '#fee2e2' : '#fef3c7' }};color:{{ $isOverdue ? '#dc2626' : '#d97706' }};border-radius:3px;padding:1px 4px;white-space:nowrap">
+                            {{ $isOverdue ? abs($daysLeft).'k!' : $daysLeft.'k' }}
+                        </span>
                     @endif
-                    <span class="p-date-txt">{{ $project->created_at->format('d-M') }}</span>
+                    <span style="font-size:9px;color:#9ca3af;white-space:nowrap">{{ $project->created_at->format('d-M') }}</span>
                 </div>
             </div>
 
-            {{-- NAME --}}
-            <div class="p-owner">{{ $project->owner_name }}</div>
-
             <div x-show="!collapsed" x-collapse>
+
+            {{-- Raqam (katta holatda) --}}
+            <div style="margin-bottom:6px">
+                <span style="background:{{ $status['color'] }};color:#fff;border-radius:6px;font-size:11px;font-weight:800;padding:2px 9px">{{ $project->number }}</span>
+            </div>
+
+            {{-- ADDRESS --}}
+            @if($project->address)
+            <div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:5px">
+                <svg width="13" height="13" fill="none" stroke="#f97316" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;margin-top:1px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5" fill="#f97316" stroke="none"/></svg>
+                <span class="p-info-text">{{ $project->address }}</span>
+            </div>
+            @endif
+
+            {{-- SERVICES --}}
+            @if($project->services->count())
+            <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:5px">
+                @foreach($project->services->take(4) as $srv)
+                <span class="p-srv-tag-v2">{{ $serviceOptions[$srv->service_name] ?? $srv->service_name }}</span>
+                @endforeach
+                @if($project->services->count() > 4)
+                <span class="p-srv-tag-v2">+{{ $project->services->count() - 4 }}</span>
+                @endif
+            </div>
+            @endif
+
+            {{-- PHONE --}}
+            @if(!empty($project->phones[0]['phone']))
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+                <svg width="13" height="13" fill="none" stroke="#8b5cf6" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 11.5 19.79 19.79 0 012 2.84 2 2 0 014 2.68h3a2 2 0 012 1.72c.22.83.46 1.63.7 2.81a2 2 0 01-.45 2.11L8.09 10.18a16 16 0 006.29 6.29l1.27-1.27a2 2 0 012.11-.45c1.18.24 1.98.48 2.81.7A2 2 0 0122 16.92z"/></svg>
+                <span class="p-info-text">{{ $project->phones[0]['phone'] }}</span>
+            </div>
+            @endif
 
             {{-- Status delay badge --}}
             @if($statusDelay > 0)
@@ -438,72 +461,30 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             <div class="p-delay-info">Bu bosqichda {{ $daysInStatus }}/{{ $allocDays }} kun</div>
             @endif
 
-            {{-- ADDRESS --}}
-            <div style="display:flex;align-items:flex-start;gap:7px;margin-bottom:6px">
-                <svg width="14" height="14" fill="none" stroke="#f97316" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;margin-top:1px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5" fill="#f97316" stroke="none"/></svg>
-                <span class="p-info-text" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">{{ $project->address }}</span>
-            </div>
-
-            {{-- SERVICES --}}
-            @if($project->services->count())
-            <div style="display:flex;align-items:flex-start;gap:7px;margin-bottom:6px">
-                <svg width="14" height="14" fill="none" stroke="#f97316" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;margin-top:2px"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-                <div style="display:flex;flex-wrap:wrap;gap:3px">
-                    @foreach($project->services->take(4) as $srv)
-                    <span class="p-srv-tag-v2">{{ $serviceOptions[$srv->service_name] ?? $srv->service_name }}</span>
-                    @endforeach
-                    @if($project->services->count() > 4)
-                    <span class="p-srv-tag-v2">+{{ $project->services->count() - 4 }}</span>
-                    @endif
-                </div>
-            </div>
-            @endif
-
-            {{-- PHONE --}}
-            @if(!empty($project->phones[0]['phone']))
-            <div style="display:flex;align-items:center;gap:7px;margin-bottom:10px">
-                <svg width="14" height="14" fill="none" stroke="#8b5cf6" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 11.5 19.79 19.79 0 012 2.84 2 2 0 014 2.68h3a2 2 0 012 1.72 12.05 12.05 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 10.18a16 16 0 006.29 6.29l1.27-1.27a2 2 0 012.11-.45 12.05 12.05 0 002.81.7A2 2 0 0122 16.92z"/></svg>
-                <span class="p-info-text" style="font-weight:500">{{ $project->phones[0]['phone'] }}</span>
-            </div>
-            @endif
 
             {{-- DIVIDER --}}
             <div class="p-card-divider"></div>
 
-            {{-- MONEY: Umumiy --}}
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
-                <div style="display:flex;align-items:center;gap:7px">
-                    <svg width="14" height="14" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M9 10h4.5a1.5 1.5 0 010 3H9m0 1h6"/></svg>
-                    <span class="p-money-label">Umumiy:</span>
-                </div>
-                <span class="p-money-main">{{ number_format($project->total_price, 0, '.', ' ') }} so'm</span>
-            </div>
+            </div>{{-- /collapsed section end --}}
 
-            {{-- MONEY: To'langan --}}
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
-                <div style="display:flex;align-items:center;gap:7px">
-                    <svg width="14" height="14" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-                    <span class="p-money-label">To'langan:</span>
-                </div>
-                <span class="p-money-paid-amt">{{ number_format($project->paid_amount, 0, '.', ' ') }} so'm</span>
+            {{-- MONEY: doim ko'rinadigan --}}
+            @if($project->total_price > 0)
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+                <span style="font-size:11px;color:#9ca3af">Umumiy</span>
+                <span style="font-size:12px;font-weight:600;color:#374151">{{ number_format($project->total_price, 0, '.', ' ') }} so'm</span>
             </div>
-
-            {{-- MONEY: Qoldiq --}}
-            @if($project->total_price > 0 && $project->paid_amount < $project->total_price)
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+                <span style="font-size:11px;color:#9ca3af">To'langan</span>
+                <span style="font-size:12px;font-weight:600;color:#16a34a">{{ number_format($project->paid_amount, 0, '.', ' ') }} so'm</span>
+            </div>
+            @if($project->paid_amount < $project->total_price)
             @php $qoldiq = $project->total_price - $project->paid_amount; @endphp
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-                <div style="display:flex;align-items:center;gap:7px">
-                    <svg width="14" height="14" fill="none" stroke="#ef4444" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                    <span class="p-money-label" style="color:#ef4444">Qoldiq:</span>
-                </div>
-                <span style="font-size:12px;font-weight:700;color:#ef4444">{{ number_format($qoldiq, 0, '.', ' ') }} so'm</span>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                <span style="font-size:11px;color:#ef4444">Qoldiq</span>
+                <span style="font-size:12px;font-weight:600;color:#ef4444">{{ number_format($qoldiq, 0, '.', ' ') }} so'm</span>
             </div>
             @endif
-
-            {{-- PROGRESS --}}
-            @if($project->total_price > 0)
-            <div class="p-pct-txt">{{ $payPct }}%</div>
-            <div class="p-bar-wrap" style="margin-bottom:10px">
+            <div class="p-bar-wrap" style="margin-bottom:8px">
                 <div class="p-bar" style="width:{{ $payPct }}%;background:{{ $barColor }}"></div>
             </div>
             @endif
@@ -611,7 +592,6 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                 </a>
             </div>
 
-            </div>{{-- /x-show collapsed --}}
         </div>{{-- /p-card --}}
         </div>{{-- /wrapper --}}
         @empty
