@@ -32,6 +32,10 @@ class ProjectService extends Model
 
         static::saved(function ($service) {
             $service->project?->updateTotals();
+            // Xizmatga biriktirilgan hodimni loyihaning assignedUsers ga ham qo'shish
+            if ($service->assigned_user_id && $service->project) {
+                $service->project->assignedUsers()->syncWithoutDetaching([$service->assigned_user_id]);
+            }
         });
 
         static::deleted(function ($service) {
