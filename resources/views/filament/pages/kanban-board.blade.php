@@ -505,7 +505,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             <div style="display:flex;align-items:center;gap:5px;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:4px 8px;margin-bottom:8px;animation:blink-warn 1.5s ease-in-out infinite">
                 <svg width="12" height="12" fill="none" stroke="#dc2626" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                 <span style="font-size:11px;font-weight:700;color:#dc2626">
-                    {{ $unassigned }} ta xizmatda hodim biriktirilmagan
+                    Hodim biriktirilmagan
                 </span>
             </div>
             @endif
