@@ -191,7 +191,7 @@ class KanbanBoard extends Page
     public function openModal(): void
     {
         $user = auth()->user();
-        if ($user?->isHisobchi() || $user?->isBajaruvchi()) return;
+        if ($user?->isHisobchi()) return;
         $this->reset(['owner_name', 'proj_title', 'address', 'latitude', 'longitude', 'description', 'assigned_user_ids', 'deadline_days', 'showDeadlineConfirm']);
         $this->phones             = ['+998'];
         $this->category           = 'turar';

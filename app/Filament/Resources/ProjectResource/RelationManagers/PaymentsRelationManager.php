@@ -14,6 +14,12 @@ class PaymentsRelationManager extends RelationManager
     protected static string $relationship = 'payments';
     protected static ?string $title = "To'lovlar";
 
+    public static function canViewAny(): bool
+    {
+        $user = auth()->user();
+        return $user?->isAdmin() || $user?->isMenejer() || $user?->isHisobchi();
+    }
+
     public function form(Form $form): Form
     {
         return $form->schema([

@@ -347,7 +347,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
     @endif
 
     <div style="margin-left:auto">
-        @if(!auth()->user()?->isHisobchi() && !auth()->user()?->isBajaruvchi())
+        @if(!auth()->user()?->isHisobchi())
         <button class="btn-new" wire:click="openModal">
             <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
             Yangi loyiha
@@ -615,7 +615,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
         </div>{{-- /p-card --}}
         </div>{{-- /wrapper --}}
         @empty
-        @if(!auth()->user()?->isHisobchi() && !auth()->user()?->isBajaruvchi())
+        @if(!auth()->user()?->isHisobchi())
         <button wire:click="openModal"
                 style="width:100%;padding:28px 12px;background:transparent;border:2px dashed #d1d5db;border-radius:10px;cursor:pointer;color:#9ca3af;font-size:28px;font-weight:300;transition:all .15s;display:flex;align-items:center;justify-content:center"
                 onmouseover="this.style.borderColor='#6b7280';this.style.color='#374151';this.style.background='rgba(0,0,0,0.03)'"
