@@ -66,7 +66,6 @@ class ServicesRelationManager extends RelationManager
                         ->orderBy('name')
                         ->pluck('name', 'id')
                 )
-                ->searchable()
                 ->nullable()
                 ->placeholder('— Tanlang —'),
 
