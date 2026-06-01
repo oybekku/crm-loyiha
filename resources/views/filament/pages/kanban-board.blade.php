@@ -395,10 +395,13 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             $payPct       = $project->payment_percent;
             $barColor     = $payPct >= 100 ? '#10b981' : ($payPct >= 50 ? '#f59e0b' : $status['color']);
             $ownerInitial = mb_strtoupper(mb_substr($project->owner_name, 0, 1));
-            // Xizmatda hodim biriktirilmagan tekshiruvi
-            $svcCount     = $project->services->count();
-            $unassigned   = $project->services->whereNull('assigned_user_id')->count();
-            $hasUnassigned = $svcCount > 0 && $unassigned > 0 && $project->paid_amount > 0;
+            // Joriy statusga mos xizmatda hodim biriktirilmagan tekshiruvi
+            $currentStatusServices = $project->services->filter(
+                fn($s) => strtolower($s->service_name) === strtolower($statusKey)
+            );
+            $hasUnassigned = $project->paid_amount > 0
+                && $currentStatusServices->isNotEmpty()
+                && $currentStatusServices->whereNull('assigned_user_id')->isNotEmpty();
         @endphp
         <div class="p-card {{ $cardClass }}"
              draggable="true"
