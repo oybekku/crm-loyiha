@@ -33,6 +33,20 @@ class Project extends Model
                 $project->number = '#' . str_pad(random_int(1, 999999999), 9, '0', STR_PAD_LEFT);
             }
         });
+
+        static::updated(function ($project) {
+            // Status o'zgarganda — mos xizmat timerini ishga tushirish
+            if (!$project->wasChanged('status')) return;
+
+            $newStatus = $project->status;
+            $now       = now();
+
+            // Joriy statusga mos xizmatni topamiz va work_started_at ni belgilaymiz
+            ProjectService::where('project_id', $project->id)
+                ->where('service_name', $newStatus)
+                ->whereNull('work_started_at')  // faqat boshlanmagan bo'lsa
+                ->update(['work_started_at' => $now]);
+        });
     }
 
     public function assignedUser()

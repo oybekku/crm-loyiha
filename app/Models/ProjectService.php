@@ -9,13 +9,36 @@ class ProjectService extends Model
     protected $fillable = [
         'project_id', 'assigned_user_id', 'service_name', 'price',
         'discount_type', 'discount_value', 'final_price', 'note',
+        'deadline_days', 'work_started_at',
     ];
 
     protected $casts = [
         'price'          => 'decimal:2',
         'discount_value' => 'decimal:2',
         'final_price'    => 'decimal:2',
+        'work_started_at'=> 'datetime',
+        'deadline_days'  => 'integer',
     ];
+
+    public function getDeadlineDateAttribute(): ?\Carbon\Carbon
+    {
+        if (!$this->work_started_at || !$this->deadline_days) return null;
+        return $this->work_started_at->copy()->addDays($this->deadline_days);
+    }
+
+    public function getIsLateAttribute(): bool
+    {
+        $deadline = $this->deadline_date;
+        if (!$deadline) return false;
+        return now()->gt($deadline);
+    }
+
+    public function getLateDaysAttribute(): int
+    {
+        if (!$this->is_late) return 0;
+        return (int) $this->deadline_date->diffInDays(now());
+    }
+
 
     protected static function booted(): void
     {

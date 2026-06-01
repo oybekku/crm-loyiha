@@ -25,7 +25,12 @@ class KanbanBoard extends Page
     protected static ?int $navigationSort = 1;
     protected static ?string $title = '';
 
-    public string $filterStatus = '';  // URL ?status= parametridan o'qiladi
+    public string $filterStatus = '';
+
+    // Xizmat hodim tayinlash modal
+    public bool  $showServiceAssignModal = false;
+    public int   $serviceAssignProjectId = 0;
+    public array $serviceAssignData      = []; // [service_id => [user_id, days]]
     public string $search      = '';  // Kanban qidiruv
 
     public bool  $showModal = false;
@@ -203,6 +208,60 @@ class KanbanBoard extends Page
     {
         $this->showModal = false;
         $this->resetErrorBag();
+    }
+
+    public function openServiceAssignModal(int $projectId): void
+    {
+        $this->serviceAssignProjectId = $projectId;
+        $project = Project::with('services.assignedUser')->find($projectId);
+        $this->serviceAssignData = [];
+        foreach ($project->services as $svc) {
+            $this->serviceAssignData[$svc->id] = [
+                'user_id' => $svc->assigned_user_id,
+                'days'    => $svc->deadline_days ?? 7,
+            ];
+        }
+        $this->showServiceAssignModal = true;
+    }
+
+    public function saveServiceAssign(): void
+    {
+        $now = now();
+        foreach ($this->serviceAssignData as $svcId => $data) {
+            $svc = \App\Models\ProjectService::find($svcId);
+            if (!$svc) continue;
+
+            $userId = $data['user_id'] ?: null;
+            $days   = max(1, (int)($data['days'] ?? 7));
+            $startedAt = $svc->work_started_at;
+            if ($userId && !$svc->assigned_user_id) {
+                $startedAt = $now;
+            }
+            if (!$userId) {
+                $startedAt = null;
+            }
+
+            \Illuminate\Support\Facades\DB::table('project_services')
+                ->where('id', $svcId)
+                ->update([
+                    'assigned_user_id' => $userId,
+                    'deadline_days'    => $days,
+                    'work_started_at'  => $startedAt,
+                ]);
+
+            if ($userId) {
+                Project::find($this->serviceAssignProjectId)
+                    ?->assignedUsers()->syncWithoutDetaching([$userId]);
+            }
+        }
+
+        $this->showServiceAssignModal = false;
+        $this->dispatch('notify', type: 'success', message: 'Hodimlar biriktirildi!');
+    }
+
+    public function closeServiceAssignModal(): void
+    {
+        $this->showServiceAssignModal = false;
     }
 
 

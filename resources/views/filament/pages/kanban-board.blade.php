@@ -601,6 +601,13 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                     <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                     Ariza
                 </a>
+                @if(!auth()->user()?->isHisobchi())
+                <button wire:click.stop="openServiceAssignModal({{ $project->id }})"
+                        style="background:#f3f4f6;border:1px solid #e5e7eb;color:#374151;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    Hodim
+                </button>
+                @endif
             </div>
 
             </div>{{-- /collapsed section end --}}
@@ -1322,6 +1329,71 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
         </div>
     </div>
 </div>
+@endif
+
+{{-- XIZMAT HODIM TAYINLASH MODAL --}}
+@if($showServiceAssignModal)
+@php $saProject = \App\Models\Project::with('services')->find($serviceAssignProjectId); @endphp
+@if($saProject)
+<div style="position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px">
+<div style="background:#fff;border-radius:16px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #e5e7eb">
+        <div>
+            <div style="font-size:15px;font-weight:800;color:#111827">Hodim tayinlash</div>
+            <div style="font-size:12px;color:#6b7280;margin-top:2px">{{ $saProject->owner_name }}</div>
+        </div>
+        <button wire:click="closeServiceAssignModal" style="background:none;border:none;cursor:pointer;font-size:22px;color:#9ca3af">×</button>
+    </div>
+
+    <div style="padding:16px 20px;display:flex;flex-direction:column;gap:12px">
+        @foreach($saProject->services as $svc)
+        <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:14px">
+            <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:10px">
+                {{ \App\Models\Project::serviceOptions()[$svc->service_name] ?? $svc->service_name }}
+                @if(isset($serviceAssignData[$svc->id]['user_id']) && $serviceAssignData[$svc->id]['user_id'])
+                <span style="font-size:10px;background:#dcfce7;color:#16a34a;border-radius:4px;padding:1px 7px;margin-left:6px;font-weight:600">Biriktirilgan</span>
+                @endif
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 100px;gap:8px">
+                <div>
+                    <label style="display:block;font-size:11px;color:#6b7280;margin-bottom:4px">Mas'ul hodim</label>
+                    <select wire:model.live="serviceAssignData.{{ $svc->id }}.user_id"
+                            style="width:100%;border:1px solid #d1d5db;border-radius:7px;padding:7px 10px;font-size:13px;background:#fff;outline:none">
+                        <option value="">— Tanlang —</option>
+                        @foreach($users as $u)
+                        <option value="{{ $u->id }}">{{ $u->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label style="display:block;font-size:11px;color:#6b7280;margin-bottom:4px">Kun</label>
+                    <input type="number" min="1" max="365"
+                           wire:model.live="serviceAssignData.{{ $svc->id }}.days"
+                           style="width:100%;border:1px solid #d1d5db;border-radius:7px;padding:7px 10px;font-size:13px;text-align:center;outline:none">
+                </div>
+            </div>
+            @if(isset($serviceAssignData[$svc->id]['user_id']) && $serviceAssignData[$svc->id]['user_id'] && isset($serviceAssignData[$svc->id]['days']))
+            <div style="font-size:11px;color:#6b7280;margin-top:6px">
+                Muddat: {{ $serviceAssignData[$svc->id]['days'] }} kun
+                @if($svc->work_started_at)
+                · Boshlangan: {{ $svc->work_started_at->format('d.m.Y') }}
+                · Tugash: {{ $svc->work_started_at->addDays($serviceAssignData[$svc->id]['days'])->format('d.m.Y') }}
+                @endif
+            </div>
+            @endif
+        </div>
+        @endforeach
+    </div>
+
+    <div style="display:flex;justify-content:space-between;padding:14px 20px;border-top:1px solid #e5e7eb">
+        <button wire:click="closeServiceAssignModal" style="background:#f3f4f6;color:#374151;border:none;border-radius:8px;padding:9px 20px;font-size:13px;font-weight:600;cursor:pointer">Bekor qilish</button>
+        <button wire:click="saveServiceAssign" style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:9px 24px;font-size:13px;font-weight:700;cursor:pointer">Saqlash</button>
+    </div>
+
+</div>
+</div>
+@endif
 @endif
 
 {{-- TO'LOV MODAL --}}
