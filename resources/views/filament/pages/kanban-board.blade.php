@@ -480,13 +480,25 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             </div>
 
             {{-- MONEY: To'langan --}}
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
                 <div style="display:flex;align-items:center;gap:7px">
                     <svg width="14" height="14" fill="none" stroke="#10b981" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
                     <span class="p-money-label">To'langan:</span>
                 </div>
                 <span class="p-money-paid-amt">{{ number_format($project->paid_amount, 0, '.', ' ') }} so'm</span>
             </div>
+
+            {{-- MONEY: Qoldiq --}}
+            @if($project->total_price > 0 && $project->paid_amount < $project->total_price)
+            @php $qoldiq = $project->total_price - $project->paid_amount; @endphp
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                <div style="display:flex;align-items:center;gap:7px">
+                    <svg width="14" height="14" fill="none" stroke="#ef4444" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <span class="p-money-label" style="color:#ef4444">Qoldiq:</span>
+                </div>
+                <span style="font-size:12px;font-weight:700;color:#ef4444">{{ number_format($qoldiq, 0, '.', ' ') }} so'm</span>
+            </div>
+            @endif
 
             {{-- PROGRESS --}}
             @if($project->total_price > 0)
