@@ -836,8 +836,14 @@ class KanbanBoard extends Page
             'deadline_date'    => ($this->deadline_days > 0) ? now()->addDays((int)$this->deadline_days)->toDateString() : null,
         ]);
 
-        if (!empty($this->assigned_user_ids)) {
-            $project->assignedUsers()->sync($this->assigned_user_ids);
+        // assignedUsers: tanlangan hodimlar + loyiha yaratuvchi (agar hodim bo'lsa)
+        $assignIds = $this->assigned_user_ids ?? [];
+        $creator   = auth()->user();
+        if ($creator && !$creator->isAdmin() && !$creator->isMenejer() && !$creator->isHisobchi()) {
+            $assignIds = array_unique(array_merge($assignIds, [$creator->id]));
+        }
+        if (!empty($assignIds)) {
+            $project->assignedUsers()->sync($assignIds);
         }
 
         // Initial status log
