@@ -41,32 +41,72 @@ class WelcomeHeroWidget extends Widget
             ->limit(4)
             ->get();
 
-        $totalCount   = Project::count();
-        $yangiCount   = Project::where('status', 'yangi')->count();
-        $jarayonCount = Project::whereIn('status', ['tolov_jarayonida', 'tekshirish'])->count();
-        $doneCount    = Project::where('status', 'tugallangan')->count();
-        $totalSum     = (float) Project::sum('total_price');
-        $paidSum      = (float) Project::sum('paid_amount');
+        $isEmployee = $user?->isBajaruvchi();
+
+        // ── Umumiy (admin/menejer uchun) yoki shaxsiy (bajaruvchi uchun) ──
+        $baseQuery = $isEmployee
+            ? Project::whereHas('assignedUsers', fn($q) => $q->where('users.id', $user->id))
+            : Project::query();
+
+        $totalCount   = (clone $baseQuery)->count();
+        $yangiCount   = (clone $baseQuery)->where('status', 'yangi')->count();
+        $jarayonCount = (clone $baseQuery)->whereIn('status', ['tolov_jarayonida', 'tekshirish'])->count();
+        $doneCount    = (clone $baseQuery)->where('status', 'tugallangan')->count();
+        $totalSum     = (float) (clone $baseQuery)->sum('total_price');
+        $paidSum      = (float) (clone $baseQuery)->sum('paid_amount');
         $debtSum      = $totalSum - $paidSum;
         $paidPct      = $totalSum > 0 ? round(($paidSum / $totalSum) * 100) : 0;
-        $overdueCount = Project::whereNotIn('status', ['tugallangan', 'bekor_qilingan', 'arxiv'])
+        $overdueProjects = (clone $baseQuery)->whereNotIn('status', ['tugallangan', 'bekor_qilingan', 'arxiv'])
             ->whereNotNull('deadline_date')
             ->where('deadline_date', '<', now()->startOfDay())
-            ->count();
+            ->select('id', 'number', 'owner_name', 'deadline_date', 'status')
+            ->orderBy('deadline_date')
+            ->get();
+        $overdueCount = $overdueProjects->count();
+
+        // ── Bajaruvchi uchun shaxsiy statistika ──
+        $myStats = null;
+        if ($isEmployee) {
+            $month = now()->month;
+            $yr    = now()->year;
+
+            // Bu oyda tugallangan xizmatlar
+            $myDoneServices = \App\Models\ProjectService::where('assigned_user_id', $user->id)
+                ->whereHas('project', fn($q) => $q->where('status', 'tugallangan'))
+                ->whereHas('project.statusLogs', fn($q) => $q
+                    ->where('status', 'tugallangan')
+                    ->whereYear('entered_at', $yr)
+                    ->whereMonth('entered_at', $month)
+                )
+                ->get();
+
+            // Jarayondagi (tugallanmagan) xizmatlar
+            $myPendingServices = \App\Models\ProjectService::where('assigned_user_id', $user->id)
+                ->whereHas('project', fn($q) => $q->whereNotIn('status', ['tugallangan', 'taqdim_etilgan', 'bekor_qilingan']))
+                ->get();
+
+            $myStats = [
+                'done_count'   => $myDoneServices->count(),
+                'done_sum'     => (float) $myDoneServices->sum('final_price'),
+                'pending_count'=> $myPendingServices->count(),
+                'pending_sum'  => (float) $myPendingServices->sum('final_price'),
+            ];
+        }
 
         return [
             'userName'      => $user?->name ?? 'Foydalanuvchi',
             'userRole'      => $user?->role_name ?? ucfirst($user?->role ?? ''),
+            'isEmployee'    => $isEmployee,
+            'myStats'       => $myStats,
             'totalCount'    => $totalCount,
             'yangiCount'    => $yangiCount,
-            'activeCount'   => Project::whereNotIn('status', ['tugallangan', 'bekor_qilingan', 'arxiv'])->count(),
+            'activeCount'   => (clone $baseQuery)->whereNotIn('status', ['tugallangan', 'bekor_qilingan', 'arxiv'])->count(),
             'doneCount'     => $doneCount,
             'quote'         => $quotes[now()->dayOfYear % count($quotes)],
             'monthlyIncome' => $monthlyIncome,
             'maxIncome'     => $maxIncome,
             'currentMonth'  => (int) now()->month,
             'recentProjects'=> $recentProjects,
-            // Bottom stats
             'statProjects'  => $totalCount,
             'statYangi'     => $yangiCount,
             'statJarayon'   => $jarayonCount,
@@ -75,7 +115,8 @@ class WelcomeHeroWidget extends Widget
             'statPaidSum'   => $paidSum,
             'statDebt'      => $debtSum,
             'statPaidPct'   => $paidPct,
-            'statOverdue'   => $overdueCount,
+            'statOverdue'        => $overdueCount,
+            'overdueProjects'    => $overdueProjects,
         ];
     }
 }

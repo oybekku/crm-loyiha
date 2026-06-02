@@ -601,6 +601,24 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                     <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                     Ariza
                 </a>
+                @if(auth()->user()?->isAdmin() || auth()->user()?->isMenejer())
+                @if($project->status === 'tugallangan')
+                <button wire:click.stop="markUncomplete({{ $project->id }})"
+                        wire:confirm="Loyihani jarayonga qaytarmoqchimisiz?"
+                        style="background:#dcfce7;border:1px solid #86efac;color:#16a34a;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                    Tugallandi
+                </button>
+                @else
+                <button wire:click.stop="markComplete({{ $project->id }})"
+                        wire:confirm="Loyihani tugallangan deb belgilaysizmi?"
+                        style="background:#f3f4f6;border:1px solid #d1d5db;color:#6b7280;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Tugallanmagan
+                </button>
+                @endif
+                @endif
+
                 @if(!auth()->user()?->isHisobchi())
                 <button wire:click.stop="openServiceAssignModal({{ $project->id }})"
                         style="background:#f3f4f6;border:1px solid #e5e7eb;color:#374151;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px">
@@ -719,7 +737,14 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 
             <div>
                 <label class="kb-label">Egasining ismi *</label>
+                <datalist id="kb-owner-names">
+                    @foreach($existingOwners as $ownerName)
+                    <option value="{{ $ownerName }}">
+                    @endforeach
+                </datalist>
                 <input wire:model.live="owner_name"
+                       list="kb-owner-names"
+                       autocomplete="off"
                        class="kb-input {{ $errors->has('owner_name') ? 'error' : '' }}"
                        placeholder="Loyiha egasi ism-familyasini kiriting...">
                 @error('owner_name')<div style="color:#ef4444;font-size:11px;margin-top:3px">{{ $message }}</div>@enderror
@@ -1038,6 +1063,31 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                     </div>
 
                     @endif
+
+                    {{-- Ixtiyoriy narx (tier xizmatlar uchun) --}}
+                    <div style="margin-top:10px;padding-top:10px;border-top:1px solid #f0fdf4" wire:click.stop>
+                        <label style="font-size:12px;color:#6b7280;font-weight:500;margin-bottom:6px;display:flex;align-items:center;gap:5px">
+                            <svg width="12" height="12" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            Ixtiyoriy narx (tanlansa ustun turadi)
+                        </label>
+                        <div style="display:flex;align-items:center;gap:8px">
+                            <input wire:model.live="services.{{ $key }}.custom_price"
+                                   type="number" min="0" placeholder="Masalan: 500000"
+                                   style="flex:1;border:1.5px solid #e5e7eb;border-radius:8px;padding:7px 10px;font-size:13px;outline:none"
+                                   onfocus="this.style.borderColor='#2563eb'" onblur="this.style.borderColor='#e5e7eb'">
+                            <span style="font-size:12px;color:#6b7280;white-space:nowrap">so'm</span>
+                            @if(!empty($srv['custom_price']))
+                            <button wire:click.stop="$set('services.{{ $key }}.custom_price', '')"
+                                    style="background:none;border:none;cursor:pointer;color:#9ca3af;font-size:16px;padding:2px">×</button>
+                            @endif
+                        </div>
+                        @if(!empty($srv['custom_price']))
+                        <div style="font-size:11px;color:#2563eb;margin-top:4px">
+                            Ixtiyoriy narx: {{ number_format((float)$srv['custom_price'], 0, '.', ' ') }} so'm
+                        </div>
+                        @endif
+                    </div>
+
                 </div>
             </div>
 
@@ -1097,9 +1147,13 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
     {{-- STEP 3 --}}
     @if($step === 3)
     @php
-        $hasTiersSrv = fn($s) => !empty($s['has_tiers']) ? (!empty($s['selected_tiers']) && !empty($s['price'])) : !empty($s['selected']);
+        $hasTiersSrv = fn($s) => !empty($s['has_tiers'])
+            ? (((float)($s['custom_price'] ?? 0) > 0) || (!empty($s['selected_tiers']) && !empty($s['price'])))
+            : !empty($s['selected']);
         $selectedSrvs = array_filter($services, $hasTiersSrv);
-        $totalNoDiscount = array_sum(array_map(fn($s) => (float)($s['price'] ?? 0), $selectedSrvs));
+        // Ixtiyoriy narx ustun turadi
+        $getPrice = fn($s) => (float)($s['custom_price'] ?? 0) > 0 ? (float)$s['custom_price'] : (float)($s['price'] ?? 0);
+        $totalNoDiscount = array_sum(array_map($getPrice, $selectedSrvs));
         $totalDiscount   = array_sum(array_map(fn($s) => (float)($s['discount_amount'] ?? 0), $selectedSrvs));
         $totalFinal      = $totalNoDiscount - $totalDiscount;
     @endphp
@@ -1125,9 +1179,10 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             <div class="confirm-title" style="margin-bottom:12px">Tanlangan xizmatlar ({{ count($selectedSrvs) }} ta)</div>
             @foreach($selectedSrvs as $key => $srv)
             @php
-                $price       = (float)($srv['price'] ?? 0);
-                $discType    = $srv['discount_type']   ?? 'none';
-                $discAmount  = (float)($srv['discount_amount'] ?? 0);
+                $customP     = (float)($srv['custom_price'] ?? 0);
+                $price       = $customP > 0 ? $customP : (float)($srv['price'] ?? 0);
+                $discType    = $customP > 0 ? 'none' : ($srv['discount_type'] ?? 'none');
+                $discAmount  = $customP > 0 ? 0 : (float)($srv['discount_amount'] ?? 0);
                 $discValue   = $srv['discount_value']  ?? '';
                 $finalPrice  = ($discType !== 'none') ? ($price - $discAmount) : $price;
                 $hasDiscount = $discType !== 'none' && $discAmount > 0;
@@ -1429,6 +1484,27 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 
         {{-- Form --}}
         <div style="display:flex;flex-direction:column;gap:14px">
+
+            {{-- Xizmat tanlash --}}
+            @if($payProj->services->count())
+            <div>
+                <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:8px">Qaysi xizmat uchun to'lov?</label>
+                <div style="display:flex;flex-direction:column;gap:6px">
+                    @foreach($payProj->services as $svc)
+                    <label style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;font-size:13px;transition:border-color .15s"
+                           :style="$wire.paymentSelectedServices.includes('{{ $svc->service_name }}') ? 'border-color:#2563eb;background:#eff6ff' : ''">
+                        <input type="checkbox"
+                               wire:model.live="paymentSelectedServices"
+                               value="{{ $svc->service_name }}"
+                               style="width:15px;height:15px;cursor:pointer;accent-color:#2563eb">
+                        <span style="font-weight:600">{{ \App\Models\Project::serviceOptions()[$svc->service_name] ?? $svc->service_name }}</span>
+                        <span style="margin-left:auto;font-size:12px;color:#6b7280">{{ number_format($svc->final_price, 0, '.', ' ') }} so'm</span>
+                    </label>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
             <div>
                 <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Summa (so'm) *</label>
                 <input wire:model.live="paymentAmount" type="number" min="1"
@@ -1969,7 +2045,7 @@ function initKbMap() {
     if (kbMap) return;
 
     kbMap = new ymaps.Map('modal-map', {
-        center: [41.2995, 69.2401],
+        center: [40.857500, 68.929654],
         zoom: 12,
         controls: ['zoomControl']
     });

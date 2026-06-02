@@ -394,6 +394,39 @@
 
 </div>
 
+{{-- ── SHAXSIY STATISTIKA (bajaruvchi uchun) ── --}}
+@if($isEmployee && $myStats)
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;position:relative;z-index:1">
+
+    {{-- Bu oy tugallangan --}}
+    <div style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.30);border-radius:12px;padding:20px 24px">
+        <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;display:flex;align-items:center;gap:6px">
+            <svg width="14" height="14" fill="none" stroke="#16a34a" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Bu oy tugallangan ishlar
+        </div>
+        <div style="font-size:28px;font-weight:900;color:#16a34a;line-height:1">{{ $myStats['done_count'] }}</div>
+        <div style="font-size:12px;color:#6b7280;margin-top:4px">xizmat</div>
+        <div style="font-size:16px;font-weight:700;color:#111827;margin-top:8px">
+            {{ number_format($myStats['done_sum'], 0, '.', ' ') }} so'm
+        </div>
+    </div>
+
+    {{-- Qolgan ishlar --}}
+    <div style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.30);border-radius:12px;padding:20px 24px">
+        <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;display:flex;align-items:center;gap:6px">
+            <svg width="14" height="14" fill="none" stroke="#f97316" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Qolgan (jarayondagi) ishlar
+        </div>
+        <div style="font-size:28px;font-weight:900;color:#f97316;line-height:1">{{ $myStats['pending_count'] }}</div>
+        <div style="font-size:12px;color:#6b7280;margin-top:4px">xizmat</div>
+        <div style="font-size:16px;font-weight:700;color:#111827;margin-top:8px">
+            {{ number_format($myStats['pending_sum'], 0, '.', ' ') }} so'm
+        </div>
+    </div>
+
+</div>
+@endif
+
 {{-- ── BOTTOM: 4 alohida stat karta ── --}}
 <div class="bh-bottom">
 
@@ -443,18 +476,38 @@
     </div>
 
     {{-- Vaqti o'tgan loyihalar --}}
-    <div class="bh-stat bh-stat--purple">
+    <div class="bh-stat bh-stat--purple" x-data="{open:false}">
         <div class="bh-stat-head">
             <div class="bh-stat-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             </div>
             <div class="bh-stat-label">Vaqti o'tgan</div>
         </div>
-        <div class="bh-stat-value"
-             x-data="{n:0}"
-             x-init="setTimeout(()=>{let t={{ $statOverdue }},d=900,s=Date.now(),iv=setInterval(()=>{let p=Math.min((Date.now()-s)/d,1);n=Math.floor((1-Math.pow(1-p,3))*t);if(p>=1){n=t;clearInterval(iv);}},16);},900)"
-             x-text="n">0</div>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+            <div class="bh-stat-value"
+                 x-data="{n:0}"
+                 x-init="setTimeout(()=>{let t={{ $statOverdue }},d=900,s=Date.now(),iv=setInterval(()=>{let p=Math.min((Date.now()-s)/d,1);n=Math.floor((1-Math.pow(1-p,3))*t);if(p>=1){n=t;clearInterval(iv);}},16);},900)"
+                 x-text="n">0</div>
+            @if($statOverdue > 0)
+            <button @click="open=!open" style="background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.2);border-radius:6px;padding:3px 8px;font-size:10px;font-weight:600;color:#7c3aed;cursor:pointer" x-text="open ? 'Yopish' : 'Ko\'rish'"></button>
+            @endif
+        </div>
         <div class="bh-stat-desc">Muddati o'tib ketgan loyihalar</div>
+        @if($statOverdue > 0)
+        <div x-show="open" x-collapse style="margin-top:10px;display:flex;flex-direction:column;gap:5px">
+            @foreach($overdueProjects as $op)
+            @php $overDays = (int) \Carbon\Carbon::parse($op->deadline_date)->diffInDays(now()); @endphp
+            <a href="/admin/projects/{{ $op->id }}/edit"
+               style="display:flex;align-items:center;justify-content:space-between;background:rgba(124,58,237,0.07);border:1px solid rgba(124,58,237,0.15);border-radius:7px;padding:6px 10px;text-decoration:none">
+                <div>
+                    <div style="font-size:11px;font-weight:700;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px">{{ $op->owner_name }}</div>
+                    <div style="font-size:10px;color:#9ca3af;font-family:monospace">{{ $op->number }}</div>
+                </div>
+                <span style="font-size:10px;font-weight:700;background:#fef2f2;color:#dc2626;border-radius:4px;padding:2px 6px;white-space:nowrap">{{ $overDays }} kun</span>
+            </a>
+            @endforeach
+        </div>
+        @endif
     </div>
 
 </div>

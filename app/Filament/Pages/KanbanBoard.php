@@ -7,6 +7,7 @@ use App\Models\PaymentLog;
 use App\Models\Project;
 use App\Models\ProjectFile;
 use App\Models\ProjectService;
+use App\Models\ProjectStatusLog;
 use App\Models\ServicePriceTier;
 use App\Models\User;
 use App\Traits\HasMenuPermission;
@@ -68,8 +69,9 @@ class KanbanBoard extends Page
     public string $paymentNote          = '';
     public bool   $paymentMoveToEskiz   = true;
     public bool   $paymentFromQueue     = false;
-    public ?int   $paymentToposyomkaUserId = null;
-    public ?int   $paymentEskizUserId      = null;
+    public ?int   $paymentToposyomkaUserId  = null;
+    public ?int   $paymentEskizUserId       = null;
+    public array  $paymentSelectedServices  = []; // tanlangan xizmatlar
     public bool   $paymentAmountConfirm    = false;
 
     // Edit payment modal state
@@ -166,6 +168,7 @@ class KanbanBoard extends Page
                 'label'            => $label,
                 'selected'         => false,
                 'price'            => '',
+                'custom_price'     => '',
                 'has_tiers'        => $hasTiers,
                 'selected_tiers'   => [],
                 'area_m2'          => '',
@@ -262,6 +265,51 @@ class KanbanBoard extends Page
     public function closeServiceAssignModal(): void
     {
         $this->showServiceAssignModal = false;
+    }
+
+    public function markComplete(int $projectId): void
+    {
+        if (!auth()->user()?->isAdmin() && !auth()->user()?->isMenejer()) return;
+
+        $project = Project::findOrFail($projectId);
+        $oldStatus = $project->status;
+        $project->status = 'tugallangan';
+        $project->saveQuietly();
+
+        ProjectStatusLog::where('project_id', $projectId)
+            ->whereNull('left_at')
+            ->update(['left_at' => now()]);
+
+        ProjectStatusLog::create([
+            'project_id' => $projectId,
+            'status'     => 'tugallangan',
+            'entered_at' => now(),
+            'changed_by' => auth()->id(),
+        ]);
+
+        $this->dispatch('notify', type: 'success', message: 'Loyiha tugallandi!');
+    }
+
+    public function markUncomplete(int $projectId): void
+    {
+        if (!auth()->user()?->isAdmin() && !auth()->user()?->isMenejer()) return;
+
+        $project = Project::findOrFail($projectId);
+        $project->status = 'tolangan';
+        $project->saveQuietly();
+
+        ProjectStatusLog::where('project_id', $projectId)
+            ->whereNull('left_at')
+            ->update(['left_at' => now()]);
+
+        ProjectStatusLog::create([
+            'project_id' => $projectId,
+            'status'     => 'tolangan',
+            'entered_at' => now(),
+            'changed_by' => auth()->id(),
+        ]);
+
+        $this->dispatch('notify', type: 'info', message: 'Loyiha jarayonga qaytarildi!');
     }
 
 
@@ -488,6 +536,7 @@ class KanbanBoard extends Page
         $project = Project::with('services')->find($projectId);
         $this->paymentToposyomkaUserId = $project?->services->where('service_name', 'toposyomka')->first()?->assigned_user_id;
         $this->paymentEskizUserId      = $project?->services->where('service_name', 'eskiz_loyiha')->first()?->assigned_user_id;
+        $this->paymentSelectedServices = []; // reset
 
         $this->showPaymentModal = true;
     }
@@ -532,6 +581,7 @@ class KanbanBoard extends Page
                 'method'       => $this->paymentMethod,
                 'note'         => trim($this->paymentNote) ?: null,
                 'created_by'   => auth()->id(),
+                'services'     => !empty($this->paymentSelectedServices) ? $this->paymentSelectedServices : null,
             ]);
 
             PaymentLog::create([
@@ -783,16 +833,18 @@ class KanbanBoard extends Page
         ]);
 
         foreach ($this->services as $key => $srv) {
-            $hasTiers = !empty($srv['has_tiers']);
+            $hasTiers    = !empty($srv['has_tiers']);
+            $customPrice = (float) ($srv['custom_price'] ?? 0);
             $included = $hasTiers
-                ? !empty($srv['selected_tiers']) && !empty($srv['price'])
+                ? ($customPrice > 0) || (!empty($srv['selected_tiers']) && !empty($srv['price']))
                 : !empty($srv['selected']);
             if (!$included) continue;
 
-            $price          = (float) ($srv['price'] ?? 0);
-            $discountType   = $srv['discount_type'] ?? 'none';
-            $discountValue  = (float) ($srv['discount_value']  ?? 0);
-            $discountAmount = (float) ($srv['discount_amount'] ?? 0);
+            // Ixtiyoriy narx berilgan bo'lsa — ustun turadi
+            $price          = $customPrice > 0 ? $customPrice : (float) ($srv['price'] ?? 0);
+            $discountType   = $customPrice > 0 ? 'none' : ($srv['discount_type'] ?? 'none');
+            $discountValue  = $customPrice > 0 ? 0 : (float) ($srv['discount_value']  ?? 0);
+            $discountAmount = $customPrice > 0 ? 0 : (float) ($srv['discount_amount'] ?? 0);
             $finalPrice     = ($discountType !== 'none') ? ($price - $discountAmount) : $price;
 
             ProjectService::create([
@@ -906,6 +958,12 @@ class KanbanBoard extends Page
                 ->get();
         }
 
-        return compact('statuses', 'routeStatuses', 'projects', 'users', 'serviceOptions', 'categoryOptions', 'priceTiers', 'paymentQueue');
+        $existingOwners = Project::distinct()
+            ->orderBy('owner_name')
+            ->pluck('owner_name')
+            ->filter()
+            ->values();
+
+        return compact('statuses', 'routeStatuses', 'projects', 'users', 'serviceOptions', 'categoryOptions', 'priceTiers', 'paymentQueue', 'existingOwners');
     }
 }

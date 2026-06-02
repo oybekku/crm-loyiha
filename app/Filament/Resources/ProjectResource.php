@@ -257,12 +257,6 @@ class ProjectResource extends Resource
                     ->formatStateUsing(fn($state) => Project::statusOptions()[$state] ?? $state)
                     ->colors($statusColors),
 
-                Tables\Columns\TextColumn::make('assignedUsers.name')
-                    ->label("Hodimlar")
-                    ->listWithLineBreaks()
-                    ->limitList(2)
-                    ->default('—'),
-
                 Tables\Columns\TextColumn::make('total_price')
                     ->label('Umumiy')
                     ->formatStateUsing(fn($state) => number_format($state, 0, '.', ' ') . " so'm")
@@ -278,6 +272,47 @@ class ProjectResource extends Resource
                     ->label('Sana')
                     ->date('d.m.Y')
                     ->sortable(),
+
+                Tables\Columns\TextColumn::make('services_performance')
+                    ->label('Ish ko\'rsatkichi')
+                    ->html()
+                    ->state(function (Project $record): string {
+                        $record->loadMissing(['services.assignedUser', 'statusLogs']);
+                        $rows = '';
+                        foreach ($record->services as $svc) {
+                            if (!$svc->assigned_user_id) continue;
+
+                            $name = $svc->assignedUser?->name ?? '—';
+                            $log  = $record->statusLogs
+                                ->where('status', $svc->service_name)
+                                ->first();
+
+                            $svcLabel = \App\Models\Project::serviceOptions()[$svc->service_name] ?? $svc->service_name;
+                            $given    = $svc->deadline_days;
+
+                            if ($svc->work_started_at && $svc->deadline_days) {
+                                if ($log?->left_at) {
+                                    $took = (int) \Carbon\Carbon::parse($svc->work_started_at)->diffInDays($log->left_at);
+                                    $diff = $took - $given;
+                                    $badge = $diff <= 0
+                                        ? "<span style='background:#dcfce7;color:#16a34a;border-radius:4px;padding:1px 5px;font-size:10px;font-weight:700'>✓ {$took}/{$given} kun</span>"
+                                        : "<span style='background:#fee2e2;color:#dc2626;border-radius:4px;padding:1px 5px;font-size:10px;font-weight:700'>+{$diff} kun kechikdi</span>";
+                                } else {
+                                    $elapsed = (int) \Carbon\Carbon::parse($svc->work_started_at)->diffInDays(now());
+                                    $diff    = $elapsed - $given;
+                                    $badge = $diff > 0
+                                        ? "<span style='background:#fef3c7;color:#d97706;border-radius:4px;padding:1px 5px;font-size:10px;font-weight:700'>⏳ +{$diff} kun</span>"
+                                        : "<span style='background:#e0f2fe;color:#0284c7;border-radius:4px;padding:1px 5px;font-size:10px;font-weight:700'>⏳ {$elapsed}/{$given} kun</span>";
+                                }
+                            } else {
+                                $badge = "<span style='background:#f3f4f6;color:#9ca3af;border-radius:4px;padding:1px 5px;font-size:10px'>—</span>";
+                            }
+
+                            $rows .= "<div style='font-size:11px;margin-bottom:3px'><span style='color:#6b7280'>{$svcLabel}:</span> <span style='font-weight:600'>{$name}</span> {$badge}</div>";
+                        }
+                        return $rows ?: '<span style="color:#d1d5db;font-size:11px">—</span>';
+                    })
+                    ->toggleable(isToggledHiddenByDefault: false),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
