@@ -1433,7 +1433,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                 Muddat: {{ $serviceAssignData[$svc->id]['days'] }} kun
                 @if($svc->work_started_at)
                 · Boshlangan: {{ $svc->work_started_at->format('d.m.Y') }}
-                · Tugash: {{ $svc->work_started_at->addDays($serviceAssignData[$svc->id]['days'])->format('d.m.Y') }}
+                · Tugash: {{ $svc->work_started_at->copy()->addDays((int)$serviceAssignData[$svc->id]['days'])->format('d.m.Y') }}
                 @endif
             </div>
             @endif
