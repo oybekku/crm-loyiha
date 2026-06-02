@@ -458,6 +458,11 @@
             <div style="font-size:24px;font-weight:900;color:#059669">{{ number_format($firmIncome, 0, '.', ' ') }}</div>
             <div style="font-size:11px;color:#059669;margin-top:4px;font-weight:700">Firma sof daromadi (so'm)</div>
         </div>
+        <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:16px;text-align:center">
+            <div style="font-size:22px;font-weight:800;color:#ea580c">{{ $pendingProjectsCount }}</div>
+            <div style="font-size:11px;color:#ea580c;margin-top:4px;font-weight:500">Qilinmagan loyihalar</div>
+            <div style="font-size:13px;font-weight:700;color:#9a3412;margin-top:6px">{{ number_format($pendingProjectsSum, 0, '.', ' ') }} so'm</div>
+        </div>
     </div>
 
     {{-- Foiz hisob --}}

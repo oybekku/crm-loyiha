@@ -332,12 +332,18 @@ class MonthlyReport extends Page
         $firmIncome        = $totalServicesSum - $totalCommissions;
         $projectsTotal     = $projects->count();
 
+        // Qilinmagan ishlar (arxivda emas, hali tugallanmagan)
+        $pendingProjectsSum = Project::whereNotIn('status', $archiveStatuses)
+            ->sum('total_price');
+        $pendingProjectsCount = Project::whereNotIn('status', $archiveStatuses)->count();
+
         $allUsers = User::orderBy('name')->get();
 
         return compact(
             'userStats', 'warnings', 'projects',
             'totalServicesSum', 'totalCommissions', 'totalAdvances',
-            'firmIncome', 'projectsTotal', 'allUsers'
+            'firmIncome', 'projectsTotal', 'allUsers',
+            'pendingProjectsSum', 'pendingProjectsCount'
         );
     }
 }
