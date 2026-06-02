@@ -533,39 +533,24 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 
             {{-- FOOTER: status label + per-service workers --}}
             @php
-                // Status log dan har bir xizmat tugash sanasini olamiz
-                $allStatusLogs = $project->statusLogs ?? collect();
                 $srvWorkers = $project->services
                     ->filter(fn($s) => $s->assignedUser)
-                    ->map(function($s) use ($serviceOptions, $statusKey, $allStatusLogs) {
-                        $daysLeft  = null;
-                        $isLate    = false;
-                        $isDone    = false;
-                        $tookDays  = null;
+                    ->map(function($s) use ($serviceOptions, $statusKey) {
+                        $daysLeft = null;
+                        $isLate   = false;
 
-                        $log = $allStatusLogs->where('status', $s->service_name)->first();
-
-                        if ($s->work_started_at && $s->deadline_days) {
-                            if ($log?->left_at) {
-                                // Xizmat tugagan — natijani ko'rsatamiz
-                                $isDone   = true;
-                                $tookDays = (int) \Carbon\Carbon::parse($s->work_started_at)->diffInDays($log->left_at);
-                                $isLate   = $tookDays > (int)$s->deadline_days;
-                            } elseif ($s->service_name === $statusKey) {
-                                // Faqat joriy status xizmatining timeri ko'rinadi
-                                $deadline = \Carbon\Carbon::parse($s->work_started_at)->addDays((int)$s->deadline_days);
-                                $daysLeft = (int) now()->diffInDays($deadline, false);
-                                $isLate   = $daysLeft < 0;
-                            }
+                        // Faqat joriy status ga mos xizmat uchun timer ko'rsatamiz
+                        if ($s->work_started_at && $s->deadline_days && $s->service_name === $statusKey) {
+                            $deadline = \Carbon\Carbon::parse($s->work_started_at)->addDays((int)$s->deadline_days);
+                            $daysLeft = (int) now()->diffInDays($deadline, false);
+                            $isLate   = $daysLeft < 0;
                         }
+
                         return [
                             'label'    => $serviceOptions[$s->service_name] ?? $s->service_name,
                             'name'     => $s->assignedUser->name,
                             'daysLeft' => $daysLeft,
                             'isLate'   => $isLate,
-                            'isDone'   => $isDone,
-                            'tookDays' => $tookDays,
-                            'given'    => (int)($s->deadline_days ?? 0),
                         ];
                     });
             @endphp
@@ -577,14 +562,8 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                     <div style="font-size:10px;line-height:1.6;display:flex;align-items:center;justify-content:flex-end;gap:4px">
                         <span style="color:#9ca3af">{{ $sw['label'] }}:</span>
                         <span style="font-weight:600;color:#374151">{{ $sw['name'] }}</span>
-                        @if($sw['isDone'])
-                            @if($sw['isLate'])
-                            <span style="font-size:10px;font-weight:700;color:#dc2626">+{{ $sw['tookDays'] - $sw['given'] }}k</span>
-                            @else
-                            <span style="font-size:10px;font-weight:700;color:#16a34a">✓{{ $sw['tookDays'] }}k</span>
-                            @endif
-                        @elseif($sw['daysLeft'] !== null)
-                            @if($sw['isLate'])
+                        @if($sw['daysLeft'] !== null)
+                                @if($sw['isLate'])
                             <span style="font-size:10px;font-weight:800;color:#dc2626;animation:blink-warn 1s ease-in-out infinite">{{ abs($sw['daysLeft']) }}k!</span>
                             @elseif($sw['daysLeft'] <= 3)
                             <span style="font-size:10px;font-weight:800;color:#dc2626;animation:blink-warn 1s ease-in-out infinite">{{ $sw['daysLeft'] }}k</span>
