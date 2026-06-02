@@ -354,10 +354,6 @@ class KanbanBoard extends Page
                 $this->addError('phones.0', "Noto'g'ri format. To'g'ri: +998901234567 (12 ta raqam)");
                 return;
             }
-            if (empty($this->deadline_days)) {
-                $this->showDeadlineConfirm = true;
-                return;
-            }
         }
         $this->showDeadlineConfirm = false;
         $this->step++;

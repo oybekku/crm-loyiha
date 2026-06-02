@@ -101,40 +101,22 @@ class ProjectResource extends Resource
                     Forms\Components\View::make('filament.forms.components.map-picker')
                         ->columnSpanFull(),
 
-                    Forms\Components\Placeholder::make('coordinates_display')
-                        ->label('Koordinatalar')
-                        ->content(function ($record) {
-                            if (!$record?->latitude || !$record?->longitude) {
-                                return new \Illuminate\Support\HtmlString(
-                                    '<span style="color:#9ca3af;font-size:13px">Xaritadan joy tanlanmagan</span>'
-                                );
-                            }
-                            $lat = number_format((float)$record->latitude, 6, '.', '');
-                            $lng = number_format((float)$record->longitude, 6, '.', '');
-                            $val = $lat . ', ' . $lng;
-                            return new \Illuminate\Support\HtmlString(
-                                "<div style='display:flex;align-items:center;gap:8px'>"
-                                . "<code style='background:#f3f4f6;padding:6px 12px;border-radius:6px;font-size:13px;font-family:monospace;flex:1'>{$val}</code>"
-                                . "<button type='button' onclick=\"navigator.clipboard.writeText('{$val}').then(()=>{this.textContent='✓ Nusxalandi!';setTimeout(()=>{this.textContent='Nusxalash'},2000)})\" "
-                                . "style='background:#f3f4f6;border:1px solid #e5e7eb;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;color:#374151;white-space:nowrap'>"
-                                . "Nusxalash</button>"
-                                . "</div>"
-                            );
-                        })
-                        ->columnSpanFull()
-                        ->visible(fn($record) => $record !== null),
+                    Forms\Components\View::make('filament.forms.components.coord-picker')
+                        ->columnSpanFull(),
 
-                    Forms\Components\Grid::make(2)->schema([
-                        Forms\Components\TextInput::make('latitude')
-                            ->label('Kenglik')
-                            ->numeric()->step(0.000001)
-                            ->placeholder('41.299800'),
+                    Forms\Components\TextInput::make('latitude')
+                        ->hiddenLabel()
+                        ->extraInputAttributes(['id' => 'fp-lat-input'])
+                        ->numeric()->step(0.000001)
+                        ->extraAttributes(['style' => 'display:none'])
+                        ->columnSpanFull(),
 
-                        Forms\Components\TextInput::make('longitude')
-                            ->label('Uzunlik')
-                            ->numeric()->step(0.000001)
-                            ->placeholder('69.240100'),
-                    ])->columnSpanFull(),
+                    Forms\Components\TextInput::make('longitude')
+                        ->hiddenLabel()
+                        ->extraInputAttributes(['id' => 'fp-lng-input'])
+                        ->numeric()->step(0.000001)
+                        ->extraAttributes(['style' => 'display:none'])
+                        ->columnSpanFull(),
 
                     Forms\Components\Repeater::make('phones')
                         ->label('Telefon raqamlar')

@@ -887,22 +887,6 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                 </div>
             </div>
 
-            @if($showDeadlineConfirm)
-            <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-                <span style="font-size:18px">⚠️</span>
-                <span style="flex:1;font-size:13px;color:#92400e;font-weight:500;min-width:180px">Muddat kiritilmagan. Muddat qo'ymasdan davom etasizmi?</span>
-                <div style="display:flex;gap:8px;flex-shrink:0">
-                    <button wire:click="nextStepWithoutDeadline"
-                            style="background:#2563eb;color:#fff;border:none;border-radius:7px;padding:7px 16px;font-size:13px;cursor:pointer;font-weight:500">
-                        Ha, davom et
-                    </button>
-                    <button wire:click="$set('showDeadlineConfirm', false)"
-                            style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;border-radius:7px;padding:7px 16px;font-size:13px;cursor:pointer">
-                        Yo'q, qaytaman
-                    </button>
-                </div>
-            </div>
-            @endif
 
             {{-- Fayl yuklash --}}
             <div>
