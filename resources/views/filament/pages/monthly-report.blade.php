@@ -704,6 +704,63 @@
         </div>
     </div>
 
+    {{-- QILINMAGAN ISHLAR --}}
+    @php
+        $dPending = $ds['pending_items'] ?? [];
+        $dPendingCnt = $ds['pending_count'] ?? 0;
+        $dPendingSum = $ds['pending_sum'] ?? 0;
+    @endphp
+    @if($dPendingCnt > 0)
+    <div style="padding:16px 24px;border-top:1px solid #e5e7eb">
+        <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+            <svg width="14" height="14" fill="none" stroke="#f97316" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Qilinmagan ishlar
+            <span style="background:#fff7ed;color:#ea580c;font-size:11px;border-radius:6px;padding:2px 8px">{{ $dPendingCnt }} ta · {{ number_format($dPendingSum,0,'.',' ') }} so'm</span>
+        </div>
+        <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead>
+                <tr style="background:#fff7ed">
+                    <th style="padding:7px 10px;text-align:left;color:#9a3412;font-weight:600">Loyiha / Egasi</th>
+                    <th style="padding:7px 10px;text-align:left;color:#9a3412;font-weight:600">Xizmat</th>
+                    <th style="padding:7px 10px;text-align:right;color:#9a3412;font-weight:600">Narx</th>
+                    <th style="padding:7px 10px;text-align:center;color:#9a3412;font-weight:600">Holat</th>
+                    <th style="padding:7px 10px;text-align:center;color:#9a3412;font-weight:600">Vaqt</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($dPending as $pi)
+                <tr style="border-bottom:1px solid #fef3c7">
+                    <td style="padding:6px 10px">
+                        <div style="font-weight:600;font-size:11px;font-family:monospace;color:#374151">{{ $pi['project_number'] }}</div>
+                        <div style="font-size:11px;color:#6b7280">{{ $pi['owner_name'] }}</div>
+                    </td>
+                    <td style="padding:6px 10px;color:#374151">{{ $pi['service_label'] }}</td>
+                    <td style="padding:6px 10px;text-align:right;font-weight:600;color:#111827">{{ number_format($pi['price'],0,'.',' ') }}</td>
+                    <td style="padding:6px 10px;text-align:center">
+                        <span style="font-size:10px;background:#e0f2fe;color:#0284c7;border-radius:4px;padding:2px 6px">{{ $pi['status'] }}</span>
+                    </td>
+                    <td style="padding:6px 10px;text-align:center">
+                        @if($pi['days_left'] !== null)
+                            @if($pi['is_late'])
+                            <span style="font-size:10px;font-weight:700;background:#fee2e2;color:#dc2626;border-radius:4px;padding:2px 6px;white-space:nowrap">{{ $pi['late_days'] }} kun kechikdi</span>
+                            @elseif($pi['days_left'] <= 3)
+                            <span style="font-size:10px;font-weight:700;background:#fef3c7;color:#d97706;border-radius:4px;padding:2px 6px;white-space:nowrap">{{ $pi['days_left'] }} kun qoldi</span>
+                            @else
+                            <span style="font-size:10px;background:#f0fdf4;color:#16a34a;border-radius:4px;padding:2px 6px;white-space:nowrap">{{ $pi['days_left'] }} kun</span>
+                            @endif
+                        @else
+                        <span style="color:#d1d5db;font-size:11px">—</span>
+                        @endif
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+        </div>
+    </div>
+    @endif
+
     {{-- ISH HAQI TO'LOVLARI --}}
     <div style="padding:16px 24px;border-top:1px solid #e5e7eb">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">

@@ -312,13 +312,30 @@ class MonthlyReport extends Page
 
             $stat['pending_count'] = $pendingServices->count();
             $stat['pending_sum']   = (float) $pendingServices->sum('final_price');
-            $stat['pending_items'] = $pendingServices->map(fn($s) => [
-                'project_number' => $s->project?->number,
-                'owner_name'     => $s->project?->owner_name,
-                'service_label'  => $s->service_label,
-                'price'          => (float)$s->final_price,
-                'status'         => $s->project?->status,
-            ])->toArray();
+            $stat['pending_items'] = $pendingServices->map(function($s) {
+                $daysLeft = null;
+                $isLate   = false;
+                $lateDays = 0;
+                if ($s->work_started_at && $s->deadline_days) {
+                    $deadline = \Carbon\Carbon::parse($s->work_started_at)->addDays((int)$s->deadline_days);
+                    $diff = (int) now()->diffInDays($deadline, false);
+                    $isLate   = $diff < 0;
+                    $daysLeft = $diff;
+                    $lateDays = $isLate ? abs($diff) : 0;
+                }
+                return [
+                    'project_number' => $s->project?->number,
+                    'owner_name'     => $s->project?->owner_name,
+                    'service_label'  => $s->service_label,
+                    'price'          => (float)$s->final_price,
+                    'status'         => $s->project?->status,
+                    'days_left'      => $daysLeft,
+                    'is_late'        => $isLate,
+                    'late_days'      => $lateDays,
+                    'deadline_days'  => $s->deadline_days,
+                    'work_started'   => $s->work_started_at,
+                ];
+            })->toArray();
         }
         unset($stat);
 
