@@ -761,6 +761,7 @@
         </table>
         </div>
     </div>
+    @endif
     {{-- ISH HAQI TO'LOVLARI --}}
     <div style="padding:16px 24px;border-top:1px solid #e5e7eb">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
