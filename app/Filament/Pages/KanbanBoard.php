@@ -236,20 +236,13 @@ class KanbanBoard extends Page
 
             $userId = $data['user_id'] ?: null;
             $days   = max(1, (int)($data['days'] ?? 7));
-            $startedAt = $svc->work_started_at;
-            if ($userId && !$svc->assigned_user_id) {
-                $startedAt = $now;
-            }
-            if (!$userId) {
-                $startedAt = null;
-            }
 
+            // work_started_at faqat status o'zgarganda belgilanadi — bu yerda o'zgartirmaymiz
             \Illuminate\Support\Facades\DB::table('project_services')
                 ->where('id', $svcId)
                 ->update([
                     'assigned_user_id' => $userId,
                     'deadline_days'    => $days,
-                    'work_started_at'  => $startedAt,
                 ]);
 
             if ($userId) {
@@ -918,7 +911,7 @@ class KanbanBoard extends Page
             $statuses = [$this->filterStatus => $statuses[$this->filterStatus]];
         }
 
-        $projectQuery = Project::with(['assignedUsers', 'services.assignedUser', 'currentStatusLog', 'payments'])
+        $projectQuery = Project::with(['assignedUsers', 'services.assignedUser', 'currentStatusLog', 'payments', 'statusLogs'])
             ->orderBy('created_at', 'desc');
 
         // Qidiruv filtri
