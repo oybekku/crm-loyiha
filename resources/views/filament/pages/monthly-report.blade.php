@@ -406,6 +406,71 @@
     @endif
 </div>
 
+{{-- FIRMA HISOBOTI --}}
+<div class="mr-card">
+    <div style="font-size:15px;font-weight:700;color:#111827;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+        <svg width="16" height="16" fill="none" stroke="#059669" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+        Firma hisoboti
+        <span style="font-size:12px;font-weight:400;color:#9ca3af">{{ \Carbon\Carbon::createFromFormat('Y-m', $selectedMonth)->translatedFormat('F Y') }}</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px">
+        <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:16px;text-align:center">
+            <div style="font-size:26px;font-weight:800;color:#15803d">{{ $projectsTotal }}</div>
+            <div style="font-size:11px;color:#16a34a;margin-top:4px;font-weight:500">To'langan loyihalar</div>
+        </div>
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px;text-align:center">
+            <div style="font-size:22px;font-weight:800;color:#111827">{{ number_format($totalServicesSum, 0, '.', ' ') }}</div>
+            <div style="font-size:11px;color:#6b7280;margin-top:4px;font-weight:500">Jami tushum (so'm)</div>
+        </div>
+        <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:16px;text-align:center">
+            <div style="font-size:22px;font-weight:800;color:#d97706">{{ number_format($totalCommissions, 0, '.', ' ') }}</div>
+            <div style="font-size:11px;color:#d97706;margin-top:4px;font-weight:500">Hodimlar ulushi (so'm)</div>
+        </div>
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:16px;text-align:center">
+            <div style="font-size:22px;font-weight:800;color:#dc2626">{{ number_format($totalAdvances, 0, '.', ' ') }}</div>
+            <div style="font-size:11px;color:#dc2626;margin-top:4px;font-weight:500">Berilgan avanslar (so'm)</div>
+        </div>
+        <div style="background:#ecfdf5;border:2px solid #34d399;border-radius:10px;padding:16px;text-align:center">
+            <div style="font-size:24px;font-weight:900;color:#059669">{{ number_format($firmIncome, 0, '.', ' ') }}</div>
+            <div style="font-size:11px;color:#059669;margin-top:4px;font-weight:700">Firma sof daromadi (so'm)</div>
+        </div>
+    </div>
+
+    {{-- Foiz hisob --}}
+    @php
+        $commPct  = $totalServicesSum > 0 ? round($totalCommissions / $totalServicesSum * 100, 1) : 0;
+        $firmPct  = $totalServicesSum > 0 ? round($firmIncome / $totalServicesSum * 100, 1) : 0;
+        $advPct   = $totalCommissions > 0 ? round($totalAdvances / $totalCommissions * 100, 1) : 0;
+        $netAfterAdv = $firmIncome - $totalAdvances;
+    @endphp
+    <div style="background:#f8fafc;border-radius:10px;padding:14px 16px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+            <div style="font-size:12px;color:#6b7280;margin-bottom:4px">Hodimlar ulushi %</div>
+            <div style="height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;margin-bottom:4px">
+                <div style="height:100%;background:#f59e0b;width:{{ $commPct }}%;border-radius:4px"></div>
+            </div>
+            <div style="font-size:12px;font-weight:600;color:#d97706">{{ $commPct }}%</div>
+        </div>
+        <div>
+            <div style="font-size:12px;color:#6b7280;margin-bottom:4px">Firma ulushi %</div>
+            <div style="height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;margin-bottom:4px">
+                <div style="height:100%;background:#10b981;width:{{ $firmPct }}%;border-radius:4px"></div>
+            </div>
+            <div style="font-size:12px;font-weight:600;color:#059669">{{ $firmPct }}%</div>
+        </div>
+    </div>
+
+    @if($totalAdvances > 0)
+    <div style="margin-top:12px;background:#fef9ec;border:1px solid #fcd34d;border-radius:8px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:13px;color:#92400e">Avanslar chiqarilgandan keyin sof daromad:</span>
+        <span style="font-size:15px;font-weight:800;color:{{ $netAfterAdv >= 0 ? '#059669' : '#dc2626' }}">
+            {{ number_format($netAfterAdv, 0, '.', ' ') }} so'm
+        </span>
+    </div>
+    @endif
+</div>
+
 {{-- OGOHLANTIRISHLAR --}}
 @if($warnings->count() > 0)
 <div class="mr-card" style="border:1.5px solid #fca5a5">
