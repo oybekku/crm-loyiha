@@ -292,6 +292,31 @@ class MonthlyReport extends Page
         // Arxiv bo'lmagan statuslar
         $archiveStatuses = ['tugallangan', 'taqdim_etilgan', 'bekor_qilingan'];
 
+        // Kutayotgan ishlari bor lekin bu oyda tugallamagan hodimlarni ham qo'shamiz
+        $allAssignedUsers = \App\Models\ProjectService::whereNotNull('assigned_user_id')
+            ->whereHas('project', fn($q) => $q->whereNotIn('status', $archiveStatuses))
+            ->with('assignedUser')
+            ->get()
+            ->pluck('assignedUser')
+            ->filter()
+            ->unique('id');
+
+        foreach ($allAssignedUsers as $u) {
+            if (!isset($userStats[$u->id])) {
+                $userStats[$u->id] = [
+                    'user'           => $u,
+                    'project_ids'    => [],
+                    'services'       => [],
+                    'services_total' => 0.0,
+                    'commission'     => 0.0,
+                    'late_count'     => 0,
+                    'ontime_count'   => 0,
+                    'advances'       => collect(),
+                    'advance_total'  => 0.0,
+                ];
+            }
+        }
+
         foreach ($userStats as $uid => &$stat) {
             $stat['project_count'] = count(array_unique($stat['project_ids']));
 
