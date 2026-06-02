@@ -458,10 +458,27 @@
             <div style="font-size:24px;font-weight:900;color:#059669">{{ number_format($firmIncome, 0, '.', ' ') }}</div>
             <div style="font-size:11px;color:#059669;margin-top:4px;font-weight:700">Firma sof daromadi (so'm)</div>
         </div>
-        <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:16px;text-align:center">
-            <div style="font-size:22px;font-weight:800;color:#ea580c">{{ $pendingProjectsCount }}</div>
-            <div style="font-size:11px;color:#ea580c;margin-top:4px;font-weight:500">Qilinmagan loyihalar</div>
-            <div style="font-size:13px;font-weight:700;color:#9a3412;margin-top:6px">{{ number_format($pendingProjectsSum, 0, '.', ' ') }} so'm</div>
+        <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:16px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                <div style="font-size:28px;font-weight:900;color:#ea580c">{{ $pendingProjectsCount }}</div>
+                <div style="font-size:12px;color:#ea580c;font-weight:600">Qilinmagan<br>loyihalar</div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+                <span style="color:#6b7280">Jami summa</span>
+                <span style="font-weight:700;color:#9a3412">{{ number_format($pendingProjectsSum, 0, '.', ' ') }} so'm</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+                <span style="color:#6b7280">To'langan</span>
+                <span style="font-weight:700;color:#16a34a">{{ number_format($pendingProjectsPaid, 0, '.', ' ') }} so'm</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:8px">
+                <span style="color:#6b7280">Qolgan qarz</span>
+                <span style="font-weight:700;color:#dc2626">{{ number_format($pendingProjectsDebt, 0, '.', ' ') }} so'm</span>
+            </div>
+            <div style="background:#e5e7eb;border-radius:4px;height:6px;overflow:hidden">
+                <div style="height:100%;background:#f97316;border-radius:4px;width:{{ $pendingProjectsPct }}%"></div>
+            </div>
+            <div style="font-size:11px;color:#ea580c;margin-top:4px;font-weight:600;text-align:right">{{ $pendingProjectsPct }}% to'langan</div>
         </div>
     </div>
 

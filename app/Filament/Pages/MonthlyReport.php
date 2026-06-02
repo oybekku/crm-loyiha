@@ -385,9 +385,12 @@ class MonthlyReport extends Page
         $projectsTotal     = $projects->count();
 
         // Qilinmagan ishlar (arxivda emas, hali tugallanmagan)
-        $pendingProjectsSum = Project::whereNotIn('status', $archiveStatuses)
-            ->sum('total_price');
-        $pendingProjectsCount = Project::whereNotIn('status', $archiveStatuses)->count();
+        $pendingQuery         = Project::whereNotIn('status', $archiveStatuses);
+        $pendingProjectsSum   = (float) (clone $pendingQuery)->sum('total_price');
+        $pendingProjectsPaid  = (float) (clone $pendingQuery)->sum('paid_amount');
+        $pendingProjectsDebt  = $pendingProjectsSum - $pendingProjectsPaid;
+        $pendingProjectsPct   = $pendingProjectsSum > 0 ? round($pendingProjectsPaid / $pendingProjectsSum * 100) : 0;
+        $pendingProjectsCount = (clone $pendingQuery)->count();
 
         $allUsers = User::orderBy('name')->get();
 
@@ -395,7 +398,8 @@ class MonthlyReport extends Page
             'userStats', 'warnings', 'projects',
             'totalServicesSum', 'totalCommissions', 'totalAdvances',
             'firmIncome', 'projectsTotal', 'allUsers',
-            'pendingProjectsSum', 'pendingProjectsCount'
+            'pendingProjectsSum', 'pendingProjectsCount',
+            'pendingProjectsPaid', 'pendingProjectsDebt', 'pendingProjectsPct'
         );
     }
 }
