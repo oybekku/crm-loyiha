@@ -535,19 +535,39 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             @php
                 $srvWorkers = $project->services
                     ->filter(fn($s) => $s->assignedUser)
-                    ->map(fn($s) => [
-                        'label' => $serviceOptions[$s->service_name] ?? $s->service_name,
-                        'name'  => $s->assignedUser->name,
-                    ]);
+                    ->map(function($s) use ($serviceOptions) {
+                        $daysLeft = null;
+                        $isLate   = false;
+                        if ($s->work_started_at && $s->deadline_days) {
+                            $deadline = \Carbon\Carbon::parse($s->work_started_at)->addDays((int)$s->deadline_days);
+                            $daysLeft = (int) now()->diffInDays($deadline, false);
+                            $isLate   = $daysLeft < 0;
+                        }
+                        return [
+                            'label'    => $serviceOptions[$s->service_name] ?? $s->service_name,
+                            'name'     => $s->assignedUser->name,
+                            'daysLeft' => $daysLeft,
+                            'isLate'   => $isLate,
+                        ];
+                    });
             @endphp
             <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;gap:8px">
                 <span class="p-status-pill" style="flex-shrink:0">{{ $status['label'] }}</span>
                 @if($srvWorkers->count() > 0)
                 <div style="text-align:right">
                     @foreach($srvWorkers as $sw)
-                    <div style="font-size:10px;line-height:1.5">
+                    <div style="font-size:10px;line-height:1.6;display:flex;align-items:center;justify-content:flex-end;gap:4px">
                         <span style="color:#9ca3af">{{ $sw['label'] }}:</span>
-                        <span style="font-weight:600;color:#374151;margin-left:3px">{{ $sw['name'] }}</span>
+                        <span style="font-weight:600;color:#374151">{{ $sw['name'] }}</span>
+                        @if($sw['daysLeft'] !== null)
+                            @if($sw['isLate'])
+                            <span style="font-size:10px;font-weight:800;color:#dc2626;animation:blink-warn 1s ease-in-out infinite">{{ abs($sw['daysLeft'] )}}k!</span>
+                            @elseif($sw['daysLeft'] <= 3)
+                            <span style="font-size:10px;font-weight:800;color:#dc2626;animation:blink-warn 1s ease-in-out infinite">{{ $sw['daysLeft'] }}k</span>
+                            @else
+                            <span style="font-size:10px;font-weight:600;color:#16a34a">{{ $sw['daysLeft'] }}k</span>
+                            @endif
+                        @endif
                     </div>
                     @endforeach
                 </div>

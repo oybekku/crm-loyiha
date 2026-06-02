@@ -264,9 +264,14 @@ class ProjectResource extends Resource
                                 } else {
                                     $elapsed = (int) \Carbon\Carbon::parse($svc->work_started_at)->diffInDays(now());
                                     $diff    = $elapsed - $given;
-                                    $badge   = $diff > 0
-                                        ? "<span style='background:#fef3c7;color:#d97706;border-radius:4px;padding:1px 5px;font-size:10px;font-weight:700'>⏳ +{$diff} kun</span>"
-                                        : "<span style='background:#e0f2fe;color:#0284c7;border-radius:4px;padding:1px 5px;font-size:10px;font-weight:700'>⏳ {$elapsed}/{$given} kun</span>";
+                                    $remaining = $given - $elapsed;
+                                    if ($diff > 0) {
+                                        $badge = "<span style='background:#fee2e2;color:#dc2626;border-radius:4px;padding:1px 5px;font-size:10px;font-weight:700;animation:blink-warn 1s ease-in-out infinite;display:inline-block'>+{$diff} kun!</span>";
+                                    } elseif ($remaining <= 3) {
+                                        $badge = "<span style='background:#fee2e2;color:#dc2626;border-radius:4px;padding:1px 5px;font-size:10px;font-weight:700;animation:blink-warn 1s ease-in-out infinite;display:inline-block'>{$remaining} kun</span>";
+                                    } else {
+                                        $badge = "<span style='background:#e0f2fe;color:#0284c7;border-radius:4px;padding:1px 5px;font-size:10px;font-weight:700'>⏳ {$elapsed}/{$given} kun</span>";
+                                    }
                                 }
                             } else {
                                 $badge = "<span style='background:#f3f4f6;color:#9ca3af;border-radius:4px;padding:1px 5px;font-size:10px'>—</span>";
