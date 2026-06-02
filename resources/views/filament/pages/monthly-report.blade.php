@@ -723,7 +723,8 @@
                 <tr style="background:#fff7ed">
                     <th style="padding:7px 10px;text-align:left;color:#9a3412;font-weight:600">Loyiha / Egasi</th>
                     <th style="padding:7px 10px;text-align:left;color:#9a3412;font-weight:600">Xizmat</th>
-                    <th style="padding:7px 10px;text-align:right;color:#9a3412;font-weight:600">Narx</th>
+                    <th style="padding:7px 10px;text-align:right;color:#9a3412;font-weight:600">Loyiha narxi</th>
+                    <th style="padding:7px 10px;text-align:right;color:#9a3412;font-weight:600">Mening ulushim</th>
                     <th style="padding:7px 10px;text-align:center;color:#9a3412;font-weight:600">Holat</th>
                     <th style="padding:7px 10px;text-align:center;color:#9a3412;font-weight:600">Vaqt</th>
                 </tr>
@@ -736,7 +737,8 @@
                         <div style="font-size:11px;color:#6b7280">{{ $pi['owner_name'] }}</div>
                     </td>
                     <td style="padding:6px 10px;color:#374151">{{ $pi['service_label'] }}</td>
-                    <td style="padding:6px 10px;text-align:right;font-weight:600;color:#111827">{{ number_format($pi['price'],0,'.',' ') }}</td>
+                    <td style="padding:6px 10px;text-align:right;color:#9ca3af;font-size:11px">{{ number_format($pi['price'],0,'.',' ') }}</td>
+                    <td style="padding:6px 10px;text-align:right;font-weight:700;color:#d97706">{{ number_format($pi['my_share'] ?? 0,0,'.',' ') }}</td>
                     <td style="padding:6px 10px;text-align:center">
                         <span style="font-size:10px;background:#e0f2fe;color:#0284c7;border-radius:4px;padding:2px 6px">{{ $pi['status'] }}</span>
                     </td>
@@ -759,8 +761,6 @@
         </table>
         </div>
     </div>
-    @endif
-
     {{-- ISH HAQI TO'LOVLARI --}}
     <div style="padding:16px 24px;border-top:1px solid #e5e7eb">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">

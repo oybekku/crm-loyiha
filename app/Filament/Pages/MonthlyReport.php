@@ -193,7 +193,7 @@ class MonthlyReport extends Page
     {
         [$year, $month] = explode('-', $this->selectedMonth);
 
-        // tolangan va tugallangan — ikkalasi ham hisobga olinadi
+        // Faqat HOZIR ham tugallangan/tolangan statusda turgan loyihalar
         $tolanganLogs = ProjectStatusLog::whereIn('status', ['tolangan', 'tugallangan'])
             ->whereYear('entered_at', $year)
             ->whereMonth('entered_at', $month)
@@ -206,9 +206,14 @@ class MonthlyReport extends Page
             ->keyBy('project_id')
             ->map(fn($l) => $l->entered_at);
 
+        // Qo'shimcha filtr: loyiha hozir ham arxiv statusida bo'lishi shart
         $projects = Project::with(['services.assignedUser', 'payments'])
             ->whereIn('id', $projectIds)
+            ->whereIn('status', ['tolangan', 'tugallangan', 'taqdim_etilgan'])
             ->get();
+
+        // Status log da bor lekin hozir arxivda emas — lardan projectIds ni yangilaymiz
+        $projectIds = $projects->pluck('id');
 
         // Avanslar: bu oy berilganlar, user_id bo'yicha guruh
         // Avans o'rniga ish haqi to'lovlari ishlatiladi
@@ -323,11 +328,16 @@ class MonthlyReport extends Page
                     $daysLeft = $diff;
                     $lateDays = $isLate ? abs($diff) : 0;
                 }
+                $rate = (float) ($s->assignedUser->commission_rate ?? 20);
+                if (in_array($s->assignedUser?->role, ['admin', 'menejer'])) $rate = 0;
+                $myShare = round((float)$s->final_price * $rate / 100, 0);
                 return [
                     'project_number' => $s->project?->number,
                     'owner_name'     => $s->project?->owner_name,
                     'service_label'  => $s->service_label,
                     'price'          => (float)$s->final_price,
+                    'my_share'       => $myShare,
+                    'rate'           => $rate,
                     'status'         => $s->project?->status,
                     'days_left'      => $daysLeft,
                     'is_late'        => $isLate,
