@@ -1493,15 +1493,34 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                 <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:8px">Qaysi xizmat uchun to'lov?</label>
                 <div style="display:flex;flex-direction:column;gap:6px">
                     @foreach($payProj->services as $svc)
-                    <label style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;font-size:13px;transition:border-color .15s"
-                           :style="$wire.paymentSelectedServices.includes('{{ $svc->service_name }}') ? 'border-color:#2563eb;background:#eff6ff' : ''">
-                        <input type="checkbox"
-                               wire:model.live="paymentSelectedServices"
-                               value="{{ $svc->service_name }}"
-                               style="width:15px;height:15px;cursor:pointer;accent-color:#2563eb">
-                        <span style="font-weight:600">{{ \App\Models\Project::serviceOptions()[$svc->service_name] ?? $svc->service_name }}</span>
-                        <span style="margin-left:auto;font-size:12px;color:#6b7280">{{ number_format($svc->final_price, 0, '.', ' ') }} so'm</span>
-                    </label>
+                    <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:8px 12px;transition:border-color .15s"
+                         :style="$wire.paymentSelectedServices.includes('{{ $svc->service_name }}') ? 'border-color:#2563eb;background:#eff6ff' : ''">
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+                            <input type="checkbox"
+                                   wire:model.live="paymentSelectedServices"
+                                   value="{{ $svc->service_name }}"
+                                   style="width:15px;height:15px;cursor:pointer;accent-color:#2563eb">
+                            <span style="font-weight:600">{{ \App\Models\Project::serviceOptions()[$svc->service_name] ?? $svc->service_name }}</span>
+                            <span style="margin-left:auto;font-size:12px;color:#6b7280">{{ number_format($svc->final_price, 0, '.', ' ') }} so'm</span>
+                        </label>
+                        @if(auth()->user()?->isAdmin())
+                        <div style="display:flex;align-items:center;gap:6px;margin-top:6px">
+                            <span style="font-size:11px;color:#9ca3af;white-space:nowrap">Tuzatish:</span>
+                            <input wire:model.live="paymentAdjustments.{{ $svc->id }}"
+                                   type="number"
+                                   placeholder="+5000 yoki -5000"
+                                   style="flex:1;border:1px solid #e5e7eb;border-radius:6px;padding:4px 8px;font-size:12px;outline:none"
+                                   onfocus="this.style.borderColor='#2563eb'" onblur="this.style.borderColor='#e5e7eb'">
+                            <span style="font-size:11px;color:#9ca3af">so'm</span>
+                            @if(!empty($paymentAdjustments[$svc->id]) && (float)($paymentAdjustments[$svc->id] ?? 0) != 0)
+                            @php $adj = (float)($paymentAdjustments[$svc->id] ?? 0); @endphp
+                            <span style="font-size:11px;font-weight:700;color:{{ $adj > 0 ? '#16a34a' : '#dc2626' }};white-space:nowrap">
+                                → {{ number_format($svc->final_price + $adj, 0, '.', ' ') }} so'm
+                            </span>
+                            @endif
+                        </div>
+                        @endif
+                    </div>
                     @endforeach
                 </div>
             </div>

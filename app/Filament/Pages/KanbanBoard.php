@@ -72,6 +72,7 @@ class KanbanBoard extends Page
     public ?int   $paymentToposyomkaUserId  = null;
     public ?int   $paymentEskizUserId       = null;
     public array  $paymentSelectedServices  = []; // tanlangan xizmatlar
+    public array  $paymentAdjustments       = []; // service_id => +/- summa (faqat admin)
     public bool   $paymentAmountConfirm    = false;
 
     // Edit payment modal state
@@ -552,6 +553,7 @@ class KanbanBoard extends Page
         $this->paymentToposyomkaUserId = $project?->services->where('service_name', 'toposyomka')->first()?->assigned_user_id;
         $this->paymentEskizUserId      = $project?->services->where('service_name', 'eskiz_loyiha')->first()?->assigned_user_id;
         $this->paymentSelectedServices = []; // reset
+        $this->paymentAdjustments      = []; // reset
 
         $this->showPaymentModal = true;
     }
@@ -569,6 +571,18 @@ class KanbanBoard extends Page
     {
         $project = Project::find($this->paymentProjectId);
         if (!$project) return;
+
+        // Admin: xizmat narxlarini tuzatish (+ yoki -)
+        if (auth()->user()?->isAdmin() && !empty($this->paymentAdjustments)) {
+            foreach ($this->paymentAdjustments as $svcId => $adj) {
+                $adj = (float) str_replace([' ', ','], '', $adj ?? '');
+                if ($adj == 0) continue;
+                $svc = \App\Models\ProjectService::find($svcId);
+                if (!$svc || $svc->project_id !== $project->id) continue;
+                $newFinal = max(0, (float)$svc->final_price + $adj);
+                $svc->update(['final_price' => $newFinal, 'price' => $newFinal]);
+            }
+        }
 
         $hasAmount = filled($this->paymentAmount) && (float)$this->paymentAmount > 0;
 
@@ -806,7 +820,7 @@ class KanbanBoard extends Page
     public function createProject(): void
     {
         $user = auth()->user();
-        if ($user?->isHisobchi() || $user?->isBajaruvchi()) {
+        if ($user?->isHisobchi()) {
             $this->showModal = false;
             return;
         }
