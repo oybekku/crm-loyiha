@@ -447,11 +447,32 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             </div>
             @endif
 
-            {{-- SERVICES --}}
+            {{-- SERVICES + qolgan kunlar --}}
             @if($project->services->count())
-            <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:5px">
+            <div style="display:flex;flex-direction:column;gap:3px;margin-bottom:5px">
                 @foreach($project->services->take(4) as $srv)
-                <span class="p-srv-tag-v2">{{ $serviceOptions[$srv->service_name] ?? $srv->service_name }}</span>
+                @php
+                    $srvLabel = $serviceOptions[$srv->service_name] ?? $srv->service_name;
+                    $daysLeft = null;
+                    $isLate   = false;
+                    if ($srv->work_started_at && $srv->deadline_days) {
+                        $deadline = \Carbon\Carbon::parse($srv->work_started_at)->addDays((int)$srv->deadline_days);
+                        $daysLeft = (int) now()->diffInDays($deadline, false);
+                        $isLate   = $daysLeft < 0;
+                    }
+                @endphp
+                <div style="display:flex;align-items:center;gap:4px">
+                    <span class="p-srv-tag-v2">{{ $srvLabel }}</span>
+                    @if($daysLeft !== null)
+                        @if($isLate)
+                        <span style="font-size:10px;font-weight:700;background:#fee2e2;color:#dc2626;border-radius:4px;padding:1px 5px;white-space:nowrap">{{ abs($daysLeft) }} kun kechikdi</span>
+                        @elseif($daysLeft === 0)
+                        <span style="font-size:10px;font-weight:700;background:#fef3c7;color:#d97706;border-radius:4px;padding:1px 5px;white-space:nowrap">Bugun tugaydi</span>
+                        @else
+                        <span style="font-size:10px;font-weight:600;background:#f0fdf4;color:#16a34a;border-radius:4px;padding:1px 5px;white-space:nowrap">{{ $daysLeft }} kun qoldi</span>
+                        @endif
+                    @endif
+                </div>
                 @endforeach
                 @if($project->services->count() > 4)
                 <span class="p-srv-tag-v2">+{{ $project->services->count() - 4 }}</span>
