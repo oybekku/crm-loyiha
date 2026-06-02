@@ -1,12 +1,18 @@
 <div x-data="{
     combined: '',
     init() {
-        // Sahifa yuklanganda yashirin fieldlardan qiymat olish
-        this.$nextTick(() => {
+        // Sahifa yuklanganda yashirin fieldlardan qiymat olish (Livewire to'ldirishini kutamiz)
+        var self = this;
+        var tryRead = function(attempt) {
             var lat = document.getElementById('fp-lat-input')?.value || '';
             var lng = document.getElementById('fp-lng-input')?.value || '';
-            if (lat && lng) this.combined = lat + ', ' + lng;
-        });
+            if (lat && lng) {
+                self.combined = parseFloat(lat).toFixed(6) + ', ' + parseFloat(lng).toFixed(6);
+            } else if (attempt < 10) {
+                setTimeout(function() { tryRead(attempt + 1); }, 200);
+            }
+        };
+        setTimeout(function() { tryRead(0); }, 300);
 
         // bh-fill-address kabi hodisa orqali yangilash
         window.addEventListener('bh-fill-coords', (e) => {
