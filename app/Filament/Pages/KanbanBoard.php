@@ -237,12 +237,38 @@ class KanbanBoard extends Page
             $userId = $data['user_id'] ?: null;
             $days   = max(1, (int)($data['days'] ?? 7));
 
-            // work_started_at faqat status o'zgarganda belgilanadi — bu yerda o'zgartirmaymiz
+            // work_started_at logikasi:
+            // 1. Loyiha hozir o'sha statusda → hozirdan boshlash
+            // 2. Loyiha o'sha statusdan o'tib ketgan → status log dan olish
+            // 3. Status hali kelmagan → NULL (⌛ kutmoqda)
+            $startedAt = $svc->work_started_at; // mavjudni saqlash
+            if ($userId && !$startedAt) {
+                $project = Project::find($this->serviceAssignProjectId);
+                if ($project) {
+                    $log = \App\Models\ProjectStatusLog::where('project_id', $project->id)
+                        ->where('status', $svc->service_name)
+                        ->orderBy('entered_at')
+                        ->first();
+                    if ($log) {
+                        // Status o'tilgan — log dan olish
+                        $startedAt = $log->entered_at;
+                    } elseif ($project->status === $svc->service_name) {
+                        // Hozir shu statusda
+                        $startedAt = $now;
+                    }
+                    // Aks holda NULL qoladi (⌛)
+                }
+            }
+            if (!$userId) {
+                $startedAt = null;
+            }
+
             \Illuminate\Support\Facades\DB::table('project_services')
                 ->where('id', $svcId)
                 ->update([
                     'assigned_user_id' => $userId,
                     'deadline_days'    => $days,
+                    'work_started_at'  => $startedAt,
                 ]);
 
             if ($userId) {
@@ -804,6 +830,8 @@ class KanbanBoard extends Page
             'owner_name'       => trim($this->owner_name),
             'title'            => trim($this->proj_title) ?: null,
             'address'          => trim($this->address),
+            'latitude'         => $this->latitude ? (float)$this->latitude : null,
+            'longitude'        => $this->longitude ? (float)$this->longitude : null,
             'phones'           => $phones,
             'description'      => trim($this->description) ?: null,
             'category'         => $this->category,

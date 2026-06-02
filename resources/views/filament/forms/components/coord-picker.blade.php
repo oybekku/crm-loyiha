@@ -1,18 +1,15 @@
 <div x-data="{
     combined: '',
     init() {
-        // Sahifa yuklanganda yashirin fieldlardan qiymat olish (Livewire to'ldirishini kutamiz)
-        var self = this;
-        var tryRead = function(attempt) {
-            var lat = document.getElementById('fp-lat-input')?.value || '';
-            var lng = document.getElementById('fp-lng-input')?.value || '';
-            if (lat && lng) {
-                self.combined = parseFloat(lat).toFixed(6) + ', ' + parseFloat(lng).toFixed(6);
-            } else if (attempt < 10) {
-                setTimeout(function() { tryRead(attempt + 1); }, 200);
-            }
-        };
-        setTimeout(function() { tryRead(0); }, 300);
+        // Record dan to'g'ridan qiymat o'qish
+        @php
+            $record = $getRecord();
+            $initLat = $record?->latitude ? number_format((float)$record->latitude, 6, '.', '') : '';
+            $initLng = $record?->longitude ? number_format((float)$record->longitude, 6, '.', '') : '';
+        @endphp
+        @if($initLat && $initLng)
+        this.combined = '{{ $initLat }}, {{ $initLng }}';
+        @endif
 
         // bh-fill-address kabi hodisa orqali yangilash
         window.addEventListener('bh-fill-coords', (e) => {

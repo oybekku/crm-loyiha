@@ -453,23 +453,32 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                 @foreach($project->services->take(4) as $srv)
                 @php
                     $srvLabel = $serviceOptions[$srv->service_name] ?? $srv->service_name;
-                    $daysLeft = null;
-                    $isLate   = false;
-                    if ($srv->work_started_at && $srv->deadline_days) {
-                        $deadline = \Carbon\Carbon::parse($srv->work_started_at)->addDays((int)$srv->deadline_days);
-                        $daysLeft = (int) now()->diffInDays($deadline, false);
-                        $isLate   = $daysLeft < 0;
+                    $daysLeft  = null;
+                    $isLate    = false;
+                    $isWaiting = false;
+                    if ($srv->deadline_days && $srv->assigned_user_id) {
+                        if ($srv->work_started_at) {
+                            // Hisoblash boshlangan
+                            $deadline = \Carbon\Carbon::parse($srv->work_started_at)->addDays((int)$srv->deadline_days);
+                            $daysLeft = (int) now()->diffInDays($deadline, false);
+                            $isLate   = $daysLeft < 0;
+                        } else {
+                            // Kutmoqda — status hali kelmagan
+                            $isWaiting = true;
+                        }
                     }
                 @endphp
                 <div style="display:flex;align-items:center;gap:4px">
                     <span class="p-srv-tag-v2">{{ $srvLabel }}</span>
-                    @if($daysLeft !== null)
+                    @if($isWaiting)
+                        <span style="font-size:10px;font-weight:600;background:#f3f4f6;color:#6b7280;border-radius:4px;padding:1px 5px;white-space:nowrap">⌛ {{ $srv->deadline_days }}k</span>
+                    @elseif($daysLeft !== null)
                         @if($isLate)
-                        <span style="font-size:10px;font-weight:700;background:#fee2e2;color:#dc2626;border-radius:4px;padding:1px 5px;white-space:nowrap">{{ abs($daysLeft) }} kun kechikdi</span>
-                        @elseif($daysLeft === 0)
-                        <span style="font-size:10px;font-weight:700;background:#fef3c7;color:#d97706;border-radius:4px;padding:1px 5px;white-space:nowrap">Bugun tugaydi</span>
+                        <span style="font-size:10px;font-weight:700;background:#fee2e2;color:#dc2626;border-radius:4px;padding:1px 5px;white-space:nowrap;animation:blink-warn 1.5s infinite">{{ abs($daysLeft) }}k!</span>
+                        @elseif($daysLeft <= 3)
+                        <span style="font-size:10px;font-weight:700;background:#fee2e2;color:#dc2626;border-radius:4px;padding:1px 5px;white-space:nowrap;animation:blink-warn 1.5s infinite">{{ $daysLeft }}k</span>
                         @else
-                        <span style="font-size:10px;font-weight:600;background:#f0fdf4;color:#16a34a;border-radius:4px;padding:1px 5px;white-space:nowrap">{{ $daysLeft }} kun qoldi</span>
+                        <span style="font-size:10px;font-weight:600;background:#f0fdf4;color:#16a34a;border-radius:4px;padding:1px 5px;white-space:nowrap">{{ $daysLeft }}k</span>
                         @endif
                     @endif
                 </div>
@@ -876,26 +885,6 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                         @endforeach
                     </select>
                 </div>
-                <div style="grid-column:1/-1">
-                    <label class="kb-label">Hodimlar (biriktirilganlar)</label>
-                    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px">
-                        @foreach($users as $u)
-                        <label style="display:flex;align-items:center;gap:6px;padding:6px 12px;border:1.5px solid #e5e7eb;border-radius:20px;cursor:pointer;font-size:13px;transition:all .15s;{{ in_array($u->id, $assigned_user_ids) ? 'background:#eff6ff;border-color:#3b82f6;color:#2563eb;font-weight:600' : 'background:#fff;color:#374151' }}">
-                            <input type="checkbox" wire:model.live="assigned_user_ids" value="{{ $u->id }}" style="display:none">
-                            {{ in_array($u->id, $assigned_user_ids) ? '✓ ' : '' }}{{ $u->name }}
-                        </label>
-                        @endforeach
-                        @if($users->isEmpty())
-                        <span style="color:#9ca3af;font-size:13px">Hodimlar topilmadi</span>
-                        @endif
-                    </div>
-                </div>
-                <div>
-                    <label class="kb-label">Muddat (kun)</label>
-                    <input wire:model="deadline_days" type="number" class="kb-input"
-                           min="1" max="9999"
-                           placeholder="Necha kun (masalan: 30)">
-                </div>
             </div>
 
             @if($showDeadlineConfirm)
@@ -954,23 +943,8 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 
             <div wire:ignore>
                 <div style="display:flex;gap:6px;margin-bottom:6px">
-                    <input id="kb-yandex-url" type="text"
-                           placeholder="Yandex Maps havolasini joylashtiring..."
-                           style="flex:1;border:1px solid #e2e8f0;border-radius:8px;padding:7px 11px;font-size:13px;outline:none"
-                           onkeydown="if(event.key==='Enter'){kbLoadYandexUrl();event.preventDefault()}">
-                    <button onclick="kbLoadYandexUrl()"
-                            style="background:#e53e3e;color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:5px">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M21 10.5c0-3.87-3.13-7-7-7A7 7 0 0 0 9.13 14.5L3 20.5l1.5 1.5 6.01-6.01A7 7 0 0 0 21 10.5zm-7 5a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/></svg>
-                        Yuklash
-                    </button>
-                </div>
-                <div style="display:flex;gap:6px;margin-bottom:6px">
-                    <input id="kb-map-search" type="text" placeholder="Ko'cha, mahalla yoki joy nomini kiriting..."
-                           style="flex:1;border:1px solid #e2e8f0;border-radius:8px;padding:7px 11px;font-size:13px;outline:none"
-                           onkeydown="if(event.key==='Enter'){kbSearchOnMap();event.preventDefault()}">
-                    <button onclick="kbSearchOnMap()" style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:13px;cursor:pointer;white-space:nowrap">Qidirish</button>
                     <button onclick="kbLocateMe()" id="kb-locate-btn" title="Joylashuvimni aniqlash"
-                            style="background:#059669;color:#fff;border:none;border-radius:8px;padding:7px 10px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap;flex-shrink:0">
+                            style="background:#059669;color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/>
                         </svg>
