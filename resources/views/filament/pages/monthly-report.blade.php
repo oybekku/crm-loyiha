@@ -128,9 +128,11 @@
                 <th style="text-align:center">Kechikkan</th>
                 <th style="text-align:right">Xizmatlar jami</th>
                 <th style="text-align:right">Hisoblangan</th>
-                <th style="text-align:right;color:#dc2626">Avans olingan</th>
-                <th style="text-align:right;color:#16a34a">Qolgan to'lov</th>
-                <th style="text-align:right">Firma ulushi</th>
+                <th style="text-align:right;color:#dc2626">Avans</th>
+                <th style="text-align:right;color:#ef4444">Jarima</th>
+                <th style="text-align:right;color:#16a34a">To'lash kerak</th>
+                <th style="text-align:right;color:#2563eb">To'landi</th>
+                <th style="text-align:center;color:#f97316">Kutayotgan</th>
             </tr>
         </thead>
         @php $i = 1; @endphp
@@ -138,12 +140,15 @@
             @php
                 $sTotal      = $stat['services_total'];
                 $comm        = $stat['commission'];
-                $firmPart    = $sTotal - $comm;
                 $advTotal    = $stat['advance_total'] ?? 0;
-                $netPayable  = $stat['net_payable']   ?? max(0, $comm - $advTotal);
+                $penalty     = $stat['penalty']       ?? 0;
+                $netPayable  = $stat['net_payable']   ?? max(0, $comm - $advTotal - $penalty);
+                $paidManual  = $stat['paid_manual']   ?? 0;
                 $ontime      = $stat['ontime_count']  ?? 0;
                 $late        = $stat['late_count']    ?? 0;
                 $nodate      = count($stat['services']) - $ontime - $late;
+                $pendingCnt  = $stat['pending_count'] ?? 0;
+                $pendingSum  = $stat['pending_sum']   ?? 0;
             @endphp
 
             <tbody x-data="{open:false}">
@@ -208,17 +213,38 @@
                     <span style="color:#d1d5db;font-size:12px">—</span>
                     @endif
                 </td>
+                {{-- Jarima input --}}
+                <td style="text-align:right" onclick="event.stopPropagation()">
+                    <input type="number" min="0"
+                           wire:model.live="penalties.{{ $uid }}"
+                           placeholder="0"
+                           style="width:90px;border:1px solid #fecaca;border-radius:6px;padding:3px 7px;font-size:12px;text-align:right;color:#dc2626;outline:none">
+                </td>
                 <td style="text-align:right">
                     <span style="font-weight:700;color:#16a34a">{{ number_format($netPayable, 0, '.', ' ') }} so'm</span>
                 </td>
+                {{-- To'landi (salary payments jami) --}}
                 <td style="text-align:right">
-                    <span style="font-weight:600;color:#059669">{{ number_format($firmPart, 0, '.', ' ') }} so'm</span>
+                    @if($advTotal > 0)
+                    <span style="font-weight:700;color:#2563eb;white-space:nowrap">{{ number_format($advTotal, 0, '.', ' ') }} so'm</span>
+                    @else
+                    <span style="color:#d1d5db;font-size:12px">—</span>
+                    @endif
+                </td>
+                {{-- Kutayotgan ishlar --}}
+                <td style="text-align:center">
+                    @if($pendingCnt > 0)
+                    <div style="font-size:12px;font-weight:700;color:#f97316">{{ $pendingCnt }} ta</div>
+                    <div style="font-size:10px;color:#9ca3af">{{ number_format($pendingSum, 0, '.', ' ') }} so'm</div>
+                    @else
+                    <span style="color:#d1d5db;font-size:12px">—</span>
+                    @endif
                 </td>
             </tr>
 
             {{-- Detail row --}}
-            <tr x-show="open" x-cloak style="display:none">
-                <td colspan="11" style="padding:0;background:#f8fafc;border-bottom:2px solid #e2e8f0">
+<tr x-show="open" x-cloak style="display:none">
+                <td colspan="13" style="padding:0;background:#f8fafc;border-bottom:2px solid #e2e8f0">
                     <div style="padding:12px 16px">
                         {{-- Per-employee mini stats --}}
                         <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap">
@@ -260,45 +286,51 @@
                             @endif
                         </div>
 
-                        {{-- Avanslar bo'limi --}}
+                        {{-- To'lovlar bo'limi (avans o'rniga) --}}
                         <div style="margin-bottom:12px">
                             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-                                <span style="font-size:12px;font-weight:700;color:#374151">Avanslar ({{ $stat['advances']->count() }} ta)</span>
+                                <span style="font-size:12px;font-weight:700;color:#374151">
+                                    To'lovlar ({{ $stat['advances']->count() }} ta)
+                                    @if($advTotal > 0)
+                                    · <span style="color:#16a34a">{{ number_format($advTotal,0,'.',' ') }} so'm</span>
+                                    @endif
+                                </span>
                                 @if(auth()->user()?->isAdmin())
-                                <button wire:click.stop="openAdvanceModal({{ $uid }}, '{{ addslashes($stat['user']->name) }}')"
-                                        style="display:inline-flex;align-items:center;gap:5px;background:#dc2626;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:11px;font-weight:600;cursor:pointer">
+                                <button wire:click.stop="openSalaryPayModal({{ $uid }})"
+                                        style="display:inline-flex;align-items:center;gap:5px;background:#2563eb;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:11px;font-weight:600;cursor:pointer">
                                     <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-                                    Avans qo'shish
+                                    To'lov qo'shish
                                 </button>
                                 @endif
                             </div>
                             @if($stat['advances']->count() > 0)
-                            <div style="background:#fff;border:1px solid #fecaca;border-radius:8px;overflow:hidden">
+                            <div style="background:#fff;border:1px solid #bfdbfe;border-radius:8px;overflow:hidden">
                                 @foreach($stat['advances'] as $adv)
-                                <div style="display:flex;align-items:center;gap:12px;padding:8px 12px;border-bottom:1px solid #fef2f2;{{ $loop->last ? 'border-bottom:none' : '' }}">
+                                <div style="display:flex;align-items:center;gap:12px;padding:8px 12px;border-bottom:1px solid #eff6ff;{{ $loop->last ? 'border-bottom:none' : '' }}">
                                     <div style="flex:1">
-                                        <span style="font-size:13px;font-weight:700;color:#dc2626">{{ number_format((float)$adv->amount, 0, '.', ' ') }} so'm</span>
+                                        <span style="font-size:13px;font-weight:700;color:#2563eb">{{ number_format((float)$adv->amount, 0, '.', ' ') }} so'm</span>
                                         @if($adv->note)
                                         <span style="font-size:11px;color:#6b7280;margin-left:8px">— {{ $adv->note }}</span>
                                         @endif
                                     </div>
                                     <div style="font-size:10px;color:#9ca3af;white-space:nowrap">
-                                        {{ $adv->given_at?->format('d.m.Y') }}
+                                        {{ ($adv->paid_at ?? $adv->given_at)?->format('d.m.Y') }}
                                         @if($adv->giver) · {{ $adv->giver->name }} @endif
                                     </div>
                                     @if(auth()->user()?->isAdmin())
-                                    <button wire:click.stop="deleteAdvance({{ $adv->id }})"
-                                            wire:confirm="Bu avansni o'chirishni tasdiqlaysizmi?"
-                                            style="background:none;border:none;cursor:pointer;color:#fca5a5;padding:2px 4px"
-                                            title="O'chirish">
-                                        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                                    <button wire:click.stop="editSalaryPay({{ $adv->id }})"
+                                            style="background:none;border:1px solid #e5e7eb;border-radius:5px;padding:2px 6px;cursor:pointer;color:#2563eb;font-size:11px">✏️</button>
+                                    <button wire:click.stop="deleteSalaryPay({{ $adv->id }})"
+                                            wire:confirm="Bu to'lovni o'chirishni tasdiqlaysizmi?"
+                                            style="background:none;border:none;cursor:pointer;color:#fca5a5;padding:2px 4px">
+                                        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
                                     </button>
                                     @endif
                                 </div>
                                 @endforeach
                             </div>
                             @else
-                            <div style="font-size:12px;color:#9ca3af;padding:8px 0">Bu oy avans berilmagan</div>
+                            <div style="font-size:12px;color:#9ca3af;padding:8px 0">Bu oy to'lov kiritilmagan</div>
                             @endif
                         </div>
 
@@ -308,14 +340,11 @@
                             <thead>
                                 <tr>
                                     <th>#</th>
-                                    <th>Loyiha</th>
-                                    <th>Manzil</th>
+                                    <th>Loyiha raqami / FISH</th>
                                     <th>Xizmat turi</th>
                                     <th style="text-align:right">Narx</th>
-                                    <th style="text-align:center">Foiz</th>
                                     <th style="text-align:right">Ulush</th>
                                     <th style="text-align:center">Muddat</th>
-                                    <th style="text-align:center">To'langan sana</th>
                                     <th style="text-align:center">Holat</th>
                                 </tr>
                             </thead>
@@ -324,10 +353,9 @@
                                 <tr>
                                     <td style="color:#9ca3af;font-size:11px">{{ $j + 1 }}</td>
                                     <td>
-                                        <div style="font-weight:600;color:#111827">{{ $srv['owner_name'] }}</div>
-                                        <div style="font-size:10px;color:#9ca3af">№{{ $srv['project_number'] }}</div>
+                                        <div style="font-weight:700;color:#111827;font-family:monospace;font-size:12px">{{ $srv['project_number'] }}</div>
+                                        <div style="font-size:12px;color:#374151;margin-top:1px">{{ $srv['owner_name'] }}</div>
                                     </td>
-                                    <td style="font-size:11px;color:#6b7280;max-width:160px">{{ $srv['address'] ?? '—' }}</td>
                                     <td>
                                         <span style="display:inline-block;background:#eff6ff;color:#2563eb;font-size:10px;font-weight:600;border-radius:4px;padding:2px 7px">
                                             {{ $srv['service_label'] ?? $srv['service_name'] ?? '—' }}
@@ -335,13 +363,6 @@
                                     </td>
                                     <td style="text-align:right;font-weight:600;white-space:nowrap">
                                         {{ number_format($srv['price'], 0, '.', ' ') }}
-                                    </td>
-                                    <td style="text-align:center">
-                                        @if($srv['rate'] > 0)
-                                        <span style="color:#d97706;font-weight:600">{{ $srv['rate'] }}%</span>
-                                        @else
-                                        <span style="color:#d1d5db">—</span>
-                                        @endif
                                     </td>
                                     <td style="text-align:right;white-space:nowrap">
                                         @if($srv['commission'] > 0)
@@ -398,8 +419,10 @@
             <td style="text-align:right">{{ number_format($totalServicesSum, 0, '.', ' ') }} so'm</td>
             <td style="text-align:right;color:#d97706">{{ number_format($totalCommissions, 0, '.', ' ') }} so'm</td>
             <td style="text-align:right;color:#dc2626">{{ number_format($totalAdvances, 0, '.', ' ') }} so'm</td>
+            <td></td>
             <td style="text-align:right;color:#16a34a">{{ number_format($totalCommissions - $totalAdvances, 0, '.', ' ') }} so'm</td>
-            <td style="text-align:right;color:#059669">{{ number_format($firmIncome, 0, '.', ' ') }} so'm</td>
+            <td></td>
+            <td></td>
         </tr>
         </tbody>
     </table>
@@ -558,12 +581,13 @@
 @if($showDetailModal && isset($userStats[$detailUserId]))
 @php
     $ds   = $userStats[$detailUserId];
-    $dUsr = $ds['user'];
-    $dCom = $ds['commission'];
-    $dAdv = $ds['advance_total'];
-    $dNet = $ds['net_payable'];
-    $dSvc = $ds['services'];
-    // Loyihalar bo'yicha guruhlash
+    $dUsr      = $ds['user'];
+    $dCom      = $ds['commission'];
+    $dAdv      = $ds['advance_total'];
+    $dNet      = $ds['net_payable'];
+    $dSvc      = $ds['services'];
+    $dSalPays  = $ds['salary_pays']  ?? collect();
+    $dPaidTotal= $ds['paid_total']   ?? 0;
     $dByProject = collect($dSvc)->groupBy('project_id');
 @endphp
 <div style="position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
@@ -675,6 +699,95 @@
         </div>
     </div>
 
+    {{-- ISH HAQI TO'LOVLARI --}}
+    <div style="padding:16px 24px;border-top:1px solid #e5e7eb">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div style="font-size:13px;font-weight:700;color:#374151">
+                Berilgan ish haqi to'lovlari
+                @if($dPaidTotal > 0)
+                <span style="background:#dcfce7;color:#16a34a;font-size:11px;border-radius:6px;padding:2px 8px;margin-left:6px">
+                    Jami: {{ number_format($dPaidTotal,0,'.',' ') }} so'm
+                </span>
+                @endif
+            </div>
+            <button wire:click="openSalaryPayModal({{ $detailUserId }})"
+                    style="display:inline-flex;align-items:center;gap:5px;background:#2563eb;color:#fff;border:none;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer">
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                To'lov qo'shish
+            </button>
+        </div>
+
+        @if($dSalPays->count() > 0)
+        <div style="display:flex;flex-direction:column;gap:6px">
+            @foreach($dSalPays as $sp)
+            <div style="display:flex;align-items:center;gap:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px">
+                <div style="font-size:14px;font-weight:700;color:#111827">{{ number_format($sp->amount,0,'.',' ') }} so'm</div>
+                <div style="font-size:12px;color:#6b7280">{{ $sp->paid_at->format('d.m.Y') }}</div>
+                @if($sp->note)
+                <div style="font-size:11px;color:#9ca3af;flex:1">{{ $sp->note }}</div>
+                @else
+                <div style="flex:1"></div>
+                @endif
+                @if($sp->giver)
+                <div style="font-size:10px;color:#9ca3af">{{ $sp->giver->name }}</div>
+                @endif
+                <button wire:click="editSalaryPay({{ $sp->id }})"
+                        style="background:none;border:1px solid #e5e7eb;border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer;color:#2563eb">✏️</button>
+                <button wire:click="deleteSalaryPay({{ $sp->id }})"
+                        wire:confirm="O'chirishni tasdiqlaysizmi?"
+                        style="background:none;border:1px solid #fecaca;border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer;color:#dc2626">🗑</button>
+            </div>
+            @endforeach
+        </div>
+        @else
+        <div style="text-align:center;padding:16px;color:#9ca3af;font-size:13px">Hali to'lov kiritilmagan</div>
+        @endif
+    </div>
+
+</div>
+</div>
+@endif
+
+{{-- ISH HAQI TO'LOVI MODAL --}}
+@if($showSalaryPayModal)
+<div style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px">
+<div style="background:#fff;border-radius:14px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.4)">
+    <div style="padding:18px 20px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center">
+        <h3 style="font-size:15px;font-weight:800;color:#111827;margin:0">
+            {{ $salaryPayEditId ? 'To\'lovni tahrirlash' : 'To\'lov qo\'shish' }}
+        </h3>
+        <button wire:click="closeSalaryPayModal" style="background:none;border:none;cursor:pointer;font-size:20px;color:#9ca3af">×</button>
+    </div>
+    <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+        <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px">Summa (so'm) *</label>
+            <input wire:model="salaryPayAmount" type="number" min="1"
+                   placeholder="Masalan: 500000"
+                   style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;font-size:14px;font-weight:600;outline:none;box-sizing:border-box"
+                   onfocus="this.style.borderColor='#2563eb'" onblur="this.style.borderColor='#e2e8f0'">
+        </div>
+        <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px">Sana *</label>
+            <input wire:model="salaryPayDate" type="date"
+                   style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;font-size:13px;outline:none;box-sizing:border-box">
+        </div>
+        <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px">Izoh (ixtiyoriy)</label>
+            <input wire:model="salaryPayNote" type="text"
+                   placeholder="Masalan: Iyun oyi ish haqi"
+                   style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;font-size:13px;outline:none;box-sizing:border-box">
+        </div>
+    </div>
+    <div style="padding:14px 20px;border-top:1px solid #e5e7eb;display:flex;gap:10px">
+        <button wire:click="saveSalaryPay"
+                style="flex:1;background:#2563eb;color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">
+            Saqlash
+        </button>
+        <button wire:click="closeSalaryPayModal"
+                style="flex:1;background:#f3f4f6;color:#374151;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:600;cursor:pointer">
+            Bekor qilish
+        </button>
+    </div>
 </div>
 </div>
 @endif

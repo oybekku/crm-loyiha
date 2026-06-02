@@ -427,7 +427,8 @@
 </div>
 @endif
 
-{{-- ── BOTTOM: 4 alohida stat karta ── --}}
+{{-- ── BOTTOM: 4 alohida stat karta (faqat admin/menejer) ── --}}
+@if(!$isEmployee)
 <div class="bh-bottom">
 
     {{-- Jami loyihalar --}}
@@ -511,8 +512,10 @@
     </div>
 
 </div>
+@endif {{-- /isEmployee --}}
 
-{{-- ── ROW 3: 4 mini karta + so'nggi loyihalar ── --}}
+{{-- ── ROW 3: 4 mini karta + so'nggi loyihalar (faqat admin/menejer) ── --}}
+@if(!$isEmployee)
 <div class="bh-row3">
 
     {{-- Jami loyihalar --}}
@@ -608,4 +611,5 @@
     @endif
 
 </div>
+@endif {{-- /isEmployee row3 --}}
 </div>

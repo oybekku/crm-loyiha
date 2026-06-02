@@ -530,6 +530,21 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             </div>
             @endif
 
+            {{-- TEKSHIRISH STATUS BELGISI --}}
+            @if($project->status === 'tekshirish')
+            <div style="display:flex;align-items:center;justify-content:center;margin-bottom:8px">
+                <span style="font-size:11px;font-weight:900;letter-spacing:1px;color:#dc2626;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:6px;padding:4px 12px;animation:blink-warn 1s ease-in-out infinite">
+                    ⚠ TEKSHIRILMAGAN
+                </span>
+            </div>
+            @elseif($project->status === 'tugallangan')
+            <div style="display:flex;align-items:center;justify-content:center;margin-bottom:8px">
+                <span style="font-size:11px;font-weight:800;letter-spacing:1px;color:#fff;background:#16a34a;border-radius:6px;padding:4px 12px">
+                    ✓ TEKSHIRILGAN
+                </span>
+            </div>
+            @endif
+
             {{-- OGOHLANTIRISH: xizmatda hodim biriktirilmagan --}}
             @if($hasUnassigned)
             <div style="display:flex;align-items:center;gap:5px;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:4px 8px;margin-bottom:8px;animation:blink-warn 1.5s ease-in-out infinite">

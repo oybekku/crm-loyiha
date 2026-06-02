@@ -8,6 +8,7 @@ use App\Models\Project;
 use App\Models\ProjectStatusLog;
 use App\Models\User;
 use Carbon\Carbon;
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -23,6 +24,17 @@ class MonthlyReport extends Page
 
     public string $selectedMonth = '';
 
+    // Jarima (user_id => summa)
+    public array $penalties   = [];
+
+    // Ish haqi to'lovi modal
+    public bool   $showSalaryPayModal = false;
+    public int    $salaryPayUserId    = 0;
+    public string $salaryPayAmount    = '';
+    public string $salaryPayDate      = '';
+    public string $salaryPayNote      = '';
+    public int    $salaryPayEditId    = 0; // tahrirlash uchun
+
     // To'liq ma'lumot modal
     public bool   $showDetailModal  = false;
     public int    $detailUserId     = 0;
@@ -37,6 +49,63 @@ class MonthlyReport extends Page
     {
         $this->showDetailModal = false;
         $this->detailUserId    = 0;
+    }
+
+    public function openSalaryPayModal(int $userId): void
+    {
+        $this->salaryPayUserId = $userId;
+        $this->salaryPayAmount = '';
+        $this->salaryPayDate   = now()->format('Y-m-d');
+        $this->salaryPayNote   = '';
+        $this->salaryPayEditId = 0;
+        $this->showSalaryPayModal = true;
+    }
+
+    public function editSalaryPay(int $payId): void
+    {
+        $pay = \App\Models\EmployeeSalaryPayment::find($payId);
+        if (!$pay) return;
+        $this->salaryPayUserId = $pay->user_id;
+        $this->salaryPayAmount = (string) $pay->amount;
+        $this->salaryPayDate   = $pay->paid_at->format('Y-m-d');
+        $this->salaryPayNote   = $pay->note ?? '';
+        $this->salaryPayEditId = $payId;
+        $this->showSalaryPayModal = true;
+    }
+
+    public function saveSalaryPay(): void
+    {
+        $amount = (float) str_replace([' ', ','], '', $this->salaryPayAmount);
+        if ($amount <= 0) return;
+
+        $data = [
+            'user_id'  => $this->salaryPayUserId,
+            'month'    => $this->selectedMonth,
+            'amount'   => $amount,
+            'paid_at'  => $this->salaryPayDate ?: now()->toDateString(),
+            'note'     => trim($this->salaryPayNote) ?: null,
+            'given_by' => auth()->id(),
+        ];
+
+        if ($this->salaryPayEditId) {
+            \App\Models\EmployeeSalaryPayment::find($this->salaryPayEditId)?->update($data);
+        } else {
+            \App\Models\EmployeeSalaryPayment::create($data);
+        }
+
+        $this->showSalaryPayModal = false;
+        Notification::make()->title('Saqlandi!')->success()->send();
+    }
+
+    public function deleteSalaryPay(int $payId): void
+    {
+        \App\Models\EmployeeSalaryPayment::find($payId)?->delete();
+        Notification::make()->title("O'chirildi!")->warning()->send();
+    }
+
+    public function closeSalaryPayModal(): void
+    {
+        $this->showSalaryPayModal = false;
     }
 
     // Avans modal state
@@ -124,7 +193,8 @@ class MonthlyReport extends Page
     {
         [$year, $month] = explode('-', $this->selectedMonth);
 
-        $tolanganLogs = ProjectStatusLog::where('status', 'tolangan')
+        // tolangan va tugallangan — ikkalasi ham hisobga olinadi
+        $tolanganLogs = ProjectStatusLog::whereIn('status', ['tolangan', 'tugallangan'])
             ->whereYear('entered_at', $year)
             ->whereMonth('entered_at', $month)
             ->get();
@@ -141,7 +211,8 @@ class MonthlyReport extends Page
             ->get();
 
         // Avanslar: bu oy berilganlar, user_id bo'yicha guruh
-        $advancesByUser = EmployeeAdvance::with('giver')
+        // Avans o'rniga ish haqi to'lovlari ishlatiladi
+        $advancesByUser = \App\Models\EmployeeSalaryPayment::with('giver')
             ->where('month', $this->selectedMonth)
             ->get()
             ->groupBy('user_id');
@@ -213,9 +284,41 @@ class MonthlyReport extends Page
             }
         }
 
-        foreach ($userStats as &$stat) {
+        // Arxiv bo'lmagan statuslar
+        $archiveStatuses = ['tugallangan', 'taqdim_etilgan', 'bekor_qilingan'];
+
+        foreach ($userStats as $uid => &$stat) {
             $stat['project_count'] = count(array_unique($stat['project_ids']));
-            $stat['net_payable']   = max(0, $stat['commission'] - $stat['advance_total']);
+
+            $penalty   = (float) ($this->penalties[$uid] ?? 0);
+
+            // Ish haqi to'lovlari (DB dan)
+            $salaryPays = \App\Models\EmployeeSalaryPayment::where('user_id', $uid)
+                ->where('month', $this->selectedMonth)
+                ->orderBy('paid_at')
+                ->get();
+            $paidTotal = (float) $salaryPays->sum('amount');
+
+            $stat['penalty']      = $penalty;
+            $stat['salary_pays']  = $salaryPays;
+            $stat['paid_total']   = $paidTotal;
+            $stat['net_payable']  = max(0, $stat['commission'] - $stat['advance_total'] - $penalty);
+
+            // Kutayotgan ishlar (tugatilmagan / to'lanmagan)
+            $pendingServices = \App\Models\ProjectService::where('assigned_user_id', $uid)
+                ->whereHas('project', fn($q) => $q->whereNotIn('status', $archiveStatuses))
+                ->with('project:id,number,owner_name,status')
+                ->get();
+
+            $stat['pending_count'] = $pendingServices->count();
+            $stat['pending_sum']   = (float) $pendingServices->sum('final_price');
+            $stat['pending_items'] = $pendingServices->map(fn($s) => [
+                'project_number' => $s->project?->number,
+                'owner_name'     => $s->project?->owner_name,
+                'service_label'  => $s->service_label,
+                'price'          => (float)$s->final_price,
+                'status'         => $s->project?->status,
+            ])->toArray();
         }
         unset($stat);
 
