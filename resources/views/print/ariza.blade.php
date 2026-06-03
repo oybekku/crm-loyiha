@@ -270,17 +270,15 @@
                 } else {
                     $svcPaid = $totalPrice > 0 ? round($paidAmount * $svcPrice / $totalPrice) : 0;
                 }
+                $svcLabel = \App\Models\Project::serviceOptions()[$svc->service_name] ?? $svc->service_name;
             @endphp
             <tr>
-                <td class="label" style="padding-left:14px;font-weight:600;color:#374151;">
-                    {{ \App\Models\Project::serviceOptions()[$svc->service_name] ?? $svc->service_name }}
-                </td>
-                <td class="value" colspan="2">
-                    <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;">
-                        <span style="font-weight:700;">{{ number_format($svcPrice, 0, ',', ' ') }} UZS</span>
-                        <span style="font-size:12px;color:#6b7280;">To'langan: <strong style="color:{{ $svcPaid > 0 ? '#166534' : '#991b1b' }};">{{ number_format($svcPaid, 0, ',', ' ') }} UZS</strong></span>
-                    </div>
-                </td>
+                <td class="label" style="padding-left:14px;font-weight:600;color:#374151;">{{ $svcLabel }}</td>
+                <td class="value" colspan="2" style="font-weight:700;">{{ number_format($svcPrice, 0, ',', ' ') }} UZS</td>
+            </tr>
+            <tr>
+                <td class="label" style="padding-left:14px;font-weight:400;color:#6b7280;font-size:12px;border-top:none;">{{ $svcLabel }} To'langan:</td>
+                <td class="value" colspan="2" style="color:{{ $svcPaid > 0 ? '#166534' : '#991b1b' }};font-weight:700;font-size:13px;border-top:none;">{{ number_format($svcPaid, 0, ',', ' ') }} UZS</td>
             </tr>
             @endforeach
         @endif
@@ -288,6 +286,12 @@
             <td class="label" id="lbl-total" style="font-weight:800;">Umumiy narx</td>
             <td class="value" colspan="2" style="font-size:15px;font-weight:700;">{{ number_format($project->total_price, 0, ',', ' ') }} UZS</td>
         </tr>
+        @if($project->services && $project->services->count() > 0)
+        <tr>
+            <td class="label" style="font-weight:600;color:#374151;">Umumiy To'langan:</td>
+            <td class="value" colspan="2" style="font-size:14px;font-weight:700;color:{{ $paidAmount > 0 ? '#166534' : '#991b1b' }};">{{ number_format($paidAmount, 0, ',', ' ') }} UZS</td>
+        </tr>
+        @endif
         <tr>
             <td class="label" id="lbl-paid">Oldindan to'lov</td>
             <td class="value" colspan="2" style="font-size:15px;font-weight:700;color:#166534;">{{ number_format($project->paid_amount, 0, ',', ' ') }} UZS</td>
