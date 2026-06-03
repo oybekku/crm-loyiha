@@ -29,7 +29,7 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->favicon(asset('favicon.png'))
-            ->brandName('BESTHOME CRM')
+            ->brandName('MAKONN.UZ')
             ->colors([
                 'primary' => Color::Green,
             ])
@@ -520,7 +520,7 @@ HTML;
                 function () {
                     $s     = \App\Services\DesignSettingsService::get();
                     $color = $s['header_text_color'];
-                    return "<a href=\"/admin\" wire:navigate style=\"color:{$color};font-weight:800;font-size:0.95rem;letter-spacing:0.07em;padding:0 1.25rem;white-space:nowrap;flex-shrink:0;text-decoration:none;\">BESTHOME CRM</a>";
+                    return "<a href=\"/admin\" wire:navigate style=\"color:{$color};font-weight:800;font-size:0.95rem;letter-spacing:0.07em;padding:0 1.25rem;white-space:nowrap;flex-shrink:0;text-decoration:none;\">MAKONN.UZ</a>";
                 }
             )
             ->renderHook(
