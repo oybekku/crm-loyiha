@@ -44,8 +44,12 @@ class EditProject extends EditRecord
 
     protected function beforeSave(): void
     {
-        // AssignedUsers dan olib tashlangan hodimlarni services dan ham tozalaymiz
-        $newUserIds = collect($this->data['assignedUsers'] ?? [])->map(fn($id) => (int) $id)->toArray();
+        // assignedUsers formada bo'lmasa — hodimlarni o'zgartirmaymiz
+        if (!array_key_exists('assignedUsers', $this->data)) {
+            return;
+        }
+
+        $newUserIds = collect($this->data['assignedUsers'])->map(fn($id) => (int) $id)->toArray();
         $oldUserIds = $this->record->assignedUsers()->pluck('users.id')->toArray();
         $removedIds = array_diff($oldUserIds, $newUserIds);
 
