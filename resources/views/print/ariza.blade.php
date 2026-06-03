@@ -135,12 +135,11 @@
     .lang-uz, .lang-ru { display: none; }
     .lang-uz.active, .lang-ru.active { display: block; }
 
-    /* Print modes */
+    .copy2 { display: none; }
     @media print {
-        body.print-copy1 .copy2 { display: none !important; }
-        body.print-copy1 .copy-divider-wrap { display: none !important; }
-        body.print-copy2 .copy1 { display: none !important; }
-        body.print-copy2 .copy-divider-wrap { display: none !important; }
+        body.print-firma .copy2 { display: none !important; }
+        body.print-mijoz .copy1 { display: none !important; }
+        body.print-mijoz .copy2 { display: flex !important; flex-direction: column; }
     }
 
     @media print {
@@ -168,8 +167,11 @@
         </button>
     </div>
     <div style="width:1px;height:28px;background:rgba(255,255,255,0.3);"></div>
-    <button onclick="window.print()" style="background:#fff;color:#1d4ed8;border:none;padding:8px 28px;border-radius:6px;font-size:14px;cursor:pointer;font-weight:700;">
-        🖨 Chop etish
+    <button onclick="printMode('firma')" style="background:#fff;color:#1d4ed8;border:none;padding:8px 22px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;">
+        🖨 Firma nusxasi
+    </button>
+    <button onclick="printMode('mijoz')" style="background:#22c55e;color:#fff;border:none;padding:8px 22px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;">
+        🖨 Mijoz nusxasi
     </button>
     <div style="width:1px;height:28px;background:rgba(255,255,255,0.3);"></div>
     <button onclick="window.close()" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.4);padding:8px 18px;border-radius:6px;font-size:14px;cursor:pointer;">
@@ -336,6 +338,129 @@
 
 </div><!-- /copy1 -->
 
+<!-- ===== MIJOZ UCHUN 2-NUSXA (summalar yo'q) ===== -->
+<div class="copy2">
+    <div class="header">
+        <div class="header-left">
+            <h1>Qabul arizasi</h1>
+            <div class="order-num">
+                <span>Ariza</span>
+                <span class="num-badge">{{ $project->number }}</span>
+                &nbsp;&nbsp;{{ $project->created_at->format('d.m.Y') }}
+            </div>
+        </div>
+        <div class="header-right">
+            <strong>BESTHOME CRM</strong>
+            +998 99 468 19 91<br>
+            {{ now()->format('d.m.Y H:i') }}
+        </div>
+    </div>
+
+    <table class="main-table">
+        <tr>
+            <td class="label">Mijoz (F.I.Sh)</td>
+            <td class="value" colspan="2">
+                <strong>{{ $project->owner_name }}</strong>
+                @if($project->phones)
+                    @foreach($project->phones as $phone)
+                        &nbsp;&nbsp;{{ is_array($phone) ? ($phone['phone'] ?? '') : $phone }}@if(!$loop->last),@endif
+                    @endforeach
+                @endif
+            </td>
+        </tr>
+        <tr>
+            <td class="label">Loyiha turi</td>
+            <td class="value" colspan="2">
+                @php $cats=['turar'=>'Turar-joy','tijorat'=>'Tijorat binosi','qishloq'=>'Qishloq qurilishi','sanoat'=>'Sanoat binosi','boshqa'=>'Boshqa']; @endphp
+                {{ $cats[$project->category] ?? $project->category }}
+            </td>
+        </tr>
+        <tr>
+            <td class="label">Loyiha nomi</td>
+            <td class="value" colspan="2">{{ $project->title ?: '—' }}</td>
+        </tr>
+        <tr>
+            <td class="label">Ob'ekt manzili</td>
+            <td class="value" colspan="2">{{ $project->address }}</td>
+        </tr>
+        <tr>
+            <td class="label">Mas'ul xodim</td>
+            <td class="value" colspan="2">{{ $project->assignedUsers->pluck('name')->join(', ') ?: '—' }}</td>
+        </tr>
+        <tr>
+            <td class="label">Taxminiy muddat</td>
+            <td class="value" colspan="2">{{ $project->deadline_date ? $project->deadline_date->format('d.m.Y') : '—' }}</td>
+        </tr>
+        <tr>
+            <td class="label">Izohlar</td>
+            <td class="value" colspan="2">{{ $project->description ?: '—' }}</td>
+        </tr>
+    </table>
+
+    <div class="conditions lang-uz active">
+        <h3>{{ $project->number }} sonli shartnomaga ilova</h3>
+        <p style="font-weight:700;margin-bottom:8px;font-size:12px;">Bildirishnoma</p>
+        <p style="line-height:1.75;text-align:justify;">
+            Men {{ $project->created_at->format('d.m.Y') }} yildagi
+            <strong>{{ $project->number }}</strong> sonli obyektning loyiha hujjatlarini ishlab chiqish haqidagi
+            shartnomaga ko'ra buyurtmachi (mulkdor) <strong>{{ $project->owner_name }}</strong>
+            ushbu bildirishnoma bilan shuni ma'lum qilamanki, Vazirlar Mahkamasining 2026 yil 13 apreldagi
+            167-son qarori bilan tasdiqlangan "Yakka tartibdagi uy-joylar hamda kichik hajmdagi noturar bino va
+            inshootlarni qurish hamda rekonstruksiya qilish ishlari yuzasidan xususiy qurilish nazoratini amalga
+            oshirish tartibi to'g'risidagi nizom"ga muvofiq mazkur obyektning loyiha hujjatlarini ishlab
+            chiqilishi bilan cheklanaman va buyurtmachi (mulkdor) sifatida loyiha tashkiloti tomonidan xususiy
+            qurilish nazoratini amalga oshirish zarurati mavjud emasligini ma'lum qilaman.
+        </p>
+        <p style="margin-top:10px;line-height:1.7;color:#444;">
+            Yuqoridagi bildirishnomani o'qib chiqdim, unga nisbatan e'tiroz va qo'shimchalarim yo'q.
+            Kelib chifadigan salbiy oqibatlar uchun javobgarlikni o'z zimmamda bo'lishidan xabardorman.
+        </p>
+    </div>
+    <div class="conditions lang-ru">
+        <h3>Приложение к договору № {{ $project->number }}</h3>
+        <p style="font-weight:700;margin-bottom:8px;font-size:12px;">Уведомление</p>
+        <p style="line-height:1.75;text-align:justify;">
+            Я, являясь Заказчиком (собственником) по договору № <strong>{{ $project->number }}</strong>
+            от {{ $project->created_at->format('d.m.Y') }} года на разработку проектной документации объекта
+            <strong>{{ $project->owner_name }}</strong>, настоящим уведомлением сообщаю, что в соответствии с
+            «Положением о порядке осуществления частного строительного контроля», утвержденным Постановлением
+            Кабинета Министров от 13 апреля 2026 года № 167, я ограничиваюсь лишь разработкой проектной
+            документации данного объекта.
+        </p>
+        <p style="margin-top:8px;line-height:1.7;color:#444;">
+            В качестве Заказчика (собственника) заявляю об отсутствии необходимости в осуществлении частного
+            строительного контроля со стороны проектной организации.
+        </p>
+        <p style="margin-top:8px;line-height:1.7;color:#444;">
+            С вышеуказанным уведомлением ознакомлен(а), возражений и дополнений не имею.
+            Осведомлен(а) о принятии на себя ответственности за любые возможные негативные последствия.
+        </p>
+    </div>
+
+    <div class="signatures">
+        <div class="sig-block">
+            <div class="sig-title">Kompaniya vakili:</div>
+            <div class="sig-line"></div>
+            <div class="sig-label">Imzo / muhr</div>
+            <div class="sig-name">{{ $project->assignedUsers->first()?->name ?: '________________' }}</div>
+            <img src="/images/imzo.png" class="stamp-img" alt="">
+        </div>
+        <div class="sig-block sig-right">
+            <div class="sig-title">Buyurtmachi:</div>
+            <div class="sig-line"></div>
+            <div class="sig-label">Imzo</div>
+            <div class="sig-name">{{ $project->owner_name }}</div>
+            <div style="font-size:11px;color:#888;margin-top:3px;">shartlar bilan tanishib, rozilik bildirdi</div>
+        </div>
+    </div>
+
+    <div class="footer-date">
+        {{ $project->created_at->format('d.m.Y H:i') }}
+        &nbsp;|&nbsp;
+        {{ now()->format('d.m.Y H:i') }}
+    </div>
+</div><!-- /copy2 -->
+
 </div><!-- /page -->
 
 <script>
@@ -423,12 +548,11 @@ function setLang(lang) {
     }
 }
 
-function printCopy(copy) {
-    document.body.classList.remove('print-copy1', 'print-copy2');
-    if (copy === 1) document.body.classList.add('print-copy1');
-    if (copy === 2) document.body.classList.add('print-copy2');
+function printMode(mode) {
+    document.body.classList.remove('print-firma', 'print-mijoz');
+    document.body.classList.add('print-' + mode);
     window.print();
-    document.body.classList.remove('print-copy1', 'print-copy2');
+    document.body.classList.remove('print-firma', 'print-mijoz');
 }
 </script>
 </body>
