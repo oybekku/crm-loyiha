@@ -2305,8 +2305,9 @@ function kbDrop(e, status) {
     // Swipe — tab linklar orqali navigate qiladi
     const tabLinks = Array.from(tabBar?.querySelectorAll('a') || []);
     let tx = 0, ty = 0;
-    document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
-    document.addEventListener('touchend', e => {
+    const swipeZone = wrap;
+    swipeZone.addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
+    swipeZone.addEventListener('touchend', e => {
         const dx = e.changedTouches[0].clientX - tx;
         const dy = e.changedTouches[0].clientY - ty;
         if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx)) return;
