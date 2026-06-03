@@ -103,7 +103,7 @@
         display: flex;
         justify-content: space-between;
         gap: 30px;
-        margin-top: 12px;
+        margin-top: 42px;
         padding-top: 6px;
     }
     .sig-block { flex: 1; position: relative; min-height: 110px; }
