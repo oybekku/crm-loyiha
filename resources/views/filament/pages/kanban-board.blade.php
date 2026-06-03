@@ -242,7 +242,12 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
   .kb-stat{min-width:60px}
 
   /* Karta tugmalari: qulay touch */
-  .p-move-btn{padding:5px 10px;font-size:11px}
+  .p-move-btn{padding:7px 11px;font-size:12px}
+  .card-actions{gap:6px}
+  .card-actions > *{flex:1 1 auto;justify-content:center;text-align:center;min-width:calc(50% - 6px);max-width:calc(50% - 3px)}
+  .card-actions > div[x-data]{flex:1 1 auto;min-width:calc(50% - 6px)}
+  .card-actions > div[x-data] .p-move-btn{width:100%;justify-content:center}
+  .card-actions a{text-align:center;justify-content:center}
 
   /* Dropdown mobilda pastga emas, tepaga chiqadi - ok */
   .p-move-dropdown{min-width:160px}
@@ -604,7 +609,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             </div>
 
             {{-- ACTION BUTTONS --}}
-            <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center">
+            <div class="card-actions" style="display:flex;flex-wrap:wrap;gap:5px;align-items:center">
                 @if(auth()->user()?->canSeeAllProjects())
                 <div x-data="{ open: false }" style="position:relative" @click.outside="open=false">
                     <button class="p-move-btn" @click.stop="open=!open" ondragstart="event.stopPropagation();event.preventDefault()">
