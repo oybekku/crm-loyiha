@@ -364,6 +364,18 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
     </div>
 </div>
 
+{{-- MOBIL STATUS TAB BAR --}}
+<div id="kb-tab-bar" style="display:none;overflow-x:auto;white-space:nowrap;padding:0 4px 8px;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin:0 -4px 8px;">
+    @foreach($statuses as $sk => $st)
+    <button onclick="kanbanScrollTo('col-{{ $sk }}')"
+            id="tab-{{ $sk }}"
+            style="display:inline-block;padding:6px 14px;margin-right:6px;border-radius:20px;border:1.5px solid #e5e7eb;background:#f9fafb;color:#374151;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s;">
+        {{ $st['label'] }}
+        <span style="background:#e5e7eb;color:#6b7280;border-radius:10px;padding:1px 6px;font-size:10px;margin-left:3px;">{{ $projects->get($sk, collect())->count() }}</span>
+    </button>
+    @endforeach
+</div>
+
 {{-- KANBAN --}}
 <div class="{{ $filterStatus ? 'kanban-grid-mode' : '' }}">
 <div class="kanban-wrap" id="kanban-wrap">
@@ -2242,34 +2254,53 @@ function kbDrop(e, status) {
 <script>
 (function() {
     if (window.innerWidth > 640) return;
+
     const wrap = document.getElementById('kanban-wrap');
-    const navBtns = document.getElementById('kb-nav-btns');
-    const label = document.getElementById('kb-nav-label');
+    const tabBar = document.getElementById('kb-tab-bar');
     if (!wrap) return;
 
-    navBtns.style.display = 'flex';
+    // Tab bar ko'rsat
+    if (tabBar) tabBar.style.display = 'block';
 
     function getColWidth() {
         return (wrap.querySelector('.kanban-col')?.offsetWidth || 300) + 12;
     }
 
-    function updateLabel() {
-        const cols = wrap.querySelectorAll('.kanban-col');
-        const idx = Math.round(wrap.scrollLeft / getColWidth());
-        const col = cols[idx];
-        if (col) {
-            const h = col.querySelector('.col-head');
-            label.textContent = h ? h.textContent.trim().replace(/\s+/g, ' ') : '';
-        }
-    }
-
-    window.kanbanNav = function(dir) {
-        wrap.scrollBy({ left: dir * getColWidth(), behavior: 'smooth' });
-        setTimeout(updateLabel, 350);
+    // Tab bosish
+    window.kanbanScrollTo = function(colId) {
+        const col = document.getElementById(colId);
+        if (!col) return;
+        const cols = Array.from(wrap.querySelectorAll('.kanban-col'));
+        const idx = cols.indexOf(col);
+        wrap.scrollTo({ left: idx * getColWidth(), behavior: 'smooth' });
+        updateActiveTabs(idx);
     };
 
-    wrap.addEventListener('scroll', updateLabel, { passive: true });
-    setTimeout(updateLabel, 300);
+    window.kanbanNav = function(dir) {
+        const colW = getColWidth();
+        const idx = Math.round(wrap.scrollLeft / colW);
+        const newIdx = Math.max(0, idx + dir);
+        wrap.scrollTo({ left: newIdx * colW, behavior: 'smooth' });
+        setTimeout(() => updateActiveTabs(newIdx), 350);
+    };
+
+    function updateActiveTabs(idx) {
+        const tabs = tabBar?.querySelectorAll('button');
+        tabs?.forEach((t, i) => {
+            t.style.background = i === idx ? '#2563eb' : '#f9fafb';
+            t.style.color = i === idx ? '#fff' : '#374151';
+            t.style.borderColor = i === idx ? '#2563eb' : '#e5e7eb';
+        });
+        // Aktiv tabni ko'rinadigan joyga scroll
+        if (tabs?.[idx]) tabs[idx].scrollIntoView({ inline: 'center', behavior: 'smooth' });
+    }
+
+    wrap.addEventListener('scroll', function() {
+        const idx = Math.round(wrap.scrollLeft / getColWidth());
+        updateActiveTabs(idx);
+    }, { passive: true });
+
+    setTimeout(() => updateActiveTabs(0), 300);
 })();
 </script>
 
