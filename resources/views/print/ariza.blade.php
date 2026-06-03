@@ -245,9 +245,19 @@
             <td class="label" id="lbl-deadline">Taxminiy muddat</td>
             <td class="value">{{ $project->deadline_date ? $project->deadline_date->format('d.m.Y') : '—' }}</td>
         </tr>
+        @if($project->services && $project->services->count() > 0)
+            @foreach($project->services as $svc)
+            <tr>
+                <td class="label" style="padding-left:14px;font-weight:600;color:#374151;">
+                    {{ \App\Models\Project::serviceOptions()[$svc->service_name] ?? $svc->service_name }}
+                </td>
+                <td class="value" colspan="2">{{ number_format($svc->final_price, 0, ',', ' ') }} UZS</td>
+            </tr>
+            @endforeach
+        @endif
         <tr>
-            <td class="label" id="lbl-total">Umumiy narx</td>
-            <td class="value" style="font-size:15px;font-weight:700;">{{ number_format($project->total_price, 0, ',', ' ') }} UZS</td>
+            <td class="label" id="lbl-total" style="font-weight:800;">Umumiy narx</td>
+            <td class="value" colspan="2" style="font-size:15px;font-weight:700;">{{ number_format($project->total_price, 0, ',', ' ') }} UZS</td>
         </tr>
         <tr>
             <td class="label" id="lbl-paid">Oldindan to'lov</td>
