@@ -197,8 +197,8 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
   .btn-new{width:100%;justify-content:center;padding:10px;font-size:13px}
 
   /* Kanban: to'liq ekran kengligi, bitta ustun ko'rinadi */
-  .kanban-wrap{gap:12px;padding:0 4px 80px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
-  .kanban-col{min-width:calc(100vw - 24px);max-width:calc(100vw - 24px);scroll-snap-align:start}
+  .kanban-wrap{gap:12px;padding:4px 12px 80px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+  .kanban-col{min-width:calc(100vw - 48px);max-width:calc(100vw - 48px);scroll-snap-align:start}
   /* Floating button */
   .kb-fab{display:flex}
   .btn-new{display:none}
@@ -257,7 +257,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 }
 
 @media (max-width: 400px) {
-  .kanban-col{min-width:calc(100vw - 16px);max-width:calc(100vw - 16px)}
+  .kanban-col{min-width:calc(100vw - 32px);max-width:calc(100vw - 32px)}
   .kb-modal{max-height:98vh}
 }
 
