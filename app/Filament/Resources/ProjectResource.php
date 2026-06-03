@@ -187,6 +187,59 @@ class ProjectResource extends Resource
                         ->columnSpanFull(),
                 ]),
 
+            Forms\Components\Section::make('Xizmatlar va to\'lovlar')
+                ->schema([
+                    Forms\Components\Placeholder::make('services_payment_breakdown')
+                        ->label('')
+                        ->content(function ($record) {
+                            if (!$record || $record->services->isEmpty()) {
+                                return new \Illuminate\Support\HtmlString('<span style="color:#9ca3af">Xizmatlar yo\'q</span>');
+                            }
+
+                            $totalPrice = (float) $record->total_price;
+                            $paidAmount = (float) $record->paid_amount;
+
+                            // Xizmat bo'yicha to'lovlarni hisoblash
+                            $servicePayments = [];
+                            foreach ($record->payments as $payment) {
+                                $services = $payment->services ?? [];
+                                if (!empty($services)) {
+                                    foreach ($services as $svcName) {
+                                        $servicePayments[$svcName] = ($servicePayments[$svcName] ?? 0) + (float)$payment->amount / count($services);
+                                    }
+                                }
+                            }
+
+                            $html = '<div style="display:flex;flex-direction:column;gap:0">';
+                            $html .= '<div style="display:flex;align-items:center;gap:10px;padding:6px 0 8px;border-bottom:2px solid #e5e7eb;margin-bottom:4px">';
+                            $html .= '<div style="flex:1;font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px">Xizmat</div>';
+                            $html .= '<div style="font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px">To\'lanadigan summa</div>';
+                            $html .= '<div style="font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px;min-width:150px;text-align:right">To\'langan</div>';
+                            $html .= '</div>';
+                            foreach ($record->services as $svc) {
+                                $svcLabel  = \App\Models\Project::serviceOptions()[$svc->service_name] ?? $svc->service_name;
+                                $svcPrice  = (float) $svc->final_price;
+                                $svcPaid   = $servicePayments[$svc->service_name] ?? 0;
+                                if (empty($servicePayments) && $totalPrice > 0) {
+                                    $svcPaid = $paidAmount * ($svcPrice / $totalPrice);
+                                }
+                                $pct = $svcPrice > 0 ? min(100, round($svcPaid / $svcPrice * 100)) : 0;
+                                $color = $pct >= 100 ? '#16a34a' : ($pct > 0 ? '#2563eb' : '#9ca3af');
+                                $html .= "<div style='display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9'>";
+                                $html .= "<div style='flex:1;font-size:13px;font-weight:600;color:#374151'>{$svcLabel}</div>";
+                                $html .= "<div style='font-size:12px;color:#6b7280'>" . number_format($svcPrice, 0, '.', ' ') . " so'm</div>";
+                                $html .= "<div style='font-size:12px;font-weight:700;color:{$color};min-width:120px;text-align:right'>" . number_format($svcPaid, 0, '.', ' ') . " so'm";
+                                if ($pct > 0) $html .= " <span style='font-size:10px;opacity:.7'>({$pct}%)</span>";
+                                $html .= "</div>";
+                                $html .= "</div>";
+                            }
+                            $html .= '</div>';
+                            return new \Illuminate\Support\HtmlString($html);
+                        })
+                        ->columnSpanFull(),
+                ])
+                ->hidden(fn($record) => !$record || $record->services->isEmpty()),
+
             Forms\Components\Section::make('Loyiha holati')
                 ->columns(3)
                 ->schema([

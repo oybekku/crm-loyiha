@@ -68,13 +68,13 @@
         border-radius: 6px;
         padding: 12px 14px;
         margin-bottom: 14px;
-        font-size: 11.5px;
-        line-height: 1.65;
+        font-size: 14px;
+        line-height: 1.7;
         color: #222;
         background: #fafbfc;
     }
     .conditions h3 {
-        font-size: 12.5px;
+        font-size: 14px;
         font-weight: 800;
         margin-bottom: 7px;
         color: #1d4ed8;
@@ -84,6 +84,19 @@
     .conditions ol { padding-left: 18px; }
     .conditions li { margin-bottom: 3px; }
 
+    /* Page break */
+    .page-break { page-break-before: always; break-before: page; }
+    .copy-divider {
+        border: none; border-top: 2px dashed #9ca3af;
+        margin: 24px 0 20px;
+    }
+    .copy-label {
+        text-align: center; font-size: 11px; color: #9ca3af;
+        margin: -32px 0 20px; background: #fff;
+        display: inline-block; padding: 0 12px;
+        position: relative; left: 50%; transform: translateX(-50%);
+    }
+
     /* Signatures */
     .signatures {
         display: flex;
@@ -92,7 +105,15 @@
         margin-top: auto;
         padding-top: 10px;
     }
-    .sig-block { flex: 1; }
+    .sig-block { flex: 1; position: relative; }
+    .stamp-img {
+        position: absolute;
+        bottom: -10px;
+        left: -10px;
+        width: 280px;
+        opacity: 0.92;
+        pointer-events: none;
+    }
     .sig-title { font-size: 13px; font-weight: 700; margin-bottom: 30px; }
     .sig-line { border-bottom: 1.5px solid #000; margin-bottom: 6px; }
     .sig-label { font-size: 11px; color: #666; }
@@ -232,19 +253,24 @@
 
     <!-- CONDITIONS: Uzbek -->
     <div class="conditions lang-uz active">
-        <h3>Xizmat ko'rsatish shartlari</h3>
-        <ol>
-            <li>Mijoz tavakkalchilikni o'z bo'yniga oladi: agar qurilmadan foydalanish shartlari qo'pol ravishda buzilgan bo'lsa, ichiga tok o'tkazuvchi suyuqlik tushgan bo'lsa (korroziya) yoki mexanik shikastlanishlar bo'lsa, ta'mirlash jarayonida qurilmaning to'liq yoki qisman ishlamay qolishi xavfi uchun mijoz javobgar bo'ladi.</li>
-            <li>Ma'lumotlar va sim-kartalar: servis markazi qurilma xotirasidagi ma'lumotlarning ehtimoliy yo'qolishi, shuningdek, ichida qolib ketgan Sim va Flash-kartalar uchun javobgarlikni o'z zimmasiga olmaydi.</li>
-            <li>Saqlash muddati: qurilmani saqlash muddati tayyor bo'lishi taxmin qilingan sanadan boshlab <strong>30 kun</strong>ni tashkil etadi. Ushbu muddatdan keyin apparat utilizatsiya qilinadi va u bo'yicha e'tirozlar qabul qilinmaydi.</li>
-            <li>Diagnostika va ta'mirlash hajmi: ijrochi faqatgina mijoz tomonidan bildirilgan nosozlikni diagnostika qilish va ta'mirlash majburiyatini oladi. Vaqt ijrochining ish hajmiga bog'liq va diagnostikadan keyin aniqlanadi.</li>
-            <li>Kvitansiya yo'qolsa: kvitansiya yo'qolgan taqdirda, qurilma mijozning pasporti taqdim etilganda topshiriladi.</li>
-            <li>Ehtiyot qismlar yetishmovchiligi: ehtiyot qismlar, materiallar yoki texnik hujjatlar bo'lmagan taqdirda, ijrochi bir tomonlama tartibda ta'mirlashni rad etish huquqiga ega.</li>
-            <li>Narxlar bilan tanishish: mijoz ushbu shartnoma tuzilgunga qadar ijrochining narxlar ro'yxati bilan tanishishi va zarurat bo'lganda xizmatlar narxini aniqlashtirib olishi kerak.</li>
-            <li>Narx va muddatning o'zgarishi: qabul vaqtida faqat taxminiy narx va muddat kelishiladi. Agar qo'shimcha ishlar, materiallar talab etilsa yoki yangi nuqsonlar aniqlansa — ijrochi mijozni ogohlantirishga majbur. Mijoz rad etsa, bajarilgan ishlar va ehtiyot qismlar qiymatini to'laydi.</li>
-            <li>Kafolat cheklovlari: suyuqlik tekkan va mexanik shikastlanishlardan keyin ta'mirlangan apparatlarga kafolat berilmaydi.</li>
-            <li>Kafolat doirasi: kafolat faqat almashtirilgan yoki ta'mirlangan qismning o'zigagina amal qiladi.</li>
-        </ol>
+        <h3>{{ $project->number }} sonli shartnomaga ilova</h3>
+        <p style="font-weight:700;margin-bottom:8px;font-size:13px;">Bildirishnoma</p>
+        <p style="line-height:1.75;text-align:justify;">
+            Men {{ $project->created_at->format('d.m.Y') }} yildagi
+            <strong>{{ $project->number }}</strong> sonli obyektning loyiha hujjatlarini ishlab chiqish haqidagi
+            shartnomaga ko'ra buyurtmachi (mulkdor)
+            <strong>{{ $project->owner_name }}</strong>
+            ushbu bildirishnoma bilan shuni ma'lum qilamanki, Vazirlar Mahkamasining 2026 yil 13 apreldagi
+            167-son qarori bilan tasdiqlangan "Yakka tartibdagi uy-joylar hamda kichik hajmdagi noturar bino va
+            inshootlarni qurish hamda rekonstruksiya qilish ishlari yuzasidan xususiy qurilish nazoratini amalga
+            oshirish tartibi to'g'risidagi nizom"ga muvofiq mazkur obyektning loyiha hujjatlarini ishlab
+            chiqilishi bilan cheklanaman va buyurtmachi (mulkdor) sifatida loyiha tashkiloti tomonidan xususiy
+            qurilish nazoratini amalga oshirish zarurati mavjud emasligini ma'lum qilaman.
+        </p>
+        <p style="margin-top:10px;line-height:1.7;color:#444;">
+            Yuqoridagi bildirishnomani o'qib chiqdim, unga nisbatan e'tiroz va qo'shimchalarim yo'q.
+            Kelib chifadigan salbiy oqibatlar uchun javobgarlikni o'z zimmamda bo'lishidan xabardorman.
+        </p>
     </div>
 
     <!-- CONDITIONS: Russian -->
@@ -268,9 +294,10 @@
     <div class="signatures">
         <div class="sig-block">
             <div class="sig-title" id="sig-company">Kompaniya vakili:</div>
-            <div class="sig-line"></div>
+            <div class="sig-line" style="margin-top:30px;"></div>
             <div class="sig-label" id="sig-label-sign">Imzo / muhr</div>
             <div class="sig-name">{{ $project->assignedUsers->first()?->name ?: '________________' }}</div>
+            <img src="/images/imzo.png" class="stamp-img" alt="">
         </div>
         <div class="sig-block sig-right">
             <div class="sig-title" id="sig-client">Buyurtmachi:</div>
@@ -286,6 +313,134 @@
         {{ $project->created_at->format('d.m.Y H:i') }}
         &nbsp;|&nbsp;
         <span id="footer-printed">Chop etilgan:</span>
+        {{ now()->format('d.m.Y H:i') }}
+    </div>
+
+    <!-- ===== 2-NUSXA ===== -->
+    <div style="position:relative;margin:28px 0 16px;">
+        <hr class="copy-divider">
+        <span class="copy-label">✂ &nbsp; 2-nusxa (mijoz uchun) &nbsp; ✂</span>
+    </div>
+
+    <!-- 2-nusxa header -->
+    <div class="header">
+        <div class="header-left">
+            <h1 id="title-text2">Qabul arizasi</h1>
+            <div class="order-num">
+                <span id="label-ariza2">Ariza</span>
+                <span class="num-badge">{{ $project->number }}</span>
+                &nbsp;&nbsp;{{ $project->created_at->format('d.m.Y') }}
+            </div>
+        </div>
+        <div class="header-right">
+            <strong>BESTHOME CRM</strong>
+            +998 99 468 19 91<br>
+            {{ now()->format('d.m.Y H:i') }}
+        </div>
+    </div>
+
+    <!-- 2-nusxa jadval — summalar YO'Q -->
+    <table class="main-table">
+        <tr>
+            <td class="label" id="lbl-client2">Mijoz (F.I.Sh)</td>
+            <td class="value" colspan="2">
+                <strong>{{ $project->owner_name }}</strong>
+                @if($project->phones)
+                    @foreach($project->phones as $phone)
+                        &nbsp;&nbsp;{{ is_array($phone) ? ($phone['phone'] ?? '') : $phone }}@if(!$loop->last),@endif
+                    @endforeach
+                @endif
+            </td>
+        </tr>
+        <tr>
+            <td class="label" id="lbl-type2">Loyiha turi</td>
+            <td class="value" colspan="2">
+                @php
+                    $cats2 = ['turar'=>'Turar-joy','tijorat'=>'Tijorat binosi','qishloq'=>'Qishloq qurilishi','sanoat'=>'Sanoat binosi','boshqa'=>'Boshqa'];
+                    $catsRu2 = ['turar'=>'Жилое здание','tijorat'=>'Коммерческое здание','qishloq'=>'Сельское строительство','sanoat'=>'Промышленное здание','boshqa'=>'Другое'];
+                @endphp
+                <span class="lang-uz active">{{ $cats2[$project->category] ?? $project->category }}</span>
+                <span class="lang-ru">{{ $catsRu2[$project->category] ?? $project->category }}</span>
+            </td>
+        </tr>
+        <tr>
+            <td class="label" id="lbl-name2">Loyiha nomi</td>
+            <td class="value" colspan="2">{{ $project->title ?: '—' }}</td>
+        </tr>
+        <tr>
+            <td class="label" id="lbl-address2">Ob'ekt manzili</td>
+            <td class="value" colspan="2">{{ $project->address }}</td>
+        </tr>
+        <tr>
+            <td class="label" id="lbl-worker2">Mas'ul xodim</td>
+            <td class="value" colspan="2">{{ $project->assignedUsers->pluck('name')->join(', ') ?: '—' }}</td>
+        </tr>
+        <tr>
+            <td class="label" id="lbl-deadline2">Taxminiy muddat</td>
+            <td class="value" colspan="2">{{ $project->deadline_date ? $project->deadline_date->format('d.m.Y') : '—' }}</td>
+        </tr>
+        <tr>
+            <td class="label" id="lbl-note2">Izohlar</td>
+            <td class="value" colspan="2" style="min-height:44px;font-style:{{ $project->description ? 'normal' : 'italic' }};color:{{ $project->description ? '#111' : '#999' }};">
+                {{ $project->description ?: '—' }}
+            </td>
+        </tr>
+    </table>
+
+    <!-- 2-nusxa shartlar -->
+    <div class="conditions lang-uz active" id="cond2-uz">
+        <h3>{{ $project->number }} sonli shartnomaga ilova</h3>
+        <p style="font-weight:700;margin-bottom:8px;font-size:14px;">Bildirishnoma</p>
+        <p style="line-height:1.75;text-align:justify;">
+            Men {{ $project->created_at->format('d.m.Y') }} yildagi
+            <strong>{{ $project->number }}</strong> sonli obyektning loyiha hujjatlarini ishlab chiqish haqidagi
+            shartnomaga ko'ra buyurtmachi (mulkdor)
+            <strong>{{ $project->owner_name }}</strong>
+            ushbu bildirishnoma bilan shuni ma'lum qilamanki, Vazirlar Mahkamasining 2026 yil 13 apreldagi
+            167-son qarori bilan tasdiqlangan "Yakka tartibdagi uy-joylar hamda kichik hajmdagi noturar bino va
+            inshootlarni qurish hamda rekonstruksiya qilish ishlari yuzasidan xususiy qurilish nazoratini amalga
+            oshirish tartibi to'g'risidagi nizom"ga muvofiq mazkur obyektning loyiha hujjatlarini ishlab
+            chiqilishi bilan cheklanaman va buyurtmachi (mulkdor) sifatida loyiha tashkiloti tomonidan xususiy
+            qurilish nazoratini amalga oshirish zarurati mavjud emasligini ma'lum qilaman.
+        </p>
+        <p style="margin-top:10px;line-height:1.7;color:#444;">
+            Yuqoridagi bildirishnomani o'qib chiqdim, unga nisbatan e'tiroz va qo'shimchalarim yo'q.
+            Kelib chifadigan salbiy oqibatlar uchun javobgarlikni o'z zimmamda bo'lishidan xabardorman.
+        </p>
+    </div>
+    <div class="conditions lang-ru" id="cond2-ru">
+        <h3>Условия оказания услуг</h3>
+        <ol>
+            <li>Клиент принимает на себя риск возможной полной или частичной утраты работоспособности устройства в процессе ремонта, в случае грубых нарушений условий эксплуатации, наличии следов попадания токопроводящей жидкости (коррозии) либо механических повреждений.</li>
+            <li>Сервисный центр не несёт ответственности за возможную потерю данных в памяти устройства, а также за оставленные Sim и Flash-карты.</li>
+            <li>Аппарат принимается на ответственное хранение на весь срок обслуживания. Срок хранения — <strong>30 дней</strong> с ориентировочной даты готовности. После данного срока аппарат утилизируется и претензии не принимаются.</li>
+            <li>Исполнитель обязуется произвести диагностику и ремонт исключительно заявленной неисправности.</li>
+            <li>В случае утери квитанции устройство выдаётся по предъявлению паспорта заказчика.</li>
+            <li>Гарантия не распространяется на аппараты с попаданием жидкости и механическими повреждениями.</li>
+        </ol>
+    </div>
+
+    <!-- 2-nusxa imzolar -->
+    <div class="signatures">
+        <div class="sig-block">
+            <div class="sig-title" id="sig-company2">Kompaniya vakili:</div>
+            <div class="sig-line" style="margin-top:30px;"></div>
+            <div class="sig-label" id="sig-label-sign2">Imzo / muhr</div>
+            <div class="sig-name">{{ $project->assignedUsers->first()?->name ?: '________________' }}</div>
+            <img src="/images/imzo.png" class="stamp-img" alt="">
+        </div>
+        <div class="sig-block sig-right">
+            <div class="sig-title" id="sig-client2">Buyurtmachi:</div>
+            <div class="sig-line"></div>
+            <div class="sig-label">Imzo</div>
+            <div class="sig-name">{{ $project->owner_name }}</div>
+            <div style="font-size:11px;color:#888;margin-top:3px;" id="sig-agree2">shartlar bilan tanishib, rozilik bildirdi</div>
+        </div>
+    </div>
+
+    <div class="footer-date">
+        {{ $project->created_at->format('d.m.Y H:i') }}
+        &nbsp;|&nbsp;
         {{ now()->format('d.m.Y H:i') }}
     </div>
 
