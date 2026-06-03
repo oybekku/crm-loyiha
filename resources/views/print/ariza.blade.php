@@ -6,20 +6,20 @@
 <title>Qabul arizasi — {{ $project->number }}</title>
 <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; font-size: 14px; color: #000; background: #fff; }
+    body { font-family: Arial, sans-serif; font-size: 13px; color: #000; background: #fff; }
 
-    .page { width: 210mm; min-height: 297mm; margin: 0 auto; padding: 14mm 14mm 12mm; display: flex; flex-direction: column; }
+    .page { width: 210mm; min-height: 297mm; margin: 0 auto; padding: 10mm 12mm 8mm; display: flex; flex-direction: column; }
 
     /* Header */
     .header {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        margin-bottom: 14px;
-        padding-bottom: 12px;
+        margin-bottom: 8px;
+        padding-bottom: 8px;
         border-bottom: 3px solid #1d4ed8;
     }
-    .header-left h1 { font-size: 30px; font-weight: 900; color: #1d4ed8; margin-bottom: 4px; letter-spacing: -0.5px; }
+    .header-left h1 { font-size: 24px; font-weight: 900; color: #1d4ed8; margin-bottom: 3px; letter-spacing: -0.5px; }
     .header-left .order-num { font-size: 13px; color: #444; display: flex; align-items: center; gap: 8px; }
     .header-right { text-align: right; font-size: 13px; line-height: 1.7; }
     .header-right strong { font-size: 15px; display: block; margin-bottom: 2px; }
@@ -36,10 +36,10 @@
     }
 
     /* Main table */
-    .main-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
+    .main-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
     .main-table td {
         border: 1.5px solid #c8d0db;
-        padding: 9px 12px;
+        padding: 5px 10px;
         vertical-align: middle;
     }
     .main-table .label {
@@ -66,17 +66,17 @@
     .conditions {
         border: 1.5px solid #c8d0db;
         border-radius: 6px;
-        padding: 12px 14px;
-        margin-bottom: 14px;
-        font-size: 14px;
-        line-height: 1.7;
+        padding: 8px 12px;
+        margin-bottom: 8px;
+        font-size: 12px;
+        line-height: 1.6;
         color: #222;
         background: #fafbfc;
     }
     .conditions h3 {
-        font-size: 14px;
+        font-size: 12px;
         font-weight: 800;
-        margin-bottom: 7px;
+        margin-bottom: 5px;
         color: #1d4ed8;
         text-transform: uppercase;
         letter-spacing: 0.03em;
@@ -88,7 +88,7 @@
     .page-break { page-break-before: always; break-before: page; }
     .copy-divider {
         border: none; border-top: 2px dashed #9ca3af;
-        margin: 24px 0 20px;
+        margin: 12px 0 10px;
     }
     .copy-label {
         text-align: center; font-size: 11px; color: #9ca3af;
@@ -114,7 +114,7 @@
         opacity: 0.92;
         pointer-events: none;
     }
-    .sig-title { font-size: 13px; font-weight: 700; margin-bottom: 30px; }
+    .sig-title { font-size: 13px; font-weight: 700; margin-bottom: 20px; }
     .sig-line { border-bottom: 1.5px solid #000; margin-bottom: 6px; }
     .sig-label { font-size: 11px; color: #666; }
     .sig-name { font-size: 14px; font-weight: 700; margin-top: 4px; }
