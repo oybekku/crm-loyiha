@@ -262,11 +262,6 @@
                 // Agar xizmat belgilanmagan bo'lsa — proportional taqsimlash
                 $hasTagged = !empty($svcPaidMap);
             @endphp
-            <tr style="background:#f0f4f8;">
-                <td class="label" style="font-size:11px;color:#6b7280;padding:4px 12px;">Xizmat</td>
-                <td class="value" style="font-size:11px;color:#6b7280;padding:4px 12px;">Narx</td>
-                <td class="value" style="font-size:11px;color:#6b7280;padding:4px 12px;min-width:120px;">To'langan</td>
-            </tr>
             @foreach($project->services as $svc)
             @php
                 $svcPrice = (float) $svc->final_price;
@@ -280,17 +275,18 @@
                 <td class="label" style="padding-left:14px;font-weight:600;color:#374151;">
                     {{ \App\Models\Project::serviceOptions()[$svc->service_name] ?? $svc->service_name }}
                 </td>
-                <td class="value">{{ number_format($svcPrice, 0, ',', ' ') }} UZS</td>
-                <td class="value" style="color:{{ $svcPaid > 0 ? '#166534' : '#991b1b' }};font-weight:600;">
-                    {{ number_format($svcPaid, 0, ',', ' ') }} UZS
+                <td class="value" colspan="2">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;">
+                        <span style="font-weight:700;">{{ number_format($svcPrice, 0, ',', ' ') }} UZS</span>
+                        <span style="font-size:12px;color:#6b7280;">To'langan: <strong style="color:{{ $svcPaid > 0 ? '#166534' : '#991b1b' }};">{{ number_format($svcPaid, 0, ',', ' ') }} UZS</strong></span>
+                    </div>
                 </td>
             </tr>
             @endforeach
         @endif
         <tr>
             <td class="label" id="lbl-total" style="font-weight:800;">Umumiy narx</td>
-            <td class="value" style="font-size:15px;font-weight:700;">{{ number_format($project->total_price, 0, ',', ' ') }} UZS</td>
-            <td class="value"></td>
+            <td class="value" colspan="2" style="font-size:15px;font-weight:700;">{{ number_format($project->total_price, 0, ',', ' ') }} UZS</td>
         </tr>
         <tr>
             <td class="label" id="lbl-paid">Oldindan to'lov</td>
