@@ -2233,10 +2233,10 @@ function kbDrop(e, status) {
 @endif
 
 <!-- Mobil navigatsiya tugmalari -->
-<div id="kb-nav-btns" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:499;display:flex;gap:10px;align-items:center;">
-    <button onclick="kanbanNav(-1)" style="background:rgba(30,30,30,0.82);color:#fff;border:none;border-radius:50%;width:46px;height:46px;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);">‹</button>
-    <span id="kb-nav-label" style="background:rgba(30,30,30,0.75);color:#fff;font-size:13px;font-weight:700;padding:6px 16px;border-radius:20px;backdrop-filter:blur(6px);white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis;text-align:center;"></span>
-    <button onclick="kanbanNav(1)" style="background:rgba(30,30,30,0.82);color:#fff;border:none;border-radius:50%;width:46px;height:46px;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);">›</button>
+<div id="kb-nav-btns" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:499;gap:10px;align-items:center;">
+    <button onclick="kanbanNav(-1)" style="background:transparent;color:transparent;border:none;width:60px;height:60px;cursor:pointer;"></button>
+    <span id="kb-nav-label" style="display:none;"></span>
+    <button onclick="kanbanNav(1)" style="background:transparent;color:transparent;border:none;width:60px;height:60px;cursor:pointer;"></button>
 </div>
 
 <script>
