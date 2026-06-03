@@ -546,8 +546,9 @@ HTML;
     private function buildStatusNavItems(): array
     {
         $statuses = [
-            'yangi'            => "Yangi",
+            'yangi'            => "Ariza",
             'tolov_jarayonida' => "To'lov jarayonida",
+            'yangi_loyihalar'  => "Yangi loyihalar",
             'toposyomka'       => 'Toposyomka',
             'eskiz_loyiha'     => 'Eskiz loyiha',
             'tekshirish'       => 'Tekshirish',
