@@ -109,7 +109,7 @@
     .sig-block { flex: 1; position: relative; min-height: 110px; }
     .stamp-img {
         position: absolute;
-        bottom: 0px;
+        bottom: -30px;
         left: -8px;
         width: 280px;
         opacity: 0.92;
