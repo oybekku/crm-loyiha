@@ -525,7 +525,13 @@ HTML;
             )
             ->renderHook(
                 'panels::body.end',
-                fn () => '<script src="' . asset('js/map-picker.js') . '?v=11" defer></script>'
+                function () {
+                    $html = '<script src="' . asset('js/map-picker.js') . '?v=11" defer></script>';
+                    if (auth()->check()) {
+                        $html .= \Livewire\Livewire::mount('message-notifier')->html();
+                    }
+                    return $html;
+                }
             )
             ->middleware([
                 EncryptCookies::class,
