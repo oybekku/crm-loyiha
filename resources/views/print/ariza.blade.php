@@ -168,14 +168,8 @@
         </button>
     </div>
     <div style="width:1px;height:28px;background:rgba(255,255,255,0.3);"></div>
-    <button onclick="printCopy(1)" style="background:#fff;color:#1d4ed8;border:none;padding:8px 20px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;">
-        🖨 Firma nusxasi
-    </button>
-    <button onclick="printCopy(2)" style="background:#22c55e;color:#fff;border:none;padding:8px 20px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;">
-        🖨 Mijoz nusxasi
-    </button>
-    <button onclick="printCopy(0)" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.4);padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;">
-        🖨 Ikkalasi
+    <button onclick="window.print()" style="background:#fff;color:#1d4ed8;border:none;padding:8px 28px;border-radius:6px;font-size:14px;cursor:pointer;font-weight:700;">
+        🖨 Chop etish
     </button>
     <div style="width:1px;height:28px;background:rgba(255,255,255,0.3);"></div>
     <button onclick="window.close()" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.4);padding:8px 18px;border-radius:6px;font-size:14px;cursor:pointer;">
@@ -340,148 +334,7 @@
         {{ now()->format('d.m.Y H:i') }}
     </div>
 
-    <!-- ===== 2-NUSXA ===== -->
 </div><!-- /copy1 -->
-
-<div class="copy-divider-wrap" style="position:relative;margin:12px 0 10px;">
-    <hr class="copy-divider">
-    <span class="copy-label">✂ &nbsp; 2-nusxa (mijoz uchun) &nbsp; ✂</span>
-</div>
-
-<div class="copy2">
-    <!-- 2-nusxa header -->
-    <div class="header">
-        <div class="header-left">
-            <h1 id="title-text2">Qabul arizasi</h1>
-            <div class="order-num">
-                <span id="label-ariza2">Ariza</span>
-                <span class="num-badge">{{ $project->number }}</span>
-                &nbsp;&nbsp;{{ $project->created_at->format('d.m.Y') }}
-            </div>
-        </div>
-        <div class="header-right">
-            <strong>BESTHOME CRM</strong>
-            +998 99 468 19 91<br>
-            {{ now()->format('d.m.Y H:i') }}
-        </div>
-    </div>
-
-    <!-- 2-nusxa jadval — summalar YO'Q -->
-    <table class="main-table">
-        <tr>
-            <td class="label" id="lbl-client2">Mijoz (F.I.Sh)</td>
-            <td class="value" colspan="2">
-                <strong>{{ $project->owner_name }}</strong>
-                @if($project->phones)
-                    @foreach($project->phones as $phone)
-                        &nbsp;&nbsp;{{ is_array($phone) ? ($phone['phone'] ?? '') : $phone }}@if(!$loop->last),@endif
-                    @endforeach
-                @endif
-            </td>
-        </tr>
-        <tr>
-            <td class="label" id="lbl-type2">Loyiha turi</td>
-            <td class="value" colspan="2">
-                @php
-                    $cats2 = ['turar'=>'Turar-joy','tijorat'=>'Tijorat binosi','qishloq'=>'Qishloq qurilishi','sanoat'=>'Sanoat binosi','boshqa'=>'Boshqa'];
-                    $catsRu2 = ['turar'=>'Жилое здание','tijorat'=>'Коммерческое здание','qishloq'=>'Сельское строительство','sanoat'=>'Промышленное здание','boshqa'=>'Другое'];
-                @endphp
-                <span class="lang-uz active">{{ $cats2[$project->category] ?? $project->category }}</span>
-                <span class="lang-ru">{{ $catsRu2[$project->category] ?? $project->category }}</span>
-            </td>
-        </tr>
-        <tr>
-            <td class="label" id="lbl-name2">Loyiha nomi</td>
-            <td class="value" colspan="2">{{ $project->title ?: '—' }}</td>
-        </tr>
-        <tr>
-            <td class="label" id="lbl-address2">Ob'ekt manzili</td>
-            <td class="value" colspan="2">{{ $project->address }}</td>
-        </tr>
-        <tr>
-            <td class="label" id="lbl-worker2">Mas'ul xodim</td>
-            <td class="value" colspan="2">{{ $project->assignedUsers->pluck('name')->join(', ') ?: '—' }}</td>
-        </tr>
-        <tr>
-            <td class="label" id="lbl-deadline2">Taxminiy muddat</td>
-            <td class="value" colspan="2">{{ $project->deadline_date ? $project->deadline_date->format('d.m.Y') : '—' }}</td>
-        </tr>
-        <tr>
-            <td class="label" id="lbl-note2">Izohlar</td>
-            <td class="value" colspan="2" style="min-height:44px;font-style:{{ $project->description ? 'normal' : 'italic' }};color:{{ $project->description ? '#111' : '#999' }};">
-                {{ $project->description ?: '—' }}
-            </td>
-        </tr>
-    </table>
-
-    <!-- 2-nusxa shartlar -->
-    <div class="conditions lang-uz active" id="cond2-uz">
-        <h3>{{ $project->number }} sonli shartnomaga ilova</h3>
-        <p style="font-weight:700;margin-bottom:8px;font-size:14px;">Bildirishnoma</p>
-        <p style="line-height:1.75;text-align:justify;">
-            Men {{ $project->created_at->format('d.m.Y') }} yildagi
-            <strong>{{ $project->number }}</strong> sonli obyektning loyiha hujjatlarini ishlab chiqish haqidagi
-            shartnomaga ko'ra buyurtmachi (mulkdor)
-            <strong>{{ $project->owner_name }}</strong>
-            ushbu bildirishnoma bilan shuni ma'lum qilamanki, Vazirlar Mahkamasining 2026 yil 13 apreldagi
-            167-son qarori bilan tasdiqlangan "Yakka tartibdagi uy-joylar hamda kichik hajmdagi noturar bino va
-            inshootlarni qurish hamda rekonstruksiya qilish ishlari yuzasidan xususiy qurilish nazoratini amalga
-            oshirish tartibi to'g'risidagi nizom"ga muvofiq mazkur obyektning loyiha hujjatlarini ishlab
-            chiqilishi bilan cheklanaman va buyurtmachi (mulkdor) sifatida loyiha tashkiloti tomonidan xususiy
-            qurilish nazoratini amalga oshirish zarurati mavjud emasligini ma'lum qilaman.
-        </p>
-        <p style="margin-top:10px;line-height:1.7;color:#444;">
-            Yuqoridagi bildirishnomani o'qib chiqdim, unga nisbatan e'tiroz va qo'shimchalarim yo'q.
-            Kelib chifadigan salbiy oqibatlar uchun javobgarlikni o'z zimmamda bo'lishidan xabardorman.
-        </p>
-    </div>
-    <div class="conditions lang-ru" id="cond2-ru">
-        <h3>Приложение к договору № {{ $project->number }}</h3>
-        <p style="font-weight:700;margin-bottom:8px;font-size:12px;">Уведомление</p>
-        <p style="line-height:1.75;text-align:justify;">
-            Я, являясь Заказчиком (собственником) по договору № <strong>{{ $project->number }}</strong>
-            от {{ $project->created_at->format('d.m.Y') }} года на разработку проектной документации объекта
-            <strong>{{ $project->owner_name }}</strong>,
-            настоящим уведомлением сообщаю, что в соответствии с «Положением о порядке осуществления частного
-            строительного контроля за работами по строительству и реконструкции индивидуального жилья, а также
-            малогабаритных нежилых зданий и сооружений», утвержденным Постановлением Кабинета Министров от
-            13 апреля 2026 года № 167, я ограничиваюсь лишь разработкой проектной документации данного объекта.
-        </p>
-        <p style="margin-top:10px;line-height:1.7;color:#444;">
-            В качестве Заказчика (собственника) заявляю об отсутствии необходимости в осуществлении частного
-            строительного контроля со стороны проектной организации.
-        </p>
-        <p style="margin-top:8px;line-height:1.7;color:#444;">
-            С вышеуказанным уведомлением ознакомлен(а), возражений и дополнений не имею.
-            Осведомлен(а) о принятии на себя ответственности за любые возможные негативные последствия.
-        </p>
-    </div>
-
-    <!-- 2-nusxa imzolar -->
-    <div class="signatures">
-        <div class="sig-block">
-            <div class="sig-title" id="sig-company2">Kompaniya vakili:</div>
-            <div class="sig-line"></div>
-            <div class="sig-label" id="sig-label-sign2">Imzo / muhr</div>
-            <div class="sig-name">{{ $project->assignedUsers->first()?->name ?: '________________' }}</div>
-            <img src="/images/imzo.png" class="stamp-img" alt="">
-        </div>
-        <div class="sig-block sig-right">
-            <div class="sig-title" id="sig-client2">Buyurtmachi:</div>
-            <div class="sig-line"></div>
-            <div class="sig-label">Imzo</div>
-            <div class="sig-name">{{ $project->owner_name }}</div>
-            <div style="font-size:11px;color:#888;margin-top:3px;" id="sig-agree2">shartlar bilan tanishib, rozilik bildirdi</div>
-        </div>
-    </div>
-
-    <div class="footer-date">
-        {{ $project->created_at->format('d.m.Y H:i') }}
-        &nbsp;|&nbsp;
-        {{ now()->format('d.m.Y H:i') }}
-    </div>
-
-</div><!-- /copy2 -->
 
 </div><!-- /page -->
 
