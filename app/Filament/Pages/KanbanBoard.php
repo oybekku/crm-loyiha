@@ -950,6 +950,8 @@ class KanbanBoard extends Page
             }
         }
 
+        $allStatuses = $statuses; // Tab bar uchun har doim barchasi
+
         // URL ?status= filtri — faqat bitta holat ko'rsatiladi
         if ($this->filterStatus && isset($statuses[$this->filterStatus])) {
             $statuses = [$this->filterStatus => $statuses[$this->filterStatus]];
@@ -1001,6 +1003,6 @@ class KanbanBoard extends Page
             ->filter()
             ->values();
 
-        return compact('statuses', 'routeStatuses', 'projects', 'users', 'serviceOptions', 'categoryOptions', 'priceTiers', 'paymentQueue', 'existingOwners');
+        return compact('statuses', 'allStatuses', 'routeStatuses', 'projects', 'users', 'serviceOptions', 'categoryOptions', 'priceTiers', 'paymentQueue', 'existingOwners');
     }
 }

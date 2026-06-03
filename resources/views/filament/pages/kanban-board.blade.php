@@ -365,14 +365,16 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 </div>
 
 {{-- MOBIL STATUS TAB BAR --}}
-<div id="kb-tab-bar" style="display:none;overflow-x:auto;white-space:nowrap;padding:0 4px 8px;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin:0 -4px 8px;">
-    @foreach($statuses as $sk => $st)
-    <button onclick="kanbanScrollTo('col-{{ $sk }}')"
-            id="tab-{{ $sk }}"
-            style="display:inline-block;padding:6px 14px;margin-right:6px;border-radius:20px;border:1.5px solid #e5e7eb;background:#f9fafb;color:#374151;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s;">
+<div id="kb-tab-bar" style="display:none;overflow-x:scroll;white-space:nowrap;padding:4px 4px 10px;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-bottom:8px;">
+    @foreach($allStatuses as $sk => $st)
+    @php $isActive = request()->get('status') === $sk || (!request()->get('status') && $loop->first); @endphp
+    <a href="/admin/kanban-board?status={{ $sk }}"
+       wire:navigate
+       id="tab-{{ $sk }}"
+       style="display:inline-block;padding:7px 14px;margin-right:6px;border-radius:20px;border:1.5px solid {{ $isActive ? '#2563eb' : '#e5e7eb' }};background:{{ $isActive ? '#2563eb' : '#f9fafb' }};color:{{ $isActive ? '#fff' : '#374151' }};font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;text-decoration:none;">
         {{ $st['label'] }}
-        <span style="background:#e5e7eb;color:#6b7280;border-radius:10px;padding:1px 6px;font-size:10px;margin-left:3px;">{{ $projects->get($sk, collect())->count() }}</span>
-    </button>
+        <span style="background:{{ $isActive ? 'rgba(255,255,255,0.25)' : '#e5e7eb' }};color:{{ $isActive ? '#fff' : '#6b7280' }};border-radius:10px;padding:1px 6px;font-size:10px;margin-left:3px;">{{ $projects->get($sk, collect())->count() }}</span>
+    </a>
     @endforeach
 </div>
 
