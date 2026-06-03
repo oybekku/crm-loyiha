@@ -2243,7 +2243,7 @@ function kbDrop(e, status) {
         const dy = e.changedTouches[0].clientY - startY;
         if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx)) return;
         const colW = wrap.querySelector('.kanban-col')?.offsetWidth || 300;
-        wrap.scrollBy({ left: dx < 0 ? colW + 12 : -(colW + 12), behavior: 'smooth' });
+        wrap.scrollBy({ left: dx > 0 ? colW + 12 : -(colW + 12), behavior: 'smooth' });
     }, { passive: true });
 })();
 </script>
