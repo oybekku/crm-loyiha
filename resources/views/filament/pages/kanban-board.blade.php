@@ -366,7 +366,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 
 {{-- KANBAN --}}
 <div class="{{ $filterStatus ? 'kanban-grid-mode' : '' }}">
-<div class="kanban-wrap">
+<div class="kanban-wrap" id="kanban-wrap">
 @foreach($statuses as $statusKey => $status)
 <div class="kanban-col" x-data="{ colCollapsed: localStorage.getItem('col_v1_{{ $statusKey }}') === 'true' }"
      x-effect="localStorage.setItem('col_v1_{{ $statusKey }}', colCollapsed ? 'true' : 'false')"
@@ -2225,6 +2225,27 @@ function kbDrop(e, status) {
         Livewire.find(lwEl.getAttribute('wire:id')).moveProject(id, status);
     }
 }
+
+// ===== MOBIL SWIPE =====
+(function() {
+    let startX = 0, startY = 0;
+    const wrap = document.getElementById('kanban-wrap');
+    if (!wrap) return;
+
+    wrap.addEventListener('touchstart', function(e) {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+    }, { passive: true });
+
+    wrap.addEventListener('touchend', function(e) {
+        if (window.innerWidth > 640) return;
+        const dx = e.changedTouches[0].clientX - startX;
+        const dy = e.changedTouches[0].clientY - startY;
+        if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx)) return;
+        const colW = wrap.querySelector('.kanban-col')?.offsetWidth || 300;
+        wrap.scrollBy({ left: dx < 0 ? colW + 12 : -(colW + 12), behavior: 'smooth' });
+    }, { passive: true });
+})();
 </script>
 
 @if(!auth()->user()?->isHisobchi() && !auth()->user()?->isBajaruvchi())

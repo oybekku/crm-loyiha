@@ -53,7 +53,7 @@ class ProjectResource extends Resource
         $user  = auth()->user();
         if ($user && !$user->canSeeAllProjects()) {
             if ($user->isHisobchi()) {
-                $query->where('status', '!=', 'yangi');
+                $query->whereNotIn('status', ['yangi', 'yangi_loyihalar']);
             } elseif (!$user->hasPermission('barcha_loyihalar')) {
                 $query->whereHas('assignedUsers', fn($q) => $q->where('users.id', $user->id));
             }
@@ -277,6 +277,7 @@ class ProjectResource extends Resource
         $statusColors = [
             'yangi'            => 'info',
             'tolov_jarayonida' => 'warning',
+            'yangi_loyihalar'  => 'primary',
             'tekshirish'       => 'warning',
             'tolangan'         => 'success',
             'tugallangan'      => 'success',
