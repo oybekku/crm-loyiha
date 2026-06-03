@@ -8,7 +8,8 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: Arial, sans-serif; font-size: 13px; color: #000; background: #fff; }
 
-    .page { width: 210mm; min-height: 297mm; margin: 0 auto; padding: 10mm 12mm 8mm; display: flex; flex-direction: column; }
+    .page { width: 210mm; margin: 0 auto; padding: 0; }
+    .copy1, .copy2 { width: 100%; min-height: 297mm; padding: 10mm 12mm 8mm; display: flex; flex-direction: column; box-sizing: border-box; }
 
     /* Header */
     .header {
@@ -105,19 +106,20 @@
         margin-top: auto;
         padding-top: 10px;
     }
-    .sig-block { flex: 1; position: relative; }
+    .sig-block { flex: 1; position: relative; min-height: 110px; }
     .stamp-img {
         position: absolute;
-        bottom: -10px;
-        left: -10px;
+        bottom: 22px;
+        left: -8px;
         width: 280px;
         opacity: 0.92;
         pointer-events: none;
+        z-index: 1;
     }
-    .sig-title { font-size: 13px; font-weight: 700; margin-bottom: 20px; }
-    .sig-line { border-bottom: 1.5px solid #000; margin-bottom: 6px; }
-    .sig-label { font-size: 11px; color: #666; }
-    .sig-name { font-size: 14px; font-weight: 700; margin-top: 4px; }
+    .sig-title { font-size: 13px; font-weight: 700; margin-bottom: 60px; }
+    .sig-line { border-bottom: 1.5px solid #000; margin-bottom: 6px; position: relative; z-index: 2; }
+    .sig-label { font-size: 11px; color: #666; position: relative; z-index: 2; }
+    .sig-name { font-size: 14px; font-weight: 700; margin-top: 4px; position: relative; z-index: 2; }
     .sig-right { text-align: right; }
 
     .footer-date {
@@ -316,7 +318,7 @@
     <div class="signatures">
         <div class="sig-block">
             <div class="sig-title" id="sig-company">Kompaniya vakili:</div>
-            <div class="sig-line" style="margin-top:30px;"></div>
+            <div class="sig-line"></div>
             <div class="sig-label" id="sig-label-sign">Imzo / muhr</div>
             <div class="sig-name">{{ $project->assignedUsers->first()?->name ?: '________________' }}</div>
             <img src="/images/imzo.png" class="stamp-img" alt="">
@@ -459,7 +461,7 @@
     <div class="signatures">
         <div class="sig-block">
             <div class="sig-title" id="sig-company2">Kompaniya vakili:</div>
-            <div class="sig-line" style="margin-top:30px;"></div>
+            <div class="sig-line"></div>
             <div class="sig-label" id="sig-label-sign2">Imzo / muhr</div>
             <div class="sig-name">{{ $project->assignedUsers->first()?->name ?: '________________' }}</div>
             <img src="/images/imzo.png" class="stamp-img" alt="">
