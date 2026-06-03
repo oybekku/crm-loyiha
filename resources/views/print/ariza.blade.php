@@ -103,8 +103,8 @@
         display: flex;
         justify-content: space-between;
         gap: 30px;
-        margin-top: auto;
-        padding-top: 10px;
+        margin-top: 12px;
+        padding-top: 6px;
     }
     .sig-block { flex: 1; position: relative; min-height: 110px; }
     .stamp-img {
@@ -116,7 +116,7 @@
         pointer-events: none;
         z-index: 1;
     }
-    .sig-title { font-size: 13px; font-weight: 700; margin-bottom: 60px; }
+    .sig-title { font-size: 13px; font-weight: 700; margin-bottom: 35px; }
     .sig-line { border-bottom: 1.5px solid #000; margin-bottom: 6px; position: relative; z-index: 2; }
     .sig-label { font-size: 11px; color: #666; position: relative; z-index: 2; }
     .sig-name { font-size: 14px; font-weight: 700; margin-top: 4px; position: relative; z-index: 2; }
