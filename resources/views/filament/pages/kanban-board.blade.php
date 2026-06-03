@@ -2226,26 +2226,6 @@ function kbDrop(e, status) {
     }
 }
 
-// ===== MOBIL SWIPE =====
-(function() {
-    let startX = 0, startY = 0;
-    const wrap = document.getElementById('kanban-wrap');
-    if (!wrap) return;
-
-    wrap.addEventListener('touchstart', function(e) {
-        startX = e.touches[0].clientX;
-        startY = e.touches[0].clientY;
-    }, { passive: true });
-
-    wrap.addEventListener('touchend', function(e) {
-        if (window.innerWidth > 640) return;
-        const dx = e.changedTouches[0].clientX - startX;
-        const dy = e.changedTouches[0].clientY - startY;
-        if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx)) return;
-        const colW = wrap.querySelector('.kanban-col')?.offsetWidth || 300;
-        wrap.scrollBy({ left: dx > 0 ? colW + 12 : -(colW + 12), behavior: 'smooth' });
-    }, { passive: true });
-})();
 </script>
 
 @if(!auth()->user()?->isHisobchi() && !auth()->user()?->isBajaruvchi())
