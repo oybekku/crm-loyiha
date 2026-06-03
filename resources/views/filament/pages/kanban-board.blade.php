@@ -2302,14 +2302,20 @@ function kbDrop(e, status) {
         updateActiveTabs(idx);
     }, { passive: true });
 
-    // Swipe
+    // Swipe — tab linklar orqali navigate qiladi
+    const tabLinks = Array.from(tabBar?.querySelectorAll('a') || []);
     let tx = 0, ty = 0;
-    wrap.addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
-    wrap.addEventListener('touchend', e => {
+    document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
+    document.addEventListener('touchend', e => {
         const dx = e.changedTouches[0].clientX - tx;
         const dy = e.changedTouches[0].clientY - ty;
-        if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx)) return;
-        kanbanNav(dx < 0 ? 1 : -1);
+        if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx)) return;
+        const activeIdx = tabLinks.findIndex(a => a.style.background.includes('2563eb') || a.style.background === '#2563eb' || a.href.includes(window.location.search));
+        const curr = activeIdx >= 0 ? activeIdx : tabLinks.findIndex(a => a.href === window.location.href);
+        const next = dx < 0 ? curr + 1 : curr - 1;
+        if (next >= 0 && next < tabLinks.length) {
+            window.location.href = tabLinks[next].href;
+        }
     }, { passive: true });
 
     setTimeout(() => updateActiveTabs(0), 300);
