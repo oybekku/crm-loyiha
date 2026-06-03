@@ -133,6 +133,14 @@
     .lang-uz, .lang-ru { display: none; }
     .lang-uz.active, .lang-ru.active { display: block; }
 
+    /* Print modes */
+    @media print {
+        body.print-copy1 .copy2 { display: none !important; }
+        body.print-copy1 .copy-divider-wrap { display: none !important; }
+        body.print-copy2 .copy1 { display: none !important; }
+        body.print-copy2 .copy-divider-wrap { display: none !important; }
+    }
+
     @media print {
         body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .page { padding: 10mm 12mm; }
@@ -158,9 +166,16 @@
         </button>
     </div>
     <div style="width:1px;height:28px;background:rgba(255,255,255,0.3);"></div>
-    <button onclick="window.print()" style="background:#fff;color:#1d4ed8;border:none;padding:8px 28px;border-radius:6px;font-size:14px;cursor:pointer;font-weight:700;">
-        🖨 Chop etish
+    <button onclick="printCopy(1)" style="background:#fff;color:#1d4ed8;border:none;padding:8px 20px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;">
+        🖨 Firma nusxasi
     </button>
+    <button onclick="printCopy(2)" style="background:#22c55e;color:#fff;border:none;padding:8px 20px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;">
+        🖨 Mijoz nusxasi
+    </button>
+    <button onclick="printCopy(0)" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.4);padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;">
+        🖨 Ikkalasi
+    </button>
+    <div style="width:1px;height:28px;background:rgba(255,255,255,0.3);"></div>
     <button onclick="window.close()" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.4);padding:8px 18px;border-radius:6px;font-size:14px;cursor:pointer;">
         ✕ Yopish
     </button>
@@ -168,6 +183,7 @@
 
 <div class="page">
 
+<div class="copy1">
     <!-- HEADER -->
     <div class="header">
         <div class="header-left">
@@ -317,11 +333,14 @@
     </div>
 
     <!-- ===== 2-NUSXA ===== -->
-    <div style="position:relative;margin:28px 0 16px;">
-        <hr class="copy-divider">
-        <span class="copy-label">✂ &nbsp; 2-nusxa (mijoz uchun) &nbsp; ✂</span>
-    </div>
+</div><!-- /copy1 -->
 
+<div class="copy-divider-wrap" style="position:relative;margin:12px 0 10px;">
+    <hr class="copy-divider">
+    <span class="copy-label">✂ &nbsp; 2-nusxa (mijoz uchun) &nbsp; ✂</span>
+</div>
+
+<div class="copy2">
     <!-- 2-nusxa header -->
     <div class="header">
         <div class="header-left">
@@ -444,7 +463,9 @@
         {{ now()->format('d.m.Y H:i') }}
     </div>
 
-</div>
+</div><!-- /copy2 -->
+
+</div><!-- /page -->
 
 <script>
 const translations = {
@@ -529,6 +550,14 @@ function setLang(lang) {
         btnRu.style.cssText = 'background:#fff;color:#1d4ed8;border:none;padding:6px 18px;border-radius:5px;font-size:13px;font-weight:700;cursor:pointer;';
         btnUz.style.cssText = 'background:transparent;color:#fff;border:none;padding:6px 18px;border-radius:5px;font-size:13px;font-weight:600;cursor:pointer;';
     }
+}
+
+function printCopy(copy) {
+    document.body.classList.remove('print-copy1', 'print-copy2');
+    if (copy === 1) document.body.classList.add('print-copy1');
+    if (copy === 2) document.body.classList.add('print-copy2');
+    window.print();
+    document.body.classList.remove('print-copy1', 'print-copy2');
 }
 </script>
 </body>
