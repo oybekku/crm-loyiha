@@ -2252,4 +2252,45 @@ function kbDrop(e, status) {
 <button class="kb-fab" wire:click="openModal" title="Yangi loyiha">+</button>
 @endif
 
+<!-- Mobil navigatsiya tugmalari -->
+<div id="kb-nav-btns" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:499;display:flex;gap:10px;align-items:center;">
+    <button onclick="kanbanNav(-1)" style="background:rgba(30,30,30,0.82);color:#fff;border:none;border-radius:50%;width:46px;height:46px;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);">‹</button>
+    <span id="kb-nav-label" style="background:rgba(30,30,30,0.75);color:#fff;font-size:13px;font-weight:700;padding:6px 16px;border-radius:20px;backdrop-filter:blur(6px);white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis;text-align:center;"></span>
+    <button onclick="kanbanNav(1)" style="background:rgba(30,30,30,0.82);color:#fff;border:none;border-radius:50%;width:46px;height:46px;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);">›</button>
+</div>
+
+<script>
+(function() {
+    if (window.innerWidth > 640) return;
+    const wrap = document.getElementById('kanban-wrap');
+    const navBtns = document.getElementById('kb-nav-btns');
+    const label = document.getElementById('kb-nav-label');
+    if (!wrap) return;
+
+    navBtns.style.display = 'flex';
+
+    function getColWidth() {
+        return (wrap.querySelector('.kanban-col')?.offsetWidth || 300) + 12;
+    }
+
+    function updateLabel() {
+        const cols = wrap.querySelectorAll('.kanban-col');
+        const idx = Math.round(wrap.scrollLeft / getColWidth());
+        const col = cols[idx];
+        if (col) {
+            const h = col.querySelector('.col-head');
+            label.textContent = h ? h.textContent.trim().replace(/\s+/g, ' ') : '';
+        }
+    }
+
+    window.kanbanNav = function(dir) {
+        wrap.scrollBy({ left: dir * getColWidth(), behavior: 'smooth' });
+        setTimeout(updateLabel, 350);
+    };
+
+    wrap.addEventListener('scroll', updateLabel, { passive: true });
+    setTimeout(updateLabel, 300);
+})();
+</script>
+
 </x-filament-panels::page>
