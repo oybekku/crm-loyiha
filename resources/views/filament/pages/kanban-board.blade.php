@@ -186,6 +186,9 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 
 /* ===== MOBIL RESPONSIVE ===== */
 @media (max-width: 640px) {
+  /* Filament page wrapper overflow fix */
+  .fi-main, .fi-page, [class*="fi-page"], .fi-body-container { overflow-x: visible !important; }
+
 
   /* Top bar: 2 qatorga ajratish */
   .kb-topbar{flex-wrap:wrap;gap:10px}
@@ -197,8 +200,8 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
   .btn-new{width:100%;justify-content:center;padding:10px;font-size:13px}
 
   /* Kanban: to'liq ekran kengligi, bitta ustun ko'rinadi */
-  .kanban-wrap{gap:12px;padding:4px 12px 80px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
-  .kanban-col{min-width:calc(100vw - 48px);max-width:calc(100vw - 48px);scroll-snap-align:start}
+  .kanban-wrap{gap:12px;padding:4px 16px 80px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;margin:0 -16px;width:calc(100% + 32px)}
+  .kanban-col{min-width:calc(100vw - 56px);max-width:calc(100vw - 56px);scroll-snap-align:start}
   /* Floating button */
   .kb-fab{display:flex}
   .btn-new{display:none}
