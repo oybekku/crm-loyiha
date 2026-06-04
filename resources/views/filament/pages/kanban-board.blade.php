@@ -383,7 +383,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 <div class="{{ $filterStatus ? 'kanban-grid-mode' : '' }}">
 <div class="kanban-wrap" id="kanban-wrap">
 @foreach($statuses as $statusKey => $status)
-<div class="kanban-col" x-data="{ colCollapsed: localStorage.getItem('col_v1_{{ $statusKey }}') === 'true' }"
+<div class="kanban-col" x-data="{ colCollapsed: localStorage.getItem('col_v1_{{ $statusKey }}_u{{ auth()->id() }}') === 'true' }"
      x-effect="localStorage.setItem('col_v1_{{ $statusKey }}', colCollapsed ? 'true' : 'false')"
      :style="colCollapsed ? 'min-width:48px;max-width:48px' : ''">
     <div class="col-head" style="background:{{ $status['head_bg'] ?? 'rgba(30,41,59,1)' }};color:{{ $status['head_text'] ?? '#f1f5f9' }};cursor:pointer;user-select:none"
@@ -403,7 +403,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
          ondragleave="kbDragLeave(event)"
          ondrop="kbDrop(event,'{{ $statusKey }}')">
         @forelse($projects->get($statusKey, collect()) as $project)
-        <div x-data="{ collapsed: localStorage.getItem('card_v2_{{ $project->id }}') === null ? true : localStorage.getItem('card_v2_{{ $project->id }}') === 'true' }"
+        <div x-data="{ collapsed: localStorage.getItem('card_v2_{{ $project->id }}_u{{ auth()->id() }}') === null ? true : localStorage.getItem('card_v2_{{ $project->id }}_u{{ auth()->id() }}') === 'true' }"
              x-effect="localStorage.setItem('card_v2_{{ $project->id }}', collapsed ? 'true' : 'false')"
              style="position:relative;margin-bottom:8px">
         @php
