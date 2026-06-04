@@ -490,8 +490,8 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                         }
                     }
                 @endphp
-                <div style="display:flex;align-items:center;gap:4px">
-                    <span class="p-srv-tag-v2">{{ $srvLabel }}</span>
+                <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+                    <span class="p-srv-tag-v2" style="{{ $srv->completed_at ? 'text-decoration:line-through;opacity:.6' : '' }}">{{ $srvLabel }}</span>
                     @if($isWaiting)
                         <span style="font-size:10px;font-weight:600;background:#f3f4f6;color:#6b7280;border-radius:4px;padding:1px 5px;white-space:nowrap">⌛ {{ $srv->deadline_days }}k</span>
                     @elseif($daysLeft !== null)
@@ -502,6 +502,18 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                         @else
                         <span style="font-size:10px;font-weight:600;background:#f0fdf4;color:#16a34a;border-radius:4px;padding:1px 5px;white-space:nowrap">{{ $daysLeft }}k</span>
                         @endif
+                    @endif
+                    @if(auth()->user()?->isAdmin())
+                    <button onclick="event.stopPropagation()"
+                            wire:click.stop="toggleServiceComplete({{ $srv->id }})"
+                            title="{{ $srv->completed_at ? 'Tugallanmagan deb belgilash' : 'Tugallangan deb belgilash' }}"
+                            style="display:inline-flex;align-items:center;gap:3px;padding:1px 6px;border-radius:4px;border:1px solid {{ $srv->completed_at ? '#86efac' : '#d1d5db' }};background:{{ $srv->completed_at ? '#f0fdf4' : '#f9fafb' }};color:{{ $srv->completed_at ? '#16a34a' : '#9ca3af' }};font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap">
+                        @if($srv->completed_at)
+                        <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Tugallandi
+                        @else
+                        <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg> Tugalmagan
+                        @endif
+                    </button>
                     @endif
                 </div>
                 @endforeach

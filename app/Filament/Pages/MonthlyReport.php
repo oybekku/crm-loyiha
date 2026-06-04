@@ -193,30 +193,20 @@ class MonthlyReport extends Page
     {
         [$year, $month] = explode('-', $this->selectedMonth);
 
-        // Faqat HOZIR ham tugallangan/tolangan statusda turgan loyihalar
-        $tolanganLogs = ProjectStatusLog::whereIn('status', ['tolangan', 'tugallangan'])
-            ->whereYear('entered_at', $year)
-            ->whereMonth('entered_at', $month)
+        // Bu oy completed_at bo'lgan xizmatlar asosida hisobot
+        $completedServices = \App\Models\ProjectService::with(['assignedUser', 'project.payments'])
+            ->whereNotNull('completed_at')
+            ->whereYear('completed_at', $year)
+            ->whereMonth('completed_at', $month)
+            ->whereNotNull('assigned_user_id')
             ->get();
 
-        $projectIds = $tolanganLogs->pluck('project_id')->unique();
+        $projectIds = $completedServices->pluck('project_id')->unique();
 
-        $tolanganDates = $tolanganLogs
-            ->sortByDesc('entered_at')
-            ->keyBy('project_id')
-            ->map(fn($l) => $l->entered_at);
-
-        // Qo'shimcha filtr: loyiha hozir ham arxiv statusida bo'lishi shart
         $projects = Project::with(['services.assignedUser', 'payments'])
             ->whereIn('id', $projectIds)
-            ->whereIn('status', ['tolangan', 'tugallangan', 'taqdim_etilgan'])
             ->get();
 
-        // Status log da bor lekin hozir arxivda emas — lardan projectIds ni yangilaymiz
-        $projectIds = $projects->pluck('id');
-
-        // Avanslar: bu oy berilganlar, user_id bo'yicha guruh
-        // Avans o'rniga ish haqi to'lovlari ishlatiladi
         $advancesByUser = \App\Models\EmployeeSalaryPayment::with('giver')
             ->where('month', $this->selectedMonth)
             ->get()
@@ -224,14 +214,15 @@ class MonthlyReport extends Page
 
         $userStats = [];
 
-        foreach ($projects as $project) {
-            $paidAt       = $tolanganDates->get($project->id);
-            $deadlineDate = $project->deadline_date
+        foreach ($completedServices as $service) {
+            if (!$service->assignedUser) continue;
+
+            $project = $projects->find($service->project_id);
+            if (!$project) continue;
+            $paidAt       = $service->completed_at;
+            $deadlineDate = $project?->deadline_date
                 ? Carbon::parse($project->deadline_date)
                 : null;
-
-            foreach ($project->services as $service) {
-                if (!$service->assigned_user_id || !$service->assignedUser) continue;
 
                 $uid  = $service->assigned_user_id;
                 $rate = (float) ($service->assignedUser->commission_rate ?? 20);
@@ -286,7 +277,6 @@ class MonthlyReport extends Page
                         ? $userStats[$uid]['late_count']++
                         : $userStats[$uid]['ontime_count']++;
                 }
-            }
         }
 
         // Arxiv bo'lmagan statuslar

@@ -333,6 +333,16 @@ class KanbanBoard extends Page
     }
 
 
+    // ── Service complete toggle (faqat admin) ────────────────────────────
+    public function toggleServiceComplete(int $serviceId): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+
+        $svc = \App\Models\ProjectService::findOrFail($serviceId);
+        $svc->completed_at = $svc->completed_at ? null : now();
+        $svc->saveQuietly();
+    }
+
     // ── Phone ─────────────────────────────────────────────────────────────
     public function addPhone(): void
     {

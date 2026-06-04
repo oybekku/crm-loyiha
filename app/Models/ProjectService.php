@@ -9,14 +9,15 @@ class ProjectService extends Model
     protected $fillable = [
         'project_id', 'assigned_user_id', 'service_name', 'price',
         'discount_type', 'discount_value', 'final_price', 'note',
-        'deadline_days', 'work_started_at',
+        'deadline_days', 'work_started_at', 'completed_at',
     ];
 
     protected $casts = [
         'price'          => 'decimal:2',
         'discount_value' => 'decimal:2',
         'final_price'    => 'decimal:2',
-        'work_started_at'=> 'datetime',
+        'work_started_at' => 'datetime',
+        'completed_at'    => 'datetime',
         'deadline_days'  => 'integer',
     ];
 
