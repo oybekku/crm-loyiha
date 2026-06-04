@@ -500,11 +500,24 @@
         </div>
         @if(count($pendingWorkerStats) > 0)
         <div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:8px">Hodimlar bo'yicha:</div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px">
             @foreach($pendingWorkerStats as $ws)
-            <div style="display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid #fed7aa;border-radius:6px;padding:7px 12px">
-                <span style="font-size:12px;color:#374151;font-weight:500">{{ $ws['name'] }}</span>
-                <span style="font-size:13px;font-weight:700;color:#d97706">{{ number_format($ws['share'], 0, '.', ' ') }}</span>
+            <div style="background:#fff;border:1px solid #fed7aa;border-radius:8px;padding:10px 14px">
+                <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:6px">{{ $ws['name'] }}</div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
+                    <span style="color:#6b7280">Ulush:</span>
+                    <span style="font-weight:600;color:#d97706">{{ number_format($ws['share'], 0, '.', ' ') }}</span>
+                </div>
+                @if($ws['given'] > 0)
+                <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
+                    <span style="color:#6b7280">Berildi:</span>
+                    <span style="font-weight:600;color:#16a34a">{{ number_format($ws['given'], 0, '.', ' ') }}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;padding-top:4px;border-top:1px dashed #fde68a">
+                    <span style="color:#92400e;font-weight:600">Qoldi:</span>
+                    <span style="font-weight:700;color:#dc2626">{{ number_format($ws['remaining'], 0, '.', ' ') }}</span>
+                </div>
+                @endif
             </div>
             @endforeach
         </div>

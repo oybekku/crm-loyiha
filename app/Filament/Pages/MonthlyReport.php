@@ -399,6 +399,12 @@ class MonthlyReport extends Page
             ->whereNotNull('assigned_user_id')
             ->get();
 
+        // Bu oy berilgan avanslar (user_id => summa)
+        $advancesThisMonth = \App\Models\EmployeeSalaryPayment::where('month', $this->selectedMonth)
+            ->get()
+            ->groupBy('user_id')
+            ->map(fn($g) => (float) $g->sum('amount'));
+
         $pendingWorkersShare = 0.0;
         $pendingWorkerStats  = [];
         foreach ($pendingServices as $ps) {
@@ -409,10 +415,20 @@ class MonthlyReport extends Page
             $pendingWorkersShare += $share;
             $uid = $ps->assigned_user_id;
             if (!isset($pendingWorkerStats[$uid])) {
-                $pendingWorkerStats[$uid] = ['name' => $ps->assignedUser->name, 'share' => 0];
+                $given = $advancesThisMonth->get($uid, 0);
+                $pendingWorkerStats[$uid] = [
+                    'name'    => $ps->assignedUser->name,
+                    'share'   => 0,
+                    'given'   => $given,
+                ];
             }
             $pendingWorkerStats[$uid]['share'] += $share;
         }
+        // remaining hisoblash
+        foreach ($pendingWorkerStats as &$ws) {
+            $ws['remaining'] = max(0, $ws['share'] - $ws['given']);
+        }
+        unset($ws);
         arsort($pendingWorkerStats);
         $pendingFirmaShare = $pendingProjectsSum - $pendingWorkersShare;
 
