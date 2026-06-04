@@ -278,6 +278,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 .p-srv-tag-v2{background:#fff4ed;color:#c2410c;font-size:11px;padding:2px 7px;border-radius:4px;font-weight:500;border:1px solid #fed7aa}
 .dark .p-srv-tag-v2{background:#431407;color:#fb923c;border-color:#7c2d12}
 .p-card-divider{border-top:1px solid #f1f5f9;margin-bottom:9px}
+@keyframes blink-new{0%,100%{opacity:1;box-shadow:0 0 4px #16a34a}50%{opacity:.6;box-shadow:none}}
 @keyframes blink-warn{0%,100%{opacity:1}50%{opacity:.5}}
 .dark .p-card-divider{border-top-color:#374151}
 .p-status-pill{font-size:11px;font-weight:600;color:#374151;background:#f1f5f9;border-radius:5px;padding:3px 9px;display:inline-block}
@@ -443,7 +444,12 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                         <path d="M6 9l6 6 6-6"/>
                     </svg>
                 </button>
-                <div class="p-owner" style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0;font-size:11px">{{ $project->owner_name }}</div>
+                <div class="p-owner" style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0;font-size:11px;display:flex;align-items:center;gap:5px">
+                    <span>{{ $project->owner_name }}</span>
+                    @if($project->created_at->diffInHours(now()) < 24)
+                    <span style="font-size:9px;font-weight:700;background:#dcfce7;color:#16a34a;border-radius:4px;padding:1px 5px;white-space:nowrap;animation:blink-new 1.5s ease-in-out infinite;flex-shrink:0">Yangi</span>
+                    @endif
+                </div>
                 <div style="flex-shrink:0;display:flex;align-items:center;gap:3px">
                     @if($daysLeft !== null && ($isOverdue || $daysLeft <= 3))
                         <span style="font-size:9px;font-weight:700;background:{{ $isOverdue ? '#fee2e2' : '#fef3c7' }};color:{{ $isOverdue ? '#dc2626' : '#d97706' }};border-radius:3px;padding:1px 4px;white-space:nowrap">
