@@ -175,6 +175,12 @@ class MonthlyReport extends Page
             ->whereIn('id', $projectIds)
             ->get();
 
+        // To'landi bosib yozilgan xizmat to'lovlari
+        $paidServiceNotes = \App\Models\EmployeeSalaryPayment::where('month', $this->selectedMonth)
+            ->whereNotNull('note')
+            ->pluck('note')
+            ->toArray();
+
         $advancesByUser = \App\Models\EmployeeSalaryPayment::with('giver')
             ->where('month', $this->selectedMonth)
             ->get()
@@ -376,12 +382,6 @@ class MonthlyReport extends Page
             ->get()
             ->groupBy('user_id')
             ->map(fn($g) => (float) $g->sum('amount'));
-
-        // To'landi bosib yozilgan xizmat to'lovlari (service_id asosida note orqali)
-        $paidServiceNotes = \App\Models\EmployeeSalaryPayment::where('month', $this->selectedMonth)
-            ->whereNotNull('note')
-            ->pluck('note')
-            ->toArray();
 
         $pendingWorkersShare = 0.0;
         $pendingWorkerStats  = [];
