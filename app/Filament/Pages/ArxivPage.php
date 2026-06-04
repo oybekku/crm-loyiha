@@ -27,6 +27,13 @@ class ArxivPage extends Page
     public string  $sortField      = 'updated_at';
     public string  $sortDir        = 'desc';
     public ?int    $selectedId     = null;
+    public string  $activeTab      = 'arxiv'; // arxiv | korzinka
+
+    // Korzinka PIN
+    public bool    $showPinModal    = false;
+    public string  $pinInput        = '';
+    public ?int    $pendingDeleteId = null;
+    public bool    $pinError        = false;
 
     // Backup/Restore
     public array   $checkedIds      = [];
@@ -181,6 +188,45 @@ class ArxivPage extends Page
         }
     }
 
+    // ── Korzinka ─────────────────────────────────────────────────────────
+    public function softDeleteProject(int $id): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+        Project::findOrFail($id)->delete();
+        $this->selectedId = null;
+        Notification::make()->title("Loyiha korzinkaga tashlandi")->warning()->send();
+    }
+
+    public function restoreProject(int $id): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+        Project::withTrashed()->findOrFail($id)->restore();
+        Notification::make()->title("Loyiha tiklandi!")->success()->send();
+    }
+
+    public function openPinModal(int $id): void
+    {
+        $this->pendingDeleteId = $id;
+        $this->pinInput        = '';
+        $this->pinError        = false;
+        $this->showPinModal    = true;
+    }
+
+    public function confirmDelete(): void
+    {
+        if ($this->pinInput !== '2728') {
+            $this->pinError = true;
+            return;
+        }
+        if ($this->pendingDeleteId) {
+            Project::withTrashed()->findOrFail($this->pendingDeleteId)->forceDelete();
+            Notification::make()->title("Loyiha butunlay o'chirildi")->danger()->send();
+        }
+        $this->showPinModal    = false;
+        $this->pendingDeleteId = null;
+        $this->pinInput        = '';
+    }
+
     public function getViewData(): array
     {
         $archiveKeys = \App\Models\ProjectStatus::allOrdered()
@@ -227,12 +273,20 @@ class ArxivPage extends Page
                 ->find($this->selectedId)
             : null;
 
+        // Korzinka loyihalari
+        $trashedProjects = Project::onlyTrashed()
+            ->with(['assignedUsers'])
+            ->orderByDesc('deleted_at')
+            ->get();
+
         return [
             'projects'        => $projects,
             'total'           => $total,
             'statusOptions'   => $archiveStatuses->pluck('label', 'key')->toArray(),
             'categoryOptions' => Project::categoryOptions(),
             'selectedProject' => $selectedProject,
+            'trashedProjects' => $trashedProjects,
+            'trashedCount'    => $trashedProjects->count(),
         ];
     }
 }

@@ -122,6 +122,84 @@ $getBadgeStyle = function(string $status) use ($archiveBadgeColors): string {
 };
 @endphp
 
+{{-- Tab bar --}}
+<div style="display:flex;gap:8px;margin-bottom:14px;border-bottom:2px solid #e5e7eb">
+    <button wire:click="$set('activeTab','arxiv')"
+            style="padding:8px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:{{ $activeTab==='arxiv' ? '2px solid #2563eb;color:#2563eb;margin-bottom:-2px' : 'none;color:#6b7280' }}">
+        📁 Arxiv
+    </button>
+    @if(auth()->user()?->isAdmin())
+    <button wire:click="$set('activeTab','korzinka')"
+            style="padding:8px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:{{ $activeTab==='korzinka' ? '2px solid #ef4444;color:#ef4444;margin-bottom:-2px' : 'none;color:#6b7280' }}">
+        🗑 Korzinka
+        @if($trashedCount > 0)
+        <span style="background:#ef4444;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px">{{ $trashedCount }}</span>
+        @endif
+    </button>
+    @endif
+</div>
+
+{{-- KORZINKA --}}
+@if($activeTab === 'korzinka')
+<div style="background:#fff;border-radius:12px;border:1px solid #e5e7eb;overflow:hidden">
+    <div style="padding:14px 20px;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:15px;font-weight:700;color:#111827">🗑 O'chirilgan loyihalar</span>
+        <span style="font-size:12px;color:#9ca3af">PIN kod bilan butunlay o'chirish mumkin</span>
+    </div>
+    @forelse($trashedProjects as $tp)
+    <div style="display:flex;align-items:center;gap:14px;padding:12px 20px;border-bottom:1px solid #f9fafb">
+        <div style="width:38px;height:38px;border-radius:50%;background:#ef4444;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0">
+            {{ mb_strtoupper(mb_substr($tp->owner_name, 0, 1)) }}
+        </div>
+        <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:700;color:#111827">{{ $tp->owner_name }}</div>
+            <div style="font-size:11px;color:#9ca3af">{{ $tp->number }} · O'chirilgan: {{ $tp->deleted_at->format('d.m.Y H:i') }}</div>
+        </div>
+        <div style="display:flex;gap:8px">
+            <button wire:click="restoreProject({{ $tp->id }})"
+                    style="background:#f0fdf4;border:1px solid #86efac;color:#16a34a;border-radius:7px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer">
+                ↩ Tiklash
+            </button>
+            <button wire:click="openPinModal({{ $tp->id }})"
+                    style="background:#fef2f2;border:1px solid #fecaca;color:#ef4444;border-radius:7px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer">
+                🗑 O'chirish
+            </button>
+        </div>
+    </div>
+    @empty
+    <div style="padding:40px;text-align:center;font-size:14px;color:#9ca3af">Korzinka bo'sh</div>
+    @endforelse
+</div>
+
+{{-- PIN Modal --}}
+@if($showPinModal)
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:flex;align-items:center;justify-content:center">
+    <div style="background:#fff;border-radius:16px;padding:28px 32px;width:320px;box-shadow:0 25px 60px rgba(0,0,0,.2)">
+        <div style="font-size:16px;font-weight:700;color:#111827;margin-bottom:6px">🔐 PIN kod kiriting</div>
+        <div style="font-size:13px;color:#6b7280;margin-bottom:16px">Loyihani butunlay o'chirish uchun PIN kod talab etiladi</div>
+        <input type="password" wire:model="pinInput"
+               wire:keydown.enter="confirmDelete"
+               style="width:100%;border:1.5px solid {{ $pinError ? '#ef4444' : '#e2e8f0' }};border-radius:8px;padding:10px 14px;font-size:18px;letter-spacing:6px;text-align:center;outline:none;margin-bottom:8px"
+               placeholder="····" autofocus maxlength="4">
+        @if($pinError)
+        <div style="font-size:12px;color:#ef4444;margin-bottom:10px">❌ Noto'g'ri PIN kod</div>
+        @endif
+        <div style="display:flex;gap:8px;margin-top:12px">
+            <button wire:click="$set('showPinModal',false)"
+                    style="flex:1;padding:10px;border-radius:8px;border:1px solid #e5e7eb;background:#f9fafb;color:#374151;font-size:13px;cursor:pointer">
+                Bekor
+            </button>
+            <button wire:click="confirmDelete"
+                    style="flex:1;padding:10px;border-radius:8px;border:none;background:#ef4444;color:#fff;font-size:13px;font-weight:600;cursor:pointer">
+                O'chirish
+            </button>
+        </div>
+    </div>
+</div>
+@endif
+
+@else
+
 <div class="arx-layout" style="gap:16px">
 
     {{-- Main table panel --}}
