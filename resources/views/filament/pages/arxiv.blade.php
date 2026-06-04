@@ -680,4 +680,6 @@ $getBadgeStyle = function(string $status) use ($archiveBadgeColors): string {
 </div>
 @endif
 
+@endif {{-- /activeTab korzinka --}}
+
 </x-filament-panels::page>
