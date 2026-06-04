@@ -647,6 +647,11 @@ class KanbanBoard extends Page
                     'payment_requested_at' => null,
                     'payment_requested_by' => null,
                 ]);
+            } elseif ($project->status === 'yangi'
+                && in_array('yangi_loyihalar', $validKeys)
+            ) {
+                $this->logStatusChange($project, 'yangi_loyihalar');
+                $project->update(['status' => 'yangi_loyihalar']);
             } elseif ($this->paymentMoveToEskiz
                 && $project->status === 'tolov_jarayonida'
                 && in_array('toposyomka', $validKeys)
