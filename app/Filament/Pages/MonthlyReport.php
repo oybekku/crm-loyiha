@@ -126,13 +126,6 @@ class MonthlyReport extends Page
         $this->showSalaryPayModal = false;
     }
 
-    // Avans modal state
-    public bool   $showAdvanceModal = false;
-    public int    $advanceUserId    = 0;
-    public string $advanceUserName  = '';
-    public string $advanceAmount    = '';
-    public string $advanceNote      = '';
-
     public static function canAccess(): bool
     {
         return auth()->user()?->isAdmin() || auth()->user()?->isMenejer();
@@ -143,49 +136,6 @@ class MonthlyReport extends Page
         $this->selectedMonth = now()->format('Y-m');
     }
 
-    public function openAdvanceModal(int $userId, string $userName): void
-    {
-        $this->advanceUserId   = $userId;
-        $this->advanceUserName = $userName;
-        $this->advanceAmount   = '';
-        $this->advanceNote     = '';
-        $this->showAdvanceModal = true;
-    }
-
-    public function closeAdvanceModal(): void
-    {
-        $this->showAdvanceModal = false;
-        $this->advanceUserId    = 0;
-        $this->advanceUserName  = '';
-        $this->advanceAmount    = '';
-        $this->advanceNote      = '';
-    }
-
-    public function saveAdvance(): void
-    {
-        $amount = (float) str_replace([' ', ','], ['', '.'], $this->advanceAmount);
-
-        if ($amount <= 0 || !$this->advanceUserId) {
-            return;
-        }
-
-        EmployeeAdvance::create([
-            'user_id'  => $this->advanceUserId,
-            'given_by' => auth()->id(),
-            'amount'   => $amount,
-            'month'    => $this->selectedMonth,
-            'note'     => trim($this->advanceNote) ?: null,
-        ]);
-
-        $this->closeAdvanceModal();
-    }
-
-    public function deleteAdvance(int $advanceId): void
-    {
-        EmployeeAdvance::where('id', $advanceId)
-            ->whereHas('user') // safety check
-            ->delete();
-    }
 
     public function exportExcel(): BinaryFileResponse
     {

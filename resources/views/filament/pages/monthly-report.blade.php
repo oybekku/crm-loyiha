@@ -93,10 +93,6 @@
         <div class="mr-stat-num">{{ number_format($totalCommissions, 0, '.', ' ') }}</div>
         <div class="mr-stat-lbl">Hodimlar ulushi jami</div>
     </div>
-    <div class="mr-stat mr-stat--danger">
-        <div class="mr-stat-num">{{ number_format($totalAdvances, 0, '.', ' ') }}</div>
-        <div class="mr-stat-lbl">Avanslar jami (so'm)</div>
-    </div>
     <div class="mr-stat mr-stat--success">
         <div class="mr-stat-num">{{ number_format($firmIncome, 0, '.', ' ') }}</div>
         <div class="mr-stat-lbl">Firma sof daromadi</div>
@@ -128,7 +124,6 @@
                 <th style="text-align:center">Kechikkan</th>
                 <th style="text-align:right">Xizmatlar jami</th>
                 <th style="text-align:right">Hisoblangan</th>
-                <th style="text-align:right;color:#dc2626">Avans</th>
                 <th style="text-align:right;color:#ef4444">Jarima</th>
                 <th style="text-align:right;color:#16a34a">To'lash kerak</th>
                 <th style="text-align:right;color:#2563eb">To'landi</th>
@@ -140,9 +135,8 @@
             @php
                 $sTotal      = $stat['services_total'];
                 $comm        = $stat['commission'];
-                $advTotal    = $stat['advance_total'] ?? 0;
                 $penalty     = $stat['penalty']       ?? 0;
-                $netPayable  = $stat['net_payable']   ?? max(0, $comm - $advTotal - $penalty);
+                $netPayable  = $stat['net_payable']   ?? max(0, $comm - $penalty);
                 $paidManual  = $stat['paid_manual']   ?? 0;
                 $ontime      = $stat['ontime_count']  ?? 0;
                 $late        = $stat['late_count']    ?? 0;
@@ -206,13 +200,6 @@
                 <td style="text-align:right">
                     <span style="font-weight:700;color:#d97706">{{ number_format($comm, 0, '.', ' ') }} so'm</span>
                 </td>
-                <td style="text-align:right">
-                    @if($advTotal > 0)
-                    <span style="font-weight:700;color:#dc2626">{{ number_format($advTotal, 0, '.', ' ') }} so'm</span>
-                    @else
-                    <span style="color:#d1d5db;font-size:12px">—</span>
-                    @endif
-                </td>
                 {{-- Jarima input --}}
                 <td style="text-align:right" onclick="event.stopPropagation()">
                     <input type="number" min="0"
@@ -222,14 +209,6 @@
                 </td>
                 <td style="text-align:right">
                     <span style="font-weight:700;color:#16a34a">{{ number_format($netPayable, 0, '.', ' ') }} so'm</span>
-                </td>
-                {{-- To'landi (salary payments jami) --}}
-                <td style="text-align:right">
-                    @if($advTotal > 0)
-                    <span style="font-weight:700;color:#2563eb;white-space:nowrap">{{ number_format($advTotal, 0, '.', ' ') }} so'm</span>
-                    @else
-                    <span style="color:#d1d5db;font-size:12px">—</span>
-                    @endif
                 </td>
                 {{-- Kutayotgan ishlar --}}
                 <td style="text-align:center">
@@ -276,64 +255,6 @@
                                 <div style="font-size:18px;font-weight:800;color:#d97706">{{ number_format($comm, 0, '.', ' ') }}</div>
                                 <div style="font-size:10px;color:#d97706;margin-top:2px">Hisoblangan ulush (so'm)</div>
                             </div>
-                            @if($advTotal > 0)
-                            <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 14px;min-width:130px;text-align:center">
-                                <div style="font-size:18px;font-weight:800;color:#dc2626">{{ number_format($advTotal, 0, '.', ' ') }}</div>
-                                <div style="font-size:10px;color:#dc2626;margin-top:2px">Avans olingan (so'm)</div>
-                            </div>
-                            <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 14px;min-width:130px;text-align:center">
-                                <div style="font-size:18px;font-weight:800;color:#16a34a">{{ number_format($netPayable, 0, '.', ' ') }}</div>
-                                <div style="font-size:10px;color:#16a34a;margin-top:2px">Qolgan to'lov (so'm)</div>
-                            </div>
-                            @endif
-                        </div>
-
-                        {{-- To'lovlar bo'limi (avans o'rniga) --}}
-                        <div style="margin-bottom:12px">
-                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-                                <span style="font-size:12px;font-weight:700;color:#374151">
-                                    To'lovlar ({{ $stat['advances']->count() }} ta)
-                                    @if($advTotal > 0)
-                                    · <span style="color:#16a34a">{{ number_format($advTotal,0,'.',' ') }} so'm</span>
-                                    @endif
-                                </span>
-                                @if(auth()->user()?->isAdmin())
-                                <button wire:click.stop="openSalaryPayModal({{ $uid }})"
-                                        style="display:inline-flex;align-items:center;gap:5px;background:#2563eb;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:11px;font-weight:600;cursor:pointer">
-                                    <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-                                    To'lov qo'shish
-                                </button>
-                                @endif
-                            </div>
-                            @if($stat['advances']->count() > 0)
-                            <div style="background:#fff;border:1px solid #bfdbfe;border-radius:8px;overflow:hidden">
-                                @foreach($stat['advances'] as $adv)
-                                <div style="display:flex;align-items:center;gap:12px;padding:8px 12px;border-bottom:1px solid #eff6ff;{{ $loop->last ? 'border-bottom:none' : '' }}">
-                                    <div style="flex:1">
-                                        <span style="font-size:13px;font-weight:700;color:#2563eb">{{ number_format((float)$adv->amount, 0, '.', ' ') }} so'm</span>
-                                        @if($adv->note)
-                                        <span style="font-size:11px;color:#6b7280;margin-left:8px">— {{ $adv->note }}</span>
-                                        @endif
-                                    </div>
-                                    <div style="font-size:10px;color:#9ca3af;white-space:nowrap">
-                                        {{ ($adv->paid_at ?? $adv->given_at)?->format('d.m.Y') }}
-                                        @if($adv->giver) · {{ $adv->giver->name }} @endif
-                                    </div>
-                                    @if(auth()->user()?->isAdmin())
-                                    <button wire:click.stop="editSalaryPay({{ $adv->id }})"
-                                            style="background:none;border:1px solid #e5e7eb;border-radius:5px;padding:2px 6px;cursor:pointer;color:#2563eb;font-size:11px">✏️</button>
-                                    <button wire:click.stop="deleteSalaryPay({{ $adv->id }})"
-                                            wire:confirm="Bu to'lovni o'chirishni tasdiqlaysizmi?"
-                                            style="background:none;border:none;cursor:pointer;color:#fca5a5;padding:2px 4px">
-                                        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
-                                    </button>
-                                    @endif
-                                </div>
-                                @endforeach
-                            </div>
-                            @else
-                            <div style="font-size:12px;color:#9ca3af;padding:8px 0">Bu oy to'lov kiritilmagan</div>
-                            @endif
                         </div>
 
                         {{-- Service detail table --}}
@@ -420,10 +341,8 @@
             <td colspan="6" style="text-align:right">Jami:</td>
             <td style="text-align:right">{{ number_format($totalServicesSum, 0, '.', ' ') }} so'm</td>
             <td style="text-align:right;color:#d97706">{{ number_format($totalCommissions, 0, '.', ' ') }} so'm</td>
-            <td style="text-align:right;color:#dc2626">{{ number_format($totalAdvances, 0, '.', ' ') }} so'm</td>
             <td></td>
-            <td style="text-align:right;color:#16a34a">{{ number_format($totalCommissions - $totalAdvances, 0, '.', ' ') }} so'm</td>
-            <td></td>
+            <td style="text-align:right;color:#16a34a">{{ number_format($totalCommissions, 0, '.', ' ') }} so'm</td>
             <td></td>
         </tr>
         </tbody>
@@ -451,10 +370,6 @@
         <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:16px;text-align:center">
             <div style="font-size:22px;font-weight:800;color:#d97706">{{ number_format($totalCommissions, 0, '.', ' ') }}</div>
             <div style="font-size:11px;color:#d97706;margin-top:4px;font-weight:500">Hodimlar ulushi (so'm)</div>
-        </div>
-        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:16px;text-align:center">
-            <div style="font-size:22px;font-weight:800;color:#dc2626">{{ number_format($totalAdvances, 0, '.', ' ') }}</div>
-            <div style="font-size:11px;color:#dc2626;margin-top:4px;font-weight:500">Berilgan avanslar (so'm)</div>
         </div>
         <div style="background:#ecfdf5;border:2px solid #34d399;border-radius:10px;padding:16px;text-align:center">
             <div style="font-size:24px;font-weight:900;color:#059669">{{ number_format($firmIncome, 0, '.', ' ') }}</div>
@@ -528,8 +443,6 @@
     @php
         $commPct  = $totalServicesSum > 0 ? round($totalCommissions / $totalServicesSum * 100, 1) : 0;
         $firmPct  = $totalServicesSum > 0 ? round($firmIncome / $totalServicesSum * 100, 1) : 0;
-        $advPct   = $totalCommissions > 0 ? round($totalAdvances / $totalCommissions * 100, 1) : 0;
-        $netAfterAdv = $firmIncome - $totalAdvances;
     @endphp
     <div style="background:#f8fafc;border-radius:10px;padding:14px 16px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div>
@@ -548,14 +461,6 @@
         </div>
     </div>
 
-    @if($totalAdvances > 0)
-    <div style="margin-top:12px;background:#fef9ec;border:1px solid #fcd34d;border-radius:8px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:13px;color:#92400e">Avanslar chiqarilgandan keyin sof daromad:</span>
-        <span style="font-size:15px;font-weight:800;color:{{ $netAfterAdv >= 0 ? '#059669' : '#dc2626' }}">
-            {{ number_format($netAfterAdv, 0, '.', ' ') }} so'm
-        </span>
-    </div>
-    @endif
 </div>
 
 {{-- OGOHLANTIRISHLAR --}}
@@ -592,62 +497,12 @@
 </div>
 @endif
 
-{{-- AVANS MODAL --}}
-@if($showAdvanceModal)
-<div style="position:fixed;inset:0;z-index:1300;display:flex;align-items:center;justify-content:center">
-    <div style="position:absolute;inset:0;background:rgba(0,0,0,.5)" wire:click="closeAdvanceModal"></div>
-    <div style="position:relative;background:#fff;border-radius:16px;padding:28px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.2)">
-
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-            <div>
-                <div style="font-size:16px;font-weight:800;color:#111827">Avans qo'shish</div>
-                <div style="font-size:12px;color:#6b7280;margin-top:2px">{{ $advanceUserName }}</div>
-            </div>
-            <button wire:click="closeAdvanceModal" style="background:none;border:none;cursor:pointer;color:#9ca3af;padding:4px">
-                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </button>
-        </div>
-
-        <div style="margin-bottom:14px">
-            <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px">
-                Avans summasi (so'm) <span style="color:#dc2626">*</span>
-            </label>
-            <input type="number" wire:model="advanceAmount" placeholder="Masalan: 1500000"
-                   style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;font-size:14px;outline:none;color:#111827"
-                   onfocus="this.style.borderColor='#dc2626'" onblur="this.style.borderColor='#e2e8f0'">
-        </div>
-
-        <div style="margin-bottom:20px">
-            <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px">
-                Izoh (ixtiyoriy)
-            </label>
-            <input type="text" wire:model="advanceNote" placeholder="Masalan: May oyi avans"
-                   style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;font-size:14px;outline:none;color:#111827"
-                   onfocus="this.style.borderColor='#6b7280'" onblur="this.style.borderColor='#e2e8f0'">
-        </div>
-
-        <div style="display:flex;gap:10px">
-            <button wire:click="saveAdvance"
-                    style="flex:1;background:#dc2626;color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">
-                Saqlash
-            </button>
-            <button wire:click="closeAdvanceModal"
-                    style="flex:1;background:#f1f5f9;color:#374151;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:600;cursor:pointer">
-                Bekor qilish
-            </button>
-        </div>
-
-    </div>
-</div>
-@endif
-
 {{-- TO'LIQ MA'LUMOT MODAL --}}
 @if($showDetailModal && isset($userStats[$detailUserId]))
 @php
     $ds   = $userStats[$detailUserId];
     $dUsr      = $ds['user'];
     $dCom      = $ds['commission'];
-    $dAdv      = $ds['advance_total'];
     $dNet      = $ds['net_payable'];
     $dSvc      = $ds['services'];
     $dSalPays  = $ds['salary_pays']  ?? collect();
@@ -762,12 +617,6 @@
             <div style="font-size:11px;color:#6b7280">Hisoblangan komissiya</div>
             <div style="font-size:16px;font-weight:800;color:#d97706">{{ number_format($dCom,0,'.',' ') }} so'm</div>
         </div>
-        @if($dAdv > 0)
-        <div style="text-align:right">
-            <div style="font-size:11px;color:#6b7280">Avans olingan</div>
-            <div style="font-size:16px;font-weight:800;color:#dc2626">- {{ number_format($dAdv,0,'.',' ') }} so'm</div>
-        </div>
-        @endif
         <div style="text-align:right;padding:8px 16px;background:#dcfce7;border-radius:8px;border:1px solid #86efac">
             <div style="font-size:11px;color:#16a34a;font-weight:600">To'lanishi kerak</div>
             <div style="font-size:20px;font-weight:900;color:#16a34a">{{ number_format($dNet,0,'.',' ') }} so'm</div>
