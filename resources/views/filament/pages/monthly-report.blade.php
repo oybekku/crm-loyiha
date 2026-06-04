@@ -481,6 +481,28 @@
                 <div style="height:100%;background:#f97316;border-radius:4px;width:{{ $pendingProjectsPct }}%"></div>
             </div>
             <div style="font-size:11px;color:#ea580c;margin-top:4px;font-weight:600;text-align:right">{{ $pendingProjectsPct }}% to'langan</div>
+
+            {{-- Taxminiy ulushlar --}}
+            <div style="margin-top:12px;padding-top:10px;border-top:1px dashed #fed7aa">
+                <div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:6px">~ Taxminiy taqsimot:</div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
+                    <span style="color:#6b7280">👷 Hodimlar ulushi</span>
+                    <span style="font-weight:700;color:#d97706">{{ number_format($pendingWorkersShare, 0, '.', ' ') }} so'm</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:8px">
+                    <span style="color:#6b7280">🏢 Firma ulushi</span>
+                    <span style="font-weight:700;color:#059669">{{ number_format($pendingFirmaShare, 0, '.', ' ') }} so'm</span>
+                </div>
+                @if(count($pendingWorkerStats) > 0)
+                <div style="font-size:10px;font-weight:700;color:#92400e;margin-bottom:4px">Hodimlar bo'yicha:</div>
+                @foreach($pendingWorkerStats as $ws)
+                <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:2px">
+                    <span style="color:#6b7280">{{ $ws['name'] }}</span>
+                    <span style="font-weight:600;color:#d97706">{{ number_format($ws['share'], 0, '.', ' ') }}</span>
+                </div>
+                @endforeach
+                @endif
+            </div>
         </div>
     </div>
 

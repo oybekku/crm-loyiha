@@ -393,6 +393,29 @@ class MonthlyReport extends Page
         $pendingProjectsPct   = $pendingProjectsSum > 0 ? round($pendingProjectsPaid / $pendingProjectsSum * 100) : 0;
         $pendingProjectsCount = (clone $pendingQuery)->count();
 
+        // Taxminiy hodimlar ulushi (faol loyihalar bo'yicha)
+        $pendingServices = \App\Models\ProjectService::with('assignedUser')
+            ->whereHas('project', fn($q) => $q->whereNotIn('status', $archiveStatuses))
+            ->whereNotNull('assigned_user_id')
+            ->get();
+
+        $pendingWorkersShare = 0.0;
+        $pendingWorkerStats  = [];
+        foreach ($pendingServices as $ps) {
+            if (!$ps->assignedUser) continue;
+            $r = (float)($ps->assignedUser->commission_rate ?? 20);
+            if (in_array($ps->assignedUser->role, ['admin', 'menejer'])) $r = 0;
+            $share = round((float)$ps->final_price * $r / 100);
+            $pendingWorkersShare += $share;
+            $uid = $ps->assigned_user_id;
+            if (!isset($pendingWorkerStats[$uid])) {
+                $pendingWorkerStats[$uid] = ['name' => $ps->assignedUser->name, 'share' => 0];
+            }
+            $pendingWorkerStats[$uid]['share'] += $share;
+        }
+        arsort($pendingWorkerStats);
+        $pendingFirmaShare = $pendingProjectsSum - $pendingWorkersShare;
+
         $allUsers = User::orderBy('name')->get();
 
         return compact(
@@ -400,7 +423,8 @@ class MonthlyReport extends Page
             'totalServicesSum', 'totalCommissions', 'totalAdvances',
             'firmIncome', 'projectsTotal', 'allUsers',
             'pendingProjectsSum', 'pendingProjectsCount',
-            'pendingProjectsPaid', 'pendingProjectsDebt', 'pendingProjectsPct'
+            'pendingProjectsPaid', 'pendingProjectsDebt', 'pendingProjectsPct',
+            'pendingWorkersShare', 'pendingFirmaShare', 'pendingWorkerStats'
         );
     }
 }
