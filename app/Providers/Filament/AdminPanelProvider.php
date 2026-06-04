@@ -528,7 +528,7 @@ HTML;
                 function () {
                     $html = '<script src="' . asset('js/map-picker.js') . '?v=11" defer></script>';
                     if (auth()->check()) {
-                        $html .= \Livewire\Livewire::mount('message-notifier')->html();
+                        $html .= \Illuminate\Support\Facades\Blade::render('@livewire(\'message-notifier\')');
                     }
                     return $html;
                 }

@@ -1,4 +1,5 @@
-<div wire:poll.8s="refresh" style="position:relative" x-data>
+<div wire:poll.8s="refresh" x-data>
+<style>@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}</style>
 
     {{-- Bell tugma --}}
     <button wire:click="$toggle('showPanel')"
@@ -64,7 +65,3 @@
     @endif
 
 </div>
-
-<style>
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.6} }
-</style>
