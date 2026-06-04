@@ -234,8 +234,10 @@
                 {{-- Kutayotgan ishlar --}}
                 <td style="text-align:center">
                     @if($pendingCnt > 0)
+                    @php $pendingRate = (float)($stat['user']->commission_rate ?? 20); @endphp
                     <div style="font-size:12px;font-weight:700;color:#f97316">{{ $pendingCnt }} ta</div>
-                    <div style="font-size:10px;color:#9ca3af">{{ number_format($pendingSum, 0, '.', ' ') }} so'm</div>
+                    <div style="font-size:10px;color:#f97316;font-weight:600">{{ number_format(round($pendingSum * $pendingRate / 100), 0, '.', ' ') }} so'm</div>
+                    <div style="font-size:9px;color:#d1d5db">({{ $pendingRate }}% ulush)</div>
                     @else
                     <span style="color:#d1d5db;font-size:12px">—</span>
                     @endif
