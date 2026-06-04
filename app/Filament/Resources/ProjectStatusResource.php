@@ -25,6 +25,11 @@ class ProjectStatusResource extends Resource
     protected static ?string $modelLabel      = 'Bo\'lim';
     protected static ?string $pluralModelLabel = 'Bo\'limlar';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->isAdmin() ?? false;
+    }
+
     public static function form(Form $form): Form
     {
         return $form->schema([
