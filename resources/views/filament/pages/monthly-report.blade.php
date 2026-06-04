@@ -797,6 +797,9 @@
                     <th style="padding:7px 10px;text-align:right;color:#9a3412;font-weight:600">Mening ulushim</th>
                     <th style="padding:7px 10px;text-align:center;color:#9a3412;font-weight:600">Holat</th>
                     <th style="padding:7px 10px;text-align:center;color:#9a3412;font-weight:600">Vaqt</th>
+                    @if(auth()->user()?->isAdmin())
+                    <th style="padding:7px 10px;text-align:center;color:#16a34a;font-weight:600">To'lov</th>
+                    @endif
                 </tr>
             </thead>
             <tbody>
@@ -825,6 +828,17 @@
                         <span style="color:#d1d5db;font-size:11px">—</span>
                         @endif
                     </td>
+                    @if(auth()->user()?->isAdmin())
+                    <td style="padding:6px 10px;text-align:center">
+                        @if(($pi['my_share'] ?? 0) > 0)
+                        <button wire:click="payServiceShare({{ $pi['service_id'] }}, {{ $pi['user_id'] }}, {{ $pi['my_share'] }})"
+                                wire:confirm="{{ number_format($pi['my_share'],0,'.',',') }} so'm to'lov yozilsinmi?"
+                                style="background:#f0fdf4;border:1px solid #86efac;color:#16a34a;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap">
+                            ✓ To'landi
+                        </button>
+                        @endif
+                    </td>
+                    @endif
                 </tr>
                 @endforeach
             </tbody>

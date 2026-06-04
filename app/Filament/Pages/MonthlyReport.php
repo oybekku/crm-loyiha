@@ -39,6 +39,24 @@ class MonthlyReport extends Page
     public bool   $showDetailModal  = false;
     public int    $detailUserId     = 0;
 
+    public function payServiceShare(int $serviceId, int $userId, float $amount): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+
+        $svc = \App\Models\ProjectService::with('project')->findOrFail($serviceId);
+
+        \App\Models\EmployeeSalaryPayment::create([
+            'user_id'  => $userId,
+            'month'    => $this->selectedMonth,
+            'amount'   => $amount,
+            'paid_at'  => now()->toDateString(),
+            'note'     => $svc->project?->number . ' — ' . $svc->service_label . ' ulushi',
+            'given_by' => auth()->id(),
+        ]);
+
+        Notification::make()->title("To'lov yozildi: " . number_format($amount, 0, '.', ' ') . " so'm")->success()->send();
+    }
+
     public function openDetailModal(int $uid): void
     {
         $this->detailUserId    = $uid;
@@ -358,6 +376,8 @@ class MonthlyReport extends Page
                 if (in_array($s->assignedUser?->role, ['admin', 'menejer'])) $rate = 0;
                 $myShare = round((float)$s->final_price * $rate / 100, 0);
                 return [
+                    'service_id'     => $s->id,
+                    'user_id'        => $s->assigned_user_id,
                     'project_number' => $s->project?->number,
                     'owner_name'     => $s->project?->owner_name,
                     'service_label'  => $s->service_label,
