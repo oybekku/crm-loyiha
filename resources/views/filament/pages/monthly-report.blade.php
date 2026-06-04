@@ -680,11 +680,17 @@
                     @if(auth()->user()?->isAdmin())
                     <td style="padding:6px 10px;text-align:center">
                         @if(($pi['my_share'] ?? 0) > 0)
-                        <button wire:click="payServiceShare({{ $pi['service_id'] }}, {{ $pi['user_id'] }}, {{ $pi['my_share'] }})"
-                                wire:confirm="{{ number_format($pi['my_share'],0,'.',',') }} so'm to'lov yozilsinmi?"
-                                style="background:#f0fdf4;border:1px solid #86efac;color:#16a34a;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap">
-                            ✓ To'landi
-                        </button>
+                            @if($pi['is_paid'] ?? false)
+                            <span style="background:#dcfce7;border:1px solid #86efac;color:#16a34a;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;white-space:nowrap">
+                                ✓ To'langan
+                            </span>
+                            @else
+                            <button wire:click="payServiceShare({{ $pi['service_id'] }}, {{ $pi['user_id'] }}, {{ $pi['my_share'] }})"
+                                    wire:confirm="{{ number_format($pi['my_share'],0,'.',',') }} so'm to'lov yozilsinmi?"
+                                    style="background:#eff6ff;border:1px solid #93c5fd;color:#2563eb;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap">
+                                To'lash
+                            </button>
+                            @endif
                         @endif
                     </td>
                     @endif

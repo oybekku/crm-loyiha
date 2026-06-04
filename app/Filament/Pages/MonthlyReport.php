@@ -50,7 +50,7 @@ class MonthlyReport extends Page
             'month'    => $this->selectedMonth,
             'amount'   => $amount,
             'paid_at'  => now()->toDateString(),
-            'note'     => $svc->project?->number . ' — ' . $svc->service_label . ' ulushi',
+            'note'     => 'svc:' . $serviceId . '|' . $svc->project?->number . ' — ' . $svc->service_label . ' ulushi',
             'given_by' => auth()->id(),
         ]);
 
@@ -311,7 +311,7 @@ class MonthlyReport extends Page
 
             $stat['pending_count'] = $pendingServices->count();
             $stat['pending_sum']   = (float) $pendingServices->sum('final_price');
-            $stat['pending_items'] = $pendingServices->map(function($s) {
+            $stat['pending_items'] = $pendingServices->map(function($s) use ($paidServiceNotes) {
                 $daysLeft = null;
                 $isLate   = false;
                 $lateDays = 0;
@@ -325,9 +325,11 @@ class MonthlyReport extends Page
                 $rate = (float) ($s->assignedUser->commission_rate ?? 20);
                 if (in_array($s->assignedUser?->role, ['admin', 'menejer'])) $rate = 0;
                 $myShare = round((float)$s->final_price * $rate / 100, 0);
+                $isPaid = collect($paidServiceNotes)->contains(fn($n) => str_starts_with($n, 'svc:' . $s->id . '|'));
                 return [
                     'service_id'     => $s->id,
                     'user_id'        => $s->assigned_user_id,
+                    'is_paid'        => $isPaid,
                     'project_number' => $s->project?->number,
                     'owner_name'     => $s->project?->owner_name,
                     'service_label'  => $s->service_label,
@@ -369,11 +371,17 @@ class MonthlyReport extends Page
             ->whereNotNull('assigned_user_id')
             ->get();
 
-        // Bu oy berilgan avanslar (user_id => summa)
+        // Bu oy berilgan to'lovlar (user_id => summa)
         $advancesThisMonth = \App\Models\EmployeeSalaryPayment::where('month', $this->selectedMonth)
             ->get()
             ->groupBy('user_id')
             ->map(fn($g) => (float) $g->sum('amount'));
+
+        // To'landi bosib yozilgan xizmat to'lovlari (service_id asosida note orqali)
+        $paidServiceNotes = \App\Models\EmployeeSalaryPayment::where('month', $this->selectedMonth)
+            ->whereNotNull('note')
+            ->pluck('note')
+            ->toArray();
 
         $pendingWorkersShare = 0.0;
         $pendingWorkerStats  = [];
