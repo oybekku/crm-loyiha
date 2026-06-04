@@ -107,14 +107,28 @@ class ProjectStatusResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->actions([
-                Tables\Actions\EditAction::make()->label(''),
-                Tables\Actions\DeleteAction::make()->label(''),
+                Tables\Actions\EditAction::make()
+                    ->label('')
+                    ->requiresConfirmation()
+                    ->modalHeading('PIN kod kiriting')
+                    ->modalDescription('Tahrirlash uchun PIN kod talab etiladi')
+                    ->form(fn (Forms\Form $form) => $form->schema([
+                        Forms\Components\TextInput::make('_pin')
+                            ->label('PIN kod')
+                            ->password()
+                            ->required()
+                            ->placeholder('****'),
+                    ]))
+                    ->before(function (array $data, $record, Tables\Actions\EditAction $action) {
+                        if (($data['_pin'] ?? '') !== '2728') {
+                            $action->halt();
+                            \Filament\Notifications\Notification::make()
+                                ->title("Noto'g'ri PIN kod")
+                                ->danger()->send();
+                        }
+                    }),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ]);
+            ->bulkActions([]);
     }
 
     public static function getPages(): array
