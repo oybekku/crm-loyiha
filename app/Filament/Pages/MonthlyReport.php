@@ -252,6 +252,14 @@ class MonthlyReport extends Page
                     ];
                 }
 
+                // Proportional to'langan ulush
+                $commission    = round($price * $rate / 100, 2);
+                $projTotal     = (float) $project->total_price;
+                $projPaid      = (float) $project->paid_amount;
+                $paidRatio     = $projTotal > 0 ? min(1, $projPaid / $projTotal) : 0;
+                $commPaid      = round($commission * $paidRatio, 0);
+                $commRemaining = max(0, $commission - $commPaid);
+
                 $userStats[$uid]['project_ids'][] = $project->id;
                 $userStats[$uid]['services'][]    = [
                     'project_id'     => $project->id,
@@ -261,7 +269,10 @@ class MonthlyReport extends Page
                     'service_name'   => $service->service_name,
                     'service_label'  => $service->service_label,
                     'price'          => $price,
-                    'commission'     => round($price * $rate / 100, 2),
+                    'commission'     => $commission,
+                    'comm_paid'      => $commPaid,
+                    'comm_remaining' => $commRemaining,
+                    'paid_ratio'     => round($paidRatio * 100),
                     'rate'           => $rate,
                     'deadline_date'  => $deadlineDate,
                     'paid_at'        => $paidAt,

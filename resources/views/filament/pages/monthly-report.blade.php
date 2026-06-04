@@ -663,6 +663,8 @@
                     <th style="padding:8px 10px;text-align:left;font-weight:600;color:#475569;border-bottom:2px solid #e2e8f0">Xizmat</th>
                     <th style="padding:8px 10px;text-align:right;font-weight:600;color:#475569;border-bottom:2px solid #e2e8f0">Narxi</th>
                     <th style="padding:8px 10px;text-align:right;font-weight:600;color:#d97706;border-bottom:2px solid #e2e8f0">Komissiya</th>
+                    <th style="padding:8px 10px;text-align:right;font-weight:600;color:#16a34a;border-bottom:2px solid #e2e8f0">To'landi</th>
+                    <th style="padding:8px 10px;text-align:right;font-weight:600;color:#dc2626;border-bottom:2px solid #e2e8f0">Qoldi</th>
                     <th style="padding:8px 10px;text-align:center;font-weight:600;color:#475569;border-bottom:2px solid #e2e8f0">Muddat</th>
                     <th style="padding:8px 10px;text-align:center;font-weight:600;color:#475569;border-bottom:2px solid #e2e8f0">Holat</th>
                 </tr>
@@ -677,6 +679,15 @@
                     <td style="padding:8px 10px;color:#374151">{{ $srv['service_label'] ?? $srv['service_name'] }}</td>
                     <td style="padding:8px 10px;text-align:right;font-weight:600;color:#111827">{{ number_format($srv['price'],0,'.',' ') }}</td>
                     <td style="padding:8px 10px;text-align:right;font-weight:700;color:#d97706">{{ number_format($srv['commission'],0,'.',' ') }}</td>
+                    <td style="padding:8px 10px;text-align:right;font-weight:700;color:#16a34a">
+                        {{ number_format($srv['comm_paid'] ?? 0, 0, '.', ' ') }}
+                        @if(isset($srv['paid_ratio']) && $srv['paid_ratio'] > 0)
+                        <div style="font-size:10px;color:#9ca3af;font-weight:400">{{ $srv['paid_ratio'] }}%</div>
+                        @endif
+                    </td>
+                    <td style="padding:8px 10px;text-align:right;font-weight:700;color:{{ ($srv['comm_remaining'] ?? 0) > 0 ? '#dc2626' : '#16a34a' }}">
+                        {{ number_format($srv['comm_remaining'] ?? 0, 0, '.', ' ') }}
+                    </td>
                     <td style="padding:8px 10px;text-align:center;font-size:11px;color:#9ca3af">
                         {{ $srv['deadline_date'] ? $srv['deadline_date']->format('d.m.Y') : '—' }}
                     </td>
