@@ -44,4 +44,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/print/project/{project}/ariza', function (\App\Models\Project $project) {
         return view('print.ariza', compact('project'));
     })->name('print.project.ariza');
+
+    Route::get('/print/project/{project}/obloshka', function (\App\Models\Project $project) {
+        return view('print.obloshka', compact('project'));
+    })->name('print.project.obloshka');
+
+    Route::post('/print/project/{project}/obloshka/manzil', function (\Illuminate\Http\Request $request, \App\Models\Project $project) {
+        $project->update(['oblozhka_address' => trim((string) $request->input('manzil'))]);
+        return response()->json(['ok' => true]);
+    })->name('print.project.obloshka.save');
 });

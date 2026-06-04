@@ -174,6 +174,13 @@
         🖨 Mijoz nusxasi
     </button>
     <div style="width:1px;height:28px;background:rgba(255,255,255,0.3);"></div>
+    <button onclick="window.open('{{ route('print.project.obloshka', $project) }}?qavat=1','_blank')" style="background:#fff;color:#1d4ed8;border:none;padding:8px 18px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;">
+        ▦ Bir qavat
+    </button>
+    <button onclick="window.open('{{ route('print.project.obloshka', $project) }}?qavat=2','_blank')" style="background:#fff;color:#1d4ed8;border:none;padding:8px 18px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;">
+        ▦ Ikki qavat
+    </button>
+    <div style="width:1px;height:28px;background:rgba(255,255,255,0.3);"></div>
     <button onclick="window.close()" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.4);padding:8px 18px;border-radius:6px;font-size:14px;cursor:pointer;">
         ✕ Yopish
     </button>

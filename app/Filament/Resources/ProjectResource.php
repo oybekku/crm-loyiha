@@ -98,6 +98,13 @@ class ProjectResource extends Resource
                         ->extraInputAttributes(['data-map-address' => '1'])
                         ->hint("Quyidagi xaritadan bosib manzilni tanlang"),
 
+                    Forms\Components\Textarea::make('oblozhka_address')
+                        ->label('Obloshka manzili')
+                        ->rows(2)
+                        ->columnSpanFull()
+                        ->placeholder('Toshkent viloyati Quyichirchiq tumani "Jumagul" mahallasi "Qolmoq" ko\'chasi 4-uy')
+                        ->hint("Obloshka (muqova) chop etishda ishlatiladi. Bo'sh qoldirilsa yuqoridagi oddiy manzil olinadi."),
+
                     Forms\Components\View::make('filament.forms.components.map-picker')
                         ->columnSpanFull(),
 
