@@ -333,7 +333,7 @@
         </p>
         <p style="margin-top:10px;line-height:1.7;color:#444;">
             Yuqoridagi bildirishnomani o'qib chiqdim, unga nisbatan e'tiroz va qo'shimchalarim yo'q.
-            Kelib chifadigan salbiy oqibatlar uchun javobgarlikni o'z zimmamda bo'lishidan xabardorman.
+            Kelib chiqadigan salbiy oqibatlar uchun javobgarlikni o'z zimmamda bo'lishidan xabardorman.
         </p>
     </div>
 
@@ -463,7 +463,7 @@
         </p>
         <p style="margin-top:10px;line-height:1.7;color:#444;">
             Yuqoridagi bildirishnomani o'qib chiqdim, unga nisbatan e'tiroz va qo'shimchalarim yo'q.
-            Kelib chifadigan salbiy oqibatlar uchun javobgarlikni o'z zimmamda bo'lishidan xabardorman.
+            Kelib chiqadigan salbiy oqibatlar uchun javobgarlikni o'z zimmamda bo'lishidan xabardorman.
         </p>
     </div>
     <div class="conditions lang-ru">
