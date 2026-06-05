@@ -80,6 +80,12 @@ class KanbanBoard extends Page
     public int    $editPaymentId        = 0;
     public string $editPaymentAmount    = '';
 
+    // To'lovni o'chirish (PIN kod bilan)
+    public bool   $showDeletePaymentModal = false;
+    public int    $deletePaymentId        = 0;
+    public string $deletePaymentPin       = '';
+    public bool   $deletePaymentPinError  = false;
+
     // Area (kv.m) modal state
     public bool   $showAreaModal  = false;
     public string $areaServiceKey = '';
@@ -750,6 +756,58 @@ class KanbanBoard extends Page
         $this->dispatch('notify', type: 'success', message: "To'lov summasi yangilandi!");
     }
 
+    // ── Delete payment (PIN kod bilan) ────────────────────────────────────
+    public function openDeletePayment(int $paymentId): void
+    {
+        $this->deletePaymentId       = $paymentId;
+        $this->deletePaymentPin      = '';
+        $this->deletePaymentPinError = false;
+        $this->showDeletePaymentModal = true;
+    }
+
+    public function closeDeletePayment(): void
+    {
+        $this->showDeletePaymentModal = false;
+        $this->deletePaymentId        = 0;
+        $this->deletePaymentPin       = '';
+        $this->deletePaymentPinError  = false;
+    }
+
+    public function confirmDeletePayment(): void
+    {
+        if ($this->deletePaymentPin !== '2728') {
+            $this->deletePaymentPinError = true;
+            return;
+        }
+
+        $payment = Payment::find($this->deletePaymentId);
+        if (!$payment) {
+            $this->closeDeletePayment();
+            return;
+        }
+
+        $amount    = (float) $payment->amount;
+        $projectId = $payment->project_id;
+
+        PaymentLog::create([
+            'project_id'  => $projectId,
+            'payment_id'  => $payment->id,
+            'user_id'     => auth()->id(),
+            'action'      => 'deleted',
+            'amount'      => 0,
+            'old_amount'  => $amount,
+            'description' => number_format($amount, 0, '.', ' ') . " so'm to'lov o'chirildi",
+        ]);
+
+        $payment->delete();
+
+        $project = Project::find($projectId);
+        $project?->updateTotals();
+
+        $this->closeDeletePayment();
+        $this->dispatch('notify', type: 'success', message: "To'lov o'chirildi!");
+    }
+
     // ── Route to department modal ─────────────────────────────────────────
     public function openRouteModal(int $projectId, string $currentStatus): void
     {
@@ -934,8 +992,115 @@ class KanbanBoard extends Page
     }
 
     // ── View data ─────────────────────────────────────────────────────────
+    /**
+     * Avtomatik status ko'chirish:
+     *  1. Mas'ul biriktirilmagan toposyomka/eskiz loyihalari → "Yangi X" bo'limida kutadi;
+     *     mas'ul biriktirilgach asl bo'limga (toposyomka/eskiz_loyiha) o'tadi.
+     *  2. Joriy bo'lim muddatiga (allocated_days) ≤3 kun qolgan loyihalar → "Kechikayotgan" bo'limga.
+     */
+    protected function reconcileAutoStatuses(): void
+    {
+        $deptMap = [
+            'toposyomka'   => 'yangi_toposyomka',
+            'eskiz_loyiha' => 'yangi_eskiz_loyiha',
+        ];
+
+        // 1) Mas'ul holatiga qarab "Yangi X" ↔ asl bo'lim (kutishdagilarga tegmaymiz)
+        foreach ($deptMap as $dept => $staging) {
+            // Asl bo'limda, lekin mas'ul yo'q → "Yangi X" ga
+            Project::where('status', $dept)
+                ->whereNull('timer_paused_at')
+                ->whereDoesntHave('services', fn ($q) =>
+                    $q->where('service_name', $dept)->whereNotNull('assigned_user_id'))
+                ->get()
+                ->each(fn ($p) => $this->switchProjectStatus($p, $staging));
+
+            // "Yangi X" da, lekin mas'ul biriktirilgan → asl bo'limga
+            Project::where('status', $staging)
+                ->whereNull('timer_paused_at')
+                ->whereHas('services', fn ($q) =>
+                    $q->where('service_name', $dept)->whereNotNull('assigned_user_id'))
+                ->get()
+                ->each(fn ($p) => $this->switchProjectStatus($p, $dept));
+        }
+
+        // 2) Kechikayotgan — joriy bo'lim muddatiga ≤3 kun qolganda (kutishdagilar bundan mustasno)
+        Project::whereIn('status', ['toposyomka', 'eskiz_loyiha', 'tekshirish'])
+            ->whereNull('timer_paused_at')
+            ->with('currentStatusLog')
+            ->get()
+            ->each(function ($p) {
+                $log = $p->currentStatusLog;
+                if (!$log || (int) $log->allocated_days <= 0) return;
+                $daysInStatus = (int) $log->entered_at->diffInDays(now());
+                $daysLeft     = (int) $log->allocated_days - $daysInStatus;
+                if ($daysLeft <= 3) {
+                    // Muddatni saqlab (entered_at + allocated_days bir xil) ko'chiramiz,
+                    // shunda kartada hisob davom etadi (3k → 2k → 1 kun → kechikkan)
+                    $this->switchProjectStatus(
+                        $p, 'kechikayotgan',
+                        $log->entered_at, (int) $log->allocated_days, $log->assigned_user_id
+                    );
+                }
+            });
+    }
+
+    protected function switchProjectStatus(Project $p, string $newStatus, $enteredAt = null, ?int $allocatedDays = null, $assignedUserId = null): void
+    {
+        if ($p->status === $newStatus) return;
+
+        \App\Models\ProjectStatusLog::where('project_id', $p->id)
+            ->whereNull('left_at')
+            ->update(['left_at' => now()]);
+
+        \App\Models\ProjectStatusLog::create([
+            'project_id'       => $p->id,
+            'status'           => $newStatus,
+            'entered_at'       => $enteredAt ?? now(),
+            'allocated_days'   => $allocatedDays ?? 0,
+            'assigned_user_id' => $assignedUserId,
+        ]);
+
+        $p->status = $newStatus;
+        $p->saveQuietly();
+    }
+
+    /**
+     * Kun hisobini to'xtatish/yoqish (soat).
+     *  - To'xtatilganda: kun sanalmaydi, kartada soat chiqadi, Kechikayotganga ko'chmaydi.
+     *  - Qayta yoqilganda: to'xtab turgan vaqt oldinga suriladi — kun yo'qolmaydi.
+     */
+    public function toggleTimer(int $projectId): void
+    {
+        $project = Project::with('currentStatusLog')->find($projectId);
+        if (!$project) return;
+
+        if ($project->timer_paused_at) {
+            // QAYTA YOQISH — to'xtab turgan vaqtni oldinga suramiz
+            $pausedSeconds = (int) $project->timer_paused_at->diffInSeconds(now());
+
+            if ($log = $project->currentStatusLog) {
+                $log->update(['entered_at' => $log->entered_at->copy()->addSeconds($pausedSeconds)]);
+            }
+            foreach ($project->services()->whereNotNull('work_started_at')->get() as $svc) {
+                $svc->update([
+                    'work_started_at' => \Carbon\Carbon::parse($svc->work_started_at)->addSeconds($pausedSeconds),
+                ]);
+            }
+
+            $project->update(['timer_paused_at' => null]);
+            $this->dispatch('notify', type: 'success', message: 'Vaqt hisobi yoqildi ▶');
+        } else {
+            // TO'XTATISH — kun hisobi to'xtaydi (kutish, soat chiqadi)
+            $project->update(['timer_paused_at' => now()]);
+            $this->dispatch('notify', type: 'success', message: "Vaqt hisobi to'xtatildi ⏸ (kutishda)");
+        }
+    }
+
     public function getViewData(): array
     {
+        $this->reconcileAutoStatuses();
+
         $authUser  = auth()->user();
         $dbStatuses = \App\Models\ProjectStatus::allOrdered();
 

@@ -13,7 +13,7 @@ class Project extends Model
     protected $fillable = [
         'number', 'owner_name', 'title', 'address', 'oblozhka_address', 'latitude', 'longitude', 'phones',
         'description', 'category', 'status', 'assigned_user_id',
-        'total_price', 'paid_amount', 'deadline_date',
+        'total_price', 'paid_amount', 'deadline_date', 'timer_paused_at',
         'payment_requested_at', 'payment_requested_by',
     ];
 
@@ -24,6 +24,7 @@ class Project extends Model
         'latitude'              => 'float',
         'longitude'             => 'float',
         'deadline_date'         => 'date',
+        'timer_paused_at'       => 'datetime',
         'payment_requested_at'  => 'datetime',
     ];
 

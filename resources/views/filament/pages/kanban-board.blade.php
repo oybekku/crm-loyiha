@@ -415,6 +415,13 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             $daysInStatus = $currentLog ? (int)$currentLog->entered_at->diffInDays(now()) : 0;
             $allocDays    = $currentLog?->allocated_days ?? 0;
             $statusDelay  = ($allocDays > 0) ? max(0, $daysInStatus - $allocDays) : 0;
+            // Joriy bo'lim muddatiga qolgan kun (allocated_days asosida)
+            $deptDaysLeft = ($allocDays > 0) ? ($allocDays - $daysInStatus) : null;
+            $isPaused     = $project->timer_paused_at !== null;
+            $deptOverdue  = !$isPaused && $deptDaysLeft !== null && $deptDaysLeft <= 0;
+            $deptOneDay   = !$isPaused && $deptDaysLeft === 1;
+            // Karta ramkasi ham bo'lim muddatiga qarab (qizil = o'tgan, sariq = ≤3 kun); kutishda — neytral
+            $cardClass    = $isPaused ? '' : ($deptOverdue ? 'card-overdue' : (($deptDaysLeft !== null && $deptDaysLeft <= 3) ? 'card-warn' : ''));
             $payPct       = $project->payment_percent;
             $barColor     = $payPct >= 100 ? '#10b981' : ($payPct >= 50 ? '#f59e0b' : $status['color']);
             $ownerInitial = mb_strtoupper(mb_substr($project->owner_name, 0, 1));
@@ -451,11 +458,26 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                     @endif
                 </div>
                 <div style="flex-shrink:0;display:flex;align-items:center;gap:3px">
-                    @if($daysLeft !== null && ($isOverdue || $daysLeft <= 3))
-                        <span style="font-size:9px;font-weight:700;background:{{ $isOverdue ? '#fee2e2' : '#fef3c7' }};color:{{ $isOverdue ? '#dc2626' : '#d97706' }};border-radius:3px;padding:1px 4px;white-space:nowrap">
-                            {{ $isOverdue ? abs($daysLeft).'k!' : $daysLeft.'k' }}
-                        </span>
-                    @endif
+                    <button wire:click.stop="toggleTimer({{ $project->id }})"
+                            onclick="event.stopPropagation()"
+                            title="{{ $isPaused ? 'Vaqt hisobini yoqish' : 'Vaqt hisobini to‘xtatish (kutish)' }}"
+                            style="border:none;background:none;padding:0;cursor:pointer;display:flex;align-items:center">
+                        @if($isPaused)
+                            {{-- Kutishda — soat --}}
+                            <span style="font-size:9px;font-weight:700;background:#f1f5f9;color:#64748b;border-radius:3px;padding:1px 5px;white-space:nowrap;display:inline-flex;align-items:center;gap:2px">🕐 kutish</span>
+                        @elseif($deptOverdue)
+                            <span style="font-size:9px;font-weight:700;background:#fee2e2;color:#dc2626;border-radius:3px;padding:1px 5px;white-space:nowrap;animation:blink-warn 1s ease-in-out infinite">kechikkan</span>
+                        @elseif($deptOneDay)
+                            <span style="font-size:9px;font-weight:700;background:#fee2e2;color:#dc2626;border-radius:3px;padding:1px 5px;white-space:nowrap;animation:blink-warn 1s ease-in-out infinite">1 kun</span>
+                        @elseif($deptDaysLeft !== null && $deptDaysLeft <= 3)
+                            <span style="font-size:9px;font-weight:700;background:#fef3c7;color:#d97706;border-radius:3px;padding:1px 4px;white-space:nowrap">{{ $deptDaysLeft }} kun</span>
+                        @elseif($deptDaysLeft !== null)
+                            <span style="font-size:9px;font-weight:600;background:#ecfdf5;color:#059669;border-radius:3px;padding:1px 4px;white-space:nowrap">{{ $deptDaysLeft }} kun</span>
+                        @else
+                            {{-- Muddat belgilanmagan / aktivlashmagan — soat --}}
+                            <span style="font-size:9px;font-weight:600;background:#f1f5f9;color:#94a3b8;border-radius:3px;padding:1px 5px;white-space:nowrap">🕐</span>
+                        @endif
+                    </button>
                     <span style="font-size:9px;color:#9ca3af;white-space:nowrap">{{ $project->created_at->format('d-M') }}</span>
                 </div>
             </div>
@@ -1676,11 +1698,18 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                     <span style="color:#9ca3af;margin-left:4px">· {{ $pmt->createdBy->name }}</span>
                     @endif
                 </div>
-                <button onclick="event.stopPropagation()"
-                        wire:click.stop="openEditPayment({{ $pmt->id }})"
-                        style="font-size:10px;padding:3px 8px;border-radius:5px;border:1px solid #e5e7eb;background:#fff;color:#2563eb;cursor:pointer;white-space:nowrap">
-                    ✏️ Tahrirlash
-                </button>
+                <div style="display:flex;gap:6px;flex-shrink:0">
+                    <button onclick="event.stopPropagation()"
+                            wire:click.stop="openEditPayment({{ $pmt->id }})"
+                            style="font-size:10px;padding:3px 8px;border-radius:5px;border:1px solid #e5e7eb;background:#fff;color:#2563eb;cursor:pointer;white-space:nowrap">
+                        ✏️ Tahrirlash
+                    </button>
+                    <button onclick="event.stopPropagation()"
+                            wire:click.stop="openDeletePayment({{ $pmt->id }})"
+                            style="font-size:10px;padding:3px 8px;border-radius:5px;border:1px solid #fecaca;background:#fff;color:#dc2626;cursor:pointer;white-space:nowrap">
+                        🗑 O'chirish
+                    </button>
+                </div>
             </div>
             @endforeach
         </div>
@@ -1761,6 +1790,33 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             <button wire:click="saveEditPayment"
                     style="padding:11px;border-radius:8px;border:none;background:#2563eb;color:#fff;cursor:pointer;font-size:13px;font-weight:600">
                 Saqlash
+            </button>
+        </div>
+    </div>
+</div>
+@endif
+
+{{-- TO'LOVNI O'CHIRISH — PIN MODAL --}}
+@if($showDeletePaymentModal)
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1500;display:flex;align-items:center;justify-content:center;padding:16px" wire:click.self="closeDeletePayment">
+    <div style="background:#fff;border-radius:16px;padding:28px 32px;width:320px;box-shadow:0 25px 60px rgba(0,0,0,.2)" wire:click.stop>
+        <div style="font-size:16px;font-weight:700;color:#111827;margin-bottom:6px">🔐 PIN kod kiriting</div>
+        <div style="font-size:13px;color:#6b7280;margin-bottom:16px">To'lovni butunlay o'chirish uchun PIN kod talab etiladi</div>
+        <input type="password" wire:model="deletePaymentPin"
+               wire:keydown.enter="confirmDeletePayment"
+               style="width:100%;border:1.5px solid {{ $deletePaymentPinError ? '#ef4444' : '#e2e8f0' }};border-radius:8px;padding:10px 14px;font-size:18px;letter-spacing:6px;text-align:center;outline:none;margin-bottom:8px"
+               placeholder="····" autofocus maxlength="4">
+        @if($deletePaymentPinError)
+        <div style="font-size:12px;color:#ef4444;margin-bottom:10px">❌ Noto'g'ri PIN kod</div>
+        @endif
+        <div style="display:flex;gap:8px;margin-top:12px">
+            <button wire:click="closeDeletePayment"
+                    style="flex:1;padding:10px;border-radius:8px;border:1px solid #e5e7eb;background:#f9fafb;color:#374151;font-size:13px;cursor:pointer">
+                Bekor
+            </button>
+            <button wire:click="confirmDeletePayment"
+                    style="flex:1;padding:10px;border-radius:8px;border:none;background:#ef4444;color:#fff;font-size:13px;font-weight:600;cursor:pointer">
+                O'chirish
             </button>
         </div>
     </div>
