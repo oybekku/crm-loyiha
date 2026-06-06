@@ -56,13 +56,35 @@ class WelcomeHeroWidget extends Widget
         $paidSum      = (float) (clone $baseQuery)->sum('paid_amount');
         $debtSum      = $totalSum - $paidSum;
         $paidPct      = $totalSum > 0 ? round(($paidSum / $totalSum) * 100) : 0;
+
+        // Qilinmagan (arxivda emas) loyihalar — "Qilinmagan loyihalar" kartasi uchun
+        $pendingQ        = (clone $baseQuery)->whereNotIn('status', ['tugallangan', 'taqdim_etilgan', 'bekor_qilingan']);
+        $pendingCountTop = (int)   (clone $pendingQ)->count();
+        $pendingSumTop   = (float) (clone $pendingQ)->sum('total_price');
+        $pendingPaidTop  = (float) (clone $pendingQ)->sum('paid_amount');
+        $pendingDebtTop  = $pendingSumTop - $pendingPaidTop;
+        $pendingPctTop   = $pendingSumTop > 0 ? round($pendingPaidTop / $pendingSumTop * 100) : 0;
         $overdueProjects = (clone $baseQuery)->whereNotIn('status', ['tugallangan', 'bekor_qilingan', 'arxiv'])
             ->whereNotNull('deadline_date')
             ->where('deadline_date', '<', now()->startOfDay())
+            ->with('assignedUsers:id,name')
             ->select('id', 'number', 'owner_name', 'deadline_date', 'status')
             ->orderBy('deadline_date')
             ->get();
         $overdueCount = $overdueProjects->count();
+
+        // Vaqti o'tgan loyihalar — qaysi hodimda nechta
+        $overdueByEmployee = [];
+        foreach ($overdueProjects as $op) {
+            foreach ($op->assignedUsers as $u) {
+                if (!isset($overdueByEmployee[$u->id])) {
+                    $overdueByEmployee[$u->id] = ['name' => $u->name, 'count' => 0];
+                }
+                $overdueByEmployee[$u->id]['count']++;
+            }
+        }
+        uasort($overdueByEmployee, fn ($a, $b) => $b['count'] <=> $a['count']);
+        $overdueByEmployee = array_values($overdueByEmployee);
 
         // ── Bajaruvchi uchun shaxsiy statistika ──
         $myStats = null;
@@ -121,6 +143,15 @@ class WelcomeHeroWidget extends Widget
             'statPaidPct'   => $paidPct,
             'statOverdue'        => $overdueCount,
             'overdueProjects'    => $overdueProjects,
+            'overdueByEmployee'  => $overdueByEmployee,
+            'statPendingCount'   => $pendingCountTop,
+            'statPendingSum'     => $pendingSumTop,
+            'statPendingPaid'    => $pendingPaidTop,
+            'statPendingDebt'    => $pendingDebtTop,
+            'statPendingPct'     => $pendingPctTop,
+            'firmReport'         => $user?->isAdmin()
+                ? \App\Services\FirmReportService::forMonth(now()->format('Y-m'))
+                : null,
         ];
     }
 }

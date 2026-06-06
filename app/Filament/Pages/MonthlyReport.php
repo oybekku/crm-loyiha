@@ -412,13 +412,18 @@ class MonthlyReport extends Page
 
         $allUsers = User::orderBy('name')->get();
 
+        // Umumiy loyihalar (barcha)
+        $allProjectsCount = (int)   Project::count();
+        $allProjectsSum   = (float) Project::sum('total_price');
+
         return compact(
             'userStats', 'warnings', 'projects',
             'totalServicesSum', 'totalCommissions', 'totalAdvances',
             'firmIncome', 'projectsTotal', 'allUsers',
             'pendingProjectsSum', 'pendingProjectsCount',
             'pendingProjectsPaid', 'pendingProjectsDebt', 'pendingProjectsPct',
-            'pendingWorkersShare', 'pendingFirmaShare', 'pendingWorkerStats'
+            'pendingWorkersShare', 'pendingFirmaShare', 'pendingWorkerStats',
+            'allProjectsCount', 'allProjectsSum'
         );
     }
 }

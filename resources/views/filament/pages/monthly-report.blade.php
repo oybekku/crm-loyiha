@@ -381,7 +381,11 @@
                 <div style="font-size:12px;color:#ea580c;font-weight:600">Qilinmagan<br>loyihalar</div>
             </div>
             <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
-                <span style="color:#6b7280">Jami summa</span>
+                <span style="color:#6b7280">Umumiy summa</span>
+                <span style="font-weight:700;color:#374151">{{ number_format($allProjectsSum, 0, '.', ' ') }} so'm</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+                <span style="color:#6b7280">Qilinmagan jami summa</span>
                 <span style="font-weight:700;color:#9a3412">{{ number_format($pendingProjectsSum, 0, '.', ' ') }} so'm</span>
             </div>
             <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
@@ -397,6 +401,12 @@
             </div>
             <div style="font-size:11px;color:#ea580c;margin-top:4px;font-weight:600;text-align:right">{{ $pendingProjectsPct }}% to'langan</div>
 
+            <div style="margin-top:10px;border-top:1px dashed #fed7aa;padding-top:8px">
+                <div style="display:flex;justify-content:space-between;font-size:12px">
+                    <span style="color:#6b7280">Umumiy loyihalar</span>
+                    <span style="font-weight:700;color:#374151">{{ $allProjectsCount }} ta</span>
+                </div>
+            </div>
         </div>
     </div>
 

@@ -433,47 +433,69 @@
 
     {{-- Jami loyihalar --}}
     <div class="bh-stat bh-stat--blue">
-        <div class="bh-stat-head">
+        <div class="bh-stat-head" style="display:flex;align-items:center;gap:8px">
             <div class="bh-stat-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
             </div>
             <div class="bh-stat-label">Jami loyihalar</div>
+            <div class="bh-stat-value" style="margin-left:auto;line-height:1"
+                 x-data="{n:0}"
+                 x-init="setTimeout(()=>{let t={{ $statProjects }},d=900,s=Date.now(),iv=setInterval(()=>{let p=Math.min((Date.now()-s)/d,1);n=Math.floor((1-Math.pow(1-p,3))*t);if(p>=1){n=t;clearInterval(iv);}},16);},300)"
+                 x-text="n">0</div>
         </div>
-        <div class="bh-stat-value"
-             x-data="{n:0}"
-             x-init="setTimeout(()=>{let t={{ $statProjects }},d=900,s=Date.now(),iv=setInterval(()=>{let p=Math.min((Date.now()-s)/d,1);n=Math.floor((1-Math.pow(1-p,3))*t);if(p>=1){n=t;clearInterval(iv);}},16);},300)"
-             x-text="n">0</div>
-        <div class="bh-stat-desc">Yangi: {{ $statYangi }} &nbsp;·&nbsp; Jarayonda: {{ $statJarayon }} &nbsp;·&nbsp; Tugallangan: {{ $statDone }}</div>
+        <div style="display:flex;flex-direction:column;gap:3px;margin-top:10px;font-size:13px;color:#6b7280">
+            <div>Yangi: <strong style="color:#374151">{{ $statYangi }}</strong></div>
+            <div>Jarayonda: <strong style="color:#374151">{{ $statJarayon }}</strong></div>
+            <div>Tugallangan: <strong style="color:#374151">{{ $statDone }}</strong></div>
+            <div>Vaqti o'tgan: <strong style="color:{{ $statOverdue > 0 ? '#dc2626' : '#374151' }}">{{ $statOverdue }}</strong></div>
+        </div>
+    </div>
+
+    {{-- Qilinmagan loyihalar --}}
+    <div class="bh-stat bh-stat--red">
+        <div class="bh-stat-head" style="display:flex;align-items:center;gap:8px">
+            <div class="bh-stat-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
+            <div class="bh-stat-label">Qilinmagan loyihalar</div>
+            <div class="bh-stat-value" style="margin-left:auto;line-height:1">{{ $statPendingCount }}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:3px;margin-top:10px;font-size:12.5px">
+            <div style="display:flex;justify-content:space-between"><span style="color:#6b7280">Umumiy summa</span><span style="font-weight:700;color:#374151">{{ number_format($statTotalSum, 0, '.', ' ') }} so'm</span></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:#6b7280">Qilinmagan jami summa</span><span style="font-weight:700;color:#9a3412">{{ number_format($statPendingSum, 0, '.', ' ') }} so'm</span></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:#6b7280">To'langan</span><span style="font-weight:700;color:#16a34a">{{ number_format($statPendingPaid, 0, '.', ' ') }} so'm</span></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:#6b7280">Qolgan qarz</span><span style="font-weight:700;color:#dc2626">{{ number_format($statPendingDebt, 0, '.', ' ') }} so'm</span></div>
+            <div style="display:flex;justify-content:space-between;border-top:1px dashed #e5e7eb;margin-top:3px;padding-top:5px"><span style="color:#6b7280">Umumiy loyihalar</span><span style="font-weight:700;color:#374151">{{ $statProjects }} ta</span></div>
+        </div>
     </div>
 
     {{-- Jami summa --}}
     <div class="bh-stat bh-stat--green">
-        <div class="bh-stat-head">
+        <div class="bh-stat-head" style="display:flex;align-items:center;gap:8px">
             <div class="bh-stat-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
             </div>
+            @if(!empty($firmReport))
+            <div class="bh-stat-label">To'langan to'liq</div>
+            <div class="bh-stat-value" style="margin-left:auto;line-height:1">{{ $firmReport['toLanganCount'] }}</div>
+            @else
             <div class="bh-stat-label">Jami summa</div>
+            @endif
         </div>
+        @if(!empty($firmReport))
+        <div style="display:flex;flex-direction:column;gap:3px;margin-top:12px;font-size:12.5px">
+            @foreach($firmReport['employeeComm'] as $emp)
+            <div style="display:flex;justify-content:space-between"><span style="color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">👷 {{ $emp['name'] }}</span><span style="font-weight:700;color:#d97706">{{ number_format($emp['commission'], 0, '.', ' ') }}</span></div>
+            @endforeach
+            <div style="display:flex;justify-content:space-between;border-top:1px dashed #e5e7eb;margin-top:3px;padding-top:5px"><span style="color:#065f46;font-weight:600">🏢 Firma</span><span style="font-weight:800;color:#059669">{{ number_format($firmReport['firmaDaromadi'], 0, '.', ' ') }}</span></div>
+        </div>
+        @else
         <div class="bh-stat-value" style="font-size:26px">{{ number_format($statTotalSum, 0, '.', ' ') }} <span style="font-size:15px;font-weight:600">so'm</span></div>
         <div class="bh-stat-desc">To'langan: {{ number_format($statPaidSum, 0, '.', ' ') }} so'm</div>
         <div class="bh-stat-bar-wrap">
             <div class="bh-stat-bar" style="width:{{ $statPaidPct }}%"></div>
         </div>
-    </div>
-
-    {{-- Qolgan qarz --}}
-    <div class="bh-stat bh-stat--red">
-        <div class="bh-stat-head">
-            <div class="bh-stat-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            </div>
-            <div class="bh-stat-label">Qolgan qarz</div>
-        </div>
-        <div class="bh-stat-value" style="font-size:20px">{{ number_format($statDebt, 0, '.', ' ') }} <span style="font-size:13px;font-weight:600">so'm</span></div>
-        <div class="bh-stat-desc">{{ $statPaidPct }}% to'langan</div>
-        <div class="bh-stat-bar-wrap">
-            <div class="bh-stat-bar" style="width:{{ $statPaidPct }}%"></div>
-        </div>
+        @endif
     </div>
 
     {{-- Vaqti o'tgan loyihalar --}}
@@ -495,14 +517,26 @@
         </div>
         <div class="bh-stat-desc">Muddati o'tib ketgan loyihalar</div>
         @if($statOverdue > 0)
-        <div x-show="open" x-collapse style="margin-top:10px;display:flex;flex-direction:column;gap:5px">
+        {{-- Hodimlar bo'yicha: qaysi hodimda nechta vaqti o'tgan loyiha --}}
+        @if(count($overdueByEmployee) > 0)
+        <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px">
+            @foreach($overdueByEmployee as $emp)
+            <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(124,58,237,0.07);border:1px solid rgba(124,58,237,0.15);border-radius:7px;padding:5px 10px">
+                <span style="font-size:12px;font-weight:600;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">👷 {{ $emp['name'] }}</span>
+                <span style="font-size:11px;font-weight:700;background:#fef2f2;color:#dc2626;border-radius:10px;padding:2px 9px;white-space:nowrap">{{ $emp['count'] }} ta</span>
+            </div>
+            @endforeach
+        </div>
+        @endif
+        <div x-show="open" x-collapse style="margin-top:8px;display:flex;flex-direction:column;gap:5px">
             @foreach($overdueProjects as $op)
             @php $overDays = (int) \Carbon\Carbon::parse($op->deadline_date)->diffInDays(now()); @endphp
             <a href="/admin/projects/{{ $op->id }}/edit"
-               style="display:flex;align-items:center;justify-content:space-between;background:rgba(124,58,237,0.07);border:1px solid rgba(124,58,237,0.15);border-radius:7px;padding:6px 10px;text-decoration:none">
+               onmouseover="this.style.background='rgba(124,58,237,0.14)'" onmouseout="this.style.background='rgba(124,58,237,0.07)'"
+               style="display:flex;align-items:center;justify-content:space-between;background:rgba(124,58,237,0.07);border:1px solid rgba(124,58,237,0.15);border-radius:7px;padding:6px 10px;text-decoration:none;transition:background .15s;cursor:pointer">
                 <div>
-                    <div style="font-size:11px;font-weight:700;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px">{{ $op->owner_name }}</div>
-                    <div style="font-size:10px;color:#9ca3af;font-family:monospace">{{ $op->number }}</div>
+                    <div style="font-size:12px;font-weight:700;color:#7c3aed;font-family:monospace">{{ $op->number }}</div>
+                    <div style="font-size:10px;color:#9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px">{{ $op->owner_name }}</div>
                 </div>
                 <span style="font-size:10px;font-weight:700;background:#fef2f2;color:#dc2626;border-radius:4px;padding:2px 6px;white-space:nowrap">{{ $overDays }} kun</span>
             </a>
@@ -514,102 +548,6 @@
 </div>
 @endif {{-- /isEmployee --}}
 
-{{-- ── ROW 3: 4 mini karta + so'nggi loyihalar (faqat admin/menejer) ── --}}
-@if(!$isEmployee)
-<div class="bh-row3">
-
-    {{-- Jami loyihalar --}}
-    <div class="bh-card bh-card--o">
-        <div class="bh-card-icon-wrap">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2"/><polyline points="3 9 9 9 9 21 15 21 15 9 21 9"/>
-            </svg>
-        </div>
-        <div class="bh-card-body">
-            <div class="bh-card-num"
-                 x-data="{n:0}"
-                 x-init="setTimeout(()=>{let t={{ $totalCount }},d=900,s=Date.now(),iv=setInterval(()=>{let p=Math.min((Date.now()-s)/d,1);n=Math.floor((1-Math.pow(1-p,3))*t);if(p>=1){n=t;clearInterval(iv);}},16);},300)"
-                 x-text="n">0</div>
-            <div class="bh-card-name">Jami</div>
-        </div>
-    </div>
-
-    {{-- Tugallangan --}}
-    <div class="bh-card bh-card--g">
-        <div class="bh-card-icon-wrap">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="20 6 9 17 4 12"/>
-            </svg>
-        </div>
-        <div class="bh-card-body">
-            <div class="bh-card-num"
-                 x-data="{n:0}"
-                 x-init="setTimeout(()=>{let t={{ $doneCount }},d=900,s=Date.now(),iv=setInterval(()=>{let p=Math.min((Date.now()-s)/d,1);n=Math.floor((1-Math.pow(1-p,3))*t);if(p>=1){n=t;clearInterval(iv);}},16);},450)"
-                 x-text="n">0</div>
-            <div class="bh-card-name">Tugallangan</div>
-        </div>
-    </div>
-
-    {{-- Faol --}}
-    <div class="bh-card bh-card--b">
-        <div class="bh-card-icon-wrap">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-            </svg>
-        </div>
-        <div class="bh-card-body">
-            <div class="bh-card-num"
-                 x-data="{n:0}"
-                 x-init="setTimeout(()=>{let t={{ $activeCount }},d=900,s=Date.now(),iv=setInterval(()=>{let p=Math.min((Date.now()-s)/d,1);n=Math.floor((1-Math.pow(1-p,3))*t);if(p>=1){n=t;clearInterval(iv);}},16);},600)"
-                 x-text="n">0</div>
-            <div class="bh-card-name">Faol</div>
-        </div>
-    </div>
-
-    {{-- Yangi --}}
-    <div class="bh-card bh-card--a">
-        <div class="bh-card-icon-wrap">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-            </svg>
-        </div>
-        <div class="bh-card-body">
-            <div class="bh-card-num"
-                 x-data="{n:0}"
-                 x-init="setTimeout(()=>{let t={{ $yangiCount }},d=900,s=Date.now(),iv=setInterval(()=>{let p=Math.min((Date.now()-s)/d,1);n=Math.floor((1-Math.pow(1-p,3))*t);if(p>=1){n=t;clearInterval(iv);}},16);},750)"
-                 x-text="n">0</div>
-            <div class="bh-card-name">Yangi</div>
-        </div>
-    </div>
-
-    {{-- So'nggi loyihalar --}}
-    @if($recentProjects->count())
-    <div class="bh-row3-recent">
-        <p class="bh-recent-title">So'nggi loyihalar</p>
-        @foreach($recentProjects as $rp)
-        @php
-            $scLabel = match($rp->status) {
-                'yangi'            => 'Yangi',
-                'tolov_jarayonida' => "To'lovda",
-                'toposyomka'       => 'Toposyomka',
-                'eskiz_loyiha'     => 'Eskiz',
-                'tekshirish'       => 'Tekshiruv',
-                'tugallangan'      => 'Tugallangan',
-                default            => ucfirst($rp->status),
-            };
-        @endphp
-        <div class="bh-proj-row">
-            <span class="bh-proj-dot" style="background:#9ca3af"></span>
-            <div class="bh-proj-info">
-                <div class="bh-proj-name">{{ $rp->number ?: '—' }}</div>
-                <div class="bh-proj-owner">{{ $rp->owner_name ?: 'Mijoz noma\'lum' }}</div>
-            </div>
-            <span class="bh-proj-badge" style="background:rgba(0,0,0,0.05);color:#374151">{{ $scLabel }}</span>
-        </div>
-        @endforeach
-    </div>
-    @endif
-
-</div>
-@endif {{-- /isEmployee row3 --}}
+{{-- ROW 3 (4 mini karta + So'nggi loyihalar) olib tashlandi.
+     Stil/markup saqlangan: resources/views/partials/_dashboard-row3-reference.blade.php --}}
 </div>
