@@ -366,8 +366,27 @@
         <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px;text-align:center">
             <div style="font-size:22px;font-weight:800;color:#111827">{{ number_format($totalServicesSum, 0, '.', ' ') }}</div>
             <div style="font-size:11px;color:#6b7280;margin-top:4px;font-weight:500">Tugatilgan ish · arxiv ({{ $toliqCount }})</div>
+            @php
+                $arxivHodimlar = collect($userStats)
+                    ->filter(fn($s) => (float)($s['commission'] ?? 0) > 0)
+                    ->sortByDesc('commission');
+            @endphp
+            @if($arxivHodimlar->count() > 0 || $firmIncome > 0)
+            <div style="margin-top:8px;border-top:1px dashed #e2e8f0;padding-top:8px;display:flex;flex-direction:column;gap:3px;text-align:left">
+                @foreach($arxivHodimlar as $s)
+                <div style="display:flex;justify-content:space-between;font-size:11px">
+                    <span style="color:#92400e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">👷 {{ $s['user']->name }}</span>
+                    <span style="font-weight:700;color:#d97706">{{ number_format($s['commission'], 0, '.', ' ') }}</span>
+                </div>
+                @endforeach
+                <div style="display:flex;justify-content:space-between;font-size:11px;border-top:1px dashed #e2e8f0;padding-top:4px;margin-top:2px">
+                    <span style="color:#065f46;font-weight:600">🏢 Firma</span>
+                    <span style="font-weight:800;color:#059669">{{ number_format($firmIncome, 0, '.', ' ') }}</span>
+                </div>
+            </div>
+            @endif
             @if($qismanTugatilgan > 0)
-            <div style="margin-top:8px;border-top:1px dashed #e2e8f0;padding-top:8px;text-align:left">
+            <div style="margin-top:6px;border-top:1px dashed #e2e8f0;padding-top:6px;text-align:left">
                 <div style="display:flex;justify-content:space-between;font-size:11px">
                     <span style="color:#9ca3af">🔄 Jarayonda (faol {{ $qismanCount }})</span>
                     <span style="font-weight:700;color:#9ca3af">{{ number_format($qismanTugatilgan, 0, '.', ' ') }}</span>
