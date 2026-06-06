@@ -161,12 +161,12 @@ class MonthlyReport extends Page
     {
         [$year, $month] = explode('-', $this->selectedMonth);
 
-        // Bu oy completed_at bo'lgan xizmatlar asosida hisobot
+        // Loyiha OCHILGAN oyiga qarab — shu oyda ochilgan loyihalarning tugatilgan xizmatlari
         $completedServices = \App\Models\ProjectService::with(['assignedUser', 'project.payments'])
             ->whereNotNull('completed_at')
-            ->whereYear('completed_at', $year)
-            ->whereMonth('completed_at', $month)
             ->whereNotNull('assigned_user_id')
+            ->whereHas('project', fn($q) =>
+                $q->whereYear('created_at', $year)->whereMonth('created_at', $month))
             ->get();
 
         $projectIds = $completedServices->pluck('project_id')->unique();
@@ -267,9 +267,10 @@ class MonthlyReport extends Page
         // Arxiv bo'lmagan statuslar
         $archiveStatuses = ['tugallangan', 'taqdim_etilgan', 'bekor_qilingan'];
 
-        // Kutayotgan ishlari bor lekin bu oyda tugallamagan hodimlarni ham qo'shamiz
+        // Shu oyda ochilgan loyihalarда ishi bor hodimlarni ham qo'shamiz
         $allAssignedUsers = \App\Models\ProjectService::whereNotNull('assigned_user_id')
-            ->whereHas('project', fn($q) => $q->whereNotIn('status', $archiveStatuses))
+            ->whereHas('project', fn($q) => $q->whereNotIn('status', $archiveStatuses)
+                ->whereYear('created_at', $year)->whereMonth('created_at', $month))
             ->with('assignedUser')
             ->get()
             ->pluck('assignedUser')
@@ -309,9 +310,10 @@ class MonthlyReport extends Page
             $stat['paid_total']   = $paidTotal;
             $stat['net_payable']  = max(0, $stat['commission'] - $stat['advance_total'] - $penalty);
 
-            // Kutayotgan ishlar (tugatilmagan / to'lanmagan)
+            // Kutayotgan ishlar (shu oyda ochilgan, tugatilmagan / to'lanmagan)
             $pendingServices = \App\Models\ProjectService::where('assigned_user_id', $uid)
-                ->whereHas('project', fn($q) => $q->whereNotIn('status', $archiveStatuses))
+                ->whereHas('project', fn($q) => $q->whereNotIn('status', $archiveStatuses)
+                    ->whereYear('created_at', $year)->whereMonth('created_at', $month))
                 ->with('project:id,number,owner_name,status')
                 ->get();
 
@@ -363,17 +365,19 @@ class MonthlyReport extends Page
         $firmIncome        = $totalServicesSum - $totalCommissions;
         $projectsTotal     = $projects->count();
 
-        // Qilinmagan ishlar (arxivda emas, hali tugallanmagan)
-        $pendingQuery         = Project::whereNotIn('status', $archiveStatuses);
+        // Qilinmagan ishlar — shu oyda OCHILGAN, arxivda emas, hali tugallanmagan
+        $pendingQuery         = Project::whereNotIn('status', $archiveStatuses)
+            ->whereYear('created_at', $year)->whereMonth('created_at', $month);
         $pendingProjectsSum   = (float) (clone $pendingQuery)->sum('total_price');
         $pendingProjectsPaid  = (float) (clone $pendingQuery)->sum('paid_amount');
         $pendingProjectsDebt  = $pendingProjectsSum - $pendingProjectsPaid;
         $pendingProjectsPct   = $pendingProjectsSum > 0 ? round($pendingProjectsPaid / $pendingProjectsSum * 100) : 0;
         $pendingProjectsCount = (clone $pendingQuery)->count();
 
-        // Taxminiy hodimlar ulushi (faol loyihalar bo'yicha)
+        // Taxminiy hodimlar ulushi (shu oyda ochilgan faol loyihalar bo'yicha)
         $pendingServices = \App\Models\ProjectService::with('assignedUser')
-            ->whereHas('project', fn($q) => $q->whereNotIn('status', $archiveStatuses))
+            ->whereHas('project', fn($q) => $q->whereNotIn('status', $archiveStatuses)
+                ->whereYear('created_at', $year)->whereMonth('created_at', $month))
             ->whereNotNull('assigned_user_id')
             ->get();
 
@@ -412,9 +416,9 @@ class MonthlyReport extends Page
 
         $allUsers = User::orderBy('name')->get();
 
-        // Umumiy loyihalar (barcha)
-        $allProjectsCount = (int)   Project::count();
-        $allProjectsSum   = (float) Project::sum('total_price');
+        // Umumiy loyihalar — shu oyda ochilgan barcha loyihalar
+        $allProjectsCount = (int)   Project::whereYear('created_at', $year)->whereMonth('created_at', $month)->count();
+        $allProjectsSum   = (float) Project::whereYear('created_at', $year)->whereMonth('created_at', $month)->sum('total_price');
 
         return compact(
             'userStats', 'warnings', 'projects',
