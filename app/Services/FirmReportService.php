@@ -16,12 +16,14 @@ class FirmReportService
         [$year, $mon] = array_pad(explode('-', $month), 2, null);
         $archiveStatuses = ['tugallangan', 'taqdim_etilgan', 'bekor_qilingan'];
 
-        // Loyiha OCHILGAN oyiga qarab — tugatilgan (completed_at) xizmatlar
+        // Daromad/komissiya FAQAT to'liq tugagan (arxiv: tugallangan/taqdim etilgan) loyihalardan.
+        // Loyiha OCHILGAN oyiga qarab.
         $completed = ProjectService::with('assignedUser')
             ->whereNotNull('completed_at')
             ->whereNotNull('assigned_user_id')
             ->whereHas('project', fn ($q) =>
-                $q->whereYear('created_at', $year)->whereMonth('created_at', $mon))
+                $q->whereYear('created_at', $year)->whereMonth('created_at', $mon)
+                  ->whereIn('status', ['tugallangan', 'taqdim_etilgan']))
             ->get();
 
         $jamiTushum     = 0.0;

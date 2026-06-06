@@ -83,11 +83,11 @@
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:18px">
     <div class="mr-stat mr-stat--neutral">
         <div class="mr-stat-num">{{ $projectsTotal }}</div>
-        <div class="mr-stat-lbl">To'langan loyihalar</div>
+        <div class="mr-stat-lbl">Bajarilgan loyihalar</div>
     </div>
     <div class="mr-stat mr-stat--neutral">
         <div class="mr-stat-num">{{ number_format($totalServicesSum, 0, '.', ' ') }}</div>
-        <div class="mr-stat-lbl">Xizmatlar jami (so'm)</div>
+        <div class="mr-stat-lbl">Tugatilgan ish · arxiv (so'm)</div>
     </div>
     <div class="mr-stat mr-stat--warn">
         <div class="mr-stat-num">{{ number_format($totalCommissions, 0, '.', ' ') }}</div>
@@ -361,11 +361,20 @@
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px">
         <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:16px;text-align:center">
             <div style="font-size:26px;font-weight:800;color:#15803d">{{ $projectsTotal }}</div>
-            <div style="font-size:11px;color:#16a34a;margin-top:4px;font-weight:500">To'langan loyihalar</div>
+            <div style="font-size:11px;color:#16a34a;margin-top:4px;font-weight:500">Bajarilgan loyihalar</div>
         </div>
         <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px;text-align:center">
             <div style="font-size:22px;font-weight:800;color:#111827">{{ number_format($totalServicesSum, 0, '.', ' ') }}</div>
-            <div style="font-size:11px;color:#6b7280;margin-top:4px;font-weight:500">Jami tushum (so'm)</div>
+            <div style="font-size:11px;color:#6b7280;margin-top:4px;font-weight:500">Tugatilgan ish · arxiv ({{ $toliqCount }})</div>
+            @if($qismanTugatilgan > 0)
+            <div style="margin-top:8px;border-top:1px dashed #e2e8f0;padding-top:8px;text-align:left">
+                <div style="display:flex;justify-content:space-between;font-size:11px">
+                    <span style="color:#9ca3af">🔄 Jarayonda (faol {{ $qismanCount }})</span>
+                    <span style="font-weight:700;color:#9ca3af">{{ number_format($qismanTugatilgan, 0, '.', ' ') }}</span>
+                </div>
+                <div style="font-size:10px;color:#cbd5e1;margin-top:2px">daromadga qo'shilmaydi</div>
+            </div>
+            @endif
         </div>
         <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:16px;text-align:center">
             <div style="font-size:22px;font-weight:800;color:#d97706">{{ number_format($totalCommissions, 0, '.', ' ') }}</div>
