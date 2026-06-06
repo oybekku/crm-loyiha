@@ -887,18 +887,23 @@ class KanbanBoard extends Page
         $project = Project::find($this->routeProjectId);
         if (!$project) return;
 
-        $this->logStatusChange($project, $this->routeNewStatus, $this->routeAllocDays, $this->routeAssignedUserId);
+        // Toposyomka / Eskiz loyiha ga yuborilsa — avval "Yangi X" (staging) bo'limiga tushadi
+        $targetDept  = $this->routeNewStatus;
+        $stagingMap  = ['toposyomka' => 'yangi_toposyomka', 'eskiz_loyiha' => 'yangi_eskiz_loyiha'];
+        $finalStatus = $stagingMap[$targetDept] ?? $targetDept;
 
-        $update = ['status' => $this->routeNewStatus];
+        $this->logStatusChange($project, $finalStatus, $this->routeAllocDays, $this->routeAssignedUserId);
+
+        $update = ['status' => $finalStatus];
         if ($this->routeAssignedUserId) {
             $update['assigned_user_id'] = $this->routeAssignedUserId;
             $project->assignedUsers()->syncWithoutDetaching([$this->routeAssignedUserId]);
         }
         $project->update($update);
 
-        // Toposyomka / Eskiz loyiha ga yuborilganda xizmat mas'ulini yangilash
-        if ($this->routeAssignedUserId && in_array($this->routeNewStatus, ['toposyomka', 'eskiz_loyiha', 'ariza'])) {
-            $service = $project->services()->where('service_name', $this->routeNewStatus)->first();
+        // Xizmat mas'ulini yangilash — asl bo'lim (toposyomka/eskiz_loyiha) bo'yicha
+        if ($this->routeAssignedUserId && in_array($targetDept, ['toposyomka', 'eskiz_loyiha', 'ariza'])) {
+            $service = $project->services()->where('service_name', $targetDept)->first();
             if ($service) {
                 $service->update(['assigned_user_id' => $this->routeAssignedUserId]);
             }
@@ -1049,29 +1054,10 @@ class KanbanBoard extends Page
      */
     protected function reconcileAutoStatuses(): void
     {
-        $deptMap = [
-            'toposyomka'   => 'yangi_toposyomka',
-            'eskiz_loyiha' => 'yangi_eskiz_loyiha',
-        ];
-
-        // 1) Mas'ul holatiga qarab "Yangi X" ↔ asl bo'lim (kutishdagilarga tegmaymiz)
-        foreach ($deptMap as $dept => $staging) {
-            // Asl bo'limda, lekin mas'ul yo'q → "Yangi X" ga
-            Project::where('status', $dept)
-                ->whereNull('timer_paused_at')
-                ->whereDoesntHave('services', fn ($q) =>
-                    $q->where('service_name', $dept)->whereNotNull('assigned_user_id'))
-                ->get()
-                ->each(fn ($p) => $this->switchProjectStatus($p, $staging));
-
-            // "Yangi X" da, lekin mas'ul biriktirilgan → asl bo'limga
-            Project::where('status', $staging)
-                ->whereNull('timer_paused_at')
-                ->whereHas('services', fn ($q) =>
-                    $q->where('service_name', $dept)->whereNotNull('assigned_user_id'))
-                ->get()
-                ->each(fn ($p) => $this->switchProjectStatus($p, $dept));
-        }
+        // 1) "Yangi X" ↔ asl bo'lim — endi avtomatik EMAS.
+        //    Route ("O'tkazish") qilinganda loyiha avval "Yangi X" (staging) ga tushadi
+        //    (confirmRoute da), undan asl bo'limga (Toposyomka/Eskiz) QO'LDA suriladi.
+        //    Shu sababli mas'ul holatiga qarab avtomatik ko'chirish o'chirildi.
 
         // 2) Kechikayotgan — joriy bo'lim muddatiga ≤3 kun qolganda (kutishdagilar bundan mustasno)
         Project::whereIn('status', ['toposyomka', 'eskiz_loyiha', 'tekshirish'])

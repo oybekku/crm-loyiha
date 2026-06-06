@@ -206,14 +206,26 @@ class ProjectResource extends Resource
                             $totalPrice = (float) $record->total_price;
                             $paidAmount = (float) $record->paid_amount;
 
-                            // Xizmat bo'yicha to'lovlarni hisoblash
+                            // Xizmat narxlari (nom => final_price)
+                            $priceMap = [];
+                            foreach ($record->services as $s) {
+                                $priceMap[$s->service_name] = (float) $s->final_price;
+                            }
+
+                            // Xizmat bo'yicha to'lovlarni hisoblash — HAR ISHNING NARXIGA PROPORSIONAL
                             $servicePayments = [];
                             foreach ($record->payments as $payment) {
                                 $services = $payment->services ?? [];
-                                if (!empty($services)) {
-                                    foreach ($services as $svcName) {
-                                        $servicePayments[$svcName] = ($servicePayments[$svcName] ?? 0) + (float)$payment->amount / count($services);
-                                    }
+                                if (empty($services)) continue;
+                                $sumSel = 0;
+                                foreach ($services as $sn) { $sumSel += ($priceMap[$sn] ?? 0); }
+                                foreach ($services as $svcName) {
+                                    $svcPrice = $priceMap[$svcName] ?? 0;
+                                    // Narxga proporsional; narxlar 0 bo'lsa teng bo'linadi (zaxira)
+                                    $share = $sumSel > 0
+                                        ? (float)$payment->amount * ($svcPrice / $sumSel)
+                                        : (float)$payment->amount / count($services);
+                                    $servicePayments[$svcName] = ($servicePayments[$svcName] ?? 0) + $share;
                                 }
                             }
 

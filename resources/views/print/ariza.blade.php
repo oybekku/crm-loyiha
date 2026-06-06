@@ -256,14 +256,24 @@
             @php
                 $totalPrice = (float) $project->total_price;
                 $paidAmount = (float) $project->paid_amount;
-                // Har xizmat uchun to'langan ulushni hisoblash
+                // Xizmat narxlari (nom => final_price)
+                $priceMap = [];
+                foreach ($project->services as $s) {
+                    $priceMap[$s->service_name] = (float) $s->final_price;
+                }
+                // Har xizmat uchun to'langan ulush — HAR ISHNING NARXIGA PROPORSIONAL
                 $svcPaidMap = [];
                 foreach ($project->payments as $pay) {
                     $svcs = $pay->services ?? [];
-                    if (!empty($svcs)) {
-                        foreach ($svcs as $sn) {
-                            $svcPaidMap[$sn] = ($svcPaidMap[$sn] ?? 0) + (float)$pay->amount / count($svcs);
-                        }
+                    if (empty($svcs)) continue;
+                    $sumSel = 0;
+                    foreach ($svcs as $sn) { $sumSel += ($priceMap[$sn] ?? 0); }
+                    foreach ($svcs as $sn) {
+                        $svcPrice = $priceMap[$sn] ?? 0;
+                        $share = $sumSel > 0
+                            ? (float)$pay->amount * ($svcPrice / $sumSel)
+                            : (float)$pay->amount / count($svcs);
+                        $svcPaidMap[$sn] = ($svcPaidMap[$sn] ?? 0) + $share;
                     }
                 }
                 // Agar xizmat belgilanmagan bo'lsa — proportional taqsimlash
