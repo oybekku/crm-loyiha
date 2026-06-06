@@ -382,6 +382,35 @@ class MonthlyReport extends Page
         $qismanTugatilgan = (float) $qismanServices->sum('final_price');
         $qismanCount      = $qismanServices->pluck('project_id')->unique()->count();
 
+        // Tugatilgan ishlar ro'yxati — shu oyda ochilgan loyihalarning BARCHA tugatilgan xizmatlari
+        // (bekor qilingandan tashqari). Arxiv = daromadga kirgan, Jarayonda = faol loyiha.
+        $statusLabels = \App\Models\ProjectStatus::pluck('label', 'key')->toArray();
+        $tugatilganIshlar = \App\Models\ProjectService::with(['assignedUser', 'project:id,number,owner_name,status'])
+            ->whereNotNull('completed_at')
+            ->whereNotNull('assigned_user_id')
+            ->whereHas('project', fn($q) =>
+                $q->whereYear('created_at', $year)->whereMonth('created_at', $month)
+                  ->where('status', '!=', 'bekor_qilingan'))
+            ->orderByDesc('completed_at')
+            ->get()
+            ->map(function ($s) use ($statusLabels) {
+                $rate = (float) ($s->assignedUser->commission_rate ?? 20);
+                if (in_array($s->assignedUser?->role, ['admin', 'menejer'])) $rate = 0;
+                $st = $s->project?->status;
+                return [
+                    'project_id'   => $s->project_id,
+                    'number'       => $s->project?->number,
+                    'owner'        => $s->project?->owner_name,
+                    'service'      => \App\Models\Project::serviceOptions()[$s->service_name] ?? $s->service_name,
+                    'employee'     => $s->assignedUser?->name ?? '—',
+                    'price'        => (float) $s->final_price,
+                    'commission'   => round((float) $s->final_price * $rate / 100),
+                    'date'         => $s->completed_at,
+                    'is_arxiv'     => in_array($st, ['tugallangan', 'taqdim_etilgan']),
+                    'status_label' => $statusLabels[$st] ?? $st,
+                ];
+            });
+
         // Qilinmagan ishlar — shu oyda OCHILGAN, arxivda emas, hali tugallanmagan
         $pendingQuery         = Project::whereNotIn('status', $archiveStatuses)
             ->whereYear('created_at', $year)->whereMonth('created_at', $month);
@@ -445,7 +474,8 @@ class MonthlyReport extends Page
             'pendingProjectsPaid', 'pendingProjectsDebt', 'pendingProjectsPct',
             'pendingWorkersShare', 'pendingFirmaShare', 'pendingWorkerStats',
             'allProjectsCount', 'allProjectsSum',
-            'toliqTugatilgan', 'qismanTugatilgan', 'toliqCount', 'qismanCount'
+            'toliqTugatilgan', 'qismanTugatilgan', 'toliqCount', 'qismanCount',
+            'tugatilganIshlar'
         );
     }
 }

@@ -383,15 +383,10 @@
                     <span style="color:#065f46;font-weight:600">🏢 Firma</span>
                     <span style="font-weight:800;color:#059669">{{ number_format($firmIncome, 0, '.', ' ') }}</span>
                 </div>
-            </div>
-            @endif
-            @if($qismanTugatilgan > 0)
-            <div style="margin-top:6px;border-top:1px dashed #e2e8f0;padding-top:6px;text-align:left">
-                <div style="display:flex;justify-content:space-between;font-size:11px">
-                    <span style="color:#9ca3af">🔄 Jarayonda (faol {{ $qismanCount }})</span>
-                    <span style="font-weight:700;color:#9ca3af">{{ number_format($qismanTugatilgan, 0, '.', ' ') }}</span>
+                <div style="display:flex;justify-content:space-between;font-size:11px;border-top:2px solid #e2e8f0;padding-top:5px;margin-top:3px">
+                    <span style="color:#111827;font-weight:700">Jami</span>
+                    <span style="font-weight:800;color:#111827">{{ number_format($toliqTugatilgan, 0, '.', ' ') }}</span>
                 </div>
-                <div style="font-size:10px;color:#cbd5e1;margin-top:2px">daromadga qo'shilmaydi</div>
             </div>
             @endif
         </div>
@@ -499,6 +494,77 @@
         </div>
     </div>
 
+</div>
+
+{{-- TUGATILGAN ISHLAR RO'YXATI --}}
+<div class="mr-card">
+    <div style="font-size:15px;font-weight:700;color:#111827;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+        <svg width="16" height="16" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Tugatilgan ishlar ro'yxati
+        <span style="font-size:12px;font-weight:400;color:#9ca3af">{{ $tugatilganIshlar->count() }} ta ish</span>
+    </div>
+
+    @if($tugatilganIshlar->count() > 0)
+    <div style="overflow-x:auto">
+    <table class="mr-table" style="width:100%">
+        <thead>
+            <tr>
+                <th style="width:30px">#</th>
+                <th>Loyiha</th>
+                <th>Xizmat</th>
+                <th>Hodim</th>
+                <th style="text-align:right">Narx</th>
+                <th style="text-align:right">Komissiya</th>
+                <th>Sana</th>
+                <th>Holat</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($tugatilganIshlar as $i => $ish)
+            <tr style="cursor:pointer" onclick="window.location='/admin/projects/{{ $ish['project_id'] }}/edit'">
+                <td style="color:#9ca3af">{{ $i + 1 }}</td>
+                <td>
+                    <span style="font-family:monospace;font-weight:700;color:#2563eb">{{ $ish['number'] }}</span>
+                    <span style="color:#6b7280">· {{ $ish['owner'] }}</span>
+                </td>
+                <td>{{ $ish['service'] }}</td>
+                <td>{{ $ish['employee'] }}</td>
+                <td style="text-align:right;font-weight:600">{{ number_format($ish['price'], 0, '.', ' ') }}</td>
+                <td style="text-align:right;color:#d97706;font-weight:600">{{ number_format($ish['commission'], 0, '.', ' ') }}</td>
+                <td style="color:#6b7280;white-space:nowrap">{{ $ish['date']?->format('d-M H:i') }}</td>
+                <td>
+                    @if($ish['is_arxiv'])
+                    <span style="font-size:11px;font-weight:700;background:#dcfce7;color:#16a34a;border-radius:6px;padding:2px 8px;white-space:nowrap">✅ {{ $ish['status_label'] }}</span>
+                    @else
+                    <span style="font-size:11px;font-weight:700;background:#f1f5f9;color:#64748b;border-radius:6px;padding:2px 8px;white-space:nowrap">🔄 {{ $ish['status_label'] }}</span>
+                    @endif
+                </td>
+            </tr>
+            @endforeach
+        </tbody>
+        <tfoot>
+            <tr style="border-top:2px solid #e5e7eb;font-weight:700">
+                <td colspan="4" style="text-align:right;color:#16a34a">✅ Arxiv (daromad):</td>
+                <td style="text-align:right;color:#16a34a">{{ number_format($toliqTugatilgan, 0, '.', ' ') }}</td>
+                <td style="text-align:right;color:#d97706">{{ number_format($totalCommissions, 0, '.', ' ') }}</td>
+                <td colspan="2"></td>
+            </tr>
+            <tr style="font-weight:700">
+                <td colspan="4" style="text-align:right;color:#64748b">🔄 Jarayonda:</td>
+                <td style="text-align:right;color:#64748b">{{ number_format($qismanTugatilgan, 0, '.', ' ') }}</td>
+                <td colspan="3"></td>
+            </tr>
+            <tr style="font-weight:800;background:#f8fafc">
+                <td colspan="4" style="text-align:right">Jami tugatilgan:</td>
+                <td style="text-align:right">{{ number_format($toliqTugatilgan + $qismanTugatilgan, 0, '.', ' ') }}</td>
+                <td colspan="3"></td>
+            </tr>
+        </tfoot>
+    </table>
+    </div>
+    @else
+    <div style="text-align:center;color:#9ca3af;padding:24px;font-size:13px">Bu oyda tugatilgan ish yo'q</div>
+    @endif
 </div>
 
 {{-- OGOHLANTIRISHLAR --}}
