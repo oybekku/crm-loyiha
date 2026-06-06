@@ -1581,20 +1581,13 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                             <span style="margin-left:auto;font-size:12px;color:#6b7280">{{ number_format($svc->final_price, 0, '.', ' ') }} so'm</span>
                         </label>
                         @if(auth()->user()?->isAdmin())
-                        <div style="display:flex;align-items:center;gap:6px;margin-top:6px">
-                            <span style="font-size:11px;color:#9ca3af;white-space:nowrap">Tuzatish:</span>
-                            <input wire:model.live="paymentAdjustments.{{ $svc->id }}"
-                                   type="number"
-                                   placeholder="+5000 yoki -5000"
-                                   style="flex:1;border:1px solid #e5e7eb;border-radius:6px;padding:4px 8px;font-size:12px;outline:none"
-                                   onfocus="this.style.borderColor='#2563eb'" onblur="this.style.borderColor='#e5e7eb'">
-                            <span style="font-size:11px;color:#9ca3af">so'm</span>
-                            @if(!empty($paymentAdjustments[$svc->id]) && (float)($paymentAdjustments[$svc->id] ?? 0) != 0)
-                            @php $adj = (float)($paymentAdjustments[$svc->id] ?? 0); @endphp
-                            <span style="font-size:11px;font-weight:700;color:{{ $adj > 0 ? '#16a34a' : '#dc2626' }};white-space:nowrap">
-                                → {{ number_format($svc->final_price + $adj, 0, '.', ' ') }} so'm
-                            </span>
-                            @endif
+                        <div style="margin-top:6px">
+                            <button type="button"
+                                    wire:click.stop="openServicePrice({{ $svc->id }})"
+                                    onclick="event.stopPropagation()"
+                                    style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid #c7d2fe;background:#eef2ff;color:#4338ca;cursor:pointer;font-weight:600">
+                                🔧 Joriy narxni o'rnatish (PIN)
+                            </button>
                         </div>
                         @endif
                     </div>
@@ -1817,6 +1810,44 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             <button wire:click="confirmDeletePayment"
                     style="flex:1;padding:10px;border-radius:8px;border:none;background:#ef4444;color:#fff;font-size:13px;font-weight:600;cursor:pointer">
                 O'chirish
+            </button>
+        </div>
+    </div>
+</div>
+@endif
+
+{{-- XIZMAT NARXINI O'RNATISH — PIN MODAL --}}
+@if($showServicePriceModal)
+@php $spSvc = \App\Models\ProjectService::find($servicePriceId); @endphp
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1500;display:flex;align-items:center;justify-content:center;padding:16px" wire:click.self="closeServicePrice">
+    <div style="background:#fff;border-radius:16px;padding:28px 32px;width:340px;box-shadow:0 25px 60px rgba(0,0,0,.2)" wire:click.stop>
+        <div style="font-size:16px;font-weight:700;color:#111827;margin-bottom:6px">🔧 Joriy narxni o'rnatish</div>
+        @if($spSvc)
+        <div style="font-size:13px;color:#6b7280;margin-bottom:14px">
+            {{ \App\Models\Project::serviceOptions()[$spSvc->service_name] ?? $spSvc->service_name }} —
+            hozirgi: <strong>{{ number_format((float)$spSvc->final_price, 0, '.', ' ') }} so'm</strong>
+        </div>
+        @endif
+        <label style="font-size:12px;font-weight:500;color:#374151;display:block;margin-bottom:6px">Yangi narx (so'm)</label>
+        <input wire:model="servicePriceValue" type="number" min="0"
+               style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px 14px;font-size:15px;outline:none;margin-bottom:12px;box-sizing:border-box"
+               placeholder="Masalan: 4078800">
+        <label style="font-size:12px;font-weight:500;color:#374151;display:block;margin-bottom:6px">PIN kod</label>
+        <input type="password" wire:model="servicePricePin"
+               wire:keydown.enter="saveServicePrice"
+               style="width:100%;border:1.5px solid {{ $servicePricePinError ? '#ef4444' : '#e2e8f0' }};border-radius:8px;padding:10px 14px;font-size:18px;letter-spacing:6px;text-align:center;outline:none;margin-bottom:8px;box-sizing:border-box"
+               placeholder="····" maxlength="4">
+        @if($servicePricePinError)
+        <div style="font-size:12px;color:#ef4444;margin-bottom:10px">❌ Noto'g'ri PIN kod</div>
+        @endif
+        <div style="display:flex;gap:8px;margin-top:12px">
+            <button wire:click="closeServicePrice"
+                    style="flex:1;padding:10px;border-radius:8px;border:1px solid #e5e7eb;background:#f9fafb;color:#374151;font-size:13px;cursor:pointer">
+                Bekor
+            </button>
+            <button wire:click="saveServicePrice"
+                    style="flex:1;padding:10px;border-radius:8px;border:none;background:#4338ca;color:#fff;font-size:13px;font-weight:600;cursor:pointer">
+                Saqlash
             </button>
         </div>
     </div>

@@ -86,6 +86,13 @@ class KanbanBoard extends Page
     public string $deletePaymentPin       = '';
     public bool   $deletePaymentPinError  = false;
 
+    // Xizmat narxini tahrirlash (Joriy narx — PIN kod bilan)
+    public bool   $showServicePriceModal = false;
+    public int    $servicePriceId        = 0;
+    public string $servicePriceValue     = '';
+    public string $servicePricePin       = '';
+    public bool   $servicePricePinError  = false;
+
     // Area (kv.m) modal state
     public bool   $showAreaModal  = false;
     public string $areaServiceKey = '';
@@ -588,18 +595,6 @@ class KanbanBoard extends Page
         $project = Project::find($this->paymentProjectId);
         if (!$project) return;
 
-        // Admin: xizmat narxlarini tuzatish (+ yoki -)
-        if (auth()->user()?->isAdmin() && !empty($this->paymentAdjustments)) {
-            foreach ($this->paymentAdjustments as $svcId => $adj) {
-                $adj = (float) str_replace([' ', ','], '', $adj ?? '');
-                if ($adj == 0) continue;
-                $svc = \App\Models\ProjectService::find($svcId);
-                if (!$svc || $svc->project_id !== $project->id) continue;
-                $newFinal = max(0, (float)$svc->final_price + $adj);
-                $svc->update(['final_price' => $newFinal, 'price' => $newFinal]);
-            }
-        }
-
         $hasAmount = filled($this->paymentAmount) && (float)$this->paymentAmount > 0;
 
         // Summa kiritilmagan — tasdiq so'rash
@@ -618,6 +613,17 @@ class KanbanBoard extends Page
                 'paymentAmount.min'    => 'Summa 0 dan katta bo\'lishi kerak',
                 'paymentDate.required' => 'Sana kiritilishi shart',
             ]);
+
+            // Ortiqcha to'lovni bloklash — to'lov ish summasidan oshmasligi kerak
+            $ishSummasi = (float) $project->services()->sum('final_price');
+            $tolangan   = (float) $project->payments()->sum('amount');
+            $qoldiq     = $ishSummasi - $tolangan;
+            if ($ishSummasi > 0 && ((float) $this->paymentAmount) > $qoldiq) {
+                $this->addError('paymentAmount',
+                    "Summa oshib ketdi! Ish summasi: " . number_format($ishSummasi, 0, '.', ' ')
+                    . " so'm, qolgan: " . number_format(max(0, $qoldiq), 0, '.', ' ') . " so'm");
+                return;
+            }
 
             $payment = Payment::create([
                 'project_id'   => $project->id,
@@ -806,6 +812,49 @@ class KanbanBoard extends Page
 
         $this->closeDeletePayment();
         $this->dispatch('notify', type: 'success', message: "To'lov o'chirildi!");
+    }
+
+    // ── Xizmat narxini tahrirlash (Joriy narx — PIN kod bilan) ────────────
+    public function openServicePrice(int $serviceId): void
+    {
+        $svc = \App\Models\ProjectService::find($serviceId);
+        if (!$svc) return;
+        $this->servicePriceId       = $serviceId;
+        $this->servicePriceValue    = (string) (float) $svc->final_price;
+        $this->servicePricePin      = '';
+        $this->servicePricePinError = false;
+        $this->showServicePriceModal = true;
+    }
+
+    public function closeServicePrice(): void
+    {
+        $this->showServicePriceModal = false;
+        $this->servicePriceId        = 0;
+        $this->servicePriceValue     = '';
+        $this->servicePricePin       = '';
+        $this->servicePricePinError  = false;
+    }
+
+    public function saveServicePrice(): void
+    {
+        if ($this->servicePricePin !== '2728') {
+            $this->servicePricePinError = true;
+            return;
+        }
+
+        $svc = \App\Models\ProjectService::find($this->servicePriceId);
+        if (!$svc) {
+            $this->closeServicePrice();
+            return;
+        }
+
+        $newPrice = max(0, (float) str_replace([' ', ','], '', $this->servicePriceValue));
+        $svc->update(['final_price' => $newPrice, 'price' => $newPrice]);
+
+        Project::find($svc->project_id)?->updateTotals();
+
+        $this->closeServicePrice();
+        $this->dispatch('notify', type: 'success', message: 'Narx yangilandi!');
     }
 
     // ── Route to department modal ─────────────────────────────────────────
