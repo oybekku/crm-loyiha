@@ -34,6 +34,10 @@ class KanbanBoard extends Page
     public array $serviceAssignData      = []; // [service_id => [user_id, days]]
     public string $search      = '';  // Kanban qidiruv
 
+    // Tanlangan davr (oy/yil) — loyihalar ochilgan oyiga qarab
+    public ?int $kbYear  = null;
+    public ?int $kbMonth = null;
+
     public bool  $showModal = false;
     public int   $step      = 1;
 
@@ -167,7 +171,22 @@ class KanbanBoard extends Page
     public function mount(): void
     {
         $this->filterStatus = request()->get('status', '');
+        $this->kbYear  ??= (int) now()->year;
+        $this->kbMonth ??= (int) now()->month;
         $this->initServices();
+    }
+
+    public function kbChangeMonth(int $delta): void
+    {
+        $date = \Carbon\Carbon::create($this->kbYear, $this->kbMonth, 1)->addMonths($delta);
+        $this->kbYear  = (int) $date->year;
+        $this->kbMonth = (int) $date->month;
+    }
+
+    public function kbSetMonth(int $year, int $month): void
+    {
+        $this->kbYear  = $year;
+        $this->kbMonth = $month;
     }
 
     private function initServices(): void
@@ -1175,6 +1194,13 @@ class KanbanBoard extends Page
         $projectQuery = Project::with(['assignedUsers', 'services.assignedUser', 'currentStatusLog', 'payments', 'statusLogs'])
             ->orderBy('created_at', 'desc');
 
+        // Tanlangan oy/yil — loyiha OCHILGAN (created_at) oyiga qarab.
+        // Qidiruv ishlatilganda — davr filtri olib tashlanadi (hammasidan qidiriladi).
+        if (empty($this->search)) {
+            $projectQuery->whereYear('created_at', $this->kbYear)
+                         ->whereMonth('created_at', $this->kbMonth);
+        }
+
         // Qidiruv filtri
         if (!empty($this->search)) {
             $q = trim($this->search);
@@ -1218,6 +1244,8 @@ class KanbanBoard extends Page
             ->filter()
             ->values();
 
-        return compact('statuses', 'allStatuses', 'routeStatuses', 'projects', 'users', 'serviceOptions', 'categoryOptions', 'priceTiers', 'paymentQueue', 'existingOwners');
+        $kbMonthLabel = \Carbon\Carbon::create($this->kbYear, $this->kbMonth, 1)->translatedFormat('F Y');
+
+        return compact('statuses', 'allStatuses', 'routeStatuses', 'projects', 'users', 'serviceOptions', 'categoryOptions', 'priceTiers', 'paymentQueue', 'existingOwners', 'kbMonthLabel');
     }
 }

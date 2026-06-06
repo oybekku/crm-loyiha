@@ -366,7 +366,14 @@
             $mColors = array_fill(0, 12, 'linear-gradient(180deg,#9ca3af,#6b7280)');
             $yMax = $maxIncome > 0 ? $maxIncome : 1;
         @endphp
-        <div class="bh-chart-label">Loyihani boshqarish dinamikasi &middot; {{ now()->year }}</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+            <div class="bh-chart-label" style="margin:0">Loyiha dinamikasi &middot; oyni tanlang</div>
+            <div style="display:flex;align-items:center;gap:8px">
+                <button wire:click="changeYear(-1)" style="background:rgba(0,0,0,.05);border:none;border-radius:6px;width:24px;height:24px;cursor:pointer;font-size:14px;color:#374151;line-height:1">‹</button>
+                <span style="font-size:13px;font-weight:700;color:#374151;min-width:38px;text-align:center">{{ $selYear }}</span>
+                <button wire:click="changeYear(1)" style="background:rgba(0,0,0,.05);border:none;border-radius:6px;width:24px;height:24px;cursor:pointer;font-size:14px;color:#374151;line-height:1">›</button>
+            </div>
+        </div>
         <div style="display:flex;gap:0;align-items:flex-end;">
             <div class="bh-chart-yaxis">
                 <span>{{ $yMax > 0 ? number_format($yMax/1000000,0).'M' : '40' }}</span>
@@ -377,13 +384,16 @@
                 @foreach($monthlyIncome as $i => $inc)
                 @php
                     $h     = max(3, (int)round(($inc / $yMax) * 78));
-                    $isCur = ($i+1) === $currentMonth;
+                    $isSel = ($i+1) === $selMonth;
                 @endphp
-                <div class="bh-bar-col {{ $isCur ? 'bh-bar-col--cur' : '' }}">
+                <div class="bh-bar-col {{ $isSel ? 'bh-bar-col--cur' : '' }}"
+                     wire:click="selectMonth({{ $i+1 }})"
+                     style="cursor:pointer"
+                     title="{{ $mLbls[$i] }} {{ $selYear }} — tanlash">
                     <div class="bh-bar"
-                         style="--h:{{$h}}px;background:{{$mColors[$i]}};opacity:{{ $isCur ? '1' : '.5' }};animation-delay:{{$i*.05}}s;">
+                         style="--h:{{$h}}px;background:{{ $isSel ? 'linear-gradient(180deg,#3b82f6,#2563eb)' : $mColors[$i] }};opacity:{{ $isSel ? '1' : '.5' }};animation-delay:{{$i*.05}}s;">
                     </div>
-                    <span class="bh-bar-month">{{ $mLbls[$i] }}</span>
+                    <span class="bh-bar-month" style="{{ $isSel ? 'color:#2563eb;font-weight:700' : '' }}">{{ $mLbls[$i] }}</span>
                 </div>
                 @endforeach
             </div>
@@ -424,6 +434,14 @@
         </div>
     </div>
 
+</div>
+@endif
+
+{{-- ── Tanlangan davr yorlig'i ── --}}
+@if(!$isEmployee)
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;position:relative;z-index:1">
+    <span style="font-size:13px;font-weight:700;color:#2563eb;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:5px 14px">📅 {{ $monthLabel }}</span>
+    <span style="font-size:11px;color:#9ca3af">— shu oyda ochilgan loyihalar hisoboti</span>
 </div>
 @endif
 

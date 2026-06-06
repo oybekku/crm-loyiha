@@ -16,12 +16,12 @@ class FirmReportService
         [$year, $mon] = array_pad(explode('-', $month), 2, null);
         $archiveStatuses = ['tugallangan', 'taqdim_etilgan', 'bekor_qilingan'];
 
-        // Bu oy tugatilgan (completed_at) xizmatlar
+        // Loyiha OCHILGAN oyiga qarab — tugatilgan (completed_at) xizmatlar
         $completed = ProjectService::with('assignedUser')
             ->whereNotNull('completed_at')
-            ->whereYear('completed_at', $year)
-            ->whereMonth('completed_at', $mon)
             ->whereNotNull('assigned_user_id')
+            ->whereHas('project', fn ($q) =>
+                $q->whereYear('created_at', $year)->whereMonth('created_at', $mon))
             ->get();
 
         $jamiTushum     = 0.0;
@@ -55,7 +55,8 @@ class FirmReportService
         // ishi tugamaganlar 0 bilan ko'rinadi (masalan Qodirxoja: 0)
         $activeAssignees = ProjectService::with('assignedUser')
             ->whereNotNull('assigned_user_id')
-            ->whereHas('project', fn ($q) => $q->whereNotIn('status', $archiveStatuses))
+            ->whereHas('project', fn ($q) =>
+                $q->whereYear('created_at', $year)->whereMonth('created_at', $mon))
             ->get()
             ->pluck('assignedUser')
             ->filter()

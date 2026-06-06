@@ -13,10 +13,32 @@ class WelcomeHeroWidget extends Widget
     protected int|string|array $columnSpan = 'full';
     protected static ?int $sort = -2;
 
+    // Tanlangan davr (oy/yil) — loyihalar ochilgan oyiga qarab filtrlanadi
+    public ?int $selYear  = null;
+    public ?int $selMonth = null;
+
+    public function mount(): void
+    {
+        $this->selYear  ??= (int) now()->year;
+        $this->selMonth ??= (int) now()->month;
+    }
+
+    public function selectMonth(int $m): void
+    {
+        if ($m >= 1 && $m <= 12) $this->selMonth = $m;
+    }
+
+    public function changeYear(int $delta): void
+    {
+        $this->selYear += $delta;
+    }
+
     public function getViewData(): array
     {
         $user = auth()->user();
-        $year = now()->year;
+        $this->selYear  ??= (int) now()->year;
+        $this->selMonth ??= (int) now()->month;
+        $year = $this->selYear;
 
         $monthlyIncome = [];
         for ($m = 1; $m <= 12; $m++) {
@@ -47,6 +69,11 @@ class WelcomeHeroWidget extends Widget
         $baseQuery = $isEmployee
             ? Project::whereHas('assignedUsers', fn($q) => $q->where('users.id', $user->id))
             : Project::query();
+
+        // Tanlangan oy/yil bo'yicha — loyiha OCHILGAN (created_at) oyiga qarab.
+        // Shu sababli o'tgan oy loyihalari keyingi oyga "o'tmaydi" (har oy alohida).
+        $baseQuery->whereYear('created_at', $this->selYear)
+                  ->whereMonth('created_at', $this->selMonth);
 
         $totalCount   = (clone $baseQuery)->count();
         $yangiCount   = (clone $baseQuery)->where('status', 'yangi')->count();
@@ -150,8 +177,11 @@ class WelcomeHeroWidget extends Widget
             'statPendingDebt'    => $pendingDebtTop,
             'statPendingPct'     => $pendingPctTop,
             'firmReport'         => $user?->isAdmin()
-                ? \App\Services\FirmReportService::forMonth(now()->format('Y-m'))
+                ? \App\Services\FirmReportService::forMonth(sprintf('%04d-%02d', $this->selYear, $this->selMonth))
                 : null,
+            'selYear'            => $this->selYear,
+            'selMonth'           => $this->selMonth,
+            'monthLabel'         => \Carbon\Carbon::create($this->selYear, $this->selMonth, 1)->translatedFormat('F Y'),
         ];
     }
 }

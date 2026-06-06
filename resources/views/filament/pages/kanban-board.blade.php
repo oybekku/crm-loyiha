@@ -355,7 +355,16 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
     </span>
     @endif
 
-    <div style="margin-left:auto">
+    {{-- Oy/yil tanlash (loyiha ochilgan oyiga qarab) --}}
+    @if(!$search)
+    <div style="display:flex;align-items:center;gap:4px;margin-left:auto;background:#fff;border:1.5px solid #e5e7eb;border-radius:8px;padding:3px 5px">
+        <button wire:click="kbChangeMonth(-1)" title="Oldingi oy" style="background:#f3f4f6;border:none;border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:15px;color:#374151;line-height:1">‹</button>
+        <span style="font-size:13px;font-weight:700;color:#2563eb;min-width:110px;text-align:center;white-space:nowrap">📅 {{ $kbMonthLabel }}</span>
+        <button wire:click="kbChangeMonth(1)" title="Keyingi oy" style="background:#f3f4f6;border:none;border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:15px;color:#374151;line-height:1">›</button>
+    </div>
+    @endif
+
+    <div style="{{ $search ? 'margin-left:auto' : '' }}">
         @if(!auth()->user()?->isHisobchi())
         <button class="btn-new" wire:click="openModal">
             <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
