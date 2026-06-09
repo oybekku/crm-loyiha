@@ -10,6 +10,11 @@ Route::get('/house-anim', function () {
     return response()->file(public_path('house-anim.html'));
 });
 
+// Bolalar Boshqaruvi ilovasi uchun maxfiylik siyosati (Google Play)
+Route::get('/privacy-policy', function () {
+    return response()->file(public_path('privacy-policy.html'));
+})->name('privacy.policy');
+
 // Ommaviy loyiha holati sahifasi (login shart emas)
 Route::get('/track/{number}', function (string $number) {
     $project = \App\Models\Project::where('number', '#' . $number)

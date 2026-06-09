@@ -551,18 +551,15 @@ HTML;
 
     private function buildStatusNavItems(): array
     {
-        $statuses = [
-            'yangi'            => "Ariza",
-            'tolov_jarayonida' => "To'lov jarayonida",
-            'yangi_loyihalar'  => "Yangi loyihalar",
-            'toposyomka'       => 'Toposyomka',
-            'eskiz_loyiha'     => 'Eskiz loyiha',
-            'tekshirish'       => 'Tekshirish',
-            'tolangan'         => "To'langan",
-            'tugallangan'      => 'Tugallangan',
-            'taqdim_etilgan'   => 'Taqdim etilgan',
-            'bekor_qilingan'   => 'Bekor qilingan',
-        ];
+        // Bo'limlar bazadan o'qiladi — doska (kanban) bilan aynan bir xil bo'lishi uchun
+        $statuses = [];
+        try {
+            $statuses = \App\Models\ProjectStatus::allOrdered()
+                ->pluck('label', 'key')
+                ->toArray();
+        } catch (\Throwable $e) {
+            // Baza tayyor bo'lmagan holat (migratsiya/o'rnatishdan oldin)
+        }
 
         $items = [];
         $sort  = 1;

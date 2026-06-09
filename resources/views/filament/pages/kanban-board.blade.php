@@ -3,6 +3,10 @@
 <style>
 /* ===== KANBAN ===== */
 .kanban-wrap{display:flex;gap:14px;overflow-x:auto;padding-bottom:16px;align-items:flex-start;min-height:200px}
+/* Tepadagi sinxron gorizontal scroll paneli */
+.kanban-scroll-top{overflow-x:auto;overflow-y:hidden;position:sticky;top:0;z-index:6;height:16px;margin-bottom:4px;background:rgba(0,0,0,0.03);border-radius:6px}
+.kanban-scroll-top > div{height:1px}
+.dark .kanban-scroll-top{background:rgba(255,255,255,0.06)}
 .kanban-col{min-width:280px;max-width:280px;flex-shrink:0;border-radius:10px;overflow:hidden}
 .col-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;font-weight:700;font-size:13px;letter-spacing:0.01em}
 .col-count{background:rgba(255,255,255,.15);border-radius:12px;padding:2px 9px;font-size:11px;font-weight:600;color:#cbd5e1}
@@ -390,6 +394,9 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 
 {{-- KANBAN --}}
 <div class="{{ $filterStatus ? 'kanban-grid-mode' : '' }}">
+@if(!$filterStatus)
+<div class="kanban-scroll-top" id="kanban-scroll-top"><div></div></div>
+@endif
 <div class="kanban-wrap" id="kanban-wrap">
 @foreach($statuses as $statusKey => $status)
 <div class="kanban-col" x-data="{ colCollapsed: localStorage.getItem('col_v1_{{ $statusKey }}_u{{ auth()->id() }}') === 'true' }"
@@ -788,6 +795,35 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 @endforeach
 </div>
 </div>{{-- /kanban-grid-mode wrapper --}}
+
+{{-- Tepa va past gorizontal scroll panellarini sinxronlash --}}
+<script>
+(function(){
+    function sync(){
+        var wrap = document.getElementById('kanban-wrap');
+        var top  = document.getElementById('kanban-scroll-top');
+        if(!wrap || !top) return;
+        var inner = top.firstElementChild;
+        // Tepa panel kengligini doska kengligiga tenglashtiramiz
+        inner.style.width = wrap.scrollWidth + 'px';
+        if(top._bhBound) return;
+        top._bhBound = true;
+        var lock = false;
+        top.addEventListener('scroll', function(){
+            if(lock) return; lock = true; wrap.scrollLeft = top.scrollLeft; lock = false;
+        });
+        wrap.addEventListener('scroll', function(){
+            if(lock) return; lock = true; top.scrollLeft = wrap.scrollLeft; lock = false;
+        });
+    }
+    function init(){ setTimeout(sync, 80); }
+    if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+    else init();
+    document.addEventListener('livewire:navigated', init);
+    document.addEventListener('livewire:update', function(){ setTimeout(sync, 120); });
+    window.addEventListener('resize', sync);
+})();
+</script>
 
 {{-- TO'LOV NAVBATI (ADMIN/MENEJER — pastda) --}}
 @if(auth()->user()?->canSeeAllProjects() && $paymentQueue->count() > 0)

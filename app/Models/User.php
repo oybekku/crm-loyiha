@@ -105,6 +105,11 @@ class User extends Authenticatable implements FilamentUser
         return $this->belongsToMany(Project::class, 'project_user')->withTimestamps();
     }
 
+    public function inventories()
+    {
+        return $this->hasMany(EmployeeInventory::class);
+    }
+
     public function getRoleNameAttribute(): string
     {
         return match($this->role) {
