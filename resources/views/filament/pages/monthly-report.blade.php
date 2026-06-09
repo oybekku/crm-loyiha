@@ -210,6 +210,15 @@
                 <td style="text-align:right">
                     <span style="font-weight:700;color:#16a34a">{{ number_format($netPayable, 0, '.', ' ') }} so'm</span>
                 </td>
+                {{-- To'landi (haqiqatda to'langan summa) --}}
+                <td style="text-align:right">
+                    @php $paidTotal = $stat['paid_total'] ?? 0; @endphp
+                    @if($paidTotal > 0)
+                    <span style="font-weight:700;color:#2563eb">{{ number_format($paidTotal, 0, '.', ' ') }} so'm</span>
+                    @else
+                    <span style="color:#d1d5db;font-size:12px">—</span>
+                    @endif
+                </td>
                 {{-- Kutayotgan ishlar --}}
                 <td style="text-align:center">
                     @if($pendingCnt > 0)
@@ -343,7 +352,8 @@
             <td style="text-align:right;color:#d97706">{{ number_format($totalCommissions, 0, '.', ' ') }} so'm</td>
             <td></td>
             <td style="text-align:right;color:#16a34a">{{ number_format($totalCommissions, 0, '.', ' ') }} so'm</td>
-            <td></td>
+            <td></td>{{-- To'landi --}}
+            <td></td>{{-- Kutayotgan --}}
         </tr>
         </tbody>
     </table>
