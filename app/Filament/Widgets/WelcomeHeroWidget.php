@@ -121,7 +121,7 @@ class WelcomeHeroWidget extends Widget
                 'user_id'    => $s->assigned_user_id,
                 'user_name'  => $s->assignedUser?->name ?? '—',
                 'days_left'  => $daysLeft,
-                'over_days'  => abs($daysLeft),
+                'over_days'  => max(1, abs($daysLeft)),
             ];
             if ($late) {
                 $overdueItems[] = $row;

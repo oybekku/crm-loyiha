@@ -538,13 +538,14 @@
 
 {{-- ⏰ DIQQAT TALAB ISHLAR: Kechikkan + Muddati yaqin (xizmat-asosli) --}}
 @if($statOverdue > 0 || $statSoon > 0)
+<style>[x-cloak]{display:none!important}</style>
 <div style="margin-top:16px;background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
         <svg width="18" height="18" fill="none" stroke="#dc2626" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         <span style="font-size:14px;font-weight:700;color:#111827">Diqqat talab ishlar</span>
         @if($isEmployee)<span style="font-size:11px;color:#9ca3af">(sizning ishlaringiz)</span>@endif
     </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px">
+    <div style="{{ $isEmployee ? 'display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px' : 'display:flex;flex-direction:column;gap:18px' }}">
 
         {{-- 🔴 Kechikkan --}}
         <div>
@@ -554,19 +555,36 @@
             @if($statOverdue === 0)
             <div style="font-size:12px;color:#9ca3af;padding:8px 0">Kechikkan ish yo'q ✓</div>
             @else
-                @foreach(($isEmployee ? [['name'=>null,'items'=>$overdueItems]] : $overdueByEmployee) as $emp)
+                @foreach(($isEmployee ? [['name'=>null,'count'=>count($overdueItems),'items'=>$overdueItems]] : $overdueByEmployee) as $emp)
+                @php $vis = $isEmployee ? $emp['items'] : array_slice($emp['items'], 0, 2); $hid = $isEmployee ? [] : array_slice($emp['items'], 2); @endphp
+                <div @if(!$isEmployee)x-data="{showAll:false}"@endif style="margin-bottom:6px">
                     @if(!$isEmployee)
                     <div style="font-size:12px;font-weight:700;color:#374151;margin:6px 0 4px">👷 {{ $emp['name'] }} <span style="font-size:10px;font-weight:700;background:#fef2f2;color:#dc2626;border-radius:10px;padding:1px 7px">{{ $emp['count'] }} ta</span></div>
                     @endif
-                    @foreach($emp['items'] as $it)
+                    @foreach($vis as $it)
                     <a href="/admin/projects/{{ $it['project_id'] }}/edit" style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:6px 10px;text-decoration:none;margin-bottom:5px">
                         <div style="min-width:0">
                             <div style="font-size:12px;font-weight:700;color:#dc2626;font-family:monospace">{{ $it['number'] }}</div>
                             <div style="font-size:10px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $it['owner'] }} · {{ $it['service'] }}</div>
                         </div>
-                        <span style="font-size:10px;font-weight:700;background:#dc2626;color:#fff;border-radius:5px;padding:2px 7px;white-space:nowrap">{{ $it['over_days'] > 0 ? $it['over_days'].' kun' : 'kechikkan' }}</span>
+                        <span style="font-size:10px;font-weight:700;background:#dc2626;color:#fff;border-radius:5px;padding:2px 7px;white-space:nowrap">{{ $it['over_days'] }} kun kech</span>
                     </a>
                     @endforeach
+                    @if(count($hid) > 0)
+                    <div x-show="showAll" x-cloak>
+                        @foreach($hid as $it)
+                        <a href="/admin/projects/{{ $it['project_id'] }}/edit" style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:6px 10px;text-decoration:none;margin-bottom:5px">
+                            <div style="min-width:0">
+                                <div style="font-size:12px;font-weight:700;color:#dc2626;font-family:monospace">{{ $it['number'] }}</div>
+                                <div style="font-size:10px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $it['owner'] }} · {{ $it['service'] }}</div>
+                            </div>
+                            <span style="font-size:10px;font-weight:700;background:#dc2626;color:#fff;border-radius:5px;padding:2px 7px;white-space:nowrap">{{ $it['over_days'] }} kun kech</span>
+                        </a>
+                        @endforeach
+                    </div>
+                    <button @click="showAll=!showAll" x-text="showAll ? '▲ Yashirish' : '▾ Batafsil (yana {{ count($hid) }} ta)'" style="background:#fef2f2;border:1px solid #fecaca;color:#dc2626;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:600;cursor:pointer;margin-top:2px"></button>
+                    @endif
+                </div>
                 @endforeach
             @endif
         </div>
@@ -579,11 +597,13 @@
             @if($statSoon === 0)
             <div style="font-size:12px;color:#9ca3af;padding:8px 0">Muddati yaqin ish yo'q</div>
             @else
-                @foreach(($isEmployee ? [['name'=>null,'items'=>$soonItems]] : $soonByEmployee) as $emp)
+                @foreach(($isEmployee ? [['name'=>null,'count'=>count($soonItems),'items'=>$soonItems]] : $soonByEmployee) as $emp)
+                @php $vis = $isEmployee ? $emp['items'] : array_slice($emp['items'], 0, 2); $hid = $isEmployee ? [] : array_slice($emp['items'], 2); @endphp
+                <div @if(!$isEmployee)x-data="{showAll:false}"@endif style="margin-bottom:6px">
                     @if(!$isEmployee)
                     <div style="font-size:12px;font-weight:700;color:#374151;margin:6px 0 4px">👷 {{ $emp['name'] }} <span style="font-size:10px;font-weight:700;background:#fffbeb;color:#d97706;border-radius:10px;padding:1px 7px">{{ $emp['count'] }} ta</span></div>
                     @endif
-                    @foreach($emp['items'] as $it)
+                    @foreach($vis as $it)
                     <a href="/admin/projects/{{ $it['project_id'] }}/edit" style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:6px 10px;text-decoration:none;margin-bottom:5px">
                         <div style="min-width:0">
                             <div style="font-size:12px;font-weight:700;color:#d97706;font-family:monospace">{{ $it['number'] }}</div>
@@ -592,6 +612,21 @@
                         <span style="font-size:10px;font-weight:700;background:#d97706;color:#fff;border-radius:5px;padding:2px 7px;white-space:nowrap">{{ $it['days_left'] > 0 ? $it['days_left'].' kun qoldi' : 'bugun' }}</span>
                     </a>
                     @endforeach
+                    @if(count($hid) > 0)
+                    <div x-show="showAll" x-cloak>
+                        @foreach($hid as $it)
+                        <a href="/admin/projects/{{ $it['project_id'] }}/edit" style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:6px 10px;text-decoration:none;margin-bottom:5px">
+                            <div style="min-width:0">
+                                <div style="font-size:12px;font-weight:700;color:#d97706;font-family:monospace">{{ $it['number'] }}</div>
+                                <div style="font-size:10px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $it['owner'] }} · {{ $it['service'] }}</div>
+                            </div>
+                            <span style="font-size:10px;font-weight:700;background:#d97706;color:#fff;border-radius:5px;padding:2px 7px;white-space:nowrap">{{ $it['days_left'] > 0 ? $it['days_left'].' kun qoldi' : 'bugun' }}</span>
+                        </a>
+                        @endforeach
+                    </div>
+                    <button @click="showAll=!showAll" x-text="showAll ? '▲ Yashirish' : '▾ Batafsil (yana {{ count($hid) }} ta)'" style="background:#fffbeb;border:1px solid #fde68a;color:#d97706;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:600;cursor:pointer;margin-top:2px"></button>
+                    @endif
+                </div>
                 @endforeach
             @endif
         </div>
