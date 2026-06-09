@@ -91,27 +91,64 @@ class WelcomeHeroWidget extends Widget
         $pendingPaidTop  = (float) (clone $pendingQ)->sum('paid_amount');
         $pendingDebtTop  = $pendingSumTop - $pendingPaidTop;
         $pendingPctTop   = $pendingSumTop > 0 ? round($pendingPaidTop / $pendingSumTop * 100) : 0;
-        $overdueProjects = (clone $baseQuery)->whereNotIn('status', ['tugallangan', 'bekor_qilingan', 'arxiv'])
-            ->whereNotNull('deadline_date')
-            ->where('deadline_date', '<', now()->startOfDay())
-            ->with('assignedUsers:id,name')
-            ->select('id', 'number', 'owner_name', 'deadline_date', 'status')
-            ->orderBy('deadline_date')
-            ->get();
-        $overdueCount = $overdueProjects->count();
+        // ── Kechikkan / muddati yaqin ishlar (xizmat-asosli — kanban bilan bir xil) ──
+        // Eslatma: oy filtri qo'llanmaydi — barcha faol kechikkan/yaqin ishlar ko'rsatiladi.
+        $archiveStatuses = ['tugallangan', 'taqdim_etilgan', 'bekor_qilingan'];
+        $attnQ = \App\Models\ProjectService::query()
+            ->whereNotNull('assigned_user_id')
+            ->whereNotNull('work_started_at')
+            ->whereNull('completed_at')
+            ->where('deadline_days', '>', 0)
+            ->whereHas('project', fn ($q) => $q->whereNotIn('status', $archiveStatuses))
+            ->with(['project:id,number,owner_name,status', 'assignedUser:id,name']);
+        if ($isEmployee) {
+            $attnQ->where('assigned_user_id', $user->id);
+        }
 
-        // Vaqti o'tgan loyihalar — qaysi hodimda nechta
-        $overdueByEmployee = [];
-        foreach ($overdueProjects as $op) {
-            foreach ($op->assignedUsers as $u) {
-                if (!isset($overdueByEmployee[$u->id])) {
-                    $overdueByEmployee[$u->id] = ['name' => $u->name, 'count' => 0];
-                }
-                $overdueByEmployee[$u->id]['count']++;
+        $svcLabels    = Project::serviceOptions();
+        $overdueItems = [];
+        $soonItems    = [];
+        foreach ($attnQ->get() as $s) {
+            if (!$s->project) continue;
+            $deadline = \Carbon\Carbon::parse($s->work_started_at)->addDays((int) $s->deadline_days);
+            $daysLeft = (int) now()->diffInDays($deadline, false);
+            $late     = now()->gt($deadline);
+            $row = [
+                'project_id' => $s->project_id,
+                'number'     => $s->project->number,
+                'owner'      => $s->project->owner_name,
+                'service'    => $svcLabels[$s->service_name] ?? $s->service_name,
+                'user_id'    => $s->assigned_user_id,
+                'user_name'  => $s->assignedUser?->name ?? '—',
+                'days_left'  => $daysLeft,
+                'over_days'  => abs($daysLeft),
+            ];
+            if ($late) {
+                $overdueItems[] = $row;
+            } elseif ($daysLeft <= 3) {
+                $soonItems[] = $row;
             }
         }
-        uasort($overdueByEmployee, fn ($a, $b) => $b['count'] <=> $a['count']);
-        $overdueByEmployee = array_values($overdueByEmployee);
+        // Eng kechikkani / eng yaqini tepada
+        usort($overdueItems, fn ($a, $b) => $a['days_left'] <=> $b['days_left']);
+        usort($soonItems,    fn ($a, $b) => $a['days_left'] <=> $b['days_left']);
+
+        // Hodimlar bo'yicha guruhlash (admin uchun)
+        $groupByEmp = function (array $items) {
+            $g = [];
+            foreach ($items as $it) {
+                $uid = $it['user_id'];
+                if (!isset($g[$uid])) $g[$uid] = ['name' => $it['user_name'], 'count' => 0, 'items' => []];
+                $g[$uid]['count']++;
+                $g[$uid]['items'][] = $it;
+            }
+            uasort($g, fn ($a, $b) => $b['count'] <=> $a['count']);
+            return array_values($g);
+        };
+        $overdueByEmployee = $groupByEmp($overdueItems);
+        $soonByEmployee    = $groupByEmp($soonItems);
+        $overdueCount      = count($overdueItems);
+        $soonCount         = count($soonItems);
 
         // ── Bajaruvchi uchun shaxsiy statistika ──
         $myStats = null;
@@ -169,8 +206,11 @@ class WelcomeHeroWidget extends Widget
             'statDebt'      => $debtSum,
             'statPaidPct'   => $paidPct,
             'statOverdue'        => $overdueCount,
-            'overdueProjects'    => $overdueProjects,
+            'statSoon'           => $soonCount,
+            'overdueItems'       => $overdueItems,
+            'soonItems'          => $soonItems,
             'overdueByEmployee'  => $overdueByEmployee,
+            'soonByEmployee'     => $soonByEmployee,
             'statPendingCount'   => $pendingCountTop,
             'statPendingSum'     => $pendingSumTop,
             'statPendingPaid'    => $pendingPaidTop,

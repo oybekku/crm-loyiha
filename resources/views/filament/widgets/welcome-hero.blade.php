@@ -529,42 +529,76 @@
                  x-data="{n:0}"
                  x-init="setTimeout(()=>{let t={{ $statOverdue }},d=900,s=Date.now(),iv=setInterval(()=>{let p=Math.min((Date.now()-s)/d,1);n=Math.floor((1-Math.pow(1-p,3))*t);if(p>=1){n=t;clearInterval(iv);}},16);},900)"
                  x-text="n">0</div>
-            @if($statOverdue > 0)
-            <button @click="open=!open" style="background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.2);border-radius:6px;padding:3px 8px;font-size:10px;font-weight:600;color:#7c3aed;cursor:pointer" x-text="open ? 'Yopish' : 'Ko\'rish'"></button>
-            @endif
         </div>
         <div class="bh-stat-desc">Muddati o'tib ketgan loyihalar</div>
-        @if($statOverdue > 0)
-        {{-- Hodimlar bo'yicha: qaysi hodimda nechta vaqti o'tgan loyiha --}}
-        @if(count($overdueByEmployee) > 0)
-        <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px">
-            @foreach($overdueByEmployee as $emp)
-            <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(124,58,237,0.07);border:1px solid rgba(124,58,237,0.15);border-radius:7px;padding:5px 10px">
-                <span style="font-size:12px;font-weight:600;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">👷 {{ $emp['name'] }}</span>
-                <span style="font-size:11px;font-weight:700;background:#fef2f2;color:#dc2626;border-radius:10px;padding:2px 9px;white-space:nowrap">{{ $emp['count'] }} ta</span>
-            </div>
-            @endforeach
-        </div>
-        @endif
-        <div x-show="open" x-collapse style="margin-top:8px;display:flex;flex-direction:column;gap:5px">
-            @foreach($overdueProjects as $op)
-            @php $overDays = (int) \Carbon\Carbon::parse($op->deadline_date)->diffInDays(now()); @endphp
-            <a href="/admin/projects/{{ $op->id }}/edit"
-               onmouseover="this.style.background='rgba(124,58,237,0.14)'" onmouseout="this.style.background='rgba(124,58,237,0.07)'"
-               style="display:flex;align-items:center;justify-content:space-between;background:rgba(124,58,237,0.07);border:1px solid rgba(124,58,237,0.15);border-radius:7px;padding:6px 10px;text-decoration:none;transition:background .15s;cursor:pointer">
-                <div>
-                    <div style="font-size:12px;font-weight:700;color:#7c3aed;font-family:monospace">{{ $op->number }}</div>
-                    <div style="font-size:10px;color:#9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px">{{ $op->owner_name }}</div>
-                </div>
-                <span style="font-size:10px;font-weight:700;background:#fef2f2;color:#dc2626;border-radius:4px;padding:2px 6px;white-space:nowrap">{{ $overDays }} kun</span>
-            </a>
-            @endforeach
-        </div>
-        @endif
     </div>
 
 </div>
 @endif {{-- /isEmployee --}}
+
+{{-- ⏰ DIQQAT TALAB ISHLAR: Kechikkan + Muddati yaqin (xizmat-asosli) --}}
+@if($statOverdue > 0 || $statSoon > 0)
+<div style="margin-top:16px;background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+        <svg width="18" height="18" fill="none" stroke="#dc2626" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span style="font-size:14px;font-weight:700;color:#111827">Diqqat talab ishlar</span>
+        @if($isEmployee)<span style="font-size:11px;color:#9ca3af">(sizning ishlaringiz)</span>@endif
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px">
+
+        {{-- 🔴 Kechikkan --}}
+        <div>
+            <div style="font-size:12px;font-weight:700;color:#dc2626;margin-bottom:8px;display:flex;align-items:center;gap:6px">
+                🔴 Kechikkan ishlar <span style="background:#fef2f2;border-radius:10px;padding:1px 8px">{{ $statOverdue }}</span>
+            </div>
+            @if($statOverdue === 0)
+            <div style="font-size:12px;color:#9ca3af;padding:8px 0">Kechikkan ish yo'q ✓</div>
+            @else
+                @foreach(($isEmployee ? [['name'=>null,'items'=>$overdueItems]] : $overdueByEmployee) as $emp)
+                    @if(!$isEmployee)
+                    <div style="font-size:12px;font-weight:700;color:#374151;margin:6px 0 4px">👷 {{ $emp['name'] }} <span style="font-size:10px;font-weight:700;background:#fef2f2;color:#dc2626;border-radius:10px;padding:1px 7px">{{ $emp['count'] }} ta</span></div>
+                    @endif
+                    @foreach($emp['items'] as $it)
+                    <a href="/admin/projects/{{ $it['project_id'] }}/edit" style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:6px 10px;text-decoration:none;margin-bottom:5px">
+                        <div style="min-width:0">
+                            <div style="font-size:12px;font-weight:700;color:#dc2626;font-family:monospace">{{ $it['number'] }}</div>
+                            <div style="font-size:10px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $it['owner'] }} · {{ $it['service'] }}</div>
+                        </div>
+                        <span style="font-size:10px;font-weight:700;background:#dc2626;color:#fff;border-radius:5px;padding:2px 7px;white-space:nowrap">{{ $it['over_days'] > 0 ? $it['over_days'].' kun' : 'kechikkan' }}</span>
+                    </a>
+                    @endforeach
+                @endforeach
+            @endif
+        </div>
+
+        {{-- 🟡 Muddati yaqin --}}
+        <div>
+            <div style="font-size:12px;font-weight:700;color:#d97706;margin-bottom:8px;display:flex;align-items:center;gap:6px">
+                🟡 Muddati yaqin (≤3 kun) <span style="background:#fffbeb;border-radius:10px;padding:1px 8px">{{ $statSoon }}</span>
+            </div>
+            @if($statSoon === 0)
+            <div style="font-size:12px;color:#9ca3af;padding:8px 0">Muddati yaqin ish yo'q</div>
+            @else
+                @foreach(($isEmployee ? [['name'=>null,'items'=>$soonItems]] : $soonByEmployee) as $emp)
+                    @if(!$isEmployee)
+                    <div style="font-size:12px;font-weight:700;color:#374151;margin:6px 0 4px">👷 {{ $emp['name'] }} <span style="font-size:10px;font-weight:700;background:#fffbeb;color:#d97706;border-radius:10px;padding:1px 7px">{{ $emp['count'] }} ta</span></div>
+                    @endif
+                    @foreach($emp['items'] as $it)
+                    <a href="/admin/projects/{{ $it['project_id'] }}/edit" style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:6px 10px;text-decoration:none;margin-bottom:5px">
+                        <div style="min-width:0">
+                            <div style="font-size:12px;font-weight:700;color:#d97706;font-family:monospace">{{ $it['number'] }}</div>
+                            <div style="font-size:10px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $it['owner'] }} · {{ $it['service'] }}</div>
+                        </div>
+                        <span style="font-size:10px;font-weight:700;background:#d97706;color:#fff;border-radius:5px;padding:2px 7px;white-space:nowrap">{{ $it['days_left'] > 0 ? $it['days_left'].' kun qoldi' : 'bugun' }}</span>
+                    </a>
+                    @endforeach
+                @endforeach
+            @endif
+        </div>
+
+    </div>
+</div>
+@endif
 
 {{-- ROW 3 (4 mini karta + So'nggi loyihalar) olib tashlandi.
      Stil/markup saqlangan: resources/views/partials/_dashboard-row3-reference.blade.php --}}
