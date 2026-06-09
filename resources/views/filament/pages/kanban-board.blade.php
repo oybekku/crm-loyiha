@@ -451,20 +451,25 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 
             // Yig'ilgan kartada ko'rsatish uchun — eng shoshilinch (kam kun qolgan) xizmat muddati
             $urgentDaysLeft = null;
+            $urgentLate     = false;
             foreach ($project->services as $s) {
                 if ($s->completed_at) continue;
                 if ($s->deadline_days && $s->assigned_user_id && $s->work_started_at) {
-                    $dl = (int) now()->diffInDays(
-                        \Carbon\Carbon::parse($s->work_started_at)->addDays((int)$s->deadline_days), false
-                    );
-                    if ($urgentDaysLeft === null || $dl < $urgentDaysLeft) $urgentDaysLeft = $dl;
+                    $dlDate = \Carbon\Carbon::parse($s->work_started_at)->addDays((int)$s->deadline_days);
+                    $dl     = (int) now()->diffInDays($dlDate, false);
+                    $late   = now()->gt($dlDate);   // soat aniqligida o'tganmi
+                    if ($urgentDaysLeft === null || $dl < $urgentDaysLeft) {
+                        $urgentDaysLeft = $dl;
+                        $urgentLate     = $late;
+                    }
                 }
             }
-            // Faqat ≤3 kun qolgan yoki muddati o'tgan bo'lsa qizil belgi
-            $showUrgent  = $urgentDaysLeft !== null && $urgentDaysLeft <= 3;
-            $urgentLabel = $urgentDaysLeft !== null
-                ? ($urgentDaysLeft < 0 ? abs($urgentDaysLeft) . 'k kech' : $urgentDaysLeft . 'k')
-                : '';
+            // Muddati o'tgan yoki ≤3 kun qolgan bo'lsa qizil belgi
+            $showUrgent  = $urgentDaysLeft !== null && ($urgentLate || $urgentDaysLeft <= 3);
+            $urgentLabel = $urgentDaysLeft === null ? ''
+                : ($urgentLate
+                    ? (abs($urgentDaysLeft) > 0 ? abs($urgentDaysLeft) . 'k kech' : 'kechikkan')
+                    : $urgentDaysLeft . 'k');
 
             // Muddat ko'rsatilmagan — faol (tugatilmagan) xizmatlardan birortasida ham muddat yo'q bo'lsa
             $activeServices = $project->services->filter(fn($s) => !$s->completed_at);
@@ -557,7 +562,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                             // Hisoblash boshlangan
                             $deadline = \Carbon\Carbon::parse($srv->work_started_at)->addDays((int)$srv->deadline_days);
                             $daysLeft = (int) now()->diffInDays($deadline, false);
-                            $isLate   = $daysLeft < 0;
+                            $isLate   = now()->gt($deadline);   // soat aniqligida o'tganmi
                         } else {
                             // Kutmoqda — status hali kelmagan
                             $isWaiting = true;
@@ -570,7 +575,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                         <span style="font-size:10px;font-weight:600;background:#f3f4f6;color:#6b7280;border-radius:4px;padding:1px 5px;white-space:nowrap">⌛ {{ $srv->deadline_days }}k</span>
                     @elseif($daysLeft !== null)
                         @if($isLate)
-                        <span style="font-size:10px;font-weight:700;background:#fee2e2;color:#dc2626;border-radius:4px;padding:1px 5px;white-space:nowrap;animation:blink-warn 1.5s infinite">{{ abs($daysLeft) }}k kech</span>
+                        <span style="font-size:10px;font-weight:700;background:#fee2e2;color:#dc2626;border-radius:4px;padding:1px 5px;white-space:nowrap;animation:blink-warn 1.5s infinite">{{ abs($daysLeft) > 0 ? abs($daysLeft).'k kech' : 'kechikkan' }}</span>
                         @elseif($daysLeft <= 3)
                         <span style="font-size:10px;font-weight:700;background:#fee2e2;color:#dc2626;border-radius:4px;padding:1px 5px;white-space:nowrap;animation:blink-warn 1.5s infinite">{{ $daysLeft }}k</span>
                         @else
