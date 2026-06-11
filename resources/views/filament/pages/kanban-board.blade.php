@@ -452,24 +452,23 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             // Yig'ilgan kartada ko'rsatish uchun — eng shoshilinch (kam kun qolgan) xizmat muddati
             $urgentDaysLeft = null;
             $urgentLate     = false;
+            $urgentLateDays = 0;
             foreach ($project->services as $s) {
                 if ($s->completed_at) continue;
                 if ($s->deadline_days && $s->assigned_user_id && $s->work_started_at) {
-                    $dlDate = \Carbon\Carbon::parse($s->work_started_at)->addDays((int)$s->deadline_days);
-                    $dl     = (int) now()->diffInDays($dlDate, false);
-                    $late   = now()->gt($dlDate);   // soat aniqligida o'tganmi
+                    $dl   = $s->days_left;   // submitted bo'lsa muzlatilgan
+                    $late = $s->is_late;
                     if ($urgentDaysLeft === null || $dl < $urgentDaysLeft) {
                         $urgentDaysLeft = $dl;
                         $urgentLate     = $late;
+                        $urgentLateDays = $s->late_days;
                     }
                 }
             }
             // Muddati o'tgan yoki ≤3 kun qolgan bo'lsa qizil belgi
             $showUrgent  = $urgentDaysLeft !== null && ($urgentLate || $urgentDaysLeft <= 3);
             $urgentLabel = $urgentDaysLeft === null ? ''
-                : ($urgentLate
-                    ? (abs($urgentDaysLeft) > 0 ? abs($urgentDaysLeft) . 'k kech' : 'kechikkan')
-                    : $urgentDaysLeft . 'k');
+                : ($urgentLate ? $urgentLateDays . 'k kech' : $urgentDaysLeft . 'k');
 
             // Muddat ko'rsatilmagan — faol (tugatilmagan) xizmatlardan birortasida ham muddat yo'q bo'lsa
             $activeServices = $project->services->filter(fn($s) => !$s->completed_at);
@@ -559,10 +558,9 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                     $isWaiting = false;
                     if ($srv->deadline_days && $srv->assigned_user_id && !$srv->completed_at) {
                         if ($srv->work_started_at) {
-                            // Hisoblash boshlangan
-                            $deadline = \Carbon\Carbon::parse($srv->work_started_at)->addDays((int)$srv->deadline_days);
-                            $daysLeft = (int) now()->diffInDays($deadline, false);
-                            $isLate   = now()->gt($deadline);   // soat aniqligida o'tganmi
+                            // Muzlatishni hisobga olib (submitted_at) — model accessorlari orqali
+                            $daysLeft = $srv->days_left;
+                            $isLate   = $srv->is_late;
                         } else {
                             // Kutmoqda — status hali kelmagan
                             $isWaiting = true;
@@ -575,7 +573,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                         <span style="font-size:10px;font-weight:600;background:#f3f4f6;color:#6b7280;border-radius:4px;padding:1px 5px;white-space:nowrap">⌛ {{ $srv->deadline_days }}k</span>
                     @elseif($daysLeft !== null)
                         @if($isLate)
-                        <span style="font-size:10px;font-weight:700;background:#fee2e2;color:#dc2626;border-radius:4px;padding:1px 5px;white-space:nowrap;animation:blink-warn 1.5s infinite">{{ abs($daysLeft) > 0 ? abs($daysLeft).'k kech' : 'kechikkan' }}</span>
+                        <span style="font-size:10px;font-weight:700;background:#fee2e2;color:#dc2626;border-radius:4px;padding:1px 5px;white-space:nowrap;animation:blink-warn 1.5s infinite">{{ $srv->late_days }}k kech</span>
                         @elseif($daysLeft <= 3)
                         <span style="font-size:10px;font-weight:700;background:#fee2e2;color:#dc2626;border-radius:4px;padding:1px 5px;white-space:nowrap;animation:blink-warn 1.5s infinite">{{ $daysLeft }}k</span>
                         @else
@@ -678,9 +676,8 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 
                         // Faqat joriy status ga mos xizmat uchun timer ko'rsatamiz
                         if ($s->work_started_at && $s->deadline_days && $s->service_name === $statusKey) {
-                            $deadline = \Carbon\Carbon::parse($s->work_started_at)->addDays((int)$s->deadline_days);
-                            $daysLeft = (int) now()->diffInDays($deadline, false);
-                            $isLate   = $daysLeft < 0;
+                            $daysLeft = $s->days_left;   // muzlatishni hisobga oladi
+                            $isLate   = $s->is_late;
                         }
 
                         return [

@@ -41,6 +41,7 @@ class Project extends Model
             if (!$project->wasChanged('status')) return;
 
             $newStatus = $project->status;
+            $prevStatus = $project->getOriginal('status');
             $now       = now();
 
             // Joriy statusga mos xizmatni topamiz va work_started_at ni belgilaymiz
@@ -48,6 +49,27 @@ class Project extends Model
                 ->where('service_name', $newStatus)
                 ->whereNull('work_started_at')  // faqat boshlanmagan bo'lsa
                 ->update(['work_started_at' => $now]);
+
+            // Ish bosqichlari (hodim ishlaydigan)
+            $workStages = ['toposyomka', 'eskiz_loyiha'];
+
+            // Ish bosqichidan CHIQILDI (tekshirishga/keyingiga yuborildi) → submitted_at muzlatish
+            if (in_array($prevStatus, $workStages) && $prevStatus !== $newStatus) {
+                ProjectService::where('project_id', $project->id)
+                    ->where('service_name', $prevStatus)
+                    ->whereNotNull('work_started_at')
+                    ->whereNull('submitted_at')
+                    ->whereNull('completed_at')
+                    ->update(['submitted_at' => $now]);
+            }
+
+            // Ish bosqichiga QAYTDI (qayta ishlash) → submitted_at tozalanadi, timer davom etadi
+            if (in_array($newStatus, $workStages)) {
+                ProjectService::where('project_id', $project->id)
+                    ->where('service_name', $newStatus)
+                    ->whereNull('completed_at')
+                    ->update(['submitted_at' => null]);
+            }
         });
     }
 

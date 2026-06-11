@@ -110,9 +110,9 @@ class WelcomeHeroWidget extends Widget
         $soonItems    = [];
         foreach ($attnQ->get() as $s) {
             if (!$s->project) continue;
-            $deadline = \Carbon\Carbon::parse($s->work_started_at)->addDays((int) $s->deadline_days);
-            $daysLeft = (int) now()->diffInDays($deadline, false);
-            $late     = now()->gt($deadline);
+            // Muddat muzlatishni hisobga oladi (submitted_at) — model accessorlari orqali
+            $daysLeft = $s->days_left;
+            $late     = $s->is_late;
             $row = [
                 'project_id' => $s->project_id,
                 'number'     => $s->project->number,
@@ -121,7 +121,7 @@ class WelcomeHeroWidget extends Widget
                 'user_id'    => $s->assigned_user_id,
                 'user_name'  => $s->assignedUser?->name ?? '—',
                 'days_left'  => $daysLeft,
-                'over_days'  => max(1, abs($daysLeft)),
+                'over_days'  => $s->late_days,
             ];
             if ($late) {
                 $overdueItems[] = $row;

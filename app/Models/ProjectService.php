@@ -9,7 +9,7 @@ class ProjectService extends Model
     protected $fillable = [
         'project_id', 'assigned_user_id', 'service_name', 'price',
         'discount_type', 'discount_value', 'final_price', 'note',
-        'deadline_days', 'work_started_at', 'completed_at',
+        'deadline_days', 'work_started_at', 'submitted_at', 'completed_at',
     ];
 
     protected $casts = [
@@ -17,6 +17,7 @@ class ProjectService extends Model
         'discount_value' => 'decimal:2',
         'final_price'    => 'decimal:2',
         'work_started_at' => 'datetime',
+        'submitted_at'    => 'datetime',
         'completed_at'    => 'datetime',
         'deadline_days'  => 'integer',
     ];
@@ -27,17 +28,34 @@ class ProjectService extends Model
         return $this->work_started_at->copy()->addDays($this->deadline_days);
     }
 
+    /**
+     * Muddat baholanadigan vaqt. Ish tekshirishga yuborilgan bo'lsa (submitted_at) —
+     * o'sha vaqtda "muzlaydi", aks holda hozirgi vaqt. Shunda adminning tekshirish
+     * vaqti hodim hisobiga qo'shilmaydi.
+     */
+    public function getEvalTimeAttribute(): \Carbon\Carbon
+    {
+        return $this->submitted_at ?: now();
+    }
+
     public function getIsLateAttribute(): bool
     {
         $deadline = $this->deadline_date;
         if (!$deadline) return false;
-        return now()->gt($deadline);
+        return $this->eval_time->gt($deadline);
     }
 
     public function getLateDaysAttribute(): int
     {
         if (!$this->is_late) return 0;
-        return (int) $this->deadline_date->diffInDays(now());
+        return max(1, (int) $this->deadline_date->diffInDays($this->eval_time));
+    }
+
+    public function getDaysLeftAttribute(): ?int
+    {
+        $deadline = $this->deadline_date;
+        if (!$deadline) return null;
+        return (int) $this->eval_time->diffInDays($deadline, false);
     }
 
 
