@@ -568,6 +568,14 @@ HTML;
                 ->url('/admin/kanban-board?status=' . $key)
                 ->group('Loyiha holatlari')
                 ->sort($sort++)
+                // Hodim (bajaruvchi) — faqat o'z ish bo'limlari ko'rinadi
+                ->visible(function () use ($key) {
+                    $u = auth()->user();
+                    if ($u && $u->isBajaruvchi()) {
+                        return in_array($key, ['toposyomka', 'eskiz_loyiha', 'kechikayotgan']);
+                    }
+                    return true;
+                })
                 ->isActiveWhen(fn () => request()->get('status') === $key
                     && request()->routeIs('filament.admin.pages.kanban-board'));
         }

@@ -99,7 +99,9 @@ class WelcomeHeroWidget extends Widget
             ->whereNotNull('work_started_at')
             ->whereNull('completed_at')
             ->where('deadline_days', '>', 0)
-            ->whereHas('project', fn ($q) => $q->whereNotIn('status', $archiveStatuses))
+            // Muzlatilgan (kutish — timer_paused_at) loyihalar diqqat talab ishlarда ko'rinmaydi
+            ->whereHas('project', fn ($q) => $q->whereNotIn('status', $archiveStatuses)
+                ->whereNull('timer_paused_at'))
             ->with(['project:id,number,owner_name,status', 'assignedUser:id,name']);
         if ($isEmployee) {
             $attnQ->where('assigned_user_id', $user->id);

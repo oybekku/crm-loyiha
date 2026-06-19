@@ -32,6 +32,7 @@ class ProjectResource extends Resource
     {
         $user = auth()->user();
         if (!$user) return false;
+        if ($user->isBajaruvchi()) return false; // hodimga "Loyihalar ro'yxati" yopiq
         if ($user->isAdmin()) return true;
         // Loyiha tahrirlash yoki ro'yxat ruxsati bo'lsa — resource sahifalariga kirish mumkin
         return $user->hasPermission(static::menuPermissionKey())
@@ -43,6 +44,7 @@ class ProjectResource extends Resource
     {
         $user = auth()->user();
         if (!$user) return false;
+        if ($user->isBajaruvchi()) return false; // hodimga menyuda ko'rinmaydi
         if ($user->isAdmin()) return true;
         return $user->hasPermission(static::menuPermissionKey());
     }

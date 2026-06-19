@@ -1446,6 +1446,14 @@ class KanbanBoard extends Page
                 $routeStatuses[$ps->key] = $data;
             }
 
+            // Hodim (bajaruvchi) — faqat o'z ish ustunlari: Toposyomka, Eskiz, Kechikayotgan
+            if ($authUser?->isBajaruvchi()) {
+                if (in_array($ps->key, ['toposyomka', 'eskiz_loyiha', 'kechikayotgan'])) {
+                    $statuses[$ps->key] = $data;
+                }
+                continue;
+            }
+
             // Faol ustunlar (is_archive=false) — barcha hodimlar ko'radi;
             // Arxiv ustunlar — faqat admin yoki maxsus ruxsat bo'lsa ko'rinadi
             if (!$ps->is_archive || $authUser?->isAdmin() || $authUser?->hasPermission('kanban_' . $ps->key)) {
