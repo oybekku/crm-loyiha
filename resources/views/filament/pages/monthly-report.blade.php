@@ -87,7 +87,7 @@
     </div>
     <div class="mr-stat mr-stat--neutral">
         <div class="mr-stat-num">{{ number_format($totalServicesSum, 0, '.', ' ') }}</div>
-        <div class="mr-stat-lbl">Tugatilgan ish · arxiv (so'm)</div>
+        <div class="mr-stat-lbl">Tugatilgan ish (so'm)</div>
     </div>
     <div class="mr-stat mr-stat--warn">
         <div class="mr-stat-num">{{ number_format($totalCommissions, 0, '.', ' ') }}</div>
@@ -375,7 +375,7 @@
         </div>
         <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px;text-align:center">
             <div style="font-size:22px;font-weight:800;color:#111827">{{ number_format($totalServicesSum, 0, '.', ' ') }}</div>
-            <div style="font-size:11px;color:#6b7280;margin-top:4px;font-weight:500">Tugatilgan ish · arxiv ({{ $toliqCount }})</div>
+            <div style="font-size:11px;color:#6b7280;margin-top:4px;font-weight:500">Tugatilgan ish ({{ $toliqCount + $qismanCount }})</div>
             @php
                 $arxivHodimlar = collect($userStats)
                     ->filter(fn($s) => (float)($s['commission'] ?? 0) > 0)
@@ -553,21 +553,21 @@
             @endforeach
         </tbody>
         <tfoot>
-            <tr style="border-top:2px solid #e5e7eb;font-weight:700">
-                <td colspan="4" style="text-align:right;color:#16a34a">✅ Arxiv (daromad):</td>
-                <td style="text-align:right;color:#16a34a">{{ number_format($toliqTugatilgan, 0, '.', ' ') }}</td>
+            <tr style="font-weight:700;color:#64748b">
+                <td colspan="4" style="text-align:right">✅ To'liq (arxiv):</td>
+                <td style="text-align:right">{{ number_format($toliqTugatilgan, 0, '.', ' ') }}</td>
+                <td colspan="3"></td>
+            </tr>
+            <tr style="font-weight:700;color:#64748b">
+                <td colspan="4" style="text-align:right">🔄 Qisman (faol):</td>
+                <td style="text-align:right">{{ number_format($qismanTugatilgan, 0, '.', ' ') }}</td>
+                <td colspan="3"></td>
+            </tr>
+            <tr style="border-top:2px solid #e5e7eb;font-weight:800;background:#f8fafc">
+                <td colspan="4" style="text-align:right">Jami tugatilgan (komissiya):</td>
+                <td style="text-align:right;color:#16a34a">{{ number_format($toliqTugatilgan + $qismanTugatilgan, 0, '.', ' ') }}</td>
                 <td style="text-align:right;color:#d97706">{{ number_format($totalCommissions, 0, '.', ' ') }}</td>
                 <td colspan="2"></td>
-            </tr>
-            <tr style="font-weight:700">
-                <td colspan="4" style="text-align:right;color:#64748b">🔄 Jarayonda:</td>
-                <td style="text-align:right;color:#64748b">{{ number_format($qismanTugatilgan, 0, '.', ' ') }}</td>
-                <td colspan="3"></td>
-            </tr>
-            <tr style="font-weight:800;background:#f8fafc">
-                <td colspan="4" style="text-align:right">Jami tugatilgan:</td>
-                <td style="text-align:right">{{ number_format($toliqTugatilgan + $qismanTugatilgan, 0, '.', ' ') }}</td>
-                <td colspan="3"></td>
             </tr>
         </tfoot>
     </table>

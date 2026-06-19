@@ -161,14 +161,15 @@ class MonthlyReport extends Page
     {
         [$year, $month] = explode('-', $this->selectedMonth);
 
-        // Daromad/komissiya FAQAT to'liq tugagan (arxivlangan: tugallangan/taqdim etilgan) loyihalardan.
+        // Komissiya HAR BAJARILGAN ish bo'yicha — xizmat tugatilsa (completed_at) hisoblanadi
+        // (loyiha to'liq arxivga o'tishini kutmaydi). Bekor qilingan loyiha hisobga olinmaydi.
         // Loyiha OCHILGAN oyiga qarab.
         $completedServices = \App\Models\ProjectService::with(['assignedUser', 'project.payments'])
             ->whereNotNull('completed_at')
             ->whereNotNull('assigned_user_id')
             ->whereHas('project', fn($q) =>
                 $q->whereYear('created_at', $year)->whereMonth('created_at', $month)
-                  ->whereIn('status', ['tugallangan', 'taqdim_etilgan']))
+                  ->where('status', '!=', 'bekor_qilingan'))
             ->get();
 
         $projectIds = $completedServices->pluck('project_id')->unique();
@@ -367,20 +368,23 @@ class MonthlyReport extends Page
         $firmIncome        = $totalServicesSum - $totalCommissions;
         $projectsTotal     = $projects->count();
 
-        // To'liq tugatilgan (daromad asosi) = arxiv xizmatlari = totalServicesSum
-        $toliqTugatilgan = $totalServicesSum;
-        $toliqCount      = $projectsTotal;
-
-        // Qisman tugatilgan (JARAYONDAGI ish — daromadga qo'shilmaydi, faqat ma'lumot):
-        // faol (arxivda emas) loyihalardagi tugatilgan xizmatlar
-        $qismanServices = \App\Models\ProjectService::whereNotNull('completed_at')
-            ->whereNotNull('assigned_user_id')
-            ->whereHas('project', fn($q) =>
-                $q->whereYear('created_at', $year)->whereMonth('created_at', $month)
-                  ->whereNotIn('status', ['tugallangan', 'taqdim_etilgan', 'bekor_qilingan']))
-            ->get();
-        $qismanTugatilgan = (float) $qismanServices->sum('final_price');
-        $qismanCount      = $qismanServices->pluck('project_id')->unique()->count();
+        // Tugatilgan ishni 2 ga ajratish (ikkalasi ham komissiyaga kiradi — faqat ko'rsatish uchun):
+        //  - To'liq: arxivga o'tgan (tugallangan/taqdim etilgan) loyihalardagilar
+        //  - Qisman: hali faol loyihalardagi tugatilgan ishlar
+        $toliqTugatilgan = 0.0; $qismanTugatilgan = 0.0;
+        $toliqIds = []; $qismanIds = [];
+        foreach ($completedServices as $cs) {
+            $st = $cs->project?->status;
+            if (in_array($st, ['tugallangan', 'taqdim_etilgan'])) {
+                $toliqTugatilgan += (float) $cs->final_price;
+                $toliqIds[$cs->project_id] = true;
+            } else {
+                $qismanTugatilgan += (float) $cs->final_price;
+                $qismanIds[$cs->project_id] = true;
+            }
+        }
+        $toliqCount  = count($toliqIds);
+        $qismanCount = count($qismanIds);
 
         // Tugatilgan ishlar ro'yxati — shu oyda ochilgan loyihalarning BARCHA tugatilgan xizmatlari
         // (bekor qilingandan tashqari). Arxiv = daromadga kirgan, Jarayonda = faol loyiha.
