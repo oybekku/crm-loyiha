@@ -665,7 +665,7 @@
     {{-- Loyihalar jadvali --}}
     <div style="padding:20px;max-height:420px;overflow-y:auto">
         <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:12px">
-            Loyihalar bo'yicha batafsil
+            Tugallangan ishlari
         </div>
         <table style="width:100%;border-collapse:collapse;font-size:12px">
             <thead>
@@ -728,9 +728,19 @@
     {{-- Hisob-kitob --}}
     <div style="padding:16px 24px;border-top:1px solid #e5e7eb;background:#f9fafb;display:flex;justify-content:flex-end;gap:24px;flex-wrap:wrap">
         <div style="text-align:right">
-            <div style="font-size:11px;color:#6b7280">Hisoblangan komissiya</div>
+            <div style="font-size:11px;color:#6b7280">Qilingan ishlari (komissiya)</div>
             <div style="font-size:16px;font-weight:800;color:#d97706">{{ number_format($dCom,0,'.',' ') }} so'm</div>
         </div>
+        <div style="text-align:right">
+            <div style="font-size:11px;color:#6b7280">To'lab berildi</div>
+            <div style="font-size:16px;font-weight:800;color:#2563eb">{{ number_format($dPaidTotal,0,'.',' ') }} so'm</div>
+        </div>
+        @if($dPaidTotal > $dCom)
+        <div style="text-align:right">
+            <div style="font-size:11px;color:#dc2626">Ortiqcha to'langan</div>
+            <div style="font-size:16px;font-weight:800;color:#dc2626">{{ number_format($dPaidTotal - $dCom,0,'.',' ') }} so'm</div>
+        </div>
+        @endif
         <div style="text-align:right;padding:8px 16px;background:#dcfce7;border-radius:8px;border:1px solid #86efac">
             <div style="font-size:11px;color:#16a34a;font-weight:600">To'lanishi kerak</div>
             <div style="font-size:20px;font-weight:900;color:#16a34a">{{ number_format($dNet,0,'.',' ') }} so'm</div>
