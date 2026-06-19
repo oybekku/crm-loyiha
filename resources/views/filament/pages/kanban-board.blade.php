@@ -394,10 +394,41 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 
 {{-- KANBAN --}}
 <div class="{{ $filterStatus ? 'kanban-grid-mode' : '' }}">
-@if(!$filterStatus)
-<div class="kanban-scroll-top" id="kanban-scroll-top"><div></div></div>
+
+{{-- QIDIRUV — TEKIS RO'YXAT --}}
+@if($search)
+<div style="max-width:920px;display:flex;flex-direction:column;gap:8px;padding:2px">
+    @php $flatResults = collect($projects)->flatten(1)->sortByDesc('created_at'); @endphp
+    @forelse($flatResults as $p)
+    @php $stm = $statusMap[$p->status] ?? ['label' => $p->status, 'color' => '#9ca3af']; @endphp
+    <div wire:click="openEditInfoModal({{ $p->id }})"
+         style="display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:12px 16px;cursor:pointer;transition:all .15s"
+         onmouseover="this.style.borderColor='#93c5fd';this.style.boxShadow='0 2px 12px rgba(0,0,0,.06)'"
+         onmouseout="this.style.borderColor='#e5e7eb';this.style.boxShadow='none'">
+        <div style="min-width:0;flex:1">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <span style="font-family:monospace;font-weight:700;color:#2563eb;font-size:13px">{{ $p->number }}</span>
+                <span style="font-weight:700;color:#111827;font-size:14px">{{ $p->owner_name }}</span>
+            </div>
+            @if($p->address)
+            <div style="font-size:12px;color:#6b7280;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:520px">📍 {{ $p->address }}</div>
+            @endif
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+            <span style="display:inline-block;font-size:11px;font-weight:700;color:#fff;background:{{ $stm['color'] }};border-radius:6px;padding:3px 10px;white-space:nowrap">{{ $stm['label'] }}</span>
+            <div style="font-size:12px;color:#374151;font-weight:600;margin-top:4px">{{ number_format($p->total_price, 0, '.', ' ') }} so'm</div>
+        </div>
+    </div>
+    @empty
+    <div style="text-align:center;color:#9ca3af;padding:30px;font-size:13px">Natija topilmadi</div>
+    @endforelse
+</div>
 @endif
-<div class="kanban-wrap" id="kanban-wrap">
+
+@if(!$filterStatus)
+<div class="kanban-scroll-top" id="kanban-scroll-top" style="{{ $search ? 'display:none' : '' }}"><div></div></div>
+@endif
+<div class="kanban-wrap" id="kanban-wrap" style="{{ $search ? 'display:none' : '' }}">
 @foreach($statuses as $statusKey => $status)
 <div class="kanban-col" x-data="{ colCollapsed: localStorage.getItem('col_v1_{{ $statusKey }}_u{{ auth()->id() }}') === 'true' }"
      x-effect="localStorage.setItem('col_v1_{{ $statusKey }}', colCollapsed ? 'true' : 'false')"
