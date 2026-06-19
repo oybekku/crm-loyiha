@@ -360,6 +360,10 @@ class KanbanBoard extends Page
             'changed_by' => auth()->id(),
         ]);
 
+        // Loyiha tugallanganda — barcha xizmatlar ham tugatilgan deb belgilanadi
+        // (hodim tugatilgan ishlari/komissiya hisobiga tushishi uchun)
+        $project->services()->whereNull('completed_at')->update(['completed_at' => now()]);
+
         $this->dispatch('notify', type: 'success', message: 'Loyiha tugallandi!');
     }
 
@@ -381,6 +385,9 @@ class KanbanBoard extends Page
             'entered_at' => now(),
             'changed_by' => auth()->id(),
         ]);
+
+        // Jarayonga qaytarilganda — xizmatlar "tugatilmagan" holatga qaytadi
+        $project->services()->update(['completed_at' => null]);
 
         $this->dispatch('notify', type: 'info', message: 'Loyiha jarayonga qaytarildi!');
     }
