@@ -1361,9 +1361,9 @@ class KanbanBoard extends Page
             ->with(['services', 'currentStatusLog'])
             ->get()
             ->each(function ($p) {
-                // Joriy statusga mos xizmat muddati o'tganmi?
+                // Joriy statusga mos xizmat muddati 0k yoki o'tganmi (days_left <= 0)?
                 $svc = $p->services->firstWhere('service_name', $p->status);
-                if (!$svc || !$svc->is_late) return;
+                if (!$svc || $svc->days_left === null || $svc->days_left > 0) return;
                 $log = $p->currentStatusLog;
                 // Xizmat work_started_at/deadline_days o'zgarmaydi — kartada "Nk kech" davom etadi
                 $this->switchProjectStatus(
