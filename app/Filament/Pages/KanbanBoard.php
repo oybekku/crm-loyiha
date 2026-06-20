@@ -1349,6 +1349,13 @@ class KanbanBoard extends Page
      */
     protected function reconcileAutoStatuses(): void
     {
+        // TEZLIK: har Livewire amalida (modal ochish, saqlash...) emas —
+        // eng ko'pi 30 soniyada bir marta ishlaydi. Aks holda yuzlab loyihani
+        // har bosishда tekshirish 10 soniya kutishга olib kelardi.
+        if (!\Illuminate\Support\Facades\Cache::add('kanban_reconcile_lock', 1, 30)) {
+            return;
+        }
+
         // 1) "Yangi X" ↔ asl bo'lim — endi avtomatik EMAS.
         //    Route ("O'tkazish") qilinganda loyiha avval "Yangi X" (staging) ga tushadi
         //    (confirmRoute da), undan asl bo'limga (Toposyomka/Eskiz) QO'LDA suriladi.
