@@ -1480,7 +1480,10 @@ class KanbanBoard extends Page
             $statuses = [$this->filterStatus => $statuses[$this->filterStatus]];
         }
 
-        $projectQuery = Project::with(['assignedUsers', 'services.assignedUser', 'currentStatusLog', 'payments', 'statusLogs'])
+        // TEZLIK: faqat kartага kerakli relationlar yuklanadi.
+        // 'payments' va 'statusLogs' kartada ishlatilmaydi (paid_amount/percent maydonlardan) —
+        // ularni har bosishда yuzlab loyiha uchun yuklash sekinlik sababi edi.
+        $projectQuery = Project::with(['assignedUsers', 'services.assignedUser', 'currentStatusLog'])
             ->orderBy('created_at', 'desc');
 
         // Tanlangan oy/yil — loyiha OCHILGAN (created_at) oyiga qarab.
