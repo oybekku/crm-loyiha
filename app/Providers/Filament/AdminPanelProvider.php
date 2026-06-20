@@ -572,7 +572,7 @@ HTML;
                 ->visible(function () use ($key) {
                     $u = auth()->user();
                     if ($u && $u->isBajaruvchi()) {
-                        return in_array($key, ['yangi_toposyomka', 'toposyomka', 'yangi_eskiz_loyiha', 'eskiz_loyiha', 'kechikayotgan']);
+                        return in_array($key, $u->kanbanServiceCols());
                     }
                     return true;
                 })

@@ -130,6 +130,30 @@ class User extends Authenticatable implements FilamentUser
     public function canSeeAllProjects(): bool { return in_array($this->role, ['admin', 'menejer']); }
 
     /**
+     * Hodim (bajaruvchi) Kanbanда qaysi ustunlarni ko'radi — o'zi biriktirilgan
+     * ish turlariga (toposyomka/eskiz) qarab. Bitta tur bo'lsa faqat o'sha bo'lim.
+     * Hech qaysi ish biriktirilmagan bo'lsa — bo'sh (hech narsa ko'rinmaydi).
+     */
+    public function kanbanServiceCols(): array
+    {
+        static $cache = [];
+        if (array_key_exists($this->id, $cache)) return $cache[$this->id];
+
+        $types = \App\Models\ProjectService::where('assigned_user_id', $this->id)
+            ->whereHas('project', fn ($q) => $q->whereNotIn('status', ['tugallangan', 'taqdim_etilgan', 'bekor_qilingan']))
+            ->distinct()
+            ->pluck('service_name')
+            ->toArray();
+
+        $cols = [];
+        if (in_array('toposyomka', $types))   $cols = array_merge($cols, ['yangi_toposyomka', 'toposyomka']);
+        if (in_array('eskiz_loyiha', $types)) $cols = array_merge($cols, ['yangi_eskiz_loyiha', 'eskiz_loyiha']);
+        if (!empty($cols)) $cols[] = 'kechikayotgan';
+
+        return $cache[$this->id] = $cols;
+    }
+
+    /**
      * The attributes that should be hidden for serialization.
      *
      * @var list<string>

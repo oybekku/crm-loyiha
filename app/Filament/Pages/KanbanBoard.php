@@ -1451,9 +1451,9 @@ class KanbanBoard extends Page
                 $routeStatuses[$ps->key] = $data;
             }
 
-            // Hodim (bajaruvchi) — faqat o'z ish ustunlari
+            // Hodim (bajaruvchi) — faqat o'zi biriktirilgan ish turi bo'limlari
             if ($authUser?->isBajaruvchi()) {
-                if (in_array($ps->key, ['yangi_toposyomka', 'toposyomka', 'yangi_eskiz_loyiha', 'eskiz_loyiha', 'kechikayotgan'])) {
+                if (in_array($ps->key, $authUser->kanbanServiceCols())) {
                     $statuses[$ps->key] = $data;
                 }
                 continue;
