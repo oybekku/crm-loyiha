@@ -1354,24 +1354,22 @@ class KanbanBoard extends Page
         //    (confirmRoute da), undan asl bo'limga (Toposyomka/Eskiz) QO'LDA suriladi.
         //    Shu sababli mas'ul holatiga qarab avtomatik ko'chirish o'chirildi.
 
-        // 2) Kechikayotgan — joriy bo'lim muddatiga ≤3 kun qolganda (kutishdagilar bundan mustasno)
-        Project::whereIn('status', ['toposyomka', 'eskiz_loyiha', 'tekshirish'])
+        // 2) Kechikayotgan — joriy bo'lim ishi (xizmat) muddati O'TGANDA (0k/kech).
+        //    Kutishdagilar (timer_paused_at) va tekshirishга yuborilganlar (submitted_at — muzlagan) mustasno.
+        Project::whereIn('status', ['toposyomka', 'eskiz_loyiha'])
             ->whereNull('timer_paused_at')
-            ->with('currentStatusLog')
+            ->with(['services', 'currentStatusLog'])
             ->get()
             ->each(function ($p) {
+                // Joriy statusga mos xizmat muddati o'tganmi?
+                $svc = $p->services->firstWhere('service_name', $p->status);
+                if (!$svc || !$svc->is_late) return;
                 $log = $p->currentStatusLog;
-                if (!$log || (int) $log->allocated_days <= 0) return;
-                $daysInStatus = (int) $log->entered_at->diffInDays(now());
-                $daysLeft     = (int) $log->allocated_days - $daysInStatus;
-                if ($daysLeft <= 3) {
-                    // Muddatni saqlab (entered_at + allocated_days bir xil) ko'chiramiz,
-                    // shunda kartada hisob davom etadi (3k → 2k → 1 kun → kechikkan)
-                    $this->switchProjectStatus(
-                        $p, 'kechikayotgan',
-                        $log->entered_at, (int) $log->allocated_days, $log->assigned_user_id
-                    );
-                }
+                // Xizmat work_started_at/deadline_days o'zgarmaydi — kartada "Nk kech" davom etadi
+                $this->switchProjectStatus(
+                    $p, 'kechikayotgan',
+                    $log?->entered_at, (int) ($log?->allocated_days ?? 0), $log?->assigned_user_id
+                );
             });
     }
 
@@ -1453,9 +1451,9 @@ class KanbanBoard extends Page
                 $routeStatuses[$ps->key] = $data;
             }
 
-            // Hodim (bajaruvchi) — faqat o'z ish ustunlari: Toposyomka, Eskiz, Kechikayotgan
+            // Hodim (bajaruvchi) — faqat o'z ish ustunlari
             if ($authUser?->isBajaruvchi()) {
-                if (in_array($ps->key, ['toposyomka', 'eskiz_loyiha', 'kechikayotgan'])) {
+                if (in_array($ps->key, ['yangi_toposyomka', 'toposyomka', 'yangi_eskiz_loyiha', 'eskiz_loyiha', 'kechikayotgan'])) {
                     $statuses[$ps->key] = $data;
                 }
                 continue;
