@@ -12,7 +12,9 @@
     // 2-qavat shablonida "TOSHKENT - 2026" rasmga yozilgan → bizniki kerak emas
     $showYil   = $qavat === 1;
     // Sarlavha 2-qavatda 2 qatorli — manzilni pastroqdan boshlaymiz
-    $manzilTop = $qavat === 2 ? '51%' : '49.3%';
+    $manzilTop  = $qavat === 2 ? '51%' : '49.3%';
+    // Manzil chap chetidan — "BIR/IKKI QAVATLI ..." sarlavhasi tagiga to'g'rilash
+    $manzilLeft = $qavat === 2 ? '5%' : '5%';
 @endphp
 <!DOCTYPE html>
 <html lang="uz">
@@ -118,7 +120,7 @@
 
 <div class="sheet">
     <img class="sheet-bg" src="{{ asset($bgImage) }}?v={{ @filemtime(public_path($bgImage)) ?: 2 }}" alt="">
-    <div class="manzil" style="top:{{ $manzilTop }}">
+    <div class="manzil" style="top:{{ $manzilTop }};left:{{ $manzilLeft }}">
         <div class="manzil-tuman">{{ $tuman }}</div>
         <div class="manzil-text" id="manzilEdit" contenteditable="true" spellcheck="false">{{ $manzil }}</div>
     </div>
