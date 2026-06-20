@@ -14,7 +14,7 @@
     // Sarlavha 2-qavatda 2 qatorli — manzilni pastroqdan boshlaymiz
     $manzilTop  = $qavat === 2 ? '51%' : '49.3%';
     // Manzil chap chetidan — "BIR/IKKI QAVATLI ..." sarlavhasi tagiga to'g'rilash
-    $manzilLeft = $qavat === 2 ? '5%' : '5%';
+    $manzilLeft = $qavat === 2 ? '6%' : '6%';
 @endphp
 <!DOCTYPE html>
 <html lang="uz">
