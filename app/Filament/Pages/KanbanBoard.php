@@ -97,26 +97,9 @@ class KanbanBoard extends Page
     public string $servicePricePin       = '';
     public bool   $servicePricePinError  = false;
 
-    // Loyiha asosiy ma'lumotini tahrirlash modali (faqat ma'lumot, xizmatsiz)
-    public bool   $showEditInfoModal = false;
-    public int    $editInfoId        = 0;
-    public string $ei_owner          = '';
-    public string $ei_title          = '';
-    public string $ei_address        = '';
-    public string $ei_oblozhka       = '';
-    public string $ei_coords         = '';   // "kenglik, uzunlik"
-    public array  $ei_phones         = ['+998'];
-    public string $ei_description    = '';
-    public string $ei_category       = 'turar';
-    public array  $ei_services       = [];   // faqat ko'rish (xizmat + to'lov)
-    public array  $ei_files          = [];   // mavjud fayllar
-    public $ei_newFiles              = [];   // yangi yuklanadigan fayllar
-    public string $ei_status         = '';
-    public bool   $ei_paymentRequested = false;
-    // Yangi xizmat qo'shish (edit modalda)
-    public string $ei_newSvcType     = '';
-    public string $ei_newSvcPrice    = '';
-    public $ei_newSvcUser            = null;
+    // Loyiha ma'lumotini tahrirlash modali ALOHIDA komponentga ko'chirildi:
+    // App\Livewire\ProjectEditModal — shu sababli modal ochilganda butun doska
+    // qaytadan yuborilmaydi (tezlik). Amal tugmalari kb-* eventlari orqali keladi.
 
     // Area (kv.m) modal state
     public bool   $showAreaModal  = false;
@@ -904,253 +887,35 @@ class KanbanBoard extends Page
         $this->dispatch('notify', type: 'success', message: 'Narx yangilandi!');
     }
 
-    // ── Loyiha asosiy ma'lumotini tahrirlash (xizmat/pulga tegmaydi) ──────
-    public function openEditInfoModal(int $projectId): void
-    {
-        $p = Project::find($projectId);
-        if (!$p) return;
-        $this->editInfoId     = $projectId;
-        $this->ei_owner       = $p->owner_name ?? '';
-        $this->ei_title       = $p->title ?? '';
-        $this->ei_address     = $p->address ?? '';
-        $this->ei_oblozhka    = $p->oblozhka_address ?? '';
-        $this->ei_coords      = ($p->latitude && $p->longitude) ? ($p->latitude . ', ' . $p->longitude) : '';
-        $this->ei_phones      = !empty($p->phones)
-            ? array_values(array_map(
-                fn($x) => is_array($x) ? ($x['phone'] ?? '') : (string) $x,
-                $p->phones
-            ))
-            : ['+998'];
-        if (empty($this->ei_phones)) $this->ei_phones = ['+998'];
-        $this->ei_description = $p->description ?? '';
-        $this->ei_category    = $p->category ?: 'turar';
+    // ── Edit modal (ProjectEditModal komponenti) eventlari ────────────────
+    // Modaldagi amal tugmalari shu listenerlarni chaqiradi → tegishli modalni ochadi.
+    #[\Livewire\Attributes\On('kb-open-payment')]
+    public function kbOpenPayment(int $id): void { $this->openPaymentModal($id); }
 
-        $this->ei_services = $this->buildEiServices($p);
-        $this->ei_files    = $this->buildEiFiles($p);
-        $this->ei_newFiles = [];
-        $this->ei_status   = $p->status;
-        $this->ei_paymentRequested = (bool) $p->payment_requested_at;
+    #[\Livewire\Attributes\On('kb-open-route')]
+    public function kbOpenRoute(int $id, string $status): void { $this->openRouteModal($id, $status); }
 
-        $this->showEditInfoModal = true;
-    }
+    #[\Livewire\Attributes\On('kb-open-assign')]
+    public function kbOpenAssign(int $id): void { $this->openServiceAssignModal($id); }
 
-    // ── Modaldagi amal tugmalari — avval edit modalni yopamiz, keyin amalni ochamiz ──
-    public function eiGoPayment(): void      { $id = $this->editInfoId; $this->closeEditInfoModal(); $this->openPaymentModal($id); }
-    public function eiGoRoute(): void        { $id = $this->editInfoId; $s = $this->ei_status; $this->closeEditInfoModal(); $this->openRouteModal($id, $s); }
-    public function eiGoAssign(): void       { $id = $this->editInfoId; $this->closeEditInfoModal(); $this->openServiceAssignModal($id); }
-    public function eiRequestPayment(): void { $id = $this->editInfoId; $this->closeEditInfoModal(); $this->requestPayment($id); }
-    public function eiCancelRequest(): void  { $id = $this->editInfoId; $this->closeEditInfoModal(); $this->cancelPaymentRequest($id); }
-    public function eiMarkComplete(): void   { $id = $this->editInfoId; $this->closeEditInfoModal(); $this->markComplete($id); }
-    public function eiMarkUncomplete(): void { $id = $this->editInfoId; $this->closeEditInfoModal(); $this->markUncomplete($id); }
-    public function eiMove(string $status): void { $id = $this->editInfoId; $this->closeEditInfoModal(); $this->moveProject($id, $status); }
+    #[\Livewire\Attributes\On('kb-request-payment')]
+    public function kbRequestPayment(int $id): void { $this->requestPayment($id); }
 
-    // Xizmatlar va to'lovlar — faqat ko'rish (narxga proporsional taqsimot)
-    private function buildEiServices(Project $p): array
-    {
-        $p->loadMissing(['services.assignedUser', 'payments']);
-        $priceMap = [];
-        foreach ($p->services as $s) $priceMap[$s->service_name] = (float) $s->final_price;
+    #[\Livewire\Attributes\On('kb-cancel-request')]
+    public function kbCancelRequest(int $id): void { $this->cancelPaymentRequest($id); }
 
-        $paid = [];
-        foreach ($p->payments as $pay) {
-            $svcs = $pay->services ?? [];
-            if (empty($svcs)) continue;
-            $sumSel = 0;
-            foreach ($svcs as $sn) $sumSel += ($priceMap[$sn] ?? 0);
-            foreach ($svcs as $sn) {
-                $sp    = $priceMap[$sn] ?? 0;
-                $share = $sumSel > 0 ? (float) $pay->amount * ($sp / $sumSel) : (float) $pay->amount / count($svcs);
-                $paid[$sn] = ($paid[$sn] ?? 0) + $share;
-            }
-        }
+    #[\Livewire\Attributes\On('kb-mark-complete')]
+    public function kbMarkComplete(int $id): void { $this->markComplete($id); }
 
-        return $p->services->map(function ($s) use ($paid) {
-            $price = (float) $s->final_price;
-            $pd    = $paid[$s->service_name] ?? 0;
-            return [
-                'key'      => $s->service_name,
-                'label'    => \App\Models\Project::serviceOptions()[$s->service_name] ?? $s->service_name,
-                'price'    => $price,
-                'paid'     => $pd,
-                'pct'      => $price > 0 ? min(100, (int) round($pd / $price * 100)) : 0,
-                'employee' => $s->assignedUser?->name,
-            ];
-        })->toArray();
-    }
+    #[\Livewire\Attributes\On('kb-mark-uncomplete')]
+    public function kbMarkUncomplete(int $id): void { $this->markUncomplete($id); }
 
-    private function buildEiFiles(Project $p): array
-    {
-        return $p->files()->orderByDesc('created_at')->get()->map(function ($f) {
-            $ext  = strtolower(pathinfo($f->file_name, PATHINFO_EXTENSION));
-            $icon = in_array($ext, ['jpg','jpeg','png','gif','webp']) ? '🖼️'
-                  : ($ext === 'pdf' ? '📄'
-                  : (in_array($ext, ['doc','docx']) ? '📝'
-                  : (in_array($ext, ['xls','xlsx']) ? '📊' : '📎')));
-            return [
-                'id'   => $f->id,
-                'name' => $f->file_name,
-                'size' => $f->file_size ? round($f->file_size / 1024) . ' KB' : '',
-                'icon' => $icon,
-                'url'  => asset('storage/' . $f->file_path),
-            ];
-        })->toArray();
-    }
+    #[\Livewire\Attributes\On('kb-move')]
+    public function kbMove(int $id, string $status): void { $this->moveProject($id, $status); }
 
-    // Loyihaga yangi xizmat (ish) qo'shish
-    public function eiAddService(): void
-    {
-        $this->validate([
-            'ei_newSvcType'  => 'required',
-            'ei_newSvcPrice' => 'required|numeric|min:1',
-        ], [
-            'ei_newSvcType.required'  => 'Xizmat turini tanlang',
-            'ei_newSvcPrice.required' => 'Narx kiriting',
-            'ei_newSvcPrice.numeric'  => 'Narx raqam bo\'lishi kerak',
-            'ei_newSvcPrice.min'      => 'Narx 0 dan katta bo\'lishi kerak',
-        ]);
-
-        $p = Project::find($this->editInfoId);
-        if (!$p) return;
-
-        // Takror oldini olish
-        if ($p->services()->where('service_name', $this->ei_newSvcType)->exists()) {
-            $this->addError('ei_newSvcType', 'Bu xizmat allaqachon mavjud');
-            return;
-        }
-
-        $price = (float) $this->ei_newSvcPrice;
-        ProjectService::create([
-            'project_id'       => $p->id,
-            'assigned_user_id' => $this->ei_newSvcUser ?: null,
-            'service_name'     => $this->ei_newSvcType,
-            'price'            => $price,
-            'discount_type'    => 'none',
-            'discount_value'   => 0,
-            'final_price'      => $price,
-        ]);
-        // updateTotals — ProjectService model hodisasi (saved) avtomat chaqiradi
-
-        // Forma tozalash + ro'yxatni yangilash
-        $this->ei_newSvcType  = '';
-        $this->ei_newSvcPrice = '';
-        $this->ei_newSvcUser  = null;
-        $this->ei_services    = $this->buildEiServices($p->fresh());
-
-        $this->dispatch('notify', type: 'success', message: 'Xizmat qo\'shildi!');
-    }
-
-    // Fayl tanlanishi bilan avtomatik saqlanadi (alohida Saqlash kerak emas)
-    public function updatedEiNewFiles(): void
-    {
-        $this->eiSaveFiles();
-    }
-
-    public function eiSaveFiles(): void
-    {
-        $p = Project::find($this->editInfoId);
-        if (!$p) return;
-
-        $allowed = ['application/pdf','image/jpeg','image/png','image/gif','image/webp',
-            'application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
-
-        $count = 0;
-        foreach ((array) $this->ei_newFiles as $file) {
-            if (!$file) continue;
-            if ($file->getSize() > 20 * 1024 * 1024) continue;
-            if (!in_array($file->getMimeType(), $allowed)) continue;
-            $path = $file->store('project-files/' . $p->id, 'public');
-            \App\Models\ProjectFile::create([
-                'project_id'  => $p->id,
-                'file_name'   => $file->getClientOriginalName(),
-                'file_path'   => $path,
-                'file_type'   => $file->getMimeType(),
-                'file_size'   => $file->getSize(),
-                'uploaded_by' => auth()->id(),
-            ]);
-            $count++;
-        }
-
-        $this->ei_newFiles = [];
-        $this->ei_files = $this->buildEiFiles($p);
-        if ($count > 0) {
-            $this->dispatch('notify', type: 'success', message: $count . " ta fayl yuklandi!");
-        }
-    }
-
-    public function eiDeleteFile(int $fileId): void
-    {
-        $f = \App\Models\ProjectFile::find($fileId);
-        if ($f && $f->project_id === $this->editInfoId) {
-            \Illuminate\Support\Facades\Storage::disk('public')->delete($f->file_path);
-            $f->delete();
-            $this->ei_files = array_values(array_filter($this->ei_files, fn($x) => $x['id'] !== $fileId));
-            $this->dispatch('notify', type: 'success', message: 'Fayl o\'chirildi');
-        }
-    }
-
-    public function closeEditInfoModal(): void
-    {
-        $this->showEditInfoModal = false;
-        $this->editInfoId = 0;
-    }
-
-    public function eiAddPhone(): void { $this->ei_phones[] = '+998'; }
-
-    public function eiRemovePhone(int $i): void
-    {
-        unset($this->ei_phones[$i]);
-        $this->ei_phones = array_values($this->ei_phones);
-        if (empty($this->ei_phones)) $this->ei_phones = ['+998'];
-    }
-
-    public function saveEditInfo(): void
-    {
-        $this->validate([
-            'ei_owner'   => 'required|min:2',
-            'ei_address' => 'required|min:3',
-        ], [
-            'ei_owner.required'   => 'Egasining ismi shart',
-            'ei_owner.min'        => 'Ism juda qisqa',
-            'ei_address.required' => 'Manzil shart',
-        ]);
-
-        $p = Project::find($this->editInfoId);
-        if (!$p) { $this->closeEditInfoModal(); return; }
-
-        // Telefonlar — create modali bilan bir xil format: [['phone' => '...']]
-        $phones = array_values(array_filter(
-            array_map(fn($p) => ['phone' => trim($p)], $this->ei_phones),
-            fn($p) => strlen($p['phone']) > 4
-        ));
-
-        // Koordinata: "kenglik, uzunlik" → lat, lng
-        $lat = null; $lng = null;
-        if (trim($this->ei_coords) !== '') {
-            $parts = preg_split('/[,\s]+/', trim($this->ei_coords));
-            if (count($parts) >= 2 && is_numeric($parts[0]) && is_numeric($parts[1])) {
-                $lat = (float) $parts[0];
-                $lng = (float) $parts[1];
-            }
-        }
-
-        $p->update([
-            'owner_name'      => trim($this->ei_owner),
-            'title'           => trim($this->ei_title) ?: null,
-            'address'         => trim($this->ei_address),
-            'oblozhka_address'=> trim($this->ei_oblozhka) ?: null,
-            'latitude'    => $lat,
-            'longitude'   => $lng,
-            'phones'      => $phones ?: null,
-            'description' => trim($this->ei_description) ?: null,
-            'category'    => $this->ei_category,
-        ]);
-
-        // Fayllar avtomatik saqlanadi (updatedEiNewFiles) — bu yerда takror kerak emas
-
-        $this->closeEditInfoModal();
-        $this->dispatch('notify', type: 'success', message: "Loyiha ma'lumotlari yangilandi!");
-    }
+    // Ma'lumot/xizmat o'zgardi — doska qaytadan render bo'lsin (getViewData)
+    #[\Livewire\Attributes\On('kb-refresh')]
+    public function kbRefresh(): void {}
 
     // ── Route to department modal ─────────────────────────────────────────
     public function openRouteModal(int $projectId, string $currentStatus): void
