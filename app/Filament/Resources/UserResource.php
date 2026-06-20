@@ -81,15 +81,21 @@ class UserResource extends Resource
                     ->label('Parol')
                     ->password()
                     ->revealable()
-                    ->live(onBlur: true)
                     ->required(fn($operation) => $operation === 'create')
                     ->dehydrated(fn($state) => filled($state))
                     ->dehydrateStateUsing(fn($state) => bcrypt($state))
-                    // Asl parolni alohida ochiq maydonga ham yozamiz (admin ko'rishi uchun)
-                    ->afterStateUpdated(fn($state, Forms\Set $set) => filled($state) ? $set('plain_password', $state) : null)
                     ->placeholder('Yangi parol kiriting'),
 
-                Forms\Components\Hidden::make('plain_password'),
+                // Admin akkauntini tahrirlash uchun PIN — kimdir kirib o'zgartirib qo'ymasin
+                Forms\Components\TextInput::make('pin_confirm')
+                    ->label('🔐 PIN kod (admin login/parolini o\'zgartirish uchun)')
+                    ->password()
+                    ->dehydrated(false)
+                    ->visible(fn($operation, $record) => $operation === 'edit' && $record?->isAdmin())
+                    ->required(fn($operation, $record) => $operation === 'edit' && $record?->isAdmin())
+                    ->rule('in:2728')
+                    ->validationMessages(['in' => 'Noto\'g\'ri PIN kod'])
+                    ->placeholder('····'),
 
                 Forms\Components\TextInput::make('commission_rate')
                     ->label('Komissiya foizi (%)')
@@ -120,15 +126,6 @@ class UserResource extends Resource
                 Tables\Columns\TextColumn::make('email')
                     ->label('Login (email)')
                     ->searchable(),
-
-                Tables\Columns\TextColumn::make('plain_password')
-                    ->label('Parol')
-                    ->placeholder('— (yangilang)')
-                    ->copyable()
-                    ->copyMessage('Parol nusxalandi')
-                    ->badge()
-                    ->color('warning')
-                    ->visible(fn() => auth()->user()?->isAdmin()),
 
                 Tables\Columns\BadgeColumn::make('role')
                     ->label('Lavozim')
