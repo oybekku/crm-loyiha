@@ -67,7 +67,7 @@ class WelcomeHeroWidget extends Widget
 
         // ── Umumiy (admin/menejer uchun) yoki shaxsiy (bajaruvchi uchun) ──
         $baseQuery = $isEmployee
-            ? Project::whereHas('assignedUsers', fn($q) => $q->where('users.id', $user->id))
+            ? Project::whereHas('services', fn($q) => $q->where('assigned_user_id', $user->id))
             : Project::query();
 
         // Tanlangan oy/yil bo'yicha — loyiha OCHILGAN (created_at) oyiga qarab.

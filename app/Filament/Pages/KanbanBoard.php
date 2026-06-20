@@ -1499,10 +1499,9 @@ class KanbanBoard extends Page
             if ($authUser->isHisobchi()) {
                 $projectQuery->where('status', '!=', 'yangi');
             } elseif (!$authUser->hasPermission('barcha_loyihalar')) {
-                // Faqat assignedUsers bo'yicha filtr — ProjectResource bilan bir xil mantiq.
-                // Services filtrini olib tashladik: agar admin assignedUsers dan olib tashlasa,
-                // hodim loyihani ko'rmasligi kerak.
-                $projectQuery->whereHas('assignedUsers', fn($q) => $q->where('users.id', $authUser->id));
+                // Hodim loyihani faqat o'zi HOZIR biror xizmat mas'uli bo'lsa ko'radi.
+                // (assignedUsers jamoasi tozalanmagani uchun eski a'zolar ham ko'rib qolardi)
+                $projectQuery->whereHas('services', fn($q) => $q->where('assigned_user_id', $authUser->id));
             }
         }
 
