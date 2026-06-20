@@ -117,7 +117,7 @@
 </div>
 
 <div class="sheet">
-    <img class="sheet-bg" src="{{ asset($bgImage) }}" alt="">
+    <img class="sheet-bg" src="{{ asset($bgImage) }}?v={{ @filemtime(public_path($bgImage)) ?: 2 }}" alt="">
     <div class="manzil" style="top:{{ $manzilTop }}">
         <div class="manzil-tuman">{{ $tuman }}</div>
         <div class="manzil-text" id="manzilEdit" contenteditable="true" spellcheck="false">{{ $manzil }}</div>
