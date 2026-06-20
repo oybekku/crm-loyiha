@@ -1529,11 +1529,12 @@ class KanbanBoard extends Page
                 ->get();
         }
 
-        $existingOwners = Project::distinct()
-            ->orderBy('owner_name')
-            ->pluck('owner_name')
-            ->filter()
-            ->values();
+        // TEZLIK: barcha loyihalar bo'yicha og'ir distinct so'rovi faqat
+        // "Yangi loyiha" formasi ochiq bo'lganda ishlaydi (avtocomplete uchun).
+        // Aks holda (modal ochish/yopish va h.k.) — skanlanmaydi.
+        $existingOwners = $this->showModal
+            ? Project::distinct()->orderBy('owner_name')->pluck('owner_name')->filter()->values()
+            : collect();
 
         $kbMonthLabel = \Carbon\Carbon::create($this->kbYear, $this->kbMonth, 1)->translatedFormat('F Y');
 
