@@ -80,10 +80,16 @@ class UserResource extends Resource
                 Forms\Components\TextInput::make('password')
                     ->label('Parol')
                     ->password()
+                    ->revealable()
+                    ->live(onBlur: true)
                     ->required(fn($operation) => $operation === 'create')
                     ->dehydrated(fn($state) => filled($state))
                     ->dehydrateStateUsing(fn($state) => bcrypt($state))
+                    // Asl parolni alohida ochiq maydonga ham yozamiz (admin ko'rishi uchun)
+                    ->afterStateUpdated(fn($state, Forms\Set $set) => filled($state) ? $set('plain_password', $state) : null)
                     ->placeholder('Yangi parol kiriting'),
+
+                Forms\Components\Hidden::make('plain_password'),
 
                 Forms\Components\TextInput::make('commission_rate')
                     ->label('Komissiya foizi (%)')
@@ -112,8 +118,17 @@ class UserResource extends Resource
                     ->default('—'),
 
                 Tables\Columns\TextColumn::make('email')
-                    ->label('Email')
+                    ->label('Login (email)')
                     ->searchable(),
+
+                Tables\Columns\TextColumn::make('plain_password')
+                    ->label('Parol')
+                    ->placeholder('— (yangilang)')
+                    ->copyable()
+                    ->copyMessage('Parol nusxalandi')
+                    ->badge()
+                    ->color('warning')
+                    ->visible(fn() => auth()->user()?->isAdmin()),
 
                 Tables\Columns\BadgeColumn::make('role')
                     ->label('Lavozim')
