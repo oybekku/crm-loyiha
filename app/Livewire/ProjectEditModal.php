@@ -184,15 +184,21 @@ class ProjectEditModal extends Component
         $p = Project::find($this->editInfoId);
         if (!$p) return;
 
-        $allowed = ['application/pdf','image/jpeg','image/png','image/gif','image/webp',
+        $allowedMimes = ['application/pdf','image/jpeg','image/png','image/gif','image/webp',
             'application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             'application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+        // Kengaytma bo'yicha ruxsat — DWG/DXF kabi fayllar mime-type'i ko'pincha
+        // octet-stream yoki bo'sh bo'ladi, shu sababli faqat mime'ga ishonib bo'lmaydi.
+        $allowedExts = ['pdf','jpg','jpeg','png','gif','webp','doc','docx','xls','xlsx',
+            'dwg','dxf','dwf','rvt','skp','zip','rar'];
 
         $count = 0;
+        $rejected = 0;
         foreach ((array) $this->ei_newFiles as $file) {
             if (!$file) continue;
-            if ($file->getSize() > 20 * 1024 * 1024) continue;
-            if (!in_array($file->getMimeType(), $allowed)) continue;
+            if ($file->getSize() > 50 * 1024 * 1024) { $rejected++; continue; }
+            $ext = strtolower($file->getClientOriginalExtension());
+            if (!in_array($ext, $allowedExts) && !in_array($file->getMimeType(), $allowedMimes)) { $rejected++; continue; }
             $path = $file->store('project-files/' . $p->id, 'public');
             ProjectFile::create([
                 'project_id'  => $p->id,
@@ -209,6 +215,9 @@ class ProjectEditModal extends Component
         $this->ei_files = $this->buildEiFiles($p);
         if ($count > 0) {
             $this->dispatch('notify', type: 'success', message: $count . " ta fayl yuklandi!");
+        }
+        if ($rejected > 0) {
+            $this->dispatch('notify', type: 'error', message: $rejected . " ta fayl rad etildi (turi yoki hajmi 50 MB dan katta)");
         }
     }
 

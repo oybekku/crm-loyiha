@@ -90,7 +90,7 @@
             <div style="display:flex;gap:8px">
                 <input wire:model="ei_coords" id="ei-coords-input" type="text" placeholder="41.299800, 69.240100" style="flex:1;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box">
                 <button type="button"
-                        onclick="(function(){var v=document.getElementById('ei-coords-input').value;if(v){navigator.clipboard&&navigator.clipboard.writeText(v);this.textContent='✓ Nusxalandi';var b=this;setTimeout(function(){b.textContent='⧉ Nusxalash';},1200);}}).call(this)"
+                        onclick="(function(btn){var inp=document.getElementById('ei-coords-input');var v=(inp&&inp.value||'').trim();if(!v)return;var ok=false;try{inp.focus();inp.select();inp.setSelectionRange(0,99999);ok=document.execCommand('copy');}catch(e){}if(!ok&&navigator.clipboard){navigator.clipboard.writeText(v);ok=true;}var old=btn.innerHTML;btn.innerHTML='✓ Nusxalandi';setTimeout(function(){btn.innerHTML=old;},1200);})(this)"
                         style="padding:9px 14px;border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb;color:#374151;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap">⧉ Nusxalash</button>
             </div>
         </div>
