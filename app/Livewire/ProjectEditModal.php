@@ -196,7 +196,7 @@ class ProjectEditModal extends Component
         $rejected = 0;
         foreach ((array) $this->ei_newFiles as $file) {
             if (!$file) continue;
-            if ($file->getSize() > 50 * 1024 * 1024) { $rejected++; continue; }
+            if ($file->getSize() > 100 * 1024 * 1024) { $rejected++; continue; }
             $ext = strtolower($file->getClientOriginalExtension());
             if (!in_array($ext, $allowedExts) && !in_array($file->getMimeType(), $allowedMimes)) { $rejected++; continue; }
             $path = $file->store('project-files/' . $p->id, 'public');
@@ -217,7 +217,7 @@ class ProjectEditModal extends Component
             $this->dispatch('notify', type: 'success', message: $count . " ta fayl yuklandi!");
         }
         if ($rejected > 0) {
-            $this->dispatch('notify', type: 'error', message: $rejected . " ta fayl rad etildi (turi yoki hajmi 50 MB dan katta)");
+            $this->dispatch('notify', type: 'error', message: $rejected . " ta fayl rad etildi (turi yoki hajmi 100 MB dan katta)");
         }
     }
 
