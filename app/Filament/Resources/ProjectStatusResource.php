@@ -68,6 +68,11 @@ class ProjectStatusResource extends Resource
                     ->label('Arxiv bo\'limi')
                     ->helperText('Yoqilsa, bu bo\'limdagi loyihalar Arxiv sahifasiga o\'tadi')
                     ->default(false),
+
+                Forms\Components\Toggle::make('is_hidden')
+                    ->label('Yashirilgan')
+                    ->helperText('Yoqilsa, bu bo\'lim Kanban va menyudan butunlay yashiriladi')
+                    ->default(false),
             ])->columns(2),
         ]);
     }
@@ -104,6 +109,14 @@ class ProjectStatusResource extends Resource
                     ->falseIcon('heroicon-o-view-columns')
                     ->trueColor('warning')
                     ->falseColor('success'),
+
+                Tables\Columns\IconColumn::make('is_hidden')
+                    ->label('Yashirin')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-eye-slash')
+                    ->falseIcon('heroicon-o-eye')
+                    ->trueColor('danger')
+                    ->falseColor('gray'),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Qo\'shilgan')

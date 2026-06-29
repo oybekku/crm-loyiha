@@ -137,51 +137,12 @@ class Project extends Model
 
     public function updateTotals(): void
     {
+        // Faqat pul summalarini yangilaymiz. Status'ga TEGMAYMIZ —
+        // to'lov qilinishi loyihani avtomatik boshqa bo'limga ko'chirmaydi.
+        // Status'ni faqat foydalanuvchi qo'lda o'zgartiradi (Kanban / tahrirlash).
         $this->total_price = $this->services()->sum('final_price');
         $this->paid_amount = $this->payments()->sum('amount');
         $this->saveQuietly();
-
-        if ($this->total_price <= 0) return;
-
-        $archiveStatuses = ['tugallangan', 'taqdim_etilgan', 'bekor_qilingan'];
-        if (in_array($this->status, $archiveStatuses)) return;
-
-        $newStatus = null;
-
-        if ($this->paid_amount >= $this->total_price) {
-            // To'liq to'langan
-            if ($this->status === 'yangi') {
-                // Yangi loyihada xizmatlar hali boshlanmagan → toposyomka (ish boshlash kerak)
-                $newStatus = 'toposyomka';
-            } elseif (in_array($this->status, ['tolov_jarayonida'])) {
-                // To'lov jarayonida edi, to'liq to'landi → toposyomka (ish boshlash kerak)
-                $newStatus = 'toposyomka';
-            } elseif (!in_array($this->status, ['tolangan', 'toposyomka'])) {
-                // Ish allaqachon boshlangan (eskiz, tekshirish...) + to'liq to'lov → tolangan
-                $newStatus = 'tolangan';
-            }
-        } elseif ($this->paid_amount > 0) {
-            // Qisman to'langan → toposyomka (agar yangi yoki tolov_jarayonida bo'lsa)
-            if (in_array($this->status, ['yangi', 'tolov_jarayonida'])) {
-                $newStatus = 'toposyomka';
-            }
-        }
-
-        if ($newStatus) {
-            $this->status = $newStatus;
-            $this->saveQuietly();
-
-            ProjectStatusLog::where('project_id', $this->id)
-                ->whereNull('left_at')
-                ->update(['left_at' => now()]);
-
-            ProjectStatusLog::create([
-                'project_id' => $this->id,
-                'status'     => $newStatus,
-                'entered_at' => now(),
-                'changed_by' => auth()->id(),
-            ]);
-        }
     }
 
     public static function statusOptions(): array

@@ -555,6 +555,7 @@ HTML;
         $statuses = [];
         try {
             $statuses = \App\Models\ProjectStatus::allOrdered()
+                ->where('is_hidden', false)
                 ->pluck('label', 'key')
                 ->toArray();
         } catch (\Throwable $e) {

@@ -1211,6 +1211,9 @@ class KanbanBoard extends Page
         $ds = \App\Services\DesignSettingsService::get();
 
         foreach ($dbStatuses as $ps) {
+            // Yashirilgan bo'limlar — Kanban'da umuman ko'rsatilmaydi (admin uchun ham)
+            if ($ps->is_hidden) continue;
+
             $rawBg   = $ds["kanban_col_{$ps->key}_bg"]      ?? '#1e293b';
             $opacity = max(0, min(100, (int)($ds["kanban_col_{$ps->key}_opacity"] ?? 100))) / 100;
             $text    = $ds["kanban_col_{$ps->key}_text"]    ?? '#f1f5f9';

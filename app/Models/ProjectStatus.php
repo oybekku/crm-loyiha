@@ -7,9 +7,9 @@ use Illuminate\Support\Facades\Cache;
 
 class ProjectStatus extends Model
 {
-    protected $fillable = ['key', 'label', 'color', 'sort_order', 'is_archive'];
+    protected $fillable = ['key', 'label', 'color', 'sort_order', 'is_archive', 'is_hidden'];
 
-    protected $casts = ['is_archive' => 'boolean'];
+    protected $casts = ['is_archive' => 'boolean', 'is_hidden' => 'boolean'];
 
     protected static function booted(): void
     {
