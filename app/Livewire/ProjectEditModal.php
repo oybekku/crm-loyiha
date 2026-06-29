@@ -81,6 +81,21 @@ class ProjectEditModal extends Component
     public function eiMarkUncomplete(): void { $id = $this->editInfoId; $this->closeEditInfoModal(); $this->dispatch('kb-mark-uncomplete', id: $id); }
     public function eiMove(string $status): void { $id = $this->editInfoId; $this->closeEditInfoModal(); $this->dispatch('kb-move', id: $id, status: $status); }
 
+    // Per-xizmat "Tugallandi/Tugalmagan" toggle — modal ochiq qoladi, ro'yxat va karta yangilanadi
+    public function eiToggleService(int $serviceId): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+        $svc = ProjectService::find($serviceId);
+        if (!$svc || $svc->project_id !== $this->editInfoId) return;
+
+        $svc->completed_at = $svc->completed_at ? null : now();
+        $svc->saveQuietly();
+
+        $p = Project::find($this->editInfoId);
+        if ($p) $this->ei_services = $this->buildEiServices($p);
+        $this->dispatch('kb-refresh'); // doskadagi karta ham yangilansin
+    }
+
     public function eiAddPhone(): void { $this->ei_phones[] = '+998'; }
 
     public function eiRemovePhone(int $i): void
@@ -255,12 +270,14 @@ class ProjectEditModal extends Component
             $price = (float) $s->final_price;
             $pd    = $paid[$s->service_name] ?? 0;
             return [
-                'key'      => $s->service_name,
-                'label'    => Project::serviceOptions()[$s->service_name] ?? $s->service_name,
-                'price'    => $price,
-                'paid'     => $pd,
-                'pct'      => $price > 0 ? min(100, (int) round($pd / $price * 100)) : 0,
-                'employee' => $s->assignedUser?->name,
+                'id'        => $s->id,
+                'key'       => $s->service_name,
+                'label'     => Project::serviceOptions()[$s->service_name] ?? $s->service_name,
+                'price'     => $price,
+                'paid'      => $pd,
+                'pct'       => $price > 0 ? min(100, (int) round($pd / $price * 100)) : 0,
+                'employee'  => $s->assignedUser?->name,
+                'completed' => (bool) $s->completed_at,
             ];
         })->toArray();
     }

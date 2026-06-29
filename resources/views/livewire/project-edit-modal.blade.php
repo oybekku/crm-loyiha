@@ -85,6 +85,45 @@
             <textarea wire:model="ei_oblozhka" rows="2" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;resize:vertical"></textarea>
         </div>
 
+        {{-- Xizmatlar va to'lovlar (Koordinatalar yuqorisida) --}}
+        @if(count($ei_services) > 0)
+        <div style="margin-bottom:16px;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden">
+            <div style="background:#f8fafc;padding:9px 14px;font-size:13px;font-weight:700;color:#111827;border-bottom:1px solid #e5e7eb">💰 Xizmatlar va to'lovlar</div>
+            <div style="padding:6px 14px">
+                @foreach($ei_services as $svc)
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;{{ !$loop->last ? 'border-bottom:1px solid #f1f5f9' : '' }}">
+                    <div>
+                        <div style="font-size:13px;font-weight:600;color:#374151;{{ $svc['completed'] ? 'text-decoration:line-through;opacity:.6' : '' }}">{{ $svc['label'] }}</div>
+                        @if(!empty($svc['employee']))
+                        <div style="font-size:11px;color:#6366f1;margin-top:2px">👷 {{ $svc['employee'] }}</div>
+                        @else
+                        <div style="font-size:11px;color:#9ca3af;margin-top:2px">👤 mas'ul biriktirilmagan</div>
+                        @endif
+                        @if(auth()->user()?->isAdmin())
+                        <button type="button" wire:click="eiToggleService({{ $svc['id'] }})"
+                                title="{{ $svc['completed'] ? 'Tugallanmagan deb belgilash' : 'Tugallangan deb belgilash' }}"
+                                style="margin-top:6px;display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:6px;border:1px solid {{ $svc['completed'] ? '#86efac' : '#d1d5db' }};background:{{ $svc['completed'] ? '#f0fdf4' : '#f9fafb' }};color:{{ $svc['completed'] ? '#16a34a' : '#9ca3af' }};font-size:11px;font-weight:600;cursor:pointer">
+                            @if($svc['completed'])
+                            <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Tugallandi
+                            @else
+                            <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg> Tugalmagan
+                            @endif
+                        </button>
+                        @endif
+                    </div>
+                    <div style="text-align:right">
+                        <span style="font-size:12px;color:#6b7280">{{ number_format($svc['price'], 0, '.', ' ') }} so'm</span>
+                        <span style="font-size:12px;font-weight:700;color:{{ $svc['pct'] >= 100 ? '#16a34a' : ($svc['pct'] > 0 ? '#2563eb' : '#9ca3af') }};margin-left:8px">
+                            {{ number_format($svc['paid'], 0, '.', ' ') }} so'm ({{ $svc['pct'] }}%)
+                        </span>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+            <div style="background:#fffbeb;padding:6px 14px;font-size:10px;color:#92400e;border-top:1px solid #fef3c7">Narx tahrirlash uchun "To'liq sahifa" → Xizmatlar panelidan foydalaning.</div>
+        </div>
+        @endif
+
         <div style="margin-bottom:12px">
             <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px">📍 Koordinatalar <span style="font-weight:400;color:#9ca3af">(kenglik, uzunlik)</span></label>
             <div style="display:flex;gap:8px">
@@ -120,34 +159,6 @@
                 <option value="noturar">Noturar joy</option>
             </select>
         </div>
-
-        {{-- Xizmatlar va to'lovlar (faqat ko'rish) --}}
-        @if(count($ei_services) > 0)
-        <div style="margin-bottom:16px;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden">
-            <div style="background:#f8fafc;padding:9px 14px;font-size:13px;font-weight:700;color:#111827;border-bottom:1px solid #e5e7eb">💰 Xizmatlar va to'lovlar</div>
-            <div style="padding:6px 14px">
-                @foreach($ei_services as $svc)
-                <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;{{ !$loop->last ? 'border-bottom:1px solid #f1f5f9' : '' }}">
-                    <div>
-                        <div style="font-size:13px;font-weight:600;color:#374151">{{ $svc['label'] }}</div>
-                        @if(!empty($svc['employee']))
-                        <div style="font-size:11px;color:#6366f1;margin-top:2px">👷 {{ $svc['employee'] }}</div>
-                        @else
-                        <div style="font-size:11px;color:#9ca3af;margin-top:2px">👤 mas'ul biriktirilmagan</div>
-                        @endif
-                    </div>
-                    <div style="text-align:right">
-                        <span style="font-size:12px;color:#6b7280">{{ number_format($svc['price'], 0, '.', ' ') }} so'm</span>
-                        <span style="font-size:12px;font-weight:700;color:{{ $svc['pct'] >= 100 ? '#16a34a' : ($svc['pct'] > 0 ? '#2563eb' : '#9ca3af') }};margin-left:8px">
-                            {{ number_format($svc['paid'], 0, '.', ' ') }} so'm ({{ $svc['pct'] }}%)
-                        </span>
-                    </div>
-                </div>
-                @endforeach
-            </div>
-            <div style="background:#fffbeb;padding:6px 14px;font-size:10px;color:#92400e;border-top:1px solid #fef3c7">Narx tahrirlash uchun "To'liq sahifa" → Xizmatlar panelidan foydalaning.</div>
-        </div>
-        @endif
 
         {{-- Hujjatlar --}}
         <div style="margin-bottom:16px;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden">

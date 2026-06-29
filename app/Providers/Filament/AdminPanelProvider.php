@@ -529,6 +529,7 @@ HTML;
                     $html = '<script src="' . asset('js/map-picker.js') . '?v=11" defer></script>';
                     if (auth()->check()) {
                         $html .= \Illuminate\Support\Facades\Blade::render('@livewire(\'message-notifier\')');
+                        $html .= \Illuminate\Support\Facades\Blade::render('@livewire(\'my-balance\')');
                     }
                     return $html;
                 }
