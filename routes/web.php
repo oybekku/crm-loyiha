@@ -54,10 +54,36 @@ Route::get('/track/{number}', function (string $number) {
     return view('track.status', compact('project', 'timeline', 'currentStatus'));
 })->name('track.project');
 
+// Ommaviy chegirma tekshirish sahifasi (flayerdagi QR shu yerga ulanadi — login shart emas)
+Route::get('/chegirma/{number}', function (string $number) {
+    $project = \App\Models\Project::where('number', '#' . ltrim($number, '#'))
+        ->orWhere('number', $number)
+        ->firstOrFail();
+
+    $discount   = 7;
+    $validUntil = $project->created_at->copy()->addMonth();
+    $active     = now()->lte($validUntil);
+
+    return view('chegirma.check', [
+        'client'     => $project->owner_name,
+        'number'     => $project->number,
+        'code'       => $number,
+        'discount'   => $discount,
+        'openedAt'   => $project->created_at->format('d.m.Y'),
+        'validUntil' => $validUntil->format('d.m.Y'),
+        'active'     => $active,
+    ]);
+})->name('chegirma.check');
+
 Route::middleware(['auth'])->group(function () {
     Route::get('/print/project/{project}/ariza', function (\App\Models\Project $project) {
         return view('print.ariza', compact('project'));
     })->name('print.project.ariza');
+
+    // Chegirma flayeri (A4 da 3 ta)
+    Route::get('/print/project/{project}/chegirma', function (\App\Models\Project $project) {
+        return view('print.chegirma', compact('project'));
+    })->name('print.project.chegirma');
 
     Route::get('/print/project/{project}/obloshka', function (\App\Models\Project $project) {
         return view('print.obloshka', compact('project'));

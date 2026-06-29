@@ -44,6 +44,8 @@
 
             <a href="{{ route('print.project.ariza', $editInfoId) }}" target="_blank" style="padding:6px 11px;border-radius:7px;border:1px solid #d1d5db;background:#fff;color:#374151;font-size:12px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:4px">🖨 Ariza</a>
 
+            <a href="{{ route('print.project.chegirma', $editInfoId) }}" target="_blank" style="padding:6px 11px;border-radius:7px;border:1px solid #fcd34d;background:#fffbeb;color:#b45309;font-size:12px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:4px">🎟 Chegirma</a>
+
             @if(auth()->user()?->isAdmin() || auth()->user()?->isMenejer())
                 @if($ei_status === 'tugallangan')
                 <button type="button" wire:click="eiMarkUncomplete" wire:confirm="Loyihani jarayonga qaytarmoqchimisiz?" style="padding:6px 11px;border-radius:7px;border:1px solid #86efac;background:#dcfce7;color:#16a34a;font-size:12px;font-weight:700;cursor:pointer">✓ Tugallandi</button>
