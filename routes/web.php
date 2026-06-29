@@ -6,6 +6,15 @@ Route::get('/', function () {
     return redirect('/admin');
 });
 
+// iOS Safari ba'zan login formani Livewire (AJAX) orqali emas, balki to'g'ridan-to'g'ri
+// "native" POST qilib yuboradi (sahifa bfcache'dan tiklanganda yoki klaviaturadagi "Go"
+// tugmasi JS ulgurmay bosilganda). Bunda /admin/login GET-only bo'lgani uchun 500 xato
+// (MethodNotAllowedHttpException) chiqadi. Shu holatda foydalanuvchini login sahifasiga
+// muloyim qaytaramiz — xato o'rniga shunchaki qayta urinadi.
+Route::post('/admin/login', function () {
+    return redirect()->route('filament.admin.auth.login');
+});
+
 Route::get('/house-anim', function () {
     return response()->file(public_path('house-anim.html'));
 });

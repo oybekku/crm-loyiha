@@ -13,6 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->trustProxies(at: '*');
         $middleware->redirectGuestsTo(fn () => route('filament.admin.auth.login'));
+        // iOS Safari'ning "native" POST /admin/login so'rovi (tana bo'sh, token yo'q)
+        // CSRF tekshiruvida 419 bermasligi uchun — quyidagi redirect marshruti uchun istisno.
+        $middleware->validateCsrfTokens(except: ['admin/login']);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
