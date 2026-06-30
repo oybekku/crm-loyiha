@@ -62,7 +62,8 @@
 <script>
 const PDF_URL    = @json($pdfUrl);
 const SAVE_URL   = @json($saveUrl);
-const STAMP_SRC  = @json(route('pechat.asset', 'stamp.png'));
+const STAMP_SRC   = @json(route('pechat.asset', 'stamp.png').'?v=2');
+const STAMP_RATIO = 0.706;   // pechat.png nisbati (553/783)
 const PDFLIB_URL = @json(route('pechat.asset', 'pdf-lib.js'));
 const CSRF       = document.querySelector('meta[name=csrf-token]').content;
 
@@ -129,7 +130,7 @@ function addStamp(){
     const pi = activePageIndex();
     const p = pageEls[pi];
     const w = Math.min(170, p.w*0.32);
-    const h = w * 0.59;                 // imzo.png nisbati (610/1037 ≈ 0.59)
+    const h = w * STAMP_RATIO;
     const x = (p.w - w)/2, y = (p.h - h)/2;
 
     const el = document.createElement('div');
@@ -180,7 +181,7 @@ function makeDraggable(el, p){
             el.style.left=nx+'px'; el.style.top=ny+'px';
         } else if(mode==='resize'){
             let nw=Math.max(40, ow+(e.clientX-sx));
-            el.style.width=nw+'px'; el.style.height=(nw*0.59)+'px';
+            el.style.width=nw+'px'; el.style.height=(nw*STAMP_RATIO)+'px';
         } else { // rotate
             let ang = Math.atan2(e.clientY-cy, e.clientX-cx)*180/Math.PI + 90;
             if(e.shiftKey) ang = Math.round(ang/15)*15;   // Shift bilan 15° qadam

@@ -82,7 +82,7 @@ Route::get('/pechat-asset/{name}', function (string $name) {
         'pdf.js'        => ['js/pechat/pdf.min.js',        'application/javascript'],
         'pdf.worker.js' => ['js/pechat/pdf.worker.min.js', 'application/javascript'],
         'pdf-lib.js'    => ['js/pechat/pdf-lib.min.js',    'application/javascript'],
-        'stamp.png'     => ['images/imzo.png',             'image/png'],
+        'stamp.png'     => ['images/pechat.png',           'image/png'],
     ];
     abort_unless(isset($map[$name]), 404);
     [$rel, $mime] = $map[$name];
