@@ -5,13 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <title>Pechat urish — {{ $file->file_name }}</title>
-@php
-    // Pechat rasmini server public/ papkadan o'qib, base64 qilamiz (public_html'dan mustaqil)
-    $stampPath = public_path('images/imzo.png');
-    $stampB64  = is_file($stampPath)
-        ? 'data:image/png;base64,' . base64_encode(file_get_contents($stampPath))
-        : '';
-@endphp
 <style>
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:-apple-system,'Segoe UI',Roboto,sans-serif;background:#52555a;color:#e5e7eb}
@@ -65,15 +58,25 @@
 
 <div class="overlay" id="ov"><div class="box"><span class="spin"></span> <span id="ovText">Saqlanmoqda...</span></div></div>
 
-<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="{{ route('pechat.asset', 'pdf.js') }}"></script>
 <script>
-const PDF_URL   = @json($pdfUrl);
-const SAVE_URL  = @json($saveUrl);
-const STAMP_SRC = @json($stampB64);
-const CSRF      = document.querySelector('meta[name=csrf-token]').content;
+const PDF_URL    = @json($pdfUrl);
+const SAVE_URL   = @json($saveUrl);
+const STAMP_SRC  = @json(route('pechat.asset', 'stamp.png'));
+const PDFLIB_URL = @json(route('pechat.asset', 'pdf-lib.js'));
+const CSRF       = document.querySelector('meta[name=csrf-token]').content;
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+pdfjsLib.GlobalWorkerOptions.workerSrc = @json(route('pechat.asset', 'pdf.worker.js'));
+
+// pdf-lib faqat SAQLASHda kerak — sahifa tez ochilishi uchun keyin yuklaymiz
+function ensurePdfLib(){
+    if(window.PDFLib) return Promise.resolve();
+    return new Promise((res, rej)=>{
+        const s=document.createElement('script');
+        s.src=PDFLIB_URL; s.onload=()=>res(); s.onerror=()=>rej(new Error('pdf-lib yuklanmadi'));
+        document.head.appendChild(s);
+    });
+}
 
 let pdfBytes = null;          // original PDF (ArrayBuffer)
 let pageEls  = [];            // {wrap, layer, w, h} per page (CSS px)
@@ -206,6 +209,7 @@ async function savePdf(){
 
     showOv('Pechat muhrlanmoqda...');
     try{
+        await ensurePdfLib();
         const {PDFDocument, degrees} = PDFLib;
         const doc = await PDFDocument.load(pdfBytes.slice(0));
         const pngBytes = await fetch(STAMP_SRC).then(r=>r.arrayBuffer());

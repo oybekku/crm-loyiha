@@ -75,6 +75,25 @@ Route::get('/chegirma/{number}', function (string $number) {
     ]);
 })->name('chegirma.check');
 
+// Pechat muharriri uchun kutubxonalar (CDN o'rniga o'z serverdan — tez, kesh bilan).
+// public/ papkadan o'qiladi (public_html'dan mustaqil), brauzer keshlaydi.
+Route::get('/pechat-asset/{name}', function (string $name) {
+    $map = [
+        'pdf.js'        => ['js/pechat/pdf.min.js',        'application/javascript'],
+        'pdf.worker.js' => ['js/pechat/pdf.worker.min.js', 'application/javascript'],
+        'pdf-lib.js'    => ['js/pechat/pdf-lib.min.js',    'application/javascript'],
+        'stamp.png'     => ['images/imzo.png',             'image/png'],
+    ];
+    abort_unless(isset($map[$name]), 404);
+    [$rel, $mime] = $map[$name];
+    $path = public_path($rel);
+    abort_unless(is_file($path), 404);
+    return response(file_get_contents($path), 200, [
+        'Content-Type'  => $mime,
+        'Cache-Control' => 'public, max-age=31536000, immutable',
+    ]);
+})->name('pechat.asset');
+
 Route::middleware(['auth'])->group(function () {
     Route::get('/print/project/{project}/ariza', function (\App\Models\Project $project) {
         return view('print.ariza', compact('project'));
