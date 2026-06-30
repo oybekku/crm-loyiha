@@ -4,15 +4,18 @@ namespace App\Http\Responses;
 
 use App\Filament\Pages\KanbanBoard;
 use Filament\Http\Responses\Auth\Contracts\LoginResponse as LoginResponseContract;
-use Illuminate\Http\RedirectResponse;
 
 /**
  * Login'dan keyin — Dashboard o'rniga "Loyihalar" (Kanban) sahifasi ochiladi.
+ *
+ * Eslatma: qaytish turini belgilamaymiz — Filament login Livewire ichida
+ * ishlagani uchun redirect() Livewire'ning Redirector'ini qaytaradi
+ * (Illuminate\Http\RedirectResponse emas).
  */
 class LoginResponse implements LoginResponseContract
 {
-    public function toResponse($request): RedirectResponse
+    public function toResponse($request)
     {
-        return redirect()->to(KanbanBoard::getUrl());
+        return redirect()->intended(KanbanBoard::getUrl());
     }
 }
