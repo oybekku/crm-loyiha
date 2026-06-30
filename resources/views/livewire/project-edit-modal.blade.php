@@ -173,6 +173,9 @@
                         <span style="font-size:16px">{{ $f['icon'] }}</span>
                         <a href="{{ $f['url'] }}" target="_blank" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#374151;font-size:13px;text-decoration:none">{{ $f['name'] }}</a>
                         <span style="color:#9ca3af;font-size:11px">{{ $f['size'] }}</span>
+                        @if(auth()->user()?->isAdmin() && \Illuminate\Support\Str::endsWith(strtolower($f['name']), '.pdf'))
+                        <a href="{{ route('pechat.editor', $f['id']) }}" target="_blank" title="Pechat urish" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:5px;color:#2563eb;text-decoration:none;padding:2px 8px;font-size:12px">🖋</a>
+                        @endif
                         <button wire:click="eiDeleteFile({{ $f['id'] }})" onclick="return confirm('Faylni o\'chirasizmi?')" style="background:#fef2f2;border:1px solid #fecaca;border-radius:5px;color:#dc2626;cursor:pointer;padding:2px 7px;font-size:11px">🗑</button>
                     </div>
                     @endforeach

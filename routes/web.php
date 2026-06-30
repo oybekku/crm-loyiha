@@ -85,6 +85,56 @@ Route::middleware(['auth'])->group(function () {
         return view('print.chegirma', compact('project'));
     })->name('print.project.chegirma');
 
+    // ── PDF ga qo'lda pechat urish (faqat admin) ──
+    Route::get('/pechat/{file}', function (\App\Models\ProjectFile $file) {
+        abort_unless(auth()->user()?->isAdmin(), 403);
+        return view('pechat.editor', [
+            'file'    => $file,
+            'pdfUrl'  => route('pechat.pdf', $file),
+            'saveUrl' => route('pechat.save', $file),
+        ]);
+    })->name('pechat.editor');
+
+    Route::get('/pechat/{file}/pdf', function (\App\Models\ProjectFile $file) {
+        abort_unless(auth()->user()?->isAdmin(), 403);
+        $disk = \Illuminate\Support\Facades\Storage::disk('public');
+        abort_unless($disk->exists($file->file_path), 404);
+        return response($disk->get($file->file_path), 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $file->file_name . '"',
+        ]);
+    })->name('pechat.pdf');
+
+    Route::post('/pechat/{file}/save', function (\Illuminate\Http\Request $request, \App\Models\ProjectFile $file) {
+        abort_unless(auth()->user()?->isAdmin(), 403);
+
+        $b64 = $request->input('pdf');
+        if (!$b64) return response()->json(['ok' => false, 'message' => "Bo'sh ma'lumot"]);
+
+        $bytes = base64_decode($b64, true);
+        if ($bytes === false || strlen($bytes) < 100) {
+            return response()->json(['ok' => false, 'message' => "Noto'g'ri PDF"]);
+        }
+
+        $disk    = \Illuminate\Support\Facades\Storage::disk('public');
+        $base    = pathinfo($file->file_name, PATHINFO_FILENAME);
+        $newName = 'pechatli_' . $base . '.pdf';
+        $newPath = 'project-files/' . $file->project_id . '/' . \Illuminate\Support\Str::random(6) . '_' . $newName;
+        $disk->put($newPath, $bytes);
+
+        $newFile = \App\Models\ProjectFile::create([
+            'project_id'  => $file->project_id,
+            'file_name'   => $newName,
+            'file_path'   => $newPath,
+            'file_type'   => 'application/pdf',
+            'file_size'   => strlen($bytes),
+            'category'    => 'hujjat',
+            'uploaded_by' => auth()->id(),
+        ]);
+
+        return response()->json(['ok' => true, 'name' => $newName, 'id' => $newFile->id]);
+    })->name('pechat.save');
+
     Route::get('/print/project/{project}/obloshka', function (\App\Models\Project $project) {
         return view('print.obloshka', compact('project'));
     })->name('print.project.obloshka');
