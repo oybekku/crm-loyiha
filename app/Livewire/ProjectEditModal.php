@@ -34,6 +34,8 @@ class ProjectEditModal extends Component
     public array  $ei_services       = [];
     public array  $ei_files          = [];
     public $ei_newFiles              = [];
+    public array  $ei_genplan        = [];
+    public $ei_newGenplan            = [];
     public string $ei_status         = '';
     public bool   $ei_paymentRequested = false;
     public string $ei_newSvcType     = '';
@@ -58,8 +60,10 @@ class ProjectEditModal extends Component
         $this->ei_description = $p->description ?? '';
         $this->ei_category    = $p->category ?: 'turar';
         $this->ei_services    = $this->buildEiServices($p);
-        $this->ei_files       = $this->buildEiFiles($p);
+        $this->ei_files       = $this->buildEiFiles($p, 'hujjat');
+        $this->ei_genplan     = $this->buildEiFiles($p, 'genplan');
         $this->ei_newFiles    = [];
+        $this->ei_newGenplan  = [];
         $this->ei_status      = $p->status;
         $this->ei_paymentRequested = (bool) $p->payment_requested_at;
         $this->showEditInfoModal = true;
@@ -191,10 +195,19 @@ class ProjectEditModal extends Component
 
     public function updatedEiNewFiles(): void
     {
-        $this->eiSaveFiles();
+        $this->storeUploads($this->ei_newFiles, 'hujjat');
+        $this->ei_newFiles = [];
+        $this->ei_files = $this->buildEiFiles(Project::find($this->editInfoId), 'hujjat');
     }
 
-    public function eiSaveFiles(): void
+    public function updatedEiNewGenplan(): void
+    {
+        $this->storeUploads($this->ei_newGenplan, 'genplan');
+        $this->ei_newGenplan = [];
+        $this->ei_genplan = $this->buildEiFiles(Project::find($this->editInfoId), 'genplan');
+    }
+
+    private function storeUploads($files, string $category): void
     {
         $p = Project::find($this->editInfoId);
         if (!$p) return;
@@ -209,7 +222,7 @@ class ProjectEditModal extends Component
 
         $count = 0;
         $rejected = 0;
-        foreach ((array) $this->ei_newFiles as $file) {
+        foreach ((array) $files as $file) {
             if (!$file) continue;
             if ($file->getSize() > 100 * 1024 * 1024) { $rejected++; continue; }
             $ext = strtolower($file->getClientOriginalExtension());
@@ -221,13 +234,12 @@ class ProjectEditModal extends Component
                 'file_path'   => $path,
                 'file_type'   => $file->getMimeType(),
                 'file_size'   => $file->getSize(),
+                'category'    => $category,
                 'uploaded_by' => auth()->id(),
             ]);
             $count++;
         }
 
-        $this->ei_newFiles = [];
-        $this->ei_files = $this->buildEiFiles($p);
         if ($count > 0) {
             $this->dispatch('notify', type: 'success', message: $count . " ta fayl yuklandi!");
         }
@@ -242,7 +254,9 @@ class ProjectEditModal extends Component
         if ($f && $f->project_id === $this->editInfoId) {
             \Illuminate\Support\Facades\Storage::disk('public')->delete($f->file_path);
             $f->delete();
-            $this->ei_files = array_values(array_filter($this->ei_files, fn($x) => $x['id'] !== $fileId));
+            $p = Project::find($this->editInfoId);
+            $this->ei_files   = $this->buildEiFiles($p, 'hujjat');
+            $this->ei_genplan = $this->buildEiFiles($p, 'genplan');
             $this->dispatch('notify', type: 'success', message: 'Fayl o\'chirildi');
         }
     }
@@ -282,9 +296,18 @@ class ProjectEditModal extends Component
         })->toArray();
     }
 
-    private function buildEiFiles(Project $p): array
+    private function buildEiFiles(Project $p, string $mode = 'hujjat'): array
     {
-        return $p->files()->orderByDesc('created_at')->get()->map(function ($f) {
+        $query = $p->files()->orderByDesc('created_at');
+        if ($mode === 'genplan') {
+            $query->where('category', 'genplan');
+        } else {
+            // Hujjatlar — GENPLAN dan tashqari hammasi
+            $query->where(function ($q) {
+                $q->where('category', '!=', 'genplan')->orWhereNull('category');
+            });
+        }
+        return $query->get()->map(function ($f) {
             $ext  = strtolower(pathinfo($f->file_name, PATHINFO_EXTENSION));
             $icon = in_array($ext, ['jpg','jpeg','png','gif','webp']) ? '🖼️'
                   : ($ext === 'pdf' ? '📄'

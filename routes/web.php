@@ -147,7 +147,7 @@ Route::middleware(['auth'])->group(function () {
             'file_path'   => $newPath,
             'file_type'   => 'application/pdf',
             'file_size'   => strlen($bytes),
-            'category'    => 'hujjat',
+            'category'    => $file->category ?: 'hujjat',
             'uploaded_by' => auth()->id(),
         ]);
 

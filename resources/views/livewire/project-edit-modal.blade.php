@@ -80,6 +80,47 @@
             @error('ei_address')<span style="font-size:11px;color:#dc2626">{{ $message }}</span>@enderror
         </div>
 
+        {{-- GENPLAN — pechat uriladigan PDFlar (Manzil ostida) --}}
+        <div style="margin-bottom:12px;border:1px solid #bbf7d0;border-radius:10px;overflow:hidden">
+            <div style="background:#f0fdf4;padding:9px 14px;font-size:13px;font-weight:700;color:#166534;border-bottom:1px solid #bbf7d0">📐 GENPLAN <span style="font-weight:400;color:#9ca3af">— pechat uchun PDF</span></div>
+            <div style="padding:10px 14px">
+                @if(count($ei_genplan) > 0)
+                <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px">
+                    @foreach($ei_genplan as $f)
+                    <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px">
+                        <span style="font-size:16px">{{ $f['icon'] }}</span>
+                        <a href="{{ $f['url'] }}" target="_blank" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#374151;font-size:13px;text-decoration:none">{{ $f['name'] }}</a>
+                        <span style="color:#9ca3af;font-size:11px">{{ $f['size'] }}</span>
+                        @if(auth()->user()?->isAdmin() && \Illuminate\Support\Str::endsWith(strtolower($f['name']), '.pdf'))
+                        <a href="{{ route('pechat.editor', $f['id']) }}" target="_blank" title="Pechat urish" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:5px;color:#2563eb;text-decoration:none;padding:2px 8px;font-size:12px">🖋</a>
+                        @endif
+                        <button wire:click="eiDeleteFile({{ $f['id'] }})" onclick="return confirm('Faylni o\'chirasizmi?')" style="background:#fef2f2;border:1px solid #fecaca;border-radius:5px;color:#dc2626;cursor:pointer;padding:2px 7px;font-size:11px">🗑</button>
+                    </div>
+                    @endforeach
+                </div>
+                @else
+                <div style="font-size:12px;color:#9ca3af;margin-bottom:10px">Hali GENPLAN PDF yuklanmagan</div>
+                @endif
+                <div x-data="{ up:false, prog:0 }"
+                     x-on:livewire-upload-start="up=true; prog=0"
+                     x-on:livewire-upload-finish="up=false; prog=100"
+                     x-on:livewire-upload-error="up=false"
+                     x-on:livewire-upload-progress="prog=$event.detail.progress">
+                    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px">GENPLAN PDF yuklash <span style="font-weight:400;color:#9ca3af">— tanlash bilan avtomatik saqlanadi</span></label>
+                    <input wire:model="ei_newGenplan" type="file" multiple style="width:100%;font-size:12px;padding:8px;border:1.5px dashed #86efac;border-radius:8px;background:#f0fdf4;box-sizing:border-box;cursor:pointer">
+                    <div x-show="up" x-cloak style="margin-top:10px">
+                        <div style="height:9px;background:#e5e7eb;border-radius:6px;overflow:hidden">
+                            <div style="height:100%;background:linear-gradient(90deg,#22c55e,#16a34a);border-radius:6px;transition:width .2s" x-bind:style="'width:'+prog+'%'"></div>
+                        </div>
+                        <div style="font-size:12px;color:#16a34a;margin-top:5px;font-weight:700;display:flex;align-items:center;gap:6px">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                            Yuklanmoqda... <span x-text="prog+'%'"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div style="margin-bottom:12px">
             <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px">Obloshka manzili
                 <span style="font-weight:400;color:#9ca3af">— muqova chop etish uchun (bo'sh bo'lsa yuqoridagi manzil olinadi)</span>
