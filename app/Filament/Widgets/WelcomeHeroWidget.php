@@ -92,7 +92,8 @@ class WelcomeHeroWidget extends Widget
         $pendingDebtTop  = $pendingSumTop - $pendingPaidTop;
         $pendingPctTop   = $pendingSumTop > 0 ? round($pendingPaidTop / $pendingSumTop * 100) : 0;
         // ── Kechikkan / muddati yaqin ishlar (xizmat-asosli — kanban bilan bir xil) ──
-        // Eslatma: oy filtri qo'llanmaydi — barcha faol kechikkan/yaqin ishlar ko'rsatiladi.
+        // Tanlangan oy bo'yicha — loyiha OCHILGAN (created_at) oyiga qarab filtrlanadi.
+        // Shu sababli o'tgan oy ishlari keyingi oyga "o'tmaydi" — har oy alohida qoladi.
         $archiveStatuses = ['tugallangan', 'taqdim_etilgan', 'bekor_qilingan'];
         $attnQ = \App\Models\ProjectService::query()
             ->whereNotNull('assigned_user_id')
@@ -103,7 +104,9 @@ class WelcomeHeroWidget extends Widget
             // loyihalar diqqat talab ishlarда ko'rinmaydi
             ->whereHas('project', fn ($q) => $q
                 ->whereNotIn('status', array_merge($archiveStatuses, ['tolov_jarayonida', 'tolangan']))
-                ->whereNull('timer_paused_at'))
+                ->whereNull('timer_paused_at')
+                ->whereYear('created_at', $this->selYear)
+                ->whereMonth('created_at', $this->selMonth))
             ->with(['project:id,number,owner_name,status', 'assignedUser:id,name']);
         if ($isEmployee) {
             $attnQ->where('assigned_user_id', $user->id);
