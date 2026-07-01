@@ -107,7 +107,7 @@ async function init(){
         wrap.appendChild(layer);
         cont.appendChild(wrap);
         await page.render({canvasContext: canvas.getContext('2d'), viewport: vp}).promise;
-        pageEls.push({wrap, layer, w: vp.width, h: vp.height, pageNum: n});
+        pageEls.push({wrap, layer, w: vp.width, h: vp.height, pageNum: n, viewport: vp});
     }
     document.getElementById('saveBtn').disabled = false;
 }
@@ -129,7 +129,7 @@ function addStamp(){
     if(!pageEls.length) return;
     const pi = activePageIndex();
     const p = pageEls[pi];
-    const w = Math.min(170, p.w*0.32);
+    const w = Math.min(238, p.w*0.45);   // 40% kattaroq default
     const h = w * STAMP_RATIO;
     const x = (p.w - w)/2, y = (p.h - h)/2;
 
@@ -198,11 +198,12 @@ async function savePdf(){
         p.layer.querySelectorAll('.stamp').forEach(el=>{
             stamps.push({
                 page: p.pageNum,
-                xPct: parseFloat(el.style.left)/p.w,
-                yPct: parseFloat(el.style.top)/p.h,
-                wPct: parseFloat(el.style.width)/p.w,
-                hPct: parseFloat(el.style.height)/p.h,
+                cxPx: parseFloat(el.style.left) + parseFloat(el.style.width)/2,   // markaz (kanvas px)
+                cyPx: parseFloat(el.style.top)  + parseFloat(el.style.height)/2,
+                wPx:  parseFloat(el.style.width),
+                hPx:  parseFloat(el.style.height),
                 rot:  parseFloat(el.dataset.rot||0),
+                vp:   p.viewport,
             });
         });
     });
@@ -219,18 +220,23 @@ async function savePdf(){
 
         stamps.forEach(s=>{
             const pg = pages[s.page-1];
-            if(!pg) return;
-            const pw = pg.getWidth(), ph = pg.getHeight();
-            const w = s.wPct*pw, h = s.hPct*ph;
-            // Markaz (PDF koordinatasi, pastdan yuqoriga)
-            const cx = (s.xPct + s.wPct/2)*pw;
-            const cy = ph - (s.yPct + s.hPct/2)*ph;
-            // CSS soat yo'nalishida aylanadi -> pdf-lib teskari
-            const rad = (-s.rot) * Math.PI/180;
+            if(!pg || !s.vp) return;
+            // Kanvas markazini PDF koordinatasiga o'giramiz — CropBox, rotatsiya, masshtabni
+            // to'g'ri hisoblaydi (shu sababli har xil PDFlarda joyi siljimaydi).
+            const c = s.vp.convertToPdfPoint(s.cxPx, s.cyPx);
+            const mb = pg.getMediaBox();
+            const cx = c[0] - mb.x;
+            const cy = c[1] - mb.y;
+            const w = s.wPx / RENDER_SCALE;
+            const h = s.hPx / RENDER_SCALE;
+            const pageRot = pg.getRotation().angle;   // 0/90/180/270
+            // CSS soat yo'nalishida aylanadi -> pdf-lib teskari; sahifa rotatsiyasini ham qoplaymiz
+            const drawRot = -s.rot - pageRot;
+            const rad = drawRot * Math.PI/180;
             const dx = w/2, dy = h/2;
             const x = cx - (dx*Math.cos(rad) - dy*Math.sin(rad));
             const y = cy - (dx*Math.sin(rad) + dy*Math.cos(rad));
-            pg.drawImage(png, {x, y, width:w, height:h, rotate: degrees(-s.rot)});
+            pg.drawImage(png, {x, y, width:w, height:h, rotate: degrees(drawRot)});
         });
 
         const out = await doc.save();
