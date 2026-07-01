@@ -1291,8 +1291,12 @@ class KanbanBoard extends Page
 
         $paymentQueue = collect();
         if ($authUser?->isHisobchi() || $authUser?->canSeeAllProjects()) {
+            // To'lov navbati ham tanlangan oyga bog'lanadi (ustunlar bilan bir xil —
+            // loyiha OCHILGAN oyiga qarab), shunda eski oy so'rovlari yangi oyga o'tmaydi.
             $paymentQueue = Project::with(['assignedUsers', 'paymentRequester'])
                 ->whereNotNull('payment_requested_at')
+                ->whereYear('created_at', $this->kbYear)
+                ->whereMonth('created_at', $this->kbMonth)
                 ->orderBy('payment_requested_at', 'asc')
                 ->get();
         }
