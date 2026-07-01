@@ -230,8 +230,9 @@ async function savePdf(){
             const w = s.wPx / RENDER_SCALE;
             const h = s.hPx / RENDER_SCALE;
             const pageRot = pg.getRotation().angle;   // 0/90/180/270
-            // CSS soat yo'nalishida aylanadi -> pdf-lib teskari; sahifa rotatsiyasini ham qoplaymiz
-            const drawRot = -s.rot - pageRot;
+            // CSS soat yo'nalishida (-s.rot); sahifa /Rotate'ini qoplaymiz (+pageRot) —
+            // shunda rotatsiyali sahifada ham pechat tik (to'g'ri) chiqadi.
+            const drawRot = pageRot - s.rot;
             const rad = drawRot * Math.PI/180;
             const dx = w/2, dy = h/2;
             const x = cx - (dx*Math.cos(rad) - dy*Math.sin(rad));
