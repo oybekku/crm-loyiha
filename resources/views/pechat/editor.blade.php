@@ -17,6 +17,18 @@
     .btn-save{background:#22c55e;color:#fff}
     .btn-save:disabled{background:#6b7280;cursor:not-allowed}
     .btn-close{background:#374151;color:#fff}
+    .btn-sign{background:#0ea5e9;color:#fff}
+    .btn-sign2{background:#8b5cf6;color:#fff}
+    .sign-ov{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:none;align-items:center;justify-content:center;padding:16px}
+    .sign-box{background:#fff;border-radius:14px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.4);max-width:95vw}
+    .sign-hd{font-size:15px;font-weight:700;color:#111;margin-bottom:12px}
+    .sign-hd span{font-weight:400;color:#9ca3af;font-size:12px}
+    #signCanvas{border:2px dashed #cbd5e1;border-radius:10px;background:#fff;touch-action:none;cursor:crosshair;display:block;max-width:100%}
+    .sign-actions{display:flex;gap:10px;align-items:center;margin-top:12px}
+    .sign-actions button{border:none;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer}
+    .s-clear{background:#f1f5f9;color:#475569}
+    .s-cancel{background:#e5e7eb;color:#374151}
+    .s-done{background:#16a34a;color:#fff}
     .hint{font-size:12px;color:#fbbf24}
 
     #pages{padding:20px;display:flex;flex-direction:column;align-items:center;gap:18px}
@@ -47,11 +59,27 @@
 
 <div class="bar">
     <span class="title">📄 {{ $file->file_name }}</span>
-    <button class="btn-stamp" onclick="addStamp()">🖋 Pechat qo'shish</button>
-    <span class="hint">Pechatni suring · burchakdan kattalashtiring · ✕ o'chirish</span>
+    <button class="btn-stamp" onclick="addStamp()">🖋 Pechat</button>
+    <button class="btn-sign" onclick="openSignPad()">✍️ Imzo chizish</button>
+    <button class="btn-sign2" id="savedSigBtn" onclick="addSavedSignature()" style="display:none">♻️ Saqlangan imzo</button>
+    <span class="hint">Suring · kattalashtiring · aylantiring · ✕ o'chirish</span>
     <span class="spacer"></span>
     <button class="btn-save" id="saveBtn" onclick="savePdf()" disabled>💾 Saqlash</button>
     <button class="btn-close" onclick="window.close()">✕ Yopish</button>
+</div>
+
+{{-- ✍️ Imzo paneli --}}
+<div class="sign-ov" id="signOv">
+    <div class="sign-box">
+        <div class="sign-hd">✍️ Qo'l qo'ying <span>— sichqoncha yoki barmoq bilan chizing</span></div>
+        <canvas id="signCanvas" width="640" height="260"></canvas>
+        <div class="sign-actions">
+            <button class="s-clear" onclick="clearSign()">🧹 Tozalash</button>
+            <span style="flex:1"></span>
+            <button class="s-cancel" onclick="closeSignPad()">Bekor</button>
+            <button class="s-done" onclick="finishSign()">✓ Tayyor</button>
+        </div>
+    </div>
 </div>
 
 <div id="pages"><div class="loading">PDF yuklanmoqda...</div></div>
@@ -65,6 +93,8 @@ const SAVE_URL   = @json($saveUrl);
 const STAMP_SRC   = @json(route('pechat.asset', 'stamp.png').'?v=2');
 const STAMP_RATIO = 0.706;   // pechat.png nisbati (553/783)
 const PDFLIB_URL = @json(route('pechat.asset', 'pdf-lib.js'));
+const SIG_SAVE_URL = @json($sigSaveUrl);
+const SIG_URL      = @json($sigUrl);
 const CSRF       = document.querySelector('meta[name=csrf-token]').content;
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = @json(route('pechat.asset', 'pdf.worker.js'));
@@ -125,12 +155,14 @@ function activePageIndex(){
     return best;
 }
 
-function addStamp(){
+function addStamp(src, ratio){
     if(!pageEls.length) return;
+    src   = src || STAMP_SRC;
+    ratio = ratio || STAMP_RATIO;
     const pi = activePageIndex();
     const p = pageEls[pi];
     const w = Math.min(238, p.w*0.45);   // 40% kattaroq default
-    const h = w * STAMP_RATIO;
+    const h = w * ratio;
     const x = (p.w - w)/2, y = (p.h - h)/2;
 
     const el = document.createElement('div');
@@ -138,7 +170,8 @@ function addStamp(){
     el.style.left = x+'px'; el.style.top = y+'px';
     el.style.width = w+'px'; el.style.height = h+'px';
     el.dataset.rot = '0';
-    el.innerHTML = '<div class="ring"></div><img src="'+STAMP_SRC+'" alt=""><div class="del" title="O\'chirish">✕</div><div class="rsz" title="O\'lcham"></div><div class="rot" title="Aylantirish"></div>';
+    el.dataset.ratio = ratio;
+    el.innerHTML = '<div class="ring"></div><img src="'+src+'" alt=""><div class="del" title="O\'chirish">✕</div><div class="rsz" title="O\'lcham"></div><div class="rot" title="Aylantirish"></div>';
     p.layer.appendChild(el);
     selectStamp(el);
 
@@ -181,7 +214,8 @@ function makeDraggable(el, p){
             el.style.left=nx+'px'; el.style.top=ny+'px';
         } else if(mode==='resize'){
             let nw=Math.max(40, ow+(e.clientX-sx));
-            el.style.width=nw+'px'; el.style.height=(nw*STAMP_RATIO)+'px';
+            const rt=parseFloat(el.dataset.ratio)||STAMP_RATIO;
+            el.style.width=nw+'px'; el.style.height=(nw*rt)+'px';
         } else { // rotate
             let ang = Math.atan2(e.clientY-cy, e.clientX-cx)*180/Math.PI + 90;
             if(e.shiftKey) ang = Math.round(ang/15)*15;   // Shift bilan 15° qadam
@@ -204,6 +238,7 @@ async function savePdf(){
                 hPx:  parseFloat(el.style.height),
                 rot:  parseFloat(el.dataset.rot||0),
                 vp:   p.viewport,
+                src:  el.querySelector('img').src,
             });
         });
     });
@@ -214,13 +249,21 @@ async function savePdf(){
         await ensurePdfLib();
         const {PDFDocument, degrees} = PDFLib;
         const doc = await PDFDocument.load(pdfBytes.slice(0));
-        const pngBytes = await fetch(STAMP_SRC).then(r=>r.arrayBuffer());
-        const png = await doc.embedPng(pngBytes);
         const pages = doc.getPages();
+
+        // Har xil rasmni (pechat, imzo) bir marta embed qilamiz
+        const imgCache = {};
+        for(const s of stamps){
+            if(!imgCache[s.src]){
+                const bytes = await fetch(s.src).then(r=>r.arrayBuffer());
+                imgCache[s.src] = await doc.embedPng(bytes);
+            }
+        }
 
         stamps.forEach(s=>{
             const pg = pages[s.page-1];
             if(!pg || !s.vp) return;
+            const png = imgCache[s.src];
             // Kanvas markazini PDF koordinatasiga o'giramiz — CropBox, rotatsiya, masshtabni
             // to'g'ri hisoblaydi (shu sababli har xil PDFlarda joyi siljimaydi).
             const c = s.vp.convertToPdfPoint(s.cxPx, s.cyPx);
@@ -266,6 +309,48 @@ async function savePdf(){
 
 function showOv(t){ document.getElementById('ovText').textContent=t; document.getElementById('ov').style.display='flex'; }
 function hideOv(){ document.getElementById('ov').style.display='none'; }
+
+// ── ✍️ IMZO PANELI ──
+let signCtx=null, signDrawn=false, signInit=false, savedSig=null;
+function openSignPad(){
+    const c=document.getElementById('signCanvas');
+    signCtx=c.getContext('2d');
+    signCtx.lineWidth=2.6; signCtx.lineCap='round'; signCtx.lineJoin='round'; signCtx.strokeStyle='#0a2a6b';
+    clearSign();
+    document.getElementById('signOv').style.display='flex';
+    if(!signInit){ setupSignDraw(c); signInit=true; }
+}
+function closeSignPad(){ document.getElementById('signOv').style.display='none'; }
+function clearSign(){ if(!signCtx) return; const c=document.getElementById('signCanvas'); signCtx.clearRect(0,0,c.width,c.height); signDrawn=false; }
+function setupSignDraw(c){
+    let drawing=false, lx=0, ly=0;
+    const pos=e=>{ const r=c.getBoundingClientRect(); const sx=c.width/r.width, sy=c.height/r.height;
+        const p=e.touches?e.touches[0]:e; return [(p.clientX-r.left)*sx,(p.clientY-r.top)*sy]; };
+    const start=e=>{ drawing=true; [lx,ly]=pos(e); e.preventDefault(); };
+    const move=e=>{ if(!drawing) return; const [x,y]=pos(e); signCtx.beginPath(); signCtx.moveTo(lx,ly); signCtx.lineTo(x,y); signCtx.stroke(); lx=x; ly=y; signDrawn=true; e.preventDefault(); };
+    const end=()=>{ drawing=false; };
+    c.addEventListener('mousedown',start); c.addEventListener('mousemove',move); window.addEventListener('mouseup',end);
+    c.addEventListener('touchstart',start,{passive:false}); c.addEventListener('touchmove',move,{passive:false}); window.addEventListener('touchend',end);
+}
+async function finishSign(){
+    if(!signDrawn){ alert("Avval qo'l qo'ying"); return; }
+    const c=document.getElementById('signCanvas');
+    const dataUrl=c.toDataURL('image/png');
+    closeSignPad();
+    addStamp(dataUrl, c.height/c.width);       // shaffof imzoni PDFga joylaymiz
+    savedSig=dataUrl;
+    document.getElementById('savedSigBtn').style.display='';
+    try{ await fetch(SIG_SAVE_URL, {method:'POST', headers:{'Content-Type':'application/json','X-CSRF-TOKEN':CSRF}, body:JSON.stringify({img:dataUrl})}); }catch(e){}
+}
+function addSavedSignature(){
+    const src = savedSig || (SIG_URL ? SIG_URL + '?t=' + Date.now() : '');
+    if(!src) return;
+    const img=new Image();
+    img.onload=()=>{ addStamp(img.src, img.height/img.width); };
+    img.onerror=()=>{ alert('Saqlangan imzo topilmadi'); };
+    img.src=src;
+}
+if(SIG_URL){ document.getElementById('savedSigBtn').style.display=''; }
 
 init();
 </script>

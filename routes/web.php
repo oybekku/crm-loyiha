@@ -111,9 +111,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/pechat/{file}', function (\App\Models\ProjectFile $file) {
         abort_unless(auth()->user()?->isAdmin(), 403);
         return view('pechat.editor', [
-            'file'    => $file,
-            'pdfUrl'  => route('pechat.pdf', $file),
-            'saveUrl' => route('pechat.save', $file),
+            'file'       => $file,
+            'pdfUrl'     => route('pechat.pdf', $file),
+            'saveUrl'    => route('pechat.save', $file),
+            'sigSaveUrl' => route('pechat.signature.save', $file),
+            'sigUrl'     => $file->project?->signature_path ? route('pechat.signature', $file) : null,
         ]);
     })->name('pechat.editor');
 
@@ -156,6 +158,37 @@ Route::middleware(['auth'])->group(function () {
 
         return response()->json(['ok' => true, 'name' => $newName, 'id' => $newFile->id]);
     })->name('pechat.save');
+
+    // ── Loyiha imzosi (mijoz qo'l qo'yadi — shaffof PNG, loyihaga saqlanadi) ──
+    Route::post('/pechat/{file}/signature', function (\Illuminate\Http\Request $request, \App\Models\ProjectFile $file) {
+        abort_unless(auth()->user()?->isAdmin(), 403);
+        $data = (string) $request->input('img');
+        $data = preg_replace('#^data:image/\w+;base64,#', '', $data);
+        $bytes = base64_decode($data, true);
+        if ($bytes === false || strlen($bytes) < 50) {
+            return response()->json(['ok' => false, 'message' => "Noto'g'ri imzo"]);
+        }
+        $project = $file->project;
+        if (!$project) return response()->json(['ok' => false, 'message' => 'Loyiha topilmadi']);
+
+        $disk = \Illuminate\Support\Facades\Storage::disk('public');
+        $path = 'signatures/' . $project->id . '.png';
+        $disk->put($path, $bytes);
+        $project->update(['signature_path' => $path]);
+
+        return response()->json(['ok' => true]);
+    })->name('pechat.signature.save');
+
+    Route::get('/pechat/{file}/signature', function (\App\Models\ProjectFile $file) {
+        abort_unless(auth()->user()?->isAdmin(), 403);
+        $path = $file->project?->signature_path;
+        $disk = \Illuminate\Support\Facades\Storage::disk('public');
+        abort_unless($path && $disk->exists($path), 404);
+        return response($disk->get($path), 200, [
+            'Content-Type'  => 'image/png',
+            'Cache-Control' => 'no-store',
+        ]);
+    })->name('pechat.signature');
 
     // ── GENPLAN: tanlangan PDFlarni muqova + sertifikat bilan yig'ish (faqat admin) ──
     Route::get('/genplan/{project}/merge', function (\App\Models\Project $project) {
