@@ -1700,7 +1700,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 @if($showPaymentModal)
 @php $payProj = \App\Models\Project::with('payments')->find($paymentProjectId); @endphp
 <div style="position:fixed;inset:0;z-index:1300;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)">
-    <div style="background:#fff;border-radius:16px;width:100%;max-width:460px;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.2)" wire:click.stop>
+    <div style="background:#fff;border-radius:16px;width:100%;max-width:460px;max-height:92vh;overflow-y:auto;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.2)" wire:click.stop>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
             <h3 style="font-size:16px;font-weight:700;color:#111827;margin:0">To'lov qo'shish</h3>
             <button wire:click="closePaymentModal" style="border:none;background:none;cursor:pointer;color:#6b7280;font-size:20px;line-height:1">×</button>
@@ -1895,7 +1895,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
         </div>
         @endif
 
-        <div style="display:flex;gap:10px;margin-top:20px">
+        <div style="display:flex;gap:10px;margin-top:20px;position:sticky;bottom:-28px;background:#fff;padding:14px 0 4px;border-top:1px solid #eef2f7;z-index:2">
             <button wire:click="closePaymentModal"
                     style="flex:1;padding:11px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;color:#374151;cursor:pointer;font-size:13px;font-weight:500">
                 Bekor qilish
