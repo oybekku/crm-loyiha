@@ -1577,7 +1577,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 @if($showRouteModal)
 @php $routeProj = \App\Models\Project::find($routeProjectId); @endphp
 <div style="position:fixed;inset:0;z-index:1300;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)">
-    <div style="background:#fff;border-radius:16px;width:100%;max-width:440px;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.2)" wire:click.stop>
+    <div style="background:#fff;border-radius:16px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.2)" wire:click.stop>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
             <h3 style="font-size:16px;font-weight:700;color:#111827;margin:0">Loyihani yo'naltirish</h3>
             <button wire:click="closeRouteModal" style="border:none;background:none;cursor:pointer;color:#6b7280;font-size:20px;line-height:1">×</button>
@@ -1915,7 +1915,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 @if($showEditPaymentModal)
 @php $editPmt = \App\Models\Payment::with('project')->find($editPaymentId); @endphp
 <div style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1400;display:flex;align-items:center;justify-content:center;padding:16px">
-    <div style="background:#fff;border-radius:14px;width:100%;max-width:380px;padding:24px;box-shadow:0 25px 80px rgba(0,0,0,.3)" wire:click.stop>
+    <div style="background:#fff;border-radius:14px;width:100%;max-width:380px;max-height:90vh;overflow-y:auto;padding:24px;box-shadow:0 25px 80px rgba(0,0,0,.3)" wire:click.stop>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
             <div style="display:flex;align-items:center;gap:8px">
                 <svg width="18" height="18" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -2039,7 +2039,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 @endphp
 <div style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1200;display:flex;align-items:center;justify-content:center;padding:16px"
      wire:click.self="closeAreaModal">
-<div style="background:#fff;border-radius:16px;width:100%;max-width:420px;padding:24px;box-shadow:0 25px 80px rgba(0,0,0,.3)" wire:click.stop>
+<div style="background:#fff;border-radius:16px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;padding:24px;box-shadow:0 25px 80px rgba(0,0,0,.3)" wire:click.stop>
 
     {{-- Header --}}
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px">
@@ -2113,7 +2113,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 @endphp
 <div style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1200;display:flex;align-items:center;justify-content:center;padding:16px"
      wire:click.self="closeDiscountModal">
-<div style="background:#fff;border-radius:16px;width:100%;max-width:440px;padding:24px;box-shadow:0 25px 80px rgba(0,0,0,.3)" wire:click.stop>
+<div style="background:#fff;border-radius:16px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto;padding:24px;box-shadow:0 25px 80px rgba(0,0,0,.3)" wire:click.stop>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
         <div style="display:flex;align-items:center;gap:8px">
             <svg width="20" height="20" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01M12 10h.01M8 10h.01M12 14h.01M8 14h.01M12 18h.01M8 18h.01"/></svg>
