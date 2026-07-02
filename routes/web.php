@@ -83,6 +83,9 @@ Route::get('/pechat-asset/{name}', function (string $name) {
         'pdf.worker.js' => ['js/pechat/pdf.worker.min.js', 'application/javascript'],
         'pdf-lib.js'    => ['js/pechat/pdf-lib.min.js',    'application/javascript'],
         'stamp.png'     => ['images/pechat.png',           'image/png'],
+        'certificate.pdf' => ['pdf/my-perfect-home.pdf',   'application/pdf'],
+        'obloshka1.png' => ['images/obloshka-1qavat.png',  'image/png'],
+        'obloshka2.png' => ['images/obloshka-2qavat.png',  'image/png'],
     ];
     abort_unless(isset($map[$name]), 404);
     [$rel, $mime] = $map[$name];
@@ -153,6 +156,45 @@ Route::middleware(['auth'])->group(function () {
 
         return response()->json(['ok' => true, 'name' => $newName, 'id' => $newFile->id]);
     })->name('pechat.save');
+
+    // ── GENPLAN: tanlangan PDFlarni muqova + sertifikat bilan yig'ish (faqat admin) ──
+    Route::get('/genplan/{project}/merge', function (\App\Models\Project $project) {
+        abort_unless(auth()->user()?->isAdmin(), 403);
+        $ids   = array_filter(array_map('intval', explode(',', (string) request('files'))));
+        $files = \App\Models\ProjectFile::whereIn('id', $ids)
+            ->where('project_id', $project->id)
+            ->orderByRaw('FIELD(id, ' . (implode(',', $ids) ?: '0') . ')')
+            ->get(['id', 'file_name']);
+        return view('genplan.merge', [
+            'project' => $project,
+            'files'   => $files,
+            'saveUrl' => route('genplan.merge.save', $project),
+        ]);
+    })->name('genplan.merge');
+
+    Route::post('/genplan/{project}/merge/save', function (\Illuminate\Http\Request $request, \App\Models\Project $project) {
+        abort_unless(auth()->user()?->isAdmin(), 403);
+        $bytes = base64_decode((string) $request->input('pdf'), true);
+        if ($bytes === false || strlen($bytes) < 100) {
+            return response()->json(['ok' => false, 'message' => "Noto'g'ri PDF"]);
+        }
+        $disk    = \Illuminate\Support\Facades\Storage::disk('public');
+        $newName = 'GENPLAN_' . preg_replace('/[^A-Za-z0-9]+/', '_', $project->owner_name ?: 'loyiha') . '.pdf';
+        $newPath = 'project-files/' . $project->id . '/' . \Illuminate\Support\Str::random(6) . '_' . $newName;
+        $disk->put($newPath, $bytes);
+
+        $newFile = \App\Models\ProjectFile::create([
+            'project_id'  => $project->id,
+            'file_name'   => $newName,
+            'file_path'   => $newPath,
+            'file_type'   => 'application/pdf',
+            'file_size'   => strlen($bytes),
+            'category'    => 'genplan',
+            'uploaded_by' => auth()->id(),
+        ]);
+
+        return response()->json(['ok' => true, 'name' => $newName, 'id' => $newFile->id]);
+    })->name('genplan.merge.save');
 
     Route::get('/print/project/{project}/obloshka', function (\App\Models\Project $project) {
         return view('print.obloshka', compact('project'));

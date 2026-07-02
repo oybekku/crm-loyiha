@@ -36,6 +36,7 @@ class ProjectEditModal extends Component
     public $ei_newFiles              = [];
     public array  $ei_genplan        = [];
     public $ei_newGenplan            = [];
+    public array  $ei_genplanSel     = [];   // yig'ish uchun belgilangan PDF id lar
     public string $ei_status         = '';
     public bool   $ei_paymentRequested = false;
     public string $ei_newSvcType     = '';
@@ -64,6 +65,7 @@ class ProjectEditModal extends Component
         $this->ei_genplan     = $this->buildEiFiles($p, 'genplan');
         $this->ei_newFiles    = [];
         $this->ei_newGenplan  = [];
+        $this->ei_genplanSel  = [];
         $this->ei_status      = $p->status;
         $this->ei_paymentRequested = (bool) $p->payment_requested_at;
         $this->showEditInfoModal = true;
@@ -98,6 +100,18 @@ class ProjectEditModal extends Component
         $p = Project::find($this->editInfoId);
         if ($p) $this->ei_services = $this->buildEiServices($p);
         $this->dispatch('kb-refresh'); // doskadagi karta ham yangilansin
+    }
+
+    // GENPLAN: belgilangan PDFlarni muqova+sertifikat bilan yig'ish sahifasini ochadi
+    public function eiMerge(): void
+    {
+        $ids = array_values(array_filter(array_map('intval', $this->ei_genplanSel)));
+        if (empty($ids)) {
+            $this->dispatch('notify', type: 'error', message: "Avval kamida bitta PDF belgilang");
+            return;
+        }
+        $url = route('genplan.merge', $this->editInfoId) . '?files=' . implode(',', $ids);
+        $this->js("window.open(" . json_encode($url) . ", '_blank')");
     }
 
     public function eiAddPhone(): void { $this->ei_phones[] = '+998'; }
