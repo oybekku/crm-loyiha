@@ -789,8 +789,8 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                 @endif
             </div>
 
-            {{-- ACTION BUTTONS --}}
-            <div class="card-actions" style="display:flex;flex-wrap:wrap;gap:5px;align-items:center">
+            {{-- ACTION BUTTONS — kartada yashirilgan (amallar edit modalda bor) --}}
+            <div class="card-actions" style="display:none">
                 @if(auth()->user()?->canSeeAllProjects())
                 <div x-data="{ open: false }" style="position:relative" @click.outside="open=false">
                     <button class="p-move-btn" @click.stop="open=!open" ondragstart="event.stopPropagation();event.preventDefault()">
