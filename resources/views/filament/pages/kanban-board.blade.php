@@ -51,11 +51,11 @@
 @keyframes kbn-zpulse{0%,100%{box-shadow:0 0 10px -2px rgba(249,115,22,.7)}50%{box-shadow:0 0 18px 0 rgba(239,68,68,.9)}}
 .kbn-card.kbn-fire{border-color:#ea580c!important;overflow:visible!important;animation:kbn-ember 2s ease-in-out infinite}
 .kbn-card.kbn-fire .kbn-vside{border-radius:12px 0 0 12px}
-.kbn-card.kbn-fire::before{content:"";position:absolute;top:0;left:0;right:0;height:26px;border-radius:13px 13px 0 0;background:linear-gradient(180deg,rgba(249,115,22,.20),transparent);z-index:1;pointer-events:none}
-.kbn-lot{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(100% - 78px);width:120px;height:120px;pointer-events:none;z-index:6;filter:drop-shadow(0 0 8px rgba(249,115,22,.5))}
+/* Olov — kartaning bo'sh markazida */
+.kbn-lot{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:96px;height:96px;pointer-events:none;z-index:1;filter:drop-shadow(0 0 7px rgba(249,115,22,.5))}
 .kbn-zudlik{display:inline-flex;align-items:center;gap:4px;background:linear-gradient(180deg,#f97316,#dc2626);color:#fff;font-size:10px;font-weight:800;letter-spacing:.04em;padding:3px 11px;border-radius:20px;white-space:nowrap;box-shadow:0 0 10px -1px #f97316;animation:kbn-zpulse 1.4s ease-in-out infinite}
-.kbn-accept{margin-top:7px;display:inline-flex;align-items:center;gap:5px;background:#16a34a;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:800;cursor:pointer;box-shadow:0 2px 8px -2px rgba(22,163,74,.6);white-space:nowrap}
-.kbn-accept:hover{background:#15803d}
+.kbn-accept-float{position:absolute;bottom:-12px;left:50%;transform:translateX(-50%);z-index:7;display:inline-flex;align-items:center;gap:5px;background:#16a34a;color:#fff;border:none;border-radius:20px;padding:5px 14px;font-size:11px;font-weight:800;cursor:pointer;box-shadow:0 3px 10px -2px rgba(22,163,74,.7);white-space:nowrap;pointer-events:auto}
+.kbn-accept-float:hover{background:#15803d}
 .dark .p-card{background:#1e2533;border-color:#2d3748}
 .p-card:hover{border-color:#93c5fd;box-shadow:0 3px 10px rgba(0,0,0,.10)}
 .p-card.dragging{opacity:.4;cursor:grabbing}
@@ -583,21 +583,25 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                         </div>
                     </div>
                     <div style="flex-shrink:0;text-align:right;font-variant-numeric:tabular-nums">
-                        @if($isUrgent)
-                        <div style="margin-bottom:5px"><span class="kbn-zudlik">🔥 ZUDLIK</span></div>
-                        @endif
-                        <div style="margin-bottom:6px"><span class="kbn-badge" style="background:{{ $wsC['color'] }};display:inline-block;padding:3px 12px;border-radius:20px;font-size:10px;font-weight:800;letter-spacing:.03em;white-space:nowrap">{{ $wsC['label'] }}</span></div>
+                        <div style="margin-bottom:6px">
+                            @if($isUrgent)
+                            <span class="kbn-zudlik">🔥 ZUDLIK</span>
+                            @else
+                            <span class="kbn-badge" style="background:{{ $wsC['color'] }};display:inline-block;padding:3px 12px;border-radius:20px;font-size:10px;font-weight:800;letter-spacing:.03em;white-space:nowrap">{{ $wsC['label'] }}</span>
+                            @endif
+                        </div>
                         @if($project->total_price > 0)
                         <div style="font-size:11px;white-space:nowrap"><span class="kbn-muted">Umumiy</span> <b style="color:#334155">{{ number_format($project->total_price,0,'.',' ') }}</b></div>
                         <div style="font-size:11px;white-space:nowrap"><span class="kbn-muted">To'langan</span> <b class="kbn-paid">{{ number_format($project->paid_amount,0,'.',' ') }}</b></div>
                         @if($qcC>0)<div style="font-size:11px;white-space:nowrap"><span class="kbn-muted">Qoldiq</span> <b class="kbn-debt">{{ number_format($qcC,0,'.',' ') }}</b></div>
                         @else<div style="font-size:11px;white-space:nowrap"><span class="kbn-paid">✓ To'liq to'langan</span></div>@endif
                         @endif
-                        @if($canAcceptUrgent)
-                        <div><button type="button" wire:click="acceptUrgent({{ $project->id }})" class="kbn-accept" title="Zudlik ishni qabul qildim — olov o'chadi">✅ Qabul qildim</button></div>
-                        @endif
                     </div>
                 </div>
+                {{-- Qabul qildim — suzuvchi (karta tanasini kattalashtirmaydi) --}}
+                @if($canAcceptUrgent)
+                <button type="button" wire:click="acceptUrgent({{ $project->id }})" class="kbn-accept-float" title="Zudlik ishni qabul qildim — olov o'chadi">✅ Qabul qildim</button>
+                @endif
             </div>
 
             {{-- TOP ROW (ochilgan header): barmoq + ism + muddat + sana --}}
