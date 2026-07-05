@@ -24,6 +24,8 @@
 .col-body.drag-over{background:#dbeafe;outline:2px dashed #3b82f6;outline-offset:-4px}
 /* Card */
 .p-card{background:#fff;border-radius:12px;padding:12px 14px;box-shadow:0 1px 4px rgba(0,0,0,.07);cursor:grab;border:1.5px solid #e5e7eb;transition:border-color .15s,box-shadow .15s,opacity .15s}
+.kb-wcard{display:flex;align-items:stretch}   /* yig'ilgan keng karta — display:flex klassda (x-show buzmasligi uchun) */
+.kb-frow{display:flex;align-items:center}      /* ochilgan header qatori */
 .dark .p-card{background:#1e2533;border-color:#2d3748}
 .p-card:hover{border-color:#93c5fd;box-shadow:0 3px 10px rgba(0,0,0,.10)}
 .p-card.dragging{opacity:.4;cursor:grabbing}
@@ -520,7 +522,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                 $empsC = $project->services->map(fn($s)=>$s->assignedUser?->name)->filter()->unique()->values();
                 $qcC   = max(0,(float)$project->total_price-(float)$project->paid_amount);
             @endphp
-            <div x-show="collapsed" style="display:flex;align-items:stretch;margin:-8px -10px;border-radius:12px;overflow:hidden;min-height:120px">
+            <div x-show="collapsed" class="kb-wcard" style="margin:-8px -10px;border-radius:12px;overflow:hidden;min-height:120px">
                 {{-- V blok (bosilsa to'liq ochiladi) --}}
                 <div @click.stop="collapsed=false" style="flex-shrink:0;align-self:stretch;width:100px;cursor:pointer;background:{{ $wsC['color'] }};display:flex;align-items:center;justify-content:center" title="To'liq ochish">
                     <svg width="62" height="62" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="5 9 12 17 19 9"/></svg>
@@ -553,7 +555,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             </div>
 
             {{-- TOP ROW (ochilgan header): barmoq + ism + muddat + sana --}}
-            <div x-show="!collapsed" style="display:flex;align-items:center;gap:5px;margin-bottom:5px">
+            <div x-show="!collapsed" class="kb-frow" style="gap:5px;margin-bottom:5px">
                 @php $ws = \App\Models\Project::workStatusOptions()[$project->work_status ?? 'yangi'] ?? ['label'=>'Yangi','color'=>'#3b82f6']; @endphp
                 <button @click.stop="collapsed=!collapsed"
                         style="flex-shrink:0;width:44px;align-self:stretch;min-height:40px;border:none;border-radius:9px;cursor:pointer;background:{{ $ws['color'] }};color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.12);transition:all .15s"
