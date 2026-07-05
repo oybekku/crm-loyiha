@@ -654,6 +654,16 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 
             <div x-show="!collapsed" x-collapse>
 
+            {{-- ZUDLIK banneri (ochilgan kartada) + Qabul qildim --}}
+            @if($isUrgent)
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px;padding:8px 11px;border:1.5px solid #fca5a5;border-radius:10px;background:linear-gradient(90deg,#fff7ed,#fef2f2)">
+                <span style="font-size:12px;font-weight:800;color:#c2410c;display:inline-flex;align-items:center;gap:5px">🔥 Zudlik bilan qilinsin!</span>
+                @if($canAcceptUrgent)
+                <button type="button" wire:click="acceptUrgent({{ $project->id }})" style="display:inline-flex;align-items:center;gap:5px;background:#16a34a;color:#fff;border:none;border-radius:8px;padding:6px 13px;font-size:12px;font-weight:800;cursor:pointer;box-shadow:0 2px 8px -2px rgba(22,163,74,.6)">✅ Qabul qildim</button>
+                @endif
+            </div>
+            @endif
+
             {{-- Raqam (katta holatda) --}}
             <div style="margin-bottom:6px">
                 <span style="background:{{ $status['color'] }};color:#fff;border-radius:6px;font-size:11px;font-weight:800;padding:2px 9px">{{ $project->number }}</span>
