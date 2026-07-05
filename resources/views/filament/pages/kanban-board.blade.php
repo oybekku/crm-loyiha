@@ -516,16 +516,15 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 
             {{-- TOP ROW: barmoq + ism + muddat + sana --}}
             <div style="display:flex;align-items:center;gap:5px;margin-bottom:5px">
+                @php $ws = \App\Models\Project::workStatusOptions()[$project->work_status ?? 'yangi'] ?? ['label'=>'Yangi','color'=>'#3b82f6']; @endphp
                 <button @click.stop="collapsed=!collapsed"
-                        style="flex-shrink:0;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:6px;cursor:pointer;padding:4px 6px;line-height:1;transition:all .15s;display:flex;align-items:center;justify-content:center"
-                        :style="collapsed ? 'color:#6b7280' : 'color:#374151;background:#e5e7eb'"
-                        :title="collapsed ? 'Ochish' : 'Yopish'">
-                    <svg width="27" height="27" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" :style="collapsed ? 'transform:rotate(-90deg)' : 'transform:rotate(0deg)'" style="transition:transform .2s">
-                        <path d="M6 9l6 6 6-6"/>
-                    </svg>
+                        style="flex-shrink:0;width:44px;align-self:stretch;min-height:40px;border:none;border-radius:9px;cursor:pointer;background:{{ $ws['color'] }};color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.12);transition:all .15s"
+                        :title="collapsed ? 'To\'liq ochish' : 'Yopish'">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" :style="collapsed ? '' : 'transform:rotate(180deg)'" style="transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
                 </button>
-                <div class="p-owner" style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0;font-size:11px;display:flex;align-items:center;gap:5px">
-                    <span>{{ $project->owner_name }}</span>
+                <div class="p-owner" style="flex:1;min-width:0;margin:0;font-size:12.5px;display:flex;align-items:center;gap:6px;overflow:hidden">
+                    <span style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $project->owner_name }}</span>
+                    <span style="flex-shrink:0;font-size:9px;font-weight:700;color:#fff;background:{{ $ws['color'] }};border-radius:11px;padding:2px 9px;white-space:nowrap">{{ $ws['label'] }}</span>
                     @if($project->created_at->diffInHours(now()) < 24)
                     <span style="font-size:9px;font-weight:700;background:#dcfce7;color:#16a34a;border-radius:4px;padding:1px 5px;white-space:nowrap;animation:blink-new 1.5s ease-in-out infinite;flex-shrink:0">Yangi</span>
                     @endif
@@ -561,6 +560,17 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                     </button>
                     <span style="font-size:9px;color:#9ca3af;white-space:nowrap">{{ $project->created_at->format('d-M') }}</span>
                 </div>
+            </div>
+
+            {{-- Yig'ilganda: hodimlar + qoldiq (V blok tagida) --}}
+            @php $emps = $project->services->map(fn($s)=>$s->assignedUser?->name)->filter()->unique()->values(); $qc = max(0,(float)$project->total_price-(float)$project->paid_amount); @endphp
+            <div x-show="collapsed" style="display:flex;align-items:center;justify-content:space-between;gap:6px;padding-left:53px;margin-top:1px">
+                <span style="font-size:10px;color:#6366f1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $emps->isNotEmpty() ? '👷 '.$emps->join(', ') : '—' }}</span>
+                @if($qc > 0)
+                <span style="font-size:10px;font-weight:700;color:#ef4444;white-space:nowrap;flex-shrink:0">Qoldiq: {{ number_format($qc,0,'.',' ') }}</span>
+                @elseif($project->total_price > 0)
+                <span style="font-size:10px;font-weight:700;color:#16a34a;white-space:nowrap;flex-shrink:0">✓ To'langan</span>
+                @endif
             </div>
 
             <div x-show="!collapsed" x-collapse>
