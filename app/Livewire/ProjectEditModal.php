@@ -39,6 +39,7 @@ class ProjectEditModal extends Component
     public array  $ei_genplanSel     = [];   // yig'ish uchun belgilangan PDF id lar
     public string $ei_status         = '';
     public string $ei_workStatus     = 'yangi';
+    public bool   $ei_isUrgent       = false;
     public bool   $ei_paymentRequested = false;
     public string $ei_mygovLogin     = '';
     public string $ei_mygovPassword  = '';
@@ -72,6 +73,7 @@ class ProjectEditModal extends Component
         $this->ei_genplanSel  = [];
         $this->ei_status      = $p->status;
         $this->ei_workStatus  = $p->work_status ?? 'yangi';
+        $this->ei_isUrgent    = (bool) $p->is_urgent;
         $this->ei_paymentRequested = (bool) $p->payment_requested_at;
         $this->ei_mygovLogin    = $this->canMygov($p) ? ($p->mygov_login ?? '') : '';
         $this->ei_mygovPassword = $this->canMygov($p) ? ($p->mygov_password ?? '') : '';
@@ -141,6 +143,29 @@ class ProjectEditModal extends Component
         $this->ei_workStatus = $ws;
         $this->dispatch('kb-refresh');
         $this->dispatch('notify', type: 'success', message: "Ish holati yangilandi");
+    }
+
+    // ── Zudlik bilan (olov) — faqat admin/menejer yoqadi/o'chiradi ──
+    public function eiToggleUrgent(): void
+    {
+        $u = auth()->user();
+        if (!$u || !$u->canSeeAllProjects()) {
+            $this->dispatch('notify', type: 'error', message: "Ruxsat yo'q");
+            return;
+        }
+        $p = Project::find($this->editInfoId);
+        if (!$p) return;
+
+        $on = !$p->is_urgent;
+        $p->update([
+            'is_urgent'          => $on,
+            // qayta yoqilganda oldingi "qabul" tozalanadi
+            'urgent_accepted_at' => $on ? null : $p->urgent_accepted_at,
+            'urgent_accepted_by' => $on ? null : $p->urgent_accepted_by,
+        ]);
+        $this->ei_isUrgent = $on;
+        $this->dispatch('kb-refresh');
+        $this->dispatch('notify', type: 'success', message: $on ? "🔥 Zudlik yoqildi" : "Zudlik o'chirildi");
     }
 
     // ── MyGOV (my.gov.uz) login/parol — admin/menejer/mas'ul hodim ──
@@ -406,6 +431,18 @@ class ProjectEditModal extends Component
 
         $canMygov = $this->editInfoId ? $this->canMygov() : false;
 
-        return view('livewire.project-edit-modal', compact('statuses', 'users', 'canMygov'));
+        // Oxirgi "Qabul qildim" ma'lumoti (kim/qachon)
+        $urgentAccepted = null;
+        if ($this->editInfoId) {
+            $p = Project::find($this->editInfoId);
+            if ($p && $p->urgent_accepted_at) {
+                $urgentAccepted = [
+                    'name' => User::find($p->urgent_accepted_by)?->name ?? 'Hodim',
+                    'at'   => $p->urgent_accepted_at,
+                ];
+            }
+        }
+
+        return view('livewire.project-edit-modal', compact('statuses', 'users', 'canMygov', 'urgentAccepted'));
     }
 }

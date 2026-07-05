@@ -16,6 +16,7 @@ class Project extends Model
         'total_price', 'paid_amount', 'deadline_date', 'timer_paused_at',
         'payment_requested_at', 'payment_requested_by',
         'mygov_login', 'mygov_password',
+        'is_urgent', 'urgent_accepted_at', 'urgent_accepted_by',
     ];
 
     protected $casts = [
@@ -28,6 +29,8 @@ class Project extends Model
         'timer_paused_at'       => 'datetime',
         'payment_requested_at'  => 'datetime',
         'mygov_password'        => 'encrypted',
+        'is_urgent'             => 'boolean',
+        'urgent_accepted_at'    => 'datetime',
     ];
 
     protected static function booted(): void

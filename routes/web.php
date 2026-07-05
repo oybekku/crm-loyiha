@@ -86,6 +86,8 @@ Route::get('/pechat-asset/{name}', function (string $name) {
         'certificate.pdf' => ['pdf/my-perfect-home.pdf',   'application/pdf'],
         'obloshka1.png' => ['images/obloshka-1qavat.png',  'image/png'],
         'obloshka2.png' => ['images/obloshka-2qavat.png',  'image/png'],
+        'lottie.js'     => ['js/lottie_light.min.js',      'application/javascript'],
+        'fire.json'     => ['lottie/fire.json',            'application/json'],
     ];
     abort_unless(isset($map[$name]), 404);
     [$rel, $mime] = $map[$name];

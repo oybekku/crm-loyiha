@@ -350,6 +350,28 @@ class KanbanBoard extends Page
         $this->dispatch('notify', type: 'success', message: 'Loyiha tugallandi!');
     }
 
+    // Zudlik olovini "Qabul qildim" — mas'ul hodim yoki admin/menejer o'chiradi
+    public function acceptUrgent(int $projectId): void
+    {
+        $project = Project::find($projectId);
+        if (!$project || !$project->is_urgent) return;
+
+        $u = auth()->user();
+        $isAssigned = $u && $project->services()->where('assigned_user_id', $u->id)->exists();
+        if (!$u || (!$u->canSeeAllProjects() && !$isAssigned)) {
+            $this->dispatch('notify', type: 'error', message: "Ruxsat yo'q");
+            return;
+        }
+
+        $project->update([
+            'is_urgent'          => false,
+            'urgent_accepted_at' => now(),
+            'urgent_accepted_by' => $u->id,
+        ]);
+
+        $this->dispatch('notify', type: 'success', message: "Qabul qilindi — olov o'chdi");
+    }
+
     public function markUncomplete(int $projectId): void
     {
         if (!auth()->user()?->isAdmin() && !auth()->user()?->isMenejer()) return;

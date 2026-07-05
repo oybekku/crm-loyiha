@@ -51,6 +51,14 @@
             @endif
 
             @if(auth()->user()?->isAdmin() || auth()->user()?->isMenejer())
+            <button type="button" wire:click="eiToggleUrgent"
+                    style="padding:6px 11px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;{{ $ei_isUrgent ? 'border:1px solid #dc2626;background:linear-gradient(180deg,#f97316,#dc2626);color:#fff;box-shadow:0 0 10px -2px #f97316' : 'border:1px solid #fdba74;background:#fff7ed;color:#c2410c' }}"
+                    title="Zudlik bilan qilinsin — karta yonadi">
+                🔥 {{ $ei_isUrgent ? 'Zudlik: YONMOQDA' : 'Zudlik' }}
+            </button>
+            @endif
+
+            @if(auth()->user()?->isAdmin() || auth()->user()?->isMenejer())
                 @if($ei_status === 'tugallangan')
                 <button type="button" wire:click="eiMarkUncomplete" wire:confirm="Loyihani jarayonga qaytarmoqchimisiz?" style="padding:6px 11px;border-radius:7px;border:1px solid #86efac;background:#dcfce7;color:#16a34a;font-size:12px;font-weight:700;cursor:pointer">✓ Tugallandi</button>
                 @else
@@ -88,6 +96,13 @@
             </div>
             <button type="button" wire:click="eiSaveMygov" style="padding:8px 16px;border-radius:8px;border:none;background:#4338ca;color:#fff;font-size:13px;font-weight:700;cursor:pointer">💾 MyGOV saqlash</button>
             <div style="font-size:10px;color:#6366f1;margin-top:8px">🔒 Parol bazada shifrlangan holda saqlanadi.</div>
+        </div>
+        @endif
+
+        {{-- Zudlik "Qabul qildim" yozuvi (kim/qachon) --}}
+        @if($urgentAccepted)
+        <div style="margin-bottom:14px;padding:9px 13px;border:1px solid #bbf7d0;border-radius:9px;background:#f0fdf4;font-size:12.5px;color:#15803d;font-weight:600;display:flex;align-items:center;gap:7px">
+            ✅ Zudlik ishni <b>{{ $urgentAccepted['name'] }}</b> qabul qildi — {{ $urgentAccepted['at']->translatedFormat('d-M, H:i') }}
         </div>
         @endif
 
