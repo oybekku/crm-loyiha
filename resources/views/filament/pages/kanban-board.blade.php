@@ -522,15 +522,15 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             @endphp
             <div x-show="collapsed" style="display:flex;align-items:stretch;margin:-8px -10px;border-radius:12px;overflow:hidden;min-height:120px">
                 {{-- V blok (bosilsa to'liq ochiladi) --}}
-                <button @click.stop="collapsed=false" style="flex-shrink:0;width:100px;border:none;cursor:pointer;background:#22c55e;display:flex;align-items:center;justify-content:center" title="To'liq ochish">
+                <button @click.stop="collapsed=false" style="flex-shrink:0;width:100px;border:none;cursor:pointer;background:{{ $wsC['color'] }};display:flex;align-items:center;justify-content:center" title="To'liq ochish">
                     <svg width="62" height="62" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="5 9 12 17 19 9"/></svg>
                 </button>
                 {{-- Kontent: info | narxlar --}}
                 <div style="flex:1;min-width:0;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:14px">
                     <div style="min-width:0;flex:1">
-                        <div style="font-size:18px;font-weight:700;color:#1f2937;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:3px">{{ $project->owner_name }}</div>
+                        <div style="font-size:20px;font-weight:700;color:#1f2937;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:4px">{{ $project->owner_name }}</div>
                         @if($empsC->isNotEmpty())
-                        <div style="font-size:12px;color:#374151;font-weight:600;margin-bottom:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $empsC->join(', ') }}</div>
+                        <div style="font-size:14px;color:#374151;font-weight:600;margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $empsC->join(', ') }}</div>
                         @endif
                         <div style="display:flex;flex-direction:column;gap:3px">
                             @foreach($project->services->take(3) as $srv)
