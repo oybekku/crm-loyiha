@@ -720,7 +720,13 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                     });
             @endphp
             <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;gap:8px">
-                <span class="p-status-pill" style="flex-shrink:0">{{ $status['label'] }}</span>
+                <div style="display:flex;flex-wrap:wrap;gap:5px;flex-shrink:0">
+                    <span class="p-status-pill">{{ $status['label'] }}</span>
+                    @php $ws = \App\Models\Project::workStatusOptions()[$project->work_status ?? 'yangi'] ?? null; @endphp
+                    @if($ws)
+                    <span style="font-size:11px;font-weight:700;color:#fff;background:{{ $ws['color'] }};border-radius:5px;padding:3px 9px;display:inline-block;white-space:nowrap">{{ $ws['label'] }}</span>
+                    @endif
+                </div>
                 @if($srvWorkers->count() > 0)
                 <div style="text-align:right">
                     @foreach($srvWorkers as $sw)

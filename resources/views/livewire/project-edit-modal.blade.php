@@ -62,6 +62,21 @@
 
         {{-- SCROLL MARKAZ --}}
         <div style="flex:1;overflow-y:auto;padding:20px 26px">
+
+        {{-- Ish holati (work progress) — rangli tugmalar --}}
+        <div style="margin-bottom:16px;padding:12px 14px;border:1px solid #e5e7eb;border-radius:10px;background:#fafbfc">
+            <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Ish holati</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+                @foreach(\App\Models\Project::workStatusOptions() as $wk => $wv)
+                @php $active = $ei_workStatus === $wk; @endphp
+                <button type="button" wire:click="eiSetWorkStatus('{{ $wk }}')"
+                        style="padding:6px 13px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;transition:all .12s;border:1.5px solid {{ $wv['color'] }};background:{{ $active ? $wv['color'] : '#fff' }};color:{{ $active ? '#fff' : $wv['color'] }}">
+                    {{ $active ? '● ' : '' }}{{ $wv['label'] }}
+                </button>
+                @endforeach
+            </div>
+        </div>
+
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
             <div>
                 <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px">Egasining ismi *</label>

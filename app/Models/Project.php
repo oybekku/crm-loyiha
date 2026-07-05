@@ -12,7 +12,7 @@ class Project extends Model
 
     protected $fillable = [
         'number', 'owner_name', 'title', 'address', 'oblozhka_address', 'signature_path', 'latitude', 'longitude', 'phones',
-        'description', 'category', 'status', 'assigned_user_id',
+        'description', 'category', 'status', 'work_status', 'assigned_user_id',
         'total_price', 'paid_amount', 'deadline_date', 'timer_paused_at',
         'payment_requested_at', 'payment_requested_by',
     ];
@@ -156,6 +156,18 @@ class Project extends Model
             'tugallangan'      => 'Tugallangan',
             'taqdim_etilgan'   => 'Taqdim etilgan',
             'bekor_qilingan'   => 'Bekor qilingan',
+        ];
+    }
+
+    // Ish holati (work progress) — Kanban statusidan mustaqil, rangli
+    public static function workStatusOptions(): array
+    {
+        return [
+            'yangi'           => ['label' => 'Yangi',            'color' => '#3b82f6'],  // ko'k
+            'jarayonda'       => ['label' => 'Jarayonda',        'color' => '#f59e0b'],  // sariq
+            'rad_qilindi'     => ['label' => 'Rad qilindi',      'color' => '#ef4444'],  // qizil
+            'tayyor'          => ['label' => 'Tayyor',           'color' => '#22c55e'],  // yashil
+            'tolov_jarayonda' => ['label' => "To'lov jarayonda", 'color' => '#8b5cf6'],  // binafsha
         ];
     }
 

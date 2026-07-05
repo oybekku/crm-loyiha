@@ -38,6 +38,7 @@ class ProjectEditModal extends Component
     public $ei_newGenplan            = [];
     public array  $ei_genplanSel     = [];   // yig'ish uchun belgilangan PDF id lar
     public string $ei_status         = '';
+    public string $ei_workStatus     = 'yangi';
     public bool   $ei_paymentRequested = false;
     public string $ei_newSvcType     = '';
     public string $ei_newSvcPrice    = '';
@@ -67,6 +68,7 @@ class ProjectEditModal extends Component
         $this->ei_newGenplan  = [];
         $this->ei_genplanSel  = [];
         $this->ei_status      = $p->status;
+        $this->ei_workStatus  = $p->work_status ?? 'yangi';
         $this->ei_paymentRequested = (bool) $p->payment_requested_at;
         $this->showEditInfoModal = true;
     }
@@ -112,6 +114,27 @@ class ProjectEditModal extends Component
         }
         $url = route('genplan.merge', $this->editInfoId) . '?files=' . implode(',', $ids);
         $this->js("window.open(" . json_encode($url) . ", '_blank')");
+    }
+
+    // Ish holati (work progress) — admin/menejer/mas'ul hodim o'zgartira oladi
+    public function eiSetWorkStatus(string $ws): void
+    {
+        if (!array_key_exists($ws, Project::workStatusOptions())) return;
+        $p = Project::find($this->editInfoId);
+        if (!$p) return;
+
+        $u = auth()->user();
+        $allowed = $u && ($u->canSeeAllProjects()
+            || $p->services()->where('assigned_user_id', $u->id)->exists());
+        if (!$allowed) {
+            $this->dispatch('notify', type: 'error', message: "Ruxsat yo'q");
+            return;
+        }
+
+        $p->update(['work_status' => $ws]);
+        $this->ei_workStatus = $ws;
+        $this->dispatch('kb-refresh');
+        $this->dispatch('notify', type: 'success', message: "Ish holati yangilandi");
     }
 
     public function eiAddPhone(): void { $this->ei_phones[] = '+998'; }
