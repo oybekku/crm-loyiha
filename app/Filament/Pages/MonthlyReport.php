@@ -506,7 +506,8 @@ class MonthlyReport extends Page
 
         $normRows = [];
         foreach ($allUsers as $u) {
-            if ($u->role === 'admin') continue; // admin ishlab chiqaruvchi emas
+            // Faqat ish bajaradigan hodimlar. Admin/menejer/hisobchi ish qilmaydi — chiqarib tashlanadi.
+            if (in_array($u->role, ['admin', 'menejer', 'hisobchi'])) continue;
             $norm     = (int) ($u->monthly_norm ?? 0);
             $months   = [];
             $metCount = 0;
