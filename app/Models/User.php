@@ -27,6 +27,7 @@ class User extends Authenticatable implements FilamentUser
         'phone',
         'permissions',
         'commission_rate',
+        'monthly_norm',
     ];
 
     public static function defaultPermissions(): array

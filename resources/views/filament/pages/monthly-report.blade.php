@@ -79,6 +79,126 @@
     </div>
 </div>
 
+{{-- ══ YILLIK NORMA JADVALI ══ --}}
+<style>
+.nrm-wrap{overflow-x:auto}
+.nrm-tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:12px}
+.nrm-tbl th{background:#f8fafc;padding:8px 6px;font-weight:700;color:#475569;border-bottom:2px solid #e2e8f0;text-align:center;white-space:nowrap;font-size:11px}
+.nrm-tbl th.l{text-align:left;padding-left:12px}
+.nrm-tbl td{padding:6px;border-bottom:1px solid #f1f5f9;text-align:center;vertical-align:middle}
+.nrm-tbl tr:last-child td{border-bottom:none}
+.nrm-emp{display:flex;align-items:center;gap:8px;min-width:150px;text-align:left;padding-left:6px}
+.nrm-av{width:26px;height:26px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff}
+.nrm-nm{font-size:13px;font-weight:600;color:#1e293b;white-space:nowrap}
+.nrm-cell{border-radius:7px;font-weight:800;font-size:12px;padding:7px 4px;min-width:38px;display:inline-block;width:100%}
+.nrm-ok{background:#dcfce7;color:#15803d}
+.nrm-no{background:#fee2e2;color:#dc2626}
+.nrm-na{background:#f1f5f9;color:#94a3b8;font-weight:600}
+.nrm-chip{cursor:pointer;font-weight:800;font-size:13px;color:#c2410c;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:5px 12px;display:inline-block;min-width:40px}
+.nrm-chip:hover{background:#ffedd5}
+.nrm-chip.empty{color:#94a3b8;background:#f8fafc;border-color:#e2e8f0}
+.nrm-input{width:52px;text-align:center;font-size:13px;font-weight:800;border:1.5px solid #f97316;border-radius:7px;padding:4px;outline:none;color:#111}
+.nrm-save{width:28px;height:28px;border:none;border-radius:7px;background:#16a34a;color:#fff;font-size:14px;cursor:pointer;line-height:1}
+.nrm-sum{font-size:11.5px;font-weight:700;white-space:nowrap;border-radius:20px;padding:4px 10px;display:inline-block}
+.nrm-sum.good{background:#dcfce7;color:#15803d} .nrm-sum.warn{background:#fef3c7;color:#b45309} .nrm-sum.na{background:#f1f5f9;color:#94a3b8}
+.nrm-yr{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:4px 6px}
+.nrm-yr button{border:none;background:none;color:#64748b;font-size:16px;cursor:pointer;padding:2px 8px;border-radius:6px}
+.nrm-yr b{font-size:14px;font-weight:800;min-width:48px;text-align:center;color:#111827}
+/* dark */
+.dark .nrm-tbl th{background:#0d1117;color:#8b949e;border-color:#21262d}
+.dark .nrm-tbl td{border-color:#21262d}
+.dark .nrm-nm{color:#c9d1d9}
+.dark .nrm-ok{background:#0d2818;color:#3fb950}
+.dark .nrm-no{background:#2d1515;color:#f87171}
+.dark .nrm-na{background:#161b22;color:#6b7280}
+.dark .nrm-chip{background:#1c1408;color:#fb923c;border-color:#7c2d12}
+.dark .nrm-chip.empty{background:#161b22;color:#6b7280;border-color:#21262d}
+.dark .nrm-input{background:#0d1117;color:#eee}
+.dark .nrm-yr{background:#161b22;border-color:#21262d}
+.dark .nrm-yr b{color:#eee}
+.dark .nrm-sum.good{background:#0d2818;color:#3fb950} .dark .nrm-sum.warn{background:#2a1d05;color:#fbbf24} .dark .nrm-sum.na{background:#161b22;color:#6b7280}
+</style>
+@php
+    $nrmMonths = ['Yan','Fev','Mar','Apr','May','Iyun','Iyul','Avg','Sen','Okt','Noy','Dek'];
+    $nrmPalette = ['#f97316','#3b82f6','#8b5cf6','#14b8a6','#eab308','#ec4899','#ef4444','#0ea5e9','#22c55e','#a855f7'];
+@endphp
+<div class="mr-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+        <div>
+            <div style="font-size:16px;font-weight:800;color:#0f172a" class="dark:text-white">📊 Hodimlar oylik norma bajarilishi</div>
+            <div style="font-size:12px;color:#64748b;margin-top:2px">Har oy bajarilgan ish soni. <b style="color:#16a34a">Yashil</b> — norma bajarilgan, <b style="color:#dc2626">qizil</b> — bajarilmagan. Normani o'zgartirish uchun raqamga bosing.</div>
+        </div>
+        <div class="nrm-yr">
+            <button wire:click="normYearShift(-1)" title="Oldingi yil">‹</button>
+            <b>{{ $normYear }}</b>
+            <button wire:click="normYearShift(1)" title="Keyingi yil">›</button>
+        </div>
+    </div>
+
+    @if(count($normRows) === 0)
+        <div style="text-align:center;color:#94a3b8;padding:24px;font-size:13px">Hozircha hodim yo'q.</div>
+    @else
+    <div class="nrm-wrap">
+        <table class="nrm-tbl">
+            <thead>
+                <tr>
+                    <th class="l">Xodim</th>
+                    <th>Norma</th>
+                    @foreach($nrmMonths as $mn)<th>{{ $mn }}</th>@endforeach
+                    <th>Umumiylik</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($normRows as $row)
+                @php $u = $row['user']; $clr = $nrmPalette[$u->id % count($nrmPalette)]; @endphp
+                <tr>
+                    <td>
+                        <div class="nrm-emp">
+                            <div class="nrm-av" style="background:{{ $clr }}">{{ mb_strtoupper(mb_substr($u->name,0,2)) }}</div>
+                            <span class="nrm-nm">{{ $u->name }}</span>
+                        </div>
+                    </td>
+                    {{-- Norma (bosilsa tahrirlanadi) --}}
+                    <td x-data="{e:false}" @click.outside="e=false">
+                        <div x-show="!e" @click="e=true" class="nrm-chip {{ $row['norm']>0 ? '' : 'empty' }}" title="Norma kiritish uchun bosing">
+                            {{ $row['norm']>0 ? $row['norm'] : '—' }}
+                        </div>
+                        <div x-show="e" x-cloak style="display:inline-flex;align-items:center;gap:4px">
+                            <input type="number" min="0" class="nrm-input"
+                                   wire:model="normEdits.{{ $u->id }}"
+                                   @keydown.enter="$wire.saveNorm({{ $u->id }}); e=false">
+                            <button class="nrm-save" wire:click="saveNorm({{ $u->id }})" @click="e=false" title="Saqlash">✓</button>
+                        </div>
+                    </td>
+                    {{-- 12 oy --}}
+                    @for($m=1;$m<=12;$m++)
+                        @php $c = $row['months'][$m]; @endphp
+                        <td>
+                            @if($c['met'] === null)
+                                <span class="nrm-cell nrm-na">{{ $c['count'] }}</span>
+                            @elseif($c['met'])
+                                <span class="nrm-cell nrm-ok">{{ $c['count'] }}</span>
+                            @else
+                                <span class="nrm-cell nrm-no">{{ $c['count'] }}</span>
+                            @endif
+                        </td>
+                    @endfor
+                    {{-- Umumiylik --}}
+                    <td>
+                        @if($row['norm'] > 0)
+                            <span class="nrm-sum {{ $row['met_count'] >= 6 ? 'good' : 'warn' }}">{{ $row['met_count'] }}/12 oy bajarilgan</span>
+                        @else
+                            <span class="nrm-sum na">norma belgilanmagan</span>
+                        @endif
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+    @endif
+</div>
+
 {{-- UMUMIY STATISTIKA --}}
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:18px">
     <div class="mr-stat mr-stat--neutral">

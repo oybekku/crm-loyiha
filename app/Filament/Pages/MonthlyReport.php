@@ -24,6 +24,10 @@ class MonthlyReport extends Page
 
     public string $selectedMonth = '';
 
+    // Yillik norma jadvali uchun
+    public int   $normYear  = 0;
+    public array $normEdits = []; // user_id => norma (tahrirlash)
+
     // Jarima (user_id => summa)
     public array $penalties   = [];
 
@@ -134,6 +138,25 @@ class MonthlyReport extends Page
     public function mount(): void
     {
         $this->selectedMonth = now()->format('Y-m');
+        $this->normYear      = (int) now()->format('Y');
+        $this->normEdits     = User::pluck('monthly_norm', 'id')
+            ->map(fn($v) => (int) $v)->toArray();
+    }
+
+    public function normYearShift(int $delta): void
+    {
+        $this->normYear += $delta;
+    }
+
+    public function saveNorm(int $uid): void
+    {
+        if (!auth()->user()?->isAdmin() && !auth()->user()?->isMenejer()) return;
+
+        $val = max(0, (int) ($this->normEdits[$uid] ?? 0));
+        User::whereKey($uid)->update(['monthly_norm' => $val]);
+        $this->normEdits[$uid] = $val;
+
+        Notification::make()->title('Norma saqlandi')->success()->send();
     }
 
 
@@ -466,6 +489,46 @@ class MonthlyReport extends Page
 
         $allUsers = User::orderBy('name')->get();
 
+        // ══ YILLIK NORMA JADVALI ══
+        // Har hodim, tanlangan yilning 12 oyi bo'yicha BAJARILGAN (completed_at) ish soni.
+        $normYear = $this->normYear ?: (int) now()->format('Y');
+        $yearCompleted = \App\Models\ProjectService::whereNotNull('completed_at')
+            ->whereNotNull('assigned_user_id')
+            ->whereYear('completed_at', $normYear)
+            ->whereHas('project', fn($q) => $q->where('status', '!=', 'bekor_qilingan'))
+            ->get(['assigned_user_id', 'completed_at']);
+
+        $normCounts = []; // [uid][oy] => son
+        foreach ($yearCompleted as $s) {
+            $m = (int) Carbon::parse($s->completed_at)->format('n');
+            $normCounts[$s->assigned_user_id][$m] = ($normCounts[$s->assigned_user_id][$m] ?? 0) + 1;
+        }
+
+        $normRows = [];
+        foreach ($allUsers as $u) {
+            if ($u->role === 'admin') continue; // admin ishlab chiqaruvchi emas
+            $norm     = (int) ($u->monthly_norm ?? 0);
+            $months   = [];
+            $metCount = 0;
+            $yearTotal = 0;
+            for ($m = 1; $m <= 12; $m++) {
+                $cnt = (int) ($normCounts[$u->id][$m] ?? 0);
+                $yearTotal += $cnt;
+                // met: true=bajarilgan(yashil), false=bajarilmagan(qizil), null=norma belgilanmagan
+                $met = $norm > 0 ? ($cnt >= $norm) : null;
+                if ($met === true) $metCount++;
+                $months[$m] = ['count' => $cnt, 'met' => $met];
+            }
+            $normRows[] = [
+                'user'       => $u,
+                'norm'       => $norm,
+                'months'     => $months,
+                'met_count'  => $metCount,
+                'year_total' => $yearTotal,
+            ];
+        }
+
+
         // Umumiy loyihalar — shu oyda ochilgan barcha loyihalar
         $allProjectsCount = (int)   Project::whereYear('created_at', $year)->whereMonth('created_at', $month)->count();
         $allProjectsSum   = (float) Project::whereYear('created_at', $year)->whereMonth('created_at', $month)->sum('total_price');
@@ -479,7 +542,8 @@ class MonthlyReport extends Page
             'pendingWorkersShare', 'pendingFirmaShare', 'pendingWorkerStats',
             'allProjectsCount', 'allProjectsSum',
             'toliqTugatilgan', 'qismanTugatilgan', 'toliqCount', 'qismanCount',
-            'tugatilganIshlar'
+            'tugatilganIshlar',
+            'normRows', 'normYear'
         );
     }
 }
