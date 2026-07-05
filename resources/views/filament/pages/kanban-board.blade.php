@@ -514,8 +514,44 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
              @click="if(!window._kbDragged && !$event.target.closest('button,a,input,select,label,textarea')) $wire.dispatch('open-edit-modal', { id: {{ $project->id }} })"
              style="margin-bottom:0;padding:8px 10px">
 
-            {{-- TOP ROW: barmoq + ism + muddat + sana --}}
-            <div style="display:flex;align-items:center;gap:5px;margin-bottom:5px">
+            {{-- ══ YIG'ILGAN: keng horizontal karta (mockup) ══ --}}
+            @php
+                $wsC  = \App\Models\Project::workStatusOptions()[$project->work_status ?? 'yangi'] ?? ['label'=>'Yangi','color'=>'#3b82f6'];
+                $empsC = $project->services->map(fn($s)=>$s->assignedUser?->name)->filter()->unique()->values();
+                $qcC   = max(0,(float)$project->total_price-(float)$project->paid_amount);
+            @endphp
+            <div x-show="collapsed" style="display:flex;align-items:stretch;margin:-8px -10px;border-radius:11px;overflow:hidden;min-height:66px">
+                <button @click.stop="collapsed=false" style="flex-shrink:0;width:64px;border:none;cursor:pointer;background:#22c55e;color:#fff;font-size:36px;font-weight:800;line-height:1;display:flex;align-items:center;justify-content:center" title="To'liq ochish">V</button>
+                <div style="flex:1;min-width:0;padding:7px 11px">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px">
+                        <span style="font-size:15px;font-weight:700;color:#1f2937;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $project->owner_name }}</span>
+                        <span style="flex-shrink:0;font-size:10px;font-weight:700;color:#fff;background:{{ $wsC['color'] }};border-radius:13px;padding:3px 11px;white-space:nowrap">{{ $wsC['label'] }}</span>
+                    </div>
+                    <div style="display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap">
+                        @if($empsC->isNotEmpty())
+                        <div style="font-size:11px;font-weight:600;color:#374151;line-height:1.35;flex-shrink:0">@foreach($empsC as $e)<div>{{ $e }}</div>@endforeach</div>
+                        @endif
+                        <div style="flex:1;min-width:110px;display:flex;flex-direction:column;gap:2px">
+                            @foreach($project->services->take(3) as $srv)
+                            <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+                                <span style="font-size:10px;font-weight:600;background:#fff1e6;color:#c2410c;border-radius:5px;padding:1px 7px;white-space:nowrap;{{ $srv->completed_at ? 'text-decoration:line-through;opacity:.6' : '' }}">{{ $serviceOptions[$srv->service_name] ?? $srv->service_name }}</span>
+                                <span style="font-size:9px;font-weight:600;background:{{ $srv->completed_at ? '#f0fdf4' : '#f3f4f6' }};color:{{ $srv->completed_at ? '#16a34a' : '#9ca3af' }};border-radius:4px;padding:1px 5px;white-space:nowrap">{{ $srv->completed_at ? '✓ Tugallandi' : '○ Tugalmagan' }}</span>
+                            </div>
+                            @endforeach
+                        </div>
+                        @if($project->total_price > 0)
+                        <div style="font-size:10px;line-height:1.5;text-align:right;flex-shrink:0">
+                            <div><span style="color:#9ca3af">Umumiy </span><b style="color:#374151">{{ number_format($project->total_price,0,'.',' ') }}</b></div>
+                            <div><span style="color:#9ca3af">To'langan </span><b style="color:#16a34a">{{ number_format($project->paid_amount,0,'.',' ') }}</b></div>
+                            @if($qcC>0)<div><span style="color:#ef4444">Qoldiq </span><b style="color:#ef4444">{{ number_format($qcC,0,'.',' ') }}</b></div>@endif
+                        </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            {{-- TOP ROW (ochilgan header): barmoq + ism + muddat + sana --}}
+            <div x-show="!collapsed" style="display:flex;align-items:center;gap:5px;margin-bottom:5px">
                 @php $ws = \App\Models\Project::workStatusOptions()[$project->work_status ?? 'yangi'] ?? ['label'=>'Yangi','color'=>'#3b82f6']; @endphp
                 <button @click.stop="collapsed=!collapsed"
                         style="flex-shrink:0;width:44px;align-self:stretch;min-height:40px;border:none;border-radius:9px;cursor:pointer;background:{{ $ws['color'] }};color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.12);transition:all .15s"
@@ -560,17 +596,6 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                     </button>
                     <span style="font-size:9px;color:#9ca3af;white-space:nowrap">{{ $project->created_at->format('d-M') }}</span>
                 </div>
-            </div>
-
-            {{-- Yig'ilganda: hodimlar + qoldiq (V blok tagida) --}}
-            @php $emps = $project->services->map(fn($s)=>$s->assignedUser?->name)->filter()->unique()->values(); $qc = max(0,(float)$project->total_price-(float)$project->paid_amount); @endphp
-            <div x-show="collapsed" style="display:flex;align-items:center;justify-content:space-between;gap:6px;padding-left:53px;margin-top:1px">
-                <span style="font-size:10px;color:#6366f1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $emps->isNotEmpty() ? '👷 '.$emps->join(', ') : '—' }}</span>
-                @if($qc > 0)
-                <span style="font-size:10px;font-weight:700;color:#ef4444;white-space:nowrap;flex-shrink:0">Qoldiq: {{ number_format($qc,0,'.',' ') }}</span>
-                @elseif($project->total_price > 0)
-                <span style="font-size:10px;font-weight:700;color:#16a34a;white-space:nowrap;flex-shrink:0">✓ To'langan</span>
-                @endif
             </div>
 
             <div x-show="!collapsed" x-collapse>
