@@ -522,7 +522,9 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             @endphp
             <div x-show="collapsed" style="display:flex;align-items:stretch;margin:-8px -10px;border-radius:12px;overflow:hidden;min-height:120px">
                 {{-- V blok (bosilsa to'liq ochiladi) --}}
-                <button @click.stop="collapsed=false" style="flex-shrink:0;width:100px;border:none;cursor:pointer;background:{{ $wsC['color'] }};color:#fff;font-size:52px;font-weight:800;line-height:1;display:flex;align-items:center;justify-content:center" title="To'liq ochish">V</button>
+                <button @click.stop="collapsed=false" style="flex-shrink:0;width:100px;border:none;cursor:pointer;background:#22c55e;display:flex;align-items:center;justify-content:center" title="To'liq ochish">
+                    <svg width="62" height="62" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="5 9 12 17 19 9"/></svg>
+                </button>
                 {{-- Kontent: info | narxlar --}}
                 <div style="flex:1;min-width:0;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:14px">
                     <div style="min-width:0;flex:1">
