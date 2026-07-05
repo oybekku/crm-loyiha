@@ -46,6 +46,10 @@
 
             <a href="{{ route('print.project.chegirma', $editInfoId) }}" target="_blank" style="padding:6px 11px;border-radius:7px;border:1px solid #fcd34d;background:#fffbeb;color:#b45309;font-size:12px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:4px">🎟 Chegirma</a>
 
+            @if($canMygov)
+            <button type="button" wire:click="eiToggleMygov" style="padding:6px 11px;border-radius:7px;border:1px solid #a5b4fc;background:#eef2ff;color:#4338ca;font-size:12px;font-weight:600;cursor:pointer">🏛 MyGOV</button>
+            @endif
+
             @if(auth()->user()?->isAdmin() || auth()->user()?->isMenejer())
                 @if($ei_status === 'tugallangan')
                 <button type="button" wire:click="eiMarkUncomplete" wire:confirm="Loyihani jarayonga qaytarmoqchimisiz?" style="padding:6px 11px;border-radius:7px;border:1px solid #86efac;background:#dcfce7;color:#16a34a;font-size:12px;font-weight:700;cursor:pointer">✓ Tugallandi</button>
@@ -62,6 +66,30 @@
 
         {{-- SCROLL MARKAZ --}}
         <div style="flex:1;overflow-y:auto;padding:20px 26px">
+
+        {{-- MyGOV login/parol paneli (🏛 MyGOV tugmasi bosilganda) --}}
+        @if($canMygov && $ei_showMygov)
+        <div style="margin-bottom:16px;padding:14px;border:1px solid #c7d2fe;border-radius:10px;background:#eef2ff">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                <span style="font-size:13px;font-weight:700;color:#4338ca">🏛 MyGOV — login/parol</span>
+                <a href="https://my.gov.uz" target="_blank" style="font-size:11px;color:#4338ca;text-decoration:underline">my.gov.uz ↗</a>
+            </div>
+            <div style="margin-bottom:8px">
+                <label style="font-size:11px;font-weight:600;color:#374151;display:block;margin-bottom:4px">Login</label>
+                <input wire:model="ei_mygovLogin" type="text" autocomplete="off" style="width:100%;padding:8px 11px;border:1.5px solid #c7d2fe;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box">
+            </div>
+            <div style="margin-bottom:11px" x-data="{ show:false }">
+                <label style="font-size:11px;font-weight:600;color:#374151;display:block;margin-bottom:4px">Parol</label>
+                <div style="display:flex;gap:6px">
+                    <input wire:model="ei_mygovPassword" x-bind:type="show ? 'text' : 'password'" id="mygov-pw-{{ $editInfoId }}" autocomplete="new-password" style="flex:1;padding:8px 11px;border:1.5px solid #c7d2fe;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box">
+                    <button type="button" @click="show=!show" x-text="show ? '🙈' : '👁'" title="Ko'rsatish/yashirish" style="padding:0 11px;border:1px solid #c7d2fe;border-radius:8px;background:#fff;cursor:pointer;font-size:15px"></button>
+                    <button type="button" title="Nusxalash" onclick="(function(b){var i=document.getElementById('mygov-pw-{{ $editInfoId }}');if(navigator.clipboard){navigator.clipboard.writeText(i.value)}b.innerHTML='✓';setTimeout(function(){b.innerHTML='⧉'},1000)})(this)" style="padding:0 11px;border:1px solid #c7d2fe;border-radius:8px;background:#fff;cursor:pointer;font-size:14px">⧉</button>
+                </div>
+            </div>
+            <button type="button" wire:click="eiSaveMygov" style="padding:8px 16px;border-radius:8px;border:none;background:#4338ca;color:#fff;font-size:13px;font-weight:700;cursor:pointer">💾 MyGOV saqlash</button>
+            <div style="font-size:10px;color:#6366f1;margin-top:8px">🔒 Parol bazada shifrlangan holda saqlanadi.</div>
+        </div>
+        @endif
 
         {{-- Ish holati (work progress) — rangli tugmalar --}}
         <div style="margin-bottom:16px;padding:12px 14px;border:1px solid #e5e7eb;border-radius:10px;background:#fafbfc">

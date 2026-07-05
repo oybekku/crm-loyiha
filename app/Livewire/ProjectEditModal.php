@@ -40,6 +40,9 @@ class ProjectEditModal extends Component
     public string $ei_status         = '';
     public string $ei_workStatus     = 'yangi';
     public bool   $ei_paymentRequested = false;
+    public string $ei_mygovLogin     = '';
+    public string $ei_mygovPassword  = '';
+    public bool   $ei_showMygov      = false;
     public string $ei_newSvcType     = '';
     public string $ei_newSvcPrice    = '';
     public $ei_newSvcUser            = null;
@@ -70,6 +73,9 @@ class ProjectEditModal extends Component
         $this->ei_status      = $p->status;
         $this->ei_workStatus  = $p->work_status ?? 'yangi';
         $this->ei_paymentRequested = (bool) $p->payment_requested_at;
+        $this->ei_mygovLogin    = $this->canMygov($p) ? ($p->mygov_login ?? '') : '';
+        $this->ei_mygovPassword = $this->canMygov($p) ? ($p->mygov_password ?? '') : '';
+        $this->ei_showMygov     = false;
         $this->showEditInfoModal = true;
     }
 
@@ -135,6 +141,35 @@ class ProjectEditModal extends Component
         $this->ei_workStatus = $ws;
         $this->dispatch('kb-refresh');
         $this->dispatch('notify', type: 'success', message: "Ish holati yangilandi");
+    }
+
+    // ── MyGOV (my.gov.uz) login/parol — admin/menejer/mas'ul hodim ──
+    private function canMygov(?Project $p = null): bool
+    {
+        $p = $p ?: Project::find($this->editInfoId);
+        $u = auth()->user();
+        if (!$p || !$u) return false;
+        return $u->canSeeAllProjects() || $p->services()->where('assigned_user_id', $u->id)->exists();
+    }
+
+    public function eiToggleMygov(): void
+    {
+        if (!$this->canMygov()) return;
+        $this->ei_showMygov = !$this->ei_showMygov;
+    }
+
+    public function eiSaveMygov(): void
+    {
+        $p = Project::find($this->editInfoId);
+        if (!$p || !$this->canMygov($p)) {
+            $this->dispatch('notify', type: 'error', message: "Ruxsat yo'q");
+            return;
+        }
+        $p->update([
+            'mygov_login'    => trim($this->ei_mygovLogin) ?: null,
+            'mygov_password' => $this->ei_mygovPassword !== '' ? $this->ei_mygovPassword : null,
+        ]);
+        $this->dispatch('notify', type: 'success', message: "MyGOV login/parol saqlandi");
     }
 
     public function eiAddPhone(): void { $this->ei_phones[] = '+998'; }
@@ -369,6 +404,8 @@ class ProjectEditModal extends Component
         $users = User::whereIn('role', ['admin', 'menejer', 'bajaruvchi'])
             ->orderBy('name')->get();
 
-        return view('livewire.project-edit-modal', compact('statuses', 'users'));
+        $canMygov = $this->editInfoId ? $this->canMygov() : false;
+
+        return view('livewire.project-edit-modal', compact('statuses', 'users', 'canMygov'));
     }
 }
