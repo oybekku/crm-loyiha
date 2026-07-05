@@ -598,10 +598,6 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                         @endif
                     </div>
                 </div>
-                {{-- Qabul qildim — suzuvchi (karta tanasini kattalashtirmaydi) --}}
-                @if($canAcceptUrgent)
-                <button type="button" wire:click="acceptUrgent({{ $project->id }})" class="kbn-accept-float" title="Zudlik ishni qabul qildim — olov o'chadi">✅ Qabul qildim</button>
-                @endif
             </div>
 
             {{-- TOP ROW (ochilgan header): barmoq + ism + muddat + sana --}}
