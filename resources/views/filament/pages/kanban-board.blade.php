@@ -522,17 +522,17 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                 $empsC = $project->services->map(fn($s)=>$s->assignedUser?->name)->filter()->unique()->values();
                 $qcC   = max(0,(float)$project->total_price-(float)$project->paid_amount);
             @endphp
-            <div x-show="collapsed" class="kb-wcard" style="margin:-8px -10px;border-radius:12px;overflow:hidden;min-height:120px">
+            <div x-show="collapsed" class="kb-wcard" style="margin:-8px -10px;border-radius:12px;overflow:hidden;min-height:82px">
                 {{-- V blok (bosilsa to'liq ochiladi) --}}
-                <div @click.stop="collapsed=false" style="flex-shrink:0;align-self:stretch;width:100px;cursor:pointer;background:{{ $wsC['color'] }};display:flex;align-items:center;justify-content:center" title="To'liq ochish">
-                    <svg width="62" height="62" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="5 9 12 17 19 9"/></svg>
+                <div @click.stop="collapsed=false" style="flex-shrink:0;align-self:stretch;width:60px;cursor:pointer;background:{{ $wsC['color'] }};display:flex;align-items:center;justify-content:center" title="To'liq ochish">
+                    <svg width="30" height="30" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="5 9 12 17 19 9"/></svg>
                 </div>
                 {{-- Kontent: info | narxlar --}}
-                <div style="flex:1;min-width:0;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:14px">
+                <div style="flex:1;min-width:0;padding:9px 13px;display:flex;justify-content:space-between;align-items:center;gap:10px">
                     <div style="min-width:0;flex:1">
-                        <div style="font-size:20px;font-weight:700;color:#1f2937;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:4px">{{ $project->owner_name }}</div>
+                        <div style="font-size:14.5px;font-weight:700;color:#1f2937;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px">{{ $project->owner_name }}</div>
                         @if($empsC->isNotEmpty())
-                        <div style="font-size:14px;color:#374151;font-weight:600;margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $empsC->join(', ') }}</div>
+                        <div style="font-size:11.5px;color:#6b7280;font-weight:500;margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $empsC->join(', ') }}</div>
                         @endif
                         <div style="display:flex;flex-direction:column;gap:3px">
                             @foreach($project->services->take(3) as $srv)
@@ -544,7 +544,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                         </div>
                     </div>
                     <div style="flex-shrink:0;text-align:right">
-                        <div style="margin-bottom:7px"><span style="background:{{ $wsC['color'] }};color:#fff;padding:4px 14px;border-radius:14px;font-size:11px;font-weight:700;white-space:nowrap">{{ $wsC['label'] }}</span></div>
+                        <div style="margin-bottom:6px"><span style="background:{{ $wsC['color'] }};color:#fff;padding:3px 11px;border-radius:12px;font-size:10px;font-weight:700;white-space:nowrap">{{ $wsC['label'] }}</span></div>
                         @if($project->total_price > 0)
                         <div style="font-size:11px;color:#6b7280;white-space:nowrap">Umumiy <b style="color:#374151">{{ number_format($project->total_price,0,'.',' ') }}</b></div>
                         <div style="font-size:11px;color:#16a34a;white-space:nowrap">To'langan <b>{{ number_format($project->paid_amount,0,'.',' ') }}</b></div>
