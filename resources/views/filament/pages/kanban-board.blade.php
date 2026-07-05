@@ -26,6 +26,26 @@
 .p-card{background:#fff;border-radius:12px;padding:12px 14px;box-shadow:0 1px 4px rgba(0,0,0,.07);cursor:grab;border:1.5px solid #e5e7eb;transition:border-color .15s,box-shadow .15s,opacity .15s}
 .kb-wcard{display:flex;align-items:stretch}   /* yig'ilgan keng karta — display:flex klassda (x-show buzmasligi uchun) */
 .kb-frow{display:flex;align-items:center}      /* ochilgan header qatori */
+
+/* ══ NEON yig'ilgan karta ══ */
+@keyframes kbn-pulse{0%,100%{opacity:1}50%{opacity:.72}}
+@keyframes kbn-sweep{0%{transform:translateX(-130%)}100%{transform:translateX(330%)}}
+.kbn-host{padding:0!important;border:none!important;background:transparent!important;box-shadow:none!important;overflow:visible!important}
+.kbn-card{position:relative;display:flex;align-items:stretch;min-height:82px;background:rgba(255,255,255,.60);-webkit-backdrop-filter:blur(9px);backdrop-filter:blur(9px);border:1.5px solid color-mix(in srgb,var(--acc) 60%,#e2e8f0);border-radius:14px;overflow:hidden;box-shadow:0 0 0 1px color-mix(in srgb,var(--acc) 15%,transparent),0 0 20px -6px color-mix(in srgb,var(--acc) 60%,transparent),0 8px 24px -12px rgba(15,23,42,.4)}
+.kbn-vside{position:relative;flex-shrink:0;width:58px;align-self:stretch;display:flex;align-items:center;justify-content:center;cursor:pointer;background:linear-gradient(180deg,color-mix(in srgb,var(--acc) 90%,#000),color-mix(in srgb,var(--acc) 62%,#000));box-shadow:inset 0 0 18px color-mix(in srgb,var(--acc) 60%,transparent),0 0 22px -3px var(--acc);overflow:hidden}
+.kbn-vside svg{filter:drop-shadow(0 0 6px rgba(255,255,255,.85))}
+.kbn-vside::after{content:"";position:absolute;top:0;bottom:0;width:36%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);animation:kbn-sweep 3.6s ease-in-out infinite}
+.kbn-name{color:#0f172a!important}
+.kbn-emp{color:#64748b!important}
+.kbn-tag{color:var(--acc)!important;border:1px solid color-mix(in srgb,var(--acc) 45%,#e2e8f0)!important;background:color-mix(in srgb,var(--acc) 10%,#fff)!important}
+.kbn-tag.done{color:#94a3b8!important;border-color:#e2e8f0!important;background:#f8fafc!important}
+.kbn-st{color:#64748b!important;border:1px solid #e2e8f0!important;background:transparent!important}
+.kbn-st.ok{color:#16a34a!important;border-color:#bbf7d0!important;background:#f0fdf4!important}
+.kbn-badge{color:#0a0e17!important;box-shadow:0 0 14px -1px var(--acc),inset 0 0 8px rgba(255,255,255,.25);animation:kbn-pulse 2.4s ease-in-out infinite}
+.kbn-paid{color:#16a34a!important}
+.kbn-debt{color:#e11d48!important}
+.kbn-muted{color:#94a3b8!important}
+@media(prefers-reduced-motion:reduce){.kbn-vside::after,.kbn-badge{animation:none}}
 .dark .p-card{background:#1e2533;border-color:#2d3748}
 .p-card:hover{border-color:#93c5fd;box-shadow:0 3px 10px rgba(0,0,0,.10)}
 .p-card.dragging{opacity:.4;cursor:grabbing}
@@ -509,6 +529,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             $showNoDeadline = $activeServices->isNotEmpty() && !$hasAnyDeadline;
         @endphp
         <div class="p-card {{ $cardClass }}"
+             :class="collapsed ? 'kbn-host' : ''"
              draggable="true"
              data-id="{{ $project->id }}"
              ondragstart="kbDragStart(event,{{ $project->id }})"
@@ -522,33 +543,34 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                 $empsC = $project->services->map(fn($s)=>$s->assignedUser?->name)->filter()->unique()->values();
                 $qcC   = max(0,(float)$project->total_price-(float)$project->paid_amount);
             @endphp
-            <div x-show="collapsed" class="kb-wcard" style="margin:-8px -10px;border-radius:12px;overflow:hidden;min-height:82px">
-                {{-- V blok (bosilsa to'liq ochiladi) --}}
-                <div @click.stop="collapsed=false" style="flex-shrink:0;align-self:stretch;width:60px;cursor:pointer;background:{{ $wsC['color'] }};display:flex;align-items:center;justify-content:center" title="To'liq ochish">
+            <div x-show="collapsed" class="kb-wcard kbn-card" style="--acc:{{ $wsC['color'] }}">
+                {{-- V blok (bosilsa to'liq ochiladi) — neon yonuvchi --}}
+                <div @click.stop="collapsed=false" class="kbn-vside" title="To'liq ochish">
                     <svg width="30" height="30" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="5 9 12 17 19 9"/></svg>
                 </div>
                 {{-- Kontent: info | narxlar --}}
-                <div style="flex:1;min-width:0;padding:9px 13px;display:flex;justify-content:space-between;align-items:center;gap:10px">
+                <div style="flex:1;min-width:0;padding:9px 13px;display:flex;justify-content:space-between;align-items:center;gap:10px;position:relative;z-index:1">
                     <div style="min-width:0;flex:1">
-                        <div style="font-size:14.5px;font-weight:700;color:#1f2937;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px">{{ $project->owner_name }}</div>
+                        <div class="kbn-name" style="font-size:14.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px">{{ $project->owner_name }}</div>
                         @if($empsC->isNotEmpty())
-                        <div style="font-size:11.5px;color:#6b7280;font-weight:500;margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $empsC->join(', ') }}</div>
+                        <div class="kbn-emp" style="font-size:11.5px;font-weight:500;margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $empsC->join(', ') }}</div>
                         @endif
                         <div style="display:flex;flex-direction:column;gap:3px">
                             @foreach($project->services->take(3) as $srv)
                             <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
-                                <span style="font-size:10px;font-weight:600;background:#fff1e6;color:#c2410c;border-radius:4px;padding:2px 7px;white-space:nowrap;{{ $srv->completed_at ? 'text-decoration:line-through;opacity:.6' : '' }}">{{ $serviceOptions[$srv->service_name] ?? $srv->service_name }}</span>
-                                <span style="font-size:9px;font-weight:600;background:{{ $srv->completed_at ? '#f0fdf4' : '#f3f4f6' }};color:{{ $srv->completed_at ? '#16a34a' : '#9ca3af' }};border-radius:4px;padding:2px 6px;white-space:nowrap">{{ $srv->completed_at ? '✓ Tugallandi' : '○ Tugalmagan' }}</span>
+                                <span class="kbn-tag {{ $srv->completed_at ? 'done' : '' }}" style="font-size:10px;font-weight:600;border-radius:6px;padding:2px 8px;white-space:nowrap">{{ $serviceOptions[$srv->service_name] ?? $srv->service_name }}</span>
+                                <span class="kbn-st {{ $srv->completed_at ? 'ok' : '' }}" style="font-size:9px;font-weight:600;border-radius:5px;padding:2px 7px;white-space:nowrap">{{ $srv->completed_at ? '✓ Tugallandi' : '○ Tugalmagan' }}</span>
                             </div>
                             @endforeach
                         </div>
                     </div>
-                    <div style="flex-shrink:0;text-align:right">
-                        <div style="margin-bottom:6px"><span style="background:{{ $wsC['color'] }};color:#fff;padding:3px 11px;border-radius:12px;font-size:10px;font-weight:700;white-space:nowrap">{{ $wsC['label'] }}</span></div>
+                    <div style="flex-shrink:0;text-align:right;font-variant-numeric:tabular-nums">
+                        <div style="margin-bottom:6px"><span class="kbn-badge" style="background:{{ $wsC['color'] }};display:inline-block;padding:3px 12px;border-radius:20px;font-size:10px;font-weight:800;letter-spacing:.03em;white-space:nowrap">{{ $wsC['label'] }}</span></div>
                         @if($project->total_price > 0)
-                        <div style="font-size:11px;color:#6b7280;white-space:nowrap">Umumiy <b style="color:#374151">{{ number_format($project->total_price,0,'.',' ') }}</b></div>
-                        <div style="font-size:11px;color:#16a34a;white-space:nowrap">To'langan <b>{{ number_format($project->paid_amount,0,'.',' ') }}</b></div>
-                        @if($qcC>0)<div style="font-size:11px;color:#ef4444;white-space:nowrap">Qoldiq <b>{{ number_format($qcC,0,'.',' ') }}</b></div>@endif
+                        <div style="font-size:11px;white-space:nowrap"><span class="kbn-muted">Umumiy</span> <b style="color:#334155">{{ number_format($project->total_price,0,'.',' ') }}</b></div>
+                        <div style="font-size:11px;white-space:nowrap"><span class="kbn-muted">To'langan</span> <b class="kbn-paid">{{ number_format($project->paid_amount,0,'.',' ') }}</b></div>
+                        @if($qcC>0)<div style="font-size:11px;white-space:nowrap"><span class="kbn-muted">Qoldiq</span> <b class="kbn-debt">{{ number_format($qcC,0,'.',' ') }}</b></div>
+                        @else<div style="font-size:11px;white-space:nowrap"><span class="kbn-paid">✓ To'liq to'langan</span></div>@endif
                         @endif
                     </div>
                 </div>
