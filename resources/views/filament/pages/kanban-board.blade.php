@@ -7,7 +7,7 @@
 .kanban-scroll-top{overflow-x:auto;overflow-y:hidden;position:sticky;top:0;z-index:6;height:16px;margin-bottom:4px;background:rgba(0,0,0,0.03);border-radius:6px}
 .kanban-scroll-top > div{height:1px}
 .dark .kanban-scroll-top{background:rgba(255,255,255,0.06)}
-.kanban-col{min-width:280px;max-width:280px;flex-shrink:0;border-radius:10px;overflow:hidden}
+.kanban-col{min-width:500px;max-width:500px;flex-shrink:0;border-radius:10px;overflow:hidden}
 .col-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;font-weight:700;font-size:13px;letter-spacing:0.01em}
 .col-count{background:rgba(255,255,255,.15);border-radius:12px;padding:2px 9px;font-size:11px;font-weight:600;color:#cbd5e1}
 .col-body{background:transparent;min-height:80px;padding:8px;display:flex;flex-direction:column;gap:8px;transition:background .15s}
@@ -520,32 +520,33 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                 $empsC = $project->services->map(fn($s)=>$s->assignedUser?->name)->filter()->unique()->values();
                 $qcC   = max(0,(float)$project->total_price-(float)$project->paid_amount);
             @endphp
-            <div x-show="collapsed" style="display:flex;align-items:stretch;margin:-8px -10px;border-radius:11px;overflow:hidden;min-height:58px">
-                <button @click.stop="collapsed=false" style="flex-shrink:0;width:46px;border:none;cursor:pointer;background:{{ $wsC['color'] }};color:#fff;display:flex;align-items:center;justify-content:center" title="To'liq ochish">
-                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="3.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-                </button>
-                <div style="flex:1;min-width:0;padding:7px 10px">
-                    {{-- Ism + ish holati --}}
-                    <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:4px">
-                        <span style="font-size:13px;font-weight:700;color:#1f2937;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $project->owner_name }}</span>
-                        <span style="flex-shrink:0;font-size:9px;font-weight:700;color:#fff;background:{{ $wsC['color'] }};border-radius:11px;padding:2px 9px;white-space:nowrap">{{ $wsC['label'] }}</span>
+            <div x-show="collapsed" style="display:flex;align-items:stretch;margin:-8px -10px;border-radius:12px;overflow:hidden;min-height:120px">
+                {{-- V blok (bosilsa to'liq ochiladi) --}}
+                <button @click.stop="collapsed=false" style="flex-shrink:0;width:100px;border:none;cursor:pointer;background:{{ $wsC['color'] }};color:#fff;font-size:52px;font-weight:800;line-height:1;display:flex;align-items:center;justify-content:center" title="To'liq ochish">V</button>
+                {{-- Kontent: info | narxlar --}}
+                <div style="flex:1;min-width:0;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:14px">
+                    <div style="min-width:0;flex:1">
+                        <div style="font-size:18px;font-weight:700;color:#1f2937;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:3px">{{ $project->owner_name }}</div>
+                        @if($empsC->isNotEmpty())
+                        <div style="font-size:12px;color:#374151;font-weight:600;margin-bottom:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $empsC->join(', ') }}</div>
+                        @endif
+                        <div style="display:flex;flex-direction:column;gap:3px">
+                            @foreach($project->services->take(3) as $srv)
+                            <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
+                                <span style="font-size:10px;font-weight:600;background:#fff1e6;color:#c2410c;border-radius:4px;padding:2px 7px;white-space:nowrap;{{ $srv->completed_at ? 'text-decoration:line-through;opacity:.6' : '' }}">{{ $serviceOptions[$srv->service_name] ?? $srv->service_name }}</span>
+                                <span style="font-size:9px;font-weight:600;background:{{ $srv->completed_at ? '#f0fdf4' : '#f3f4f6' }};color:{{ $srv->completed_at ? '#16a34a' : '#9ca3af' }};border-radius:4px;padding:2px 6px;white-space:nowrap">{{ $srv->completed_at ? '✓ Tugallandi' : '○ Tugalmagan' }}</span>
+                            </div>
+                            @endforeach
+                        </div>
                     </div>
-                    {{-- Xizmatlar (har biri 1 qator: nom + holat + hodim) --}}
-                    @foreach($project->services->take(3) as $srv)
-                    <div style="display:flex;align-items:center;gap:5px;margin-bottom:2px;overflow:hidden">
-                        <span style="flex-shrink:0;font-size:10px;font-weight:600;background:#fff1e6;color:#c2410c;border-radius:4px;padding:1px 6px;white-space:nowrap;{{ $srv->completed_at ? 'text-decoration:line-through;opacity:.6' : '' }}">{{ $serviceOptions[$srv->service_name] ?? $srv->service_name }}</span>
-                        <span style="flex-shrink:0;font-size:11px;color:{{ $srv->completed_at ? '#16a34a' : '#cbd5e1' }}">{{ $srv->completed_at ? '✓' : '○' }}</span>
-                        @if($srv->assignedUser)<span style="font-size:10px;color:#6366f1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $srv->assignedUser->name }}</span>@endif
+                    <div style="flex-shrink:0;text-align:right">
+                        <div style="margin-bottom:7px"><span style="background:{{ $wsC['color'] }};color:#fff;padding:4px 14px;border-radius:14px;font-size:11px;font-weight:700;white-space:nowrap">{{ $wsC['label'] }}</span></div>
+                        @if($project->total_price > 0)
+                        <div style="font-size:11px;color:#6b7280;white-space:nowrap">Umumiy <b style="color:#374151">{{ number_format($project->total_price,0,'.',' ') }}</b></div>
+                        <div style="font-size:11px;color:#16a34a;white-space:nowrap">To'langan <b>{{ number_format($project->paid_amount,0,'.',' ') }}</b></div>
+                        @if($qcC>0)<div style="font-size:11px;color:#ef4444;white-space:nowrap">Qoldiq <b>{{ number_format($qcC,0,'.',' ') }}</b></div>@endif
+                        @endif
                     </div>
-                    @endforeach
-                    {{-- Summa --}}
-                    @if($project->total_price > 0)
-                    <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:3px;font-size:10px">
-                        <span style="color:#9ca3af">To'langan <b style="color:#16a34a">{{ number_format($project->paid_amount,0,'.',' ') }}</b></span>
-                        @if($qcC>0)<span style="font-weight:700;color:#ef4444;white-space:nowrap">Qoldiq {{ number_format($qcC,0,'.',' ') }}</span>
-                        @else<span style="font-weight:700;color:#16a34a;white-space:nowrap">✓ To'langan</span>@endif
-                    </div>
-                    @endif
                 </div>
             </div>
 
