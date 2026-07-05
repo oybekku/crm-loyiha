@@ -520,33 +520,32 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                 $empsC = $project->services->map(fn($s)=>$s->assignedUser?->name)->filter()->unique()->values();
                 $qcC   = max(0,(float)$project->total_price-(float)$project->paid_amount);
             @endphp
-            <div x-show="collapsed" style="display:flex;align-items:stretch;margin:-8px -10px;border-radius:11px;overflow:hidden;min-height:66px">
-                <button @click.stop="collapsed=false" style="flex-shrink:0;width:64px;border:none;cursor:pointer;background:#22c55e;color:#fff;font-size:36px;font-weight:800;line-height:1;display:flex;align-items:center;justify-content:center" title="To'liq ochish">V</button>
-                <div style="flex:1;min-width:0;padding:7px 11px">
-                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px">
-                        <span style="font-size:15px;font-weight:700;color:#1f2937;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $project->owner_name }}</span>
-                        <span style="flex-shrink:0;font-size:10px;font-weight:700;color:#fff;background:{{ $wsC['color'] }};border-radius:13px;padding:3px 11px;white-space:nowrap">{{ $wsC['label'] }}</span>
+            <div x-show="collapsed" style="display:flex;align-items:stretch;margin:-8px -10px;border-radius:11px;overflow:hidden;min-height:58px">
+                <button @click.stop="collapsed=false" style="flex-shrink:0;width:46px;border:none;cursor:pointer;background:{{ $wsC['color'] }};color:#fff;display:flex;align-items:center;justify-content:center" title="To'liq ochish">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="3.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div style="flex:1;min-width:0;padding:7px 10px">
+                    {{-- Ism + ish holati --}}
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:4px">
+                        <span style="font-size:13px;font-weight:700;color:#1f2937;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $project->owner_name }}</span>
+                        <span style="flex-shrink:0;font-size:9px;font-weight:700;color:#fff;background:{{ $wsC['color'] }};border-radius:11px;padding:2px 9px;white-space:nowrap">{{ $wsC['label'] }}</span>
                     </div>
-                    <div style="display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap">
-                        @if($empsC->isNotEmpty())
-                        <div style="font-size:11px;font-weight:600;color:#374151;line-height:1.35;flex-shrink:0">@foreach($empsC as $e)<div>{{ $e }}</div>@endforeach</div>
-                        @endif
-                        <div style="flex:1;min-width:110px;display:flex;flex-direction:column;gap:2px">
-                            @foreach($project->services->take(3) as $srv)
-                            <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
-                                <span style="font-size:10px;font-weight:600;background:#fff1e6;color:#c2410c;border-radius:5px;padding:1px 7px;white-space:nowrap;{{ $srv->completed_at ? 'text-decoration:line-through;opacity:.6' : '' }}">{{ $serviceOptions[$srv->service_name] ?? $srv->service_name }}</span>
-                                <span style="font-size:9px;font-weight:600;background:{{ $srv->completed_at ? '#f0fdf4' : '#f3f4f6' }};color:{{ $srv->completed_at ? '#16a34a' : '#9ca3af' }};border-radius:4px;padding:1px 5px;white-space:nowrap">{{ $srv->completed_at ? '✓ Tugallandi' : '○ Tugalmagan' }}</span>
-                            </div>
-                            @endforeach
-                        </div>
-                        @if($project->total_price > 0)
-                        <div style="font-size:10px;line-height:1.5;text-align:right;flex-shrink:0">
-                            <div><span style="color:#9ca3af">Umumiy </span><b style="color:#374151">{{ number_format($project->total_price,0,'.',' ') }}</b></div>
-                            <div><span style="color:#9ca3af">To'langan </span><b style="color:#16a34a">{{ number_format($project->paid_amount,0,'.',' ') }}</b></div>
-                            @if($qcC>0)<div><span style="color:#ef4444">Qoldiq </span><b style="color:#ef4444">{{ number_format($qcC,0,'.',' ') }}</b></div>@endif
-                        </div>
-                        @endif
+                    {{-- Xizmatlar (har biri 1 qator: nom + holat + hodim) --}}
+                    @foreach($project->services->take(3) as $srv)
+                    <div style="display:flex;align-items:center;gap:5px;margin-bottom:2px;overflow:hidden">
+                        <span style="flex-shrink:0;font-size:10px;font-weight:600;background:#fff1e6;color:#c2410c;border-radius:4px;padding:1px 6px;white-space:nowrap;{{ $srv->completed_at ? 'text-decoration:line-through;opacity:.6' : '' }}">{{ $serviceOptions[$srv->service_name] ?? $srv->service_name }}</span>
+                        <span style="flex-shrink:0;font-size:11px;color:{{ $srv->completed_at ? '#16a34a' : '#cbd5e1' }}">{{ $srv->completed_at ? '✓' : '○' }}</span>
+                        @if($srv->assignedUser)<span style="font-size:10px;color:#6366f1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $srv->assignedUser->name }}</span>@endif
                     </div>
+                    @endforeach
+                    {{-- Summa --}}
+                    @if($project->total_price > 0)
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:3px;font-size:10px">
+                        <span style="color:#9ca3af">To'langan <b style="color:#16a34a">{{ number_format($project->paid_amount,0,'.',' ') }}</b></span>
+                        @if($qcC>0)<span style="font-weight:700;color:#ef4444;white-space:nowrap">Qoldiq {{ number_format($qcC,0,'.',' ') }}</span>
+                        @else<span style="font-weight:700;color:#16a34a;white-space:nowrap">✓ To'langan</span>@endif
+                    </div>
+                    @endif
                 </div>
             </div>
 
