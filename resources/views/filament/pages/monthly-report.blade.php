@@ -199,6 +199,47 @@
     @endif
 </div>
 
+{{-- ══ MyGOV — kim orqali kelgan (FISH) ══ --}}
+<style>
+.mg-has{background:#ccfbf1!important;color:#0f766e!important}
+.mg-total{background:#e0e7ff!important;color:#4338ca!important}
+.dark .mg-has{background:#0f2e2a!important;color:#5eead4!important}
+.dark .mg-total{background:#1e1b4b!important;color:#a5b4fc!important}
+</style>
+<div class="mr-card">
+    <div style="margin-bottom:12px">
+        <div style="font-size:16px;font-weight:800;color:#0f172a" class="dark:text-white">🏛 MyGOV — kim orqali kelgan</div>
+        <div style="font-size:12px;color:#64748b;margin-top:2px">Har bir FISH (kim orqali kelgani) bo'yicha arizalar soni — {{ $normYear }}-yil. Yuqoridagi yil almashtirgichга bog'liq.</div>
+    </div>
+    @if(count($mygovRows) === 0)
+        <div style="text-align:center;color:#94a3b8;padding:24px;font-size:13px">Hozircha MyGOV FISH kiritilmagan. Loyiha oynasida <b>MyGOV → FISH</b> maydonini to'ldiring.</div>
+    @else
+    <div class="nrm-wrap">
+        <table class="nrm-tbl">
+            <thead>
+                <tr>
+                    <th class="l">FISH — kim orqali</th>
+                    @foreach($nrmMonths as $mn)<th>{{ $mn }}</th>@endforeach
+                    <th>Jami</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($mygovRows as $row)
+                <tr>
+                    <td><div class="nrm-emp" style="min-width:150px"><span class="nrm-nm">{{ $row['fish'] }}</span></div></td>
+                    @for($m=1;$m<=12;$m++)
+                        @php $c = $row['months'][$m]; @endphp
+                        <td><span class="nrm-cell {{ $c>0 ? 'mg-has' : 'nrm-na' }}">{{ $c }}</span></td>
+                    @endfor
+                    <td><span class="nrm-sum mg-total">{{ $row['total'] }} ta</span></td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+    @endif
+</div>
+
 {{-- UMUMIY STATISTIKA --}}
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:18px">
     <div class="mr-stat mr-stat--neutral">

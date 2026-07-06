@@ -15,7 +15,7 @@ class Project extends Model
         'description', 'category', 'status', 'work_status', 'assigned_user_id',
         'total_price', 'paid_amount', 'deadline_date', 'timer_paused_at',
         'payment_requested_at', 'payment_requested_by',
-        'mygov_login', 'mygov_password',
+        'mygov_login', 'mygov_password', 'mygov_fish',
         'is_urgent', 'urgent_accepted_at', 'urgent_accepted_by',
     ];
 

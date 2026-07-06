@@ -529,6 +529,27 @@ class MonthlyReport extends Page
             ];
         }
 
+        // ══ MyGOV — kim orqali kelgan (FISH bo'yicha), loyiha ochilgan oyга ══
+        $mygovData = \App\Models\Project::whereNotNull('mygov_fish')
+            ->where('mygov_fish', '!=', '')
+            ->whereYear('created_at', $normYear)
+            ->get(['mygov_fish', 'created_at']);
+        $mygovCounts = []; // [fish][oy] => son
+        foreach ($mygovData as $mp) {
+            $fish = trim($mp->mygov_fish);
+            if ($fish === '') continue;
+            $m = (int) Carbon::parse($mp->created_at)->format('n');
+            $mygovCounts[$fish][$m] = ($mygovCounts[$fish][$m] ?? 0) + 1;
+        }
+        $mygovRows = [];
+        foreach ($mygovCounts as $fish => $months) {
+            $full = [];
+            $total = 0;
+            for ($m = 1; $m <= 12; $m++) { $c = (int) ($months[$m] ?? 0); $full[$m] = $c; $total += $c; }
+            $mygovRows[] = ['fish' => $fish, 'months' => $full, 'total' => $total];
+        }
+        usort($mygovRows, fn($a, $b) => $b['total'] <=> $a['total']);
+
 
         // Umumiy loyihalar — shu oyda ochilgan barcha loyihalar
         $allProjectsCount = (int)   Project::whereYear('created_at', $year)->whereMonth('created_at', $month)->count();
@@ -544,7 +565,7 @@ class MonthlyReport extends Page
             'allProjectsCount', 'allProjectsSum',
             'toliqTugatilgan', 'qismanTugatilgan', 'toliqCount', 'qismanCount',
             'tugatilganIshlar',
-            'normRows', 'normYear'
+            'normRows', 'normYear', 'mygovRows'
         );
     }
 }

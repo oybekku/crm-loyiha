@@ -94,6 +94,14 @@
                     <button type="button" title="Nusxalash" onclick="(function(b){var i=document.getElementById('mygov-pw-{{ $editInfoId }}');if(navigator.clipboard){navigator.clipboard.writeText(i.value)}b.innerHTML='✓';setTimeout(function(){b.innerHTML='⧉'},1000)})(this)" style="padding:0 11px;border:1px solid #c7d2fe;border-radius:8px;background:#fff;cursor:pointer;font-size:14px">⧉</button>
                 </div>
             </div>
+            <div style="margin-bottom:11px">
+                <label style="font-size:11px;font-weight:600;color:#374151;display:block;margin-bottom:4px">FISH — kim orqali keldi</label>
+                <input wire:model="ei_mygovFish" type="text" list="mygov-fish-list-{{ $editInfoId }}" autocomplete="off" placeholder="Masalan: Umarov Oybek" style="width:100%;padding:8px 11px;border:1.5px solid #c7d2fe;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box">
+                <datalist id="mygov-fish-list-{{ $editInfoId }}">
+                    @foreach($mygovFishList as $fn)<option value="{{ $fn }}"></option>@endforeach
+                </datalist>
+                <div style="font-size:10px;color:#6366f1;margin-top:4px">Ariza kim orqali kelganini yozing — statistikaga o'tadi (Oylik hisobot).</div>
+            </div>
             <button type="button" wire:click="eiSaveMygov" style="padding:8px 16px;border-radius:8px;border:none;background:#4338ca;color:#fff;font-size:13px;font-weight:700;cursor:pointer">💾 MyGOV saqlash</button>
             <div style="font-size:10px;color:#6366f1;margin-top:8px">🔒 Parol bazada shifrlangan holda saqlanadi.</div>
         </div>

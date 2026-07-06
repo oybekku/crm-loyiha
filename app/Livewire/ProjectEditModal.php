@@ -43,6 +43,7 @@ class ProjectEditModal extends Component
     public bool   $ei_paymentRequested = false;
     public string $ei_mygovLogin     = '';
     public string $ei_mygovPassword  = '';
+    public string $ei_mygovFish      = '';
     public bool   $ei_showMygov      = false;
     public string $ei_newSvcType     = '';
     public string $ei_newSvcPrice    = '';
@@ -77,6 +78,7 @@ class ProjectEditModal extends Component
         $this->ei_paymentRequested = (bool) $p->payment_requested_at;
         $this->ei_mygovLogin    = $this->canMygov($p) ? ($p->mygov_login ?? '') : '';
         $this->ei_mygovPassword = $this->canMygov($p) ? ($p->mygov_password ?? '') : '';
+        $this->ei_mygovFish     = $this->canMygov($p) ? ($p->mygov_fish ?? '') : '';
         $this->ei_showMygov     = false;
         $this->showEditInfoModal = true;
     }
@@ -193,6 +195,7 @@ class ProjectEditModal extends Component
         $p->update([
             'mygov_login'    => trim($this->ei_mygovLogin) ?: null,
             'mygov_password' => $this->ei_mygovPassword !== '' ? $this->ei_mygovPassword : null,
+            'mygov_fish'     => trim($this->ei_mygovFish) ?: null,
         ]);
         $this->dispatch('notify', type: 'success', message: "MyGOV login/parol saqlandi");
     }
@@ -431,6 +434,12 @@ class ProjectEditModal extends Component
 
         $canMygov = $this->editInfoId ? $this->canMygov() : false;
 
+        // FISH avtomat-taklif ro'yxati (avval kiritilgan ismlar)
+        $mygovFishList = $canMygov
+            ? Project::whereNotNull('mygov_fish')->where('mygov_fish', '!=', '')
+                ->distinct()->orderBy('mygov_fish')->pluck('mygov_fish')->toArray()
+            : [];
+
         // Oxirgi "Qabul qildim" ma'lumoti (kim/qachon)
         $urgentAccepted = null;
         if ($this->editInfoId) {
@@ -443,6 +452,6 @@ class ProjectEditModal extends Component
             }
         }
 
-        return view('livewire.project-edit-modal', compact('statuses', 'users', 'canMygov', 'urgentAccepted'));
+        return view('livewire.project-edit-modal', compact('statuses', 'users', 'canMygov', 'urgentAccepted', 'mygovFishList'));
     }
 }
