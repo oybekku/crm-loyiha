@@ -369,7 +369,26 @@ class KanbanBoard extends Page
             'urgent_accepted_by' => $u->id,
         ]);
 
-        $this->dispatch('notify', type: 'success', message: "Qabul qilindi — olov o'chdi");
+        $this->dispatch('notify', type: 'success', message: "Qabul qilindi — zudlik o'chdi");
+    }
+
+    // Zudlik bayrog'i — admin/menejer kartadagi bayroqni bosib yoqadi/o'chiradi
+    public function toggleUrgent(int $projectId): void
+    {
+        $u = auth()->user();
+        if (!$u || !$u->canSeeAllProjects()) return;
+
+        $project = Project::find($projectId);
+        if (!$project) return;
+
+        $on = !$project->is_urgent;
+        $project->update([
+            'is_urgent'          => $on,
+            'urgent_accepted_at' => $on ? null : $project->urgent_accepted_at,
+            'urgent_accepted_by' => $on ? null : $project->urgent_accepted_by,
+        ]);
+
+        $this->dispatch('notify', type: 'success', message: $on ? 'Zudlik yoqildi' : "Zudlik o'chirildi");
     }
 
     public function markUncomplete(int $projectId): void

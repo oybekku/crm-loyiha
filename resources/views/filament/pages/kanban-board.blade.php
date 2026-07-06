@@ -31,8 +31,8 @@
 @keyframes kbn-pulse{0%,100%{opacity:1}50%{opacity:.72}}
 @keyframes kbn-sweep{0%{transform:translateX(-130%)}100%{transform:translateX(330%)}}
 .kbn-host{padding:0!important;border:none!important;background:transparent!important;box-shadow:none!important;overflow:visible!important}
-.kbn-card{position:relative;display:flex;align-items:stretch;min-height:82px;background:rgba(255,255,255,.60);-webkit-backdrop-filter:blur(9px);backdrop-filter:blur(9px);border:1.5px solid color-mix(in srgb,var(--acc) 60%,#e2e8f0);border-radius:14px;overflow:hidden;box-shadow:0 0 0 1px color-mix(in srgb,var(--acc) 15%,transparent),0 0 20px -6px color-mix(in srgb,var(--acc) 60%,transparent),0 8px 24px -12px rgba(15,23,42,.4)}
-.kbn-vside{position:relative;flex-shrink:0;width:58px;align-self:stretch;display:flex;align-items:center;justify-content:center;cursor:pointer;background:linear-gradient(180deg,color-mix(in srgb,var(--acc) 90%,#000),color-mix(in srgb,var(--acc) 62%,#000));box-shadow:inset 0 0 18px color-mix(in srgb,var(--acc) 60%,transparent),0 0 22px -3px var(--acc);overflow:hidden}
+.kbn-card{position:relative;display:flex;align-items:stretch;min-height:82px;background:rgba(255,255,255,.60);-webkit-backdrop-filter:blur(9px);backdrop-filter:blur(9px);border:1.5px solid color-mix(in srgb,var(--acc) 60%,#e2e8f0);border-radius:14px;overflow:visible;box-shadow:0 0 0 1px color-mix(in srgb,var(--acc) 15%,transparent),0 0 20px -6px color-mix(in srgb,var(--acc) 60%,transparent),0 8px 24px -12px rgba(15,23,42,.4)}
+.kbn-vside{position:relative;flex-shrink:0;width:58px;align-self:stretch;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:13px 0 0 13px;background:linear-gradient(180deg,color-mix(in srgb,var(--acc) 90%,#000),color-mix(in srgb,var(--acc) 62%,#000));box-shadow:inset 0 0 18px color-mix(in srgb,var(--acc) 60%,transparent),0 0 22px -3px var(--acc);overflow:hidden}
 .kbn-vside svg{filter:drop-shadow(0 0 6px rgba(255,255,255,.85))}
 .kbn-vside::after{content:"";position:absolute;top:0;bottom:0;width:36%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);animation:kbn-sweep 3.6s ease-in-out infinite}
 .kbn-name{color:#0f172a!important}
@@ -46,16 +46,14 @@
 .kbn-debt{color:#e11d48!important}
 .kbn-muted{color:#94a3b8!important}
 @media(prefers-reduced-motion:reduce){.kbn-vside::after,.kbn-badge{animation:none}}
-/* ══ ZUDLIK (olov) ══ */
-@keyframes kbn-ember{0%,100%{box-shadow:0 0 0 1.5px #ea580c,0 0 18px -3px rgba(234,88,12,.6),0 0 40px -8px rgba(239,68,68,.5)}50%{box-shadow:0 0 0 1.5px #ef4444,0 0 30px 0 rgba(249,115,22,.7),0 0 60px -6px rgba(220,38,38,.55)}}
-@keyframes kbn-zpulse{0%,100%{box-shadow:0 0 10px -2px rgba(249,115,22,.7)}50%{box-shadow:0 0 18px 0 rgba(239,68,68,.9)}}
-.kbn-card.kbn-fire{border-color:#ea580c!important;overflow:visible!important;animation:kbn-ember 2s ease-in-out infinite}
-.kbn-card.kbn-fire .kbn-vside{border-radius:12px 0 0 12px}
-/* Olov — kartaning bo'sh markazida */
-.kbn-lot{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:96px;height:96px;pointer-events:none;z-index:1;filter:drop-shadow(0 0 7px rgba(249,115,22,.5))}
-.kbn-zudlik{display:inline-flex;align-items:center;gap:4px;background:linear-gradient(180deg,#f97316,#dc2626);color:#fff;font-size:10px;font-weight:800;letter-spacing:.04em;padding:3px 11px;border-radius:20px;white-space:nowrap;box-shadow:0 0 10px -1px #f97316;animation:kbn-zpulse 1.4s ease-in-out infinite}
-.kbn-accept-float{position:absolute;bottom:-12px;left:50%;transform:translateX(-50%);z-index:7;display:inline-flex;align-items:center;gap:5px;background:#16a34a;color:#fff;border:none;border-radius:20px;padding:5px 14px;font-size:11px;font-weight:800;cursor:pointer;box-shadow:0 3px 10px -2px rgba(22,163,74,.7);white-space:nowrap;pointer-events:auto}
-.kbn-accept-float:hover{background:#15803d}
+/* ══ ZUDLIK (bayroq + qizil neon) ══ */
+@keyframes kbn-redneon{0%,100%{box-shadow:0 0 0 1.5px #cd201f,0 0 16px -2px rgba(205,32,31,.55),0 0 34px -6px rgba(205,32,31,.45)}50%{box-shadow:0 0 0 1.5px #a01518,0 0 28px 0 rgba(205,32,31,.8),0 0 54px -4px rgba(160,20,24,.6)}}
+.kbn-card.kbn-fire{border-color:#cd201f!important;animation:kbn-redneon 1.8s ease-in-out infinite}
+/* Bayroq (zudlik belgisi) — sozlangan joy: right 96, top -28, size 92 */
+.kbn-flag{position:absolute;top:-28px;right:96px;z-index:6;line-height:0;border:none;background:none;padding:0;margin:0}
+.kbn-flag.clickable{cursor:pointer}
+.kbn-flag img{display:block;height:92px;width:auto;pointer-events:none;filter:drop-shadow(0 4px 6px rgba(0,0,0,.28))}
+.kbn-card.kbn-fire .kbn-flag img{filter:drop-shadow(0 0 11px rgba(205,32,31,.9))}
 .dark .p-card{background:#1e2533;border-color:#2d3748}
 .p-card:hover{border-color:#93c5fd;box-shadow:0 3px 10px rgba(0,0,0,.10)}
 .p-card.dragging{opacity:.4;cursor:grabbing}
@@ -556,11 +554,16 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                 $uAuth = auth()->user();
                 $canAcceptUrgent = $isUrgent && $uAuth && ($uAuth->canSeeAllProjects()
                     || $project->services->contains(fn($s)=>$s->assigned_user_id === $uAuth->id));
+                $canToggleUrgent = $uAuth && $uAuth->canSeeAllProjects(); // admin/menejer bayroqni bosadi
             @endphp
             <div x-show="collapsed" class="kb-wcard kbn-card {{ $isUrgent ? 'kbn-fire' : '' }}" style="--acc:{{ $wsC['color'] }}">
-                @if($isUrgent)
-                {{-- Zudlik olovi (Lottie) — kartaning tepasidan ko'tariladi --}}
-                <div class="kbn-lot" x-data x-init="window.kbFire($el)"></div>
+                {{-- Zudlik bayrog'i: admin/menejer bossa yoqadi/o'chadi; boshqalar faqat qizilni ko'radi --}}
+                @if($canToggleUrgent)
+                <button type="button" class="kbn-flag clickable" wire:click="toggleUrgent({{ $project->id }})" title="Zudlik belgisi — bosib yoqing/o'chiring">
+                    <img src="{{ $isUrgent ? route('pechat.asset','flag-red.png') : route('pechat.asset','flag.png') }}" alt="Zudlik">
+                </button>
+                @elseif($isUrgent)
+                <span class="kbn-flag"><img src="{{ route('pechat.asset','flag-red.png') }}" alt="Zudlik"></span>
                 @endif
                 {{-- V blok (bosilsa to'liq ochiladi) — neon yonuvchi --}}
                 <div @click.stop="collapsed=false" class="kbn-vside" title="To'liq ochish">
@@ -584,11 +587,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                     </div>
                     <div style="flex-shrink:0;text-align:right;font-variant-numeric:tabular-nums">
                         <div style="margin-bottom:6px">
-                            @if($isUrgent)
-                            <span class="kbn-zudlik">🔥 ZUDLIK</span>
-                            @else
                             <span class="kbn-badge" style="background:{{ $wsC['color'] }};display:inline-block;padding:3px 12px;border-radius:20px;font-size:10px;font-weight:800;letter-spacing:.03em;white-space:nowrap">{{ $wsC['label'] }}</span>
-                            @endif
                         </div>
                         @if($project->total_price > 0)
                         <div style="font-size:11px;white-space:nowrap"><span class="kbn-muted">Umumiy</span> <b style="color:#334155">{{ number_format($project->total_price,0,'.',' ') }}</b></div>
@@ -2694,33 +2693,6 @@ function kbDrop(e, status) {
     }, { passive: true });
 
     setTimeout(() => updateActiveTabs(0), 300);
-})();
-</script>
-
-{{-- ══ Zudlik olovi (Lottie) — faqat yonayotgan karta bo'lsa yuklanadi ══ --}}
-<script>
-(function(){
-    var LOTTIE_JS = @json(route('pechat.asset','lottie.js'));
-    var FIRE_JSON = @json(route('pechat.asset','fire.json'));
-    // Har bir yonayotgan karta o'zini shu funksiya bilan yoqadi (Alpine x-init)
-    window.kbFire = function(el){
-        if(!el || el.dataset.lit) return;
-        el.dataset.lit = '1';
-        function go(){
-            try { window.lottie.loadAnimation({container:el, renderer:'svg', loop:true, autoplay:true, path:FIRE_JSON}); }
-            catch(e){}
-        }
-        if(window.lottie){ go(); return; }
-        // Lottie pleyeri hali yuklanmagan — bir marta yuklaymiz, keyin hammasi ishga tushadi
-        document.addEventListener('kb-lottie-ready', go, {once:true});
-        if(!window.__kbLottieLoading){
-            window.__kbLottieLoading = true;
-            var s = document.createElement('script');
-            s.src = LOTTIE_JS;
-            s.onload = function(){ document.dispatchEvent(new Event('kb-lottie-ready')); };
-            document.head.appendChild(s);
-        }
-    };
 })();
 </script>
 
