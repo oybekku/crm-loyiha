@@ -555,6 +555,11 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                 $canAcceptUrgent = $isUrgent && $uAuth && ($uAuth->canSeeAllProjects()
                     || $project->services->contains(fn($s)=>$s->assigned_user_id === $uAuth->id));
                 $canToggleUrgent = $uAuth && $uAuth->canSeeAllProjects(); // admin/menejer bayroqni bosadi
+                $acceptedName = null;
+                if ($project->urgent_accepted_by && $project->urgent_accepted_at) {
+                    $acceptedName = optional($project->assignedUsers->firstWhere('id', $project->urgent_accepted_by))->name
+                        ?? \App\Models\User::find($project->urgent_accepted_by)?->name;
+                }
             @endphp
             <div x-show="collapsed" class="kb-wcard kbn-card {{ $isUrgent ? 'kbn-fire' : '' }}" style="--acc:{{ $wsC['color'] }}">
                 {{-- Zudlik bayrog'i: admin/menejer bossa yoqadi/o'chadi; boshqalar faqat qizilni ko'radi --}}
@@ -652,10 +657,15 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             {{-- ZUDLIK banneri (ochilgan kartada) + Qabul qildim --}}
             @if($isUrgent)
             <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px;padding:8px 11px;border:1.5px solid #fca5a5;border-radius:10px;background:linear-gradient(90deg,#fff7ed,#fef2f2)">
-                <span style="font-size:12px;font-weight:800;color:#c2410c;display:inline-flex;align-items:center;gap:5px">🔥 Zudlik bilan qilinsin!</span>
+                <span style="font-size:12px;font-weight:800;color:#b91c1c;display:inline-flex;align-items:center;gap:5px">🚩 Zudlik bilan qilinsin!</span>
                 @if($canAcceptUrgent)
                 <button type="button" wire:click="acceptUrgent({{ $project->id }})" style="display:inline-flex;align-items:center;gap:5px;background:#16a34a;color:#fff;border:none;border-radius:8px;padding:6px 13px;font-size:12px;font-weight:800;cursor:pointer;box-shadow:0 2px 8px -2px rgba(22,163,74,.6)">✅ Qabul qildim</button>
                 @endif
+            </div>
+            @elseif($acceptedName)
+            {{-- Qabul qilingan — kim/qachon --}}
+            <div style="margin-bottom:8px;padding:7px 11px;border:1.5px solid #bbf7d0;border-radius:10px;background:#f0fdf4;font-size:12px;font-weight:700;color:#15803d;display:inline-flex;align-items:center;gap:6px">
+                ✅ {{ $acceptedName }} ishni qabul qildi — {{ $project->urgent_accepted_at->translatedFormat('d-M, H:i') }}
             </div>
             @endif
 
