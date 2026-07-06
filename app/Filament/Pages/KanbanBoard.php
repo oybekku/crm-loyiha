@@ -1305,6 +1305,19 @@ class KanbanBoard extends Page
 
         $projects = $projectQuery->get()->groupBy('status');
 
+        // MyGOV ustuni oyга bog'liq bo'lmasin — ariza navbati barcha oylar bo'yicha to'liq ko'rinsin.
+        // (Loyiha eski oyда ochilgan bo'lsa ham, MyGOV'ga surilsa shu ustunда turadi.)
+        if (empty($this->search)) {
+            $mygovQuery = Project::with(['assignedUsers', 'services.assignedUser', 'currentStatusLog'])
+                ->where('status', 'mygov')
+                ->orderBy('created_at', 'desc');
+            if ($authUser && !$authUser->canSeeAllProjects() && !$authUser->isHisobchi()
+                && !$authUser->hasPermission('barcha_loyihalar')) {
+                $mygovQuery->whereHas('services', fn($q) => $q->where('assigned_user_id', $authUser->id));
+            }
+            $projects['mygov'] = $mygovQuery->get();
+        }
+
         $users           = User::orderBy('name')->get();
         $serviceOptions  = Project::serviceOptions();
         $categoryOptions = Project::categoryOptions();
