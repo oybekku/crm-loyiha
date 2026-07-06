@@ -170,6 +170,30 @@ class ProjectEditModal extends Component
         $this->dispatch('notify', type: 'success', message: $on ? "🔥 Zudlik yoqildi" : "Zudlik o'chirildi");
     }
 
+    // Zudlikni "Qabul qildim" — faqat biriktirilgan hodim yoki admin/menejer
+    public function eiAcceptUrgent(): void
+    {
+        $p = Project::find($this->editInfoId);
+        if (!$p || !$p->is_urgent) return;
+
+        $u = auth()->user();
+        $ok = $u && ($u->canSeeAllProjects()
+            || $p->services()->where('assigned_user_id', $u->id)->exists());
+        if (!$ok) {
+            $this->dispatch('notify', type: 'error', message: "Ruxsat yo'q");
+            return;
+        }
+
+        $p->update([
+            'is_urgent'          => false,
+            'urgent_accepted_at' => now(),
+            'urgent_accepted_by' => $u->id,
+        ]);
+        $this->ei_isUrgent = false;
+        $this->dispatch('kb-refresh');
+        $this->dispatch('notify', type: 'success', message: "Qabul qilindi — zudlik o'chdi");
+    }
+
     // ── MyGOV (my.gov.uz) login/parol — admin/menejer/mas'ul hodim ──
     private function canMygov(?Project $p = null): bool
     {
@@ -440,8 +464,9 @@ class ProjectEditModal extends Component
                 ->distinct()->orderBy('mygov_fish')->pluck('mygov_fish')->toArray()
             : [];
 
-        // Oxirgi "Qabul qildim" ma'lumoti (kim/qachon)
-        $urgentAccepted = null;
+        // Oxirgi "Qabul qildim" ma'lumoti (kim/qachon) + hozir qabul qila oladimi
+        $urgentAccepted   = null;
+        $canAcceptUrgent  = false;
         if ($this->editInfoId) {
             $p = Project::find($this->editInfoId);
             if ($p && $p->urgent_accepted_at) {
@@ -450,8 +475,13 @@ class ProjectEditModal extends Component
                     'at'   => $p->urgent_accepted_at,
                 ];
             }
+            if ($p && $p->is_urgent) {
+                $u = auth()->user();
+                $canAcceptUrgent = $u && ($u->canSeeAllProjects()
+                    || $p->services()->where('assigned_user_id', $u->id)->exists());
+            }
         }
 
-        return view('livewire.project-edit-modal', compact('statuses', 'users', 'canMygov', 'urgentAccepted', 'mygovFishList'));
+        return view('livewire.project-edit-modal', compact('statuses', 'users', 'canMygov', 'urgentAccepted', 'canAcceptUrgent', 'mygovFishList'));
     }
 }

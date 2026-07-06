@@ -107,6 +107,14 @@
         </div>
         @endif
 
+        {{-- Zudlik — Qabul qildim (faqat biriktirilgan hodim yoki admin/menejer) --}}
+        @if($canAcceptUrgent)
+        <div style="margin-bottom:14px;padding:11px 14px;border:1.5px solid #fca5a5;border-radius:10px;background:linear-gradient(90deg,#fff7ed,#fef2f2);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+            <span style="font-size:13px;font-weight:800;color:#b91c1c;display:inline-flex;align-items:center;gap:6px">🚩 Bu ish ZUDLIK bilan belgilangan</span>
+            <button type="button" wire:click="eiAcceptUrgent" style="display:inline-flex;align-items:center;gap:5px;background:#16a34a;color:#fff;border:none;border-radius:8px;padding:8px 15px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 2px 8px -2px rgba(22,163,74,.6)">✅ Qabul qildim</button>
+        </div>
+        @endif
+
         {{-- Zudlik "Qabul qildim" yozuvi (kim/qachon) --}}
         @if($urgentAccepted)
         <div style="margin-bottom:14px;padding:9px 13px;border:1px solid #bbf7d0;border-radius:9px;background:#f0fdf4;font-size:12.5px;color:#15803d;font-weight:600;display:flex;align-items:center;gap:7px">
