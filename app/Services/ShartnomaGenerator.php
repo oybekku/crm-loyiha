@@ -66,6 +66,10 @@ class ShartnomaGenerator
             $xml = str_replace('Кушманов Элёр Равшанбекович', htmlspecialchars($p->owner_name, ENT_XML1, 'UTF-8'), $xml);
         }
 
+        // Aktдаги bo'lak-bo'lak qolgan eski shartnoma raqami "№456/09-24" → "№{raqam}"
+        $xml = str_replace('№456', '№' . htmlspecialchars((string) ($p->seq_no ?? ''), ENT_XML1, 'UTF-8'), $xml);
+        $xml = str_replace('/09-24', '', $xml);
+
         $zip->deleteName('word/document.xml');
         $zip->addFromString('word/document.xml', $xml);
         $zip->close();
