@@ -239,7 +239,16 @@
                 <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;{{ !$loop->last ? 'border-bottom:1px solid #f1f5f9' : '' }}">
                     <div>
                         <div style="font-size:13px;font-weight:600;color:#374151;{{ $svc['completed'] ? 'text-decoration:line-through;opacity:.6' : '' }}">{{ $svc['label'] }}</div>
-                        @if(!empty($svc['employee']))
+                        @if(auth()->user()?->canSeeAllProjects())
+                        {{-- Mas'ul hodim biriktirish (shu yerda) --}}
+                        <select @change="$wire.eiAssignService({{ $svc['id'] }}, $event.target.value)"
+                                style="margin-top:3px;font-size:11px;padding:4px 8px;border-radius:6px;cursor:pointer;color:#374151;max-width:190px;border:1px solid {{ !empty($svc['assigned_user_id']) ? '#a5b4fc' : '#e5e7eb' }};background:{{ !empty($svc['assigned_user_id']) ? '#eef2ff' : '#fff' }}">
+                            <option value="">👤 Mas'ul tanlang...</option>
+                            @foreach($users as $usr)
+                            <option value="{{ $usr->id }}" @selected((string)($svc['assigned_user_id'] ?? '') === (string)$usr->id)>{{ $usr->name }}</option>
+                            @endforeach
+                        </select>
+                        @elseif(!empty($svc['employee']))
                         <div style="font-size:11px;color:#6366f1;margin-top:2px">👷 {{ $svc['employee'] }}</div>
                         @else
                         <div style="font-size:11px;color:#9ca3af;margin-top:2px">👤 mas'ul biriktirilmagan</div>

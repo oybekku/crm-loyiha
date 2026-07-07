@@ -120,6 +120,25 @@ class ProjectEditModal extends Component
         $this->dispatch('kb-refresh'); // doskadagi karta ham yangilansin
     }
 
+    // Xizmatga mas'ul hodim biriktirish (admin/menejer) — shu yerda, modal ochiq qoladi
+    public function eiAssignService(int $serviceId, $userId): void
+    {
+        $u = auth()->user();
+        if (!$u || !$u->canSeeAllProjects()) {
+            $this->dispatch('notify', type: 'error', message: "Ruxsat yo'q");
+            return;
+        }
+        $svc = ProjectService::find($serviceId);
+        if (!$svc || $svc->project_id !== $this->editInfoId) return;
+
+        $svc->update(['assigned_user_id' => $userId ? (int) $userId : null]);
+
+        $p = Project::find($this->editInfoId);
+        if ($p) $this->ei_services = $this->buildEiServices($p);
+        $this->dispatch('kb-refresh');
+        $this->dispatch('notify', type: 'success', message: $userId ? "Mas'ul biriktirildi" : "Mas'ul olib tashlandi");
+    }
+
     // GENPLAN: belgilangan PDFlarni muqova+sertifikat bilan yig'ish sahifasini ochadi
     public function eiMerge(): void
     {
@@ -424,6 +443,7 @@ class ProjectEditModal extends Component
                 'paid'      => $pd,
                 'pct'       => $price > 0 ? min(100, (int) round($pd / $price * 100)) : 0,
                 'employee'  => $s->assignedUser?->name,
+                'assigned_user_id' => $s->assigned_user_id,
                 'completed' => (bool) $s->completed_at,
             ];
         })->toArray();
