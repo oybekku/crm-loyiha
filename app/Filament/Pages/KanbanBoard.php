@@ -1280,10 +1280,10 @@ class KanbanBoard extends Page
                 $routeStatuses[$ps->key] = $data;
             }
 
-            // Hodim (bajaruvchi) — o'zi biriktirilgan ish turlari
-            // + maxsus "BARCHA loyiha" ruxsati berilgan ustunlar (masalan Tugallangan, MyGOV)
+            // Hodim (bajaruvchi) — ustun FAQAT Ruxsatnomalarда belgilangan bo'lsa ko'rinadi.
+            // (kanban_<key> = ustunni ko'rish; kanban_all_<key> = shu ustunда barcha loyiha)
             if ($authUser?->isBajaruvchi()) {
-                if (in_array($ps->key, $authUser->kanbanServiceCols())
+                if ($authUser->hasPermission('kanban_' . $ps->key)
                     || $authUser->hasPermission('kanban_all_' . $ps->key)) {
                     $statuses[$ps->key] = $data;
                 }
