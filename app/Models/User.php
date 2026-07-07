@@ -32,19 +32,16 @@ class User extends Authenticatable implements FilamentUser
 
     public static function defaultPermissions(): array
     {
-        $kanbanKeys = [];
-        try {
-            $kanbanKeys = ProjectStatus::allOrdered()->map(fn($ps) => 'kanban_' . $ps->key)->toArray();
-        } catch (\Throwable) {}
-
-        return array_values(array_merge([
+        // Kanban ustunlari (kanban_*) sukut bo'yicha BERILMAYDI — whitelist.
+        // Admin har bir hodimga kerakli ustunlarni Ruxsatnomalardan o'zi belgilaydi.
+        return [
             'page_kanban_board',   // Loyihalar menyu
             'page_arxiv_page',     // Arxiv menyu
             'loyiha_tahrirlash',   // Loyihani tahrirlash
             'loyiha_otkazish',     // Loyihani bosqichga o'tkazish
             'tolov_kiritish',      // To'lov kiritish
             'loyiha_yuborish',     // Loyihani yuborish
-        ], $kanbanKeys));
+        ];
     }
 
     public static function allPermissions(): array
