@@ -49,6 +49,7 @@ class KanbanBoard extends Page
     public array  $phones            = ['+998'];
     public string $description       = '';
     public string $category          = 'turar';
+    public string $mygov_fish        = '';   // MyGOV — kim orqali keldi
     public array  $assigned_user_ids = [];
     public string $deadline_days     = '';
     public bool   $showDeadlineConfirm   = false;
@@ -232,7 +233,7 @@ class KanbanBoard extends Page
     {
         $user = auth()->user();
         if ($user?->isHisobchi()) return;
-        $this->reset(['owner_name', 'proj_title', 'address', 'latitude', 'longitude', 'description', 'assigned_user_ids', 'deadline_days', 'showDeadlineConfirm']);
+        $this->reset(['owner_name', 'proj_title', 'address', 'latitude', 'longitude', 'description', 'mygov_fish', 'assigned_user_ids', 'deadline_days', 'showDeadlineConfirm']);
         $this->phones             = ['+998'];
         $this->category           = 'turar';
         $this->uploadedFiles      = [];
@@ -1073,6 +1074,7 @@ class KanbanBoard extends Page
             'phones'           => $phones,
             'description'      => trim($this->description) ?: null,
             'category'         => $this->category,
+            'mygov_fish'       => trim($this->mygov_fish) ?: null,
             'status'           => 'yangi',
             'assigned_user_id' => $primaryUserId,
             'deadline_date'    => ($this->deadline_days > 0) ? now()->addDays((int)$this->deadline_days)->toDateString() : null,
@@ -1377,11 +1379,17 @@ class KanbanBoard extends Page
             ? Project::distinct()->orderBy('owner_name')->pluck('owner_name')->filter()->values()
             : collect();
 
+        // MyGOV FISH avtomat-taklif ro'yxati (yangi loyiha formasi ochiq bo'lsa)
+        $mygovFishList = $this->showModal
+            ? Project::whereNotNull('mygov_fish')->where('mygov_fish', '!=', '')
+                ->distinct()->orderBy('mygov_fish')->pluck('mygov_fish')->toArray()
+            : [];
+
         $kbMonthLabel = \Carbon\Carbon::create($this->kbYear, $this->kbMonth, 1)->translatedFormat('F Y');
 
         // Qidiruv tekis ro'yxati uchun — barcha statuslar belgisi
         $statusMap = $dbStatuses->keyBy('key')->map(fn($s) => ['label' => $s->label, 'color' => $s->color])->toArray();
 
-        return compact('statuses', 'allStatuses', 'routeStatuses', 'projects', 'users', 'serviceOptions', 'categoryOptions', 'priceTiers', 'paymentQueue', 'existingOwners', 'kbMonthLabel', 'statusMap');
+        return compact('statuses', 'allStatuses', 'routeStatuses', 'projects', 'users', 'serviceOptions', 'categoryOptions', 'priceTiers', 'paymentQueue', 'existingOwners', 'mygovFishList', 'kbMonthLabel', 'statusMap');
     }
 }

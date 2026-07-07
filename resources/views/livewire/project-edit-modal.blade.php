@@ -80,7 +80,7 @@
         <div style="margin-bottom:16px;padding:14px;border:1px solid #c7d2fe;border-radius:10px;background:#eef2ff">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
                 <span style="font-size:13px;font-weight:700;color:#4338ca">🏛 MyGOV — login/parol</span>
-                <a href="https://my.gov.uz" target="_blank" style="font-size:11px;color:#4338ca;text-decoration:underline">my.gov.uz ↗</a>
+                <a href="https://id.egov.uz/" target="_blank" style="font-size:11px;color:#4338ca;text-decoration:underline">id.egov.uz ↗</a>
             </div>
             <div style="margin-bottom:8px">
                 <label style="font-size:11px;font-weight:600;color:#374151;display:block;margin-bottom:4px">Login</label>

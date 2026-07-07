@@ -1167,6 +1167,15 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             </div>
 
             <div>
+                <label class="kb-label">🏛 MyGOV — kim orqali keldi (FISH)</label>
+                <input wire:model.live="mygov_fish" list="kb-fish-names" autocomplete="off" class="kb-input" placeholder="Masalan: Umarov Oybek (ixtiyoriy)">
+                <datalist id="kb-fish-names">
+                    @foreach($mygovFishList ?? [] as $fn)<option value="{{ $fn }}"></option>@endforeach
+                </datalist>
+                <div style="font-size:11px;color:#6b7280;margin-top:3px">Kim orqali kelganini yozing — Oylik hisobotdagi MyGOV statistikasiga o'tadi.</div>
+            </div>
+
+            <div>
                 <label class="kb-label">Manzil *</label>
                 <input wire:model.live="address"
                        id="kb-address-input"
