@@ -42,7 +42,9 @@
             <button type="button" wire:click="eiGoRoute" style="padding:6px 11px;border-radius:7px;border:1px solid #93c5fd;background:#eff6ff;color:#2563eb;font-size:12px;font-weight:600;cursor:pointer">✈ Yuborish</button>
             @endif
 
+            {{-- Eski "Ariza" tugmasi yashirildi — o'rniga Shartnoma keladi
             <a href="{{ route('print.project.ariza', $editInfoId) }}" target="_blank" style="padding:6px 11px;border-radius:7px;border:1px solid #d1d5db;background:#fff;color:#374151;font-size:12px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:4px">🖨 Ariza</a>
+            --}}
 
             <a href="{{ route('print.project.chegirma', $editInfoId) }}" target="_blank" style="padding:6px 11px;border-radius:7px;border:1px solid #fcd34d;background:#fffbeb;color:#b45309;font-size:12px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:4px">🎟 Chegirma</a>
 
