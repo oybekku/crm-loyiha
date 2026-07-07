@@ -1280,11 +1280,9 @@ class KanbanBoard extends Page
                 $routeStatuses[$ps->key] = $data;
             }
 
-            // Hodim (bajaruvchi) — o'zi biriktirilgan ish turi bo'limlari
-            // + alohida ruxsat berilgan ustunlar (masalan Tugallangan, MyGOV)
+            // Hodim (bajaruvchi) — faqat o'zi biriktirilgan ish turi bo'limlari
             if ($authUser?->isBajaruvchi()) {
-                if (in_array($ps->key, $authUser->kanbanServiceCols())
-                    || $authUser->hasPermission('kanban_' . $ps->key)) {
+                if (in_array($ps->key, $authUser->kanbanServiceCols())) {
                     $statuses[$ps->key] = $data;
                 }
                 continue;
@@ -1327,25 +1325,12 @@ class KanbanBoard extends Page
             });
         }
 
-        // Bajaruvchiga alohida ruxsat berilgan ustunlar — o'sha ustunlarда BARCHA loyihani ko'radi
-        $permittedCols = [];
-        if ($authUser && $authUser->isBajaruvchi()) {
-            foreach ($dbStatuses as $ps) {
-                if ($authUser->hasPermission('kanban_' . $ps->key)) $permittedCols[] = $ps->key;
-            }
-        }
-
         if ($authUser && !$authUser->canSeeAllProjects()) {
             if ($authUser->isHisobchi()) {
                 $projectQuery->where('status', '!=', 'yangi');
             } elseif (!$authUser->hasPermission('barcha_loyihalar')) {
-                // Hodim: o'zi mas'ul bo'lgan loyihalar + alohida ruxsat berilgan ustunlardagi BARCHA loyiha
-                $projectQuery->where(function ($q) use ($authUser, $permittedCols) {
-                    $q->whereHas('services', fn($s) => $s->where('assigned_user_id', $authUser->id));
-                    if (!empty($permittedCols)) {
-                        $q->orWhereIn('status', $permittedCols);
-                    }
-                });
+                // Hodim loyihani FAQAT o'zi biror xizmat mas'uli bo'lsa ko'radi (izolyatsiya).
+                $projectQuery->whereHas('services', fn($q) => $q->where('assigned_user_id', $authUser->id));
             }
         }
 
@@ -1358,8 +1343,7 @@ class KanbanBoard extends Page
                 ->where('status', 'mygov')
                 ->orderBy('created_at', 'desc');
             if ($authUser && !$authUser->canSeeAllProjects() && !$authUser->isHisobchi()
-                && !$authUser->hasPermission('barcha_loyihalar')
-                && !$authUser->hasPermission('kanban_mygov')) {
+                && !$authUser->hasPermission('barcha_loyihalar')) {
                 $mygovQuery->whereHas('services', fn($q) => $q->where('assigned_user_id', $authUser->id));
             }
             $projects['mygov'] = $mygovQuery->get();
