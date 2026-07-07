@@ -31,6 +31,9 @@ class ProjectEditModal extends Component
     public array  $ei_phones         = ['+998'];
     public string $ei_description    = '';
     public string $ei_category       = 'turar';
+    public string $ei_passportSeries   = '';
+    public string $ei_passportIssuedBy = '';
+    public string $ei_pinfl            = '';
     public array  $ei_services       = [];
     public array  $ei_files          = [];
     public $ei_newFiles              = [];
@@ -66,6 +69,9 @@ class ProjectEditModal extends Component
         if (empty($this->ei_phones)) $this->ei_phones = ['+998'];
         $this->ei_description = $p->description ?? '';
         $this->ei_category    = $p->category ?: 'turar';
+        $this->ei_passportSeries   = $p->passport_series ?? '';
+        $this->ei_passportIssuedBy = $p->passport_issued_by ?? '';
+        $this->ei_pinfl            = $p->pinfl ?? '';
         $this->ei_services    = $this->buildEiServices($p);
         $this->ei_files       = $this->buildEiFiles($p, 'hujjat');
         $this->ei_genplan     = $this->buildEiFiles($p, 'genplan');
@@ -271,6 +277,9 @@ class ProjectEditModal extends Component
             'phones'           => $phones ?: null,
             'description'      => trim($this->ei_description) ?: null,
             'category'         => $this->ei_category,
+            'passport_series'    => trim($this->ei_passportSeries) ?: null,
+            'passport_issued_by' => trim($this->ei_passportIssuedBy) ?: null,
+            'pinfl'              => trim($this->ei_pinfl) ?: null,
         ]);
 
         $this->closeEditInfoModal();

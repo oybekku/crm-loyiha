@@ -12,6 +12,7 @@ class Project extends Model
 
     protected $fillable = [
         'number', 'owner_name', 'title', 'address', 'oblozhka_address', 'signature_path', 'latitude', 'longitude', 'phones',
+        'passport_series', 'passport_issued_by', 'pinfl',
         'description', 'category', 'status', 'work_status', 'assigned_user_id',
         'total_price', 'paid_amount', 'deadline_date', 'timer_paused_at',
         'payment_requested_at', 'payment_requested_by',

@@ -154,6 +154,25 @@
             @error('ei_address')<span style="font-size:11px;color:#dc2626">{{ $message }}</span>@enderror
         </div>
 
+        {{-- Pasport ma'lumotlari --}}
+        <div style="margin-bottom:12px;padding:12px 14px;border:1px solid #e5e7eb;border-radius:10px;background:#fafbfc">
+            <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">🪪 Pasport ma'lumotlari</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+                <div>
+                    <label style="font-size:11px;font-weight:600;color:#374151;display:block;margin-bottom:4px">Seriya va raqam</label>
+                    <input wire:model="ei_passportSeries" type="text" placeholder="AD 3824135" style="width:100%;padding:8px 11px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box">
+                </div>
+                <div>
+                    <label style="font-size:11px;font-weight:600;color:#374151;display:block;margin-bottom:4px">ПИНФЛ (JSHSHIR)</label>
+                    <input wire:model="ei_pinfl" type="text" inputmode="numeric" placeholder="32209712860013" style="width:100%;padding:8px 11px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box">
+                </div>
+            </div>
+            <div>
+                <label style="font-size:11px;font-weight:600;color:#374151;display:block;margin-bottom:4px">Kim tomonidan berilgan</label>
+                <input wire:model="ei_passportIssuedBy" type="text" placeholder="Quyi Chirchiq IIB 04.07.2023" style="width:100%;padding:8px 11px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box">
+            </div>
+        </div>
+
         {{-- GENPLAN — pechat uriladigan PDFlar (Manzil ostida) --}}
         <div style="margin-bottom:12px;border:1px solid #bbf7d0;border-radius:10px;overflow:hidden">
             <div style="background:#f0fdf4;padding:9px 14px;font-size:13px;font-weight:700;color:#166534;border-bottom:1px solid #bbf7d0">📐 GENPLAN <span style="font-weight:400;color:#9ca3af">— pechat uchun PDF</span></div>

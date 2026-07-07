@@ -1175,6 +1175,20 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                 <div style="font-size:11px;color:#6b7280;margin-top:3px">Kim orqali kelganini yozing — Oylik hisobotdagi MyGOV statistikasiga o'tadi.</div>
             </div>
 
+            {{-- Pasport ma'lumotlari (keyinchalik foydalanish uchun) --}}
+            <div>
+                <label class="kb-label">🪪 Pasport (seriya va raqam)</label>
+                <input wire:model.live="passport_series" class="kb-input" placeholder="Masalan: AD 3824135">
+            </div>
+            <div>
+                <label class="kb-label">Kim tomonidan berilgan</label>
+                <input wire:model.live="passport_issued_by" class="kb-input" placeholder="Masalan: Quyi Chirchiq IIB 04.07.2023">
+            </div>
+            <div>
+                <label class="kb-label">ПИНФЛ (JSHSHIR)</label>
+                <input wire:model.live="pinfl" class="kb-input" inputmode="numeric" placeholder="Masalan: 32209712860013">
+            </div>
+
             <div>
                 <label class="kb-label">Manzil *</label>
                 <input wire:model.live="address"
