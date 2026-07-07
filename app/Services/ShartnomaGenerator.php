@@ -49,7 +49,7 @@ class ShartnomaGenerator
             '{manzil}'     => $p->address ?? '',
             '{narx}'       => number_format($total, 2, ',', ' '),
             '{narx_sozda}' => self::sumWords($total),
-            '{raqam}'      => (string) ($p->seq_no ?? ''),
+            '{raqam}'      => '№' . ($p->seq_no ?? ''),
             '{sana}'       => $p->created_at ? $p->created_at->format('d.m.Y') : '',
             '{pasport}'    => $p->passport_series ?? '',
             '{berilgan}'   => $p->passport_issued_by ?? '',
