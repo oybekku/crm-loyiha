@@ -1175,20 +1175,6 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                 <div style="font-size:11px;color:#6b7280;margin-top:3px">Kim orqali kelganini yozing — Oylik hisobotdagi MyGOV statistikasiga o'tadi.</div>
             </div>
 
-            {{-- Pasport ma'lumotlari (keyinchalik foydalanish uchun) --}}
-            <div>
-                <label class="kb-label">🪪 Pasport (seriya va raqam)</label>
-                <input wire:model.live="passport_series" class="kb-input" placeholder="Masalan: AD 3824135">
-            </div>
-            <div>
-                <label class="kb-label">Kim tomonidan berilgan</label>
-                <input wire:model.live="passport_issued_by" class="kb-input" placeholder="Masalan: Quyi Chirchiq IIB 04.07.2023">
-            </div>
-            <div>
-                <label class="kb-label">ПИНФЛ (JSHSHIR)</label>
-                <input wire:model.live="pinfl" class="kb-input" inputmode="numeric" placeholder="Masalan: 32209712860013">
-            </div>
-
             <div>
                 <label class="kb-label">Manzil *</label>
                 <input wire:model.live="address"
@@ -1334,6 +1320,23 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             </div>
             <div style="font-size:11px;color:#9ca3af;text-align:center;padding:4px 0">
                 Qidiring → yaqinlashtiring → uyga bosing
+            </div>
+
+            {{-- Pasport ma'lumotlari (keyinchalik foydalanish uchun) --}}
+            <div style="margin-top:14px;padding:14px;border:1px solid #e2e8f0;border-radius:10px;background:#fafbfc">
+                <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:10px;display:flex;align-items:center;gap:6px">🪪 Pasport ma'lumotlari <span style="font-weight:400;color:#9ca3af">(ixtiyoriy)</span></div>
+                <div style="margin-bottom:10px">
+                    <label class="kb-label">Seriya va raqam</label>
+                    <input wire:model.live="passport_series" class="kb-input" placeholder="Masalan: AD 3824135">
+                </div>
+                <div style="margin-bottom:10px">
+                    <label class="kb-label">Kim tomonidan berilgan</label>
+                    <input wire:model.live="passport_issued_by" class="kb-input" placeholder="Masalan: Quyi Chirchiq IIB 04.07.2023">
+                </div>
+                <div>
+                    <label class="kb-label">ПИНФЛ (JSHSHIR)</label>
+                    <input wire:model.live="pinfl" class="kb-input" inputmode="numeric" placeholder="Masalan: 32209712860013">
+                </div>
             </div>
         </div>
     </div>
