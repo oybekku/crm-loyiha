@@ -562,12 +562,8 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                 }
             @endphp
             <div x-show="collapsed" class="kb-wcard kbn-card {{ $isUrgent ? 'kbn-fire' : '' }}" style="--acc:{{ $wsC['color'] }}">
-                {{-- Zudlik bayrog'i: admin/menejer bossa yoqadi/o'chadi; boshqalar faqat qizilni ko'radi --}}
-                @if($canToggleUrgent)
-                <button type="button" class="kbn-flag clickable" wire:click="toggleUrgent({{ $project->id }})" title="Zudlik belgisi — bosib yoqing/o'chiring">
-                    <img src="{{ $isUrgent ? route('pechat.asset','flag-red.png') : route('pechat.asset','flag.png') }}" alt="Zudlik">
-                </button>
-                @elseif($isUrgent)
+                {{-- Zudlik qizil bayrog'i — faqat zudlik yoqilgan bo'lsa ko'rinadi (yoqish/o'chirish ochilgan kartada) --}}
+                @if($isUrgent)
                 <span class="kbn-flag"><img src="{{ route('pechat.asset','flag-red.png') }}" alt="Zudlik"></span>
                 @endif
                 {{-- V blok (bosilsa to'liq ochiladi) — neon yonuvchi --}}
@@ -654,16 +650,25 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 
             <div x-show="!collapsed" x-collapse>
 
-            {{-- ZUDLIK banneri (ochilgan kartada) + Qabul qildim --}}
-            @if($isUrgent)
+            {{-- ZUDLIK boshqaruvi (ochilgan kartada) --}}
+            @if($canToggleUrgent)
+            {{-- Admin/menejer: Zudlik bilan — yoqish/o'chirish --}}
+            <div style="margin-bottom:8px">
+                <button type="button" wire:click="toggleUrgent({{ $project->id }})"
+                        style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;border-radius:9px;padding:7px 14px;cursor:pointer;{{ $isUrgent ? 'border:1.5px solid #b91c1c;background:linear-gradient(180deg,#cd201f,#a01518);color:#fff;box-shadow:0 0 12px -2px rgba(205,32,31,.7)' : 'border:1.5px solid #fca5a5;background:#fff7ed;color:#b91c1c' }}">
+                    🚩 {{ $isUrgent ? 'Zudlik yoqilgan — bosib o‘chirish' : 'Zudlik bilan' }}
+                </button>
+            </div>
+            @elseif($isUrgent && $canAcceptUrgent)
+            {{-- Biriktirilgan hodim: Zudlik + Qabul qildim --}}
             <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px;padding:8px 11px;border:1.5px solid #fca5a5;border-radius:10px;background:linear-gradient(90deg,#fff7ed,#fef2f2)">
                 <span style="font-size:12px;font-weight:800;color:#b91c1c;display:inline-flex;align-items:center;gap:5px">🚩 Zudlik bilan qilinsin!</span>
-                @if($canAcceptUrgent)
                 <button type="button" wire:click="acceptUrgent({{ $project->id }})" style="display:inline-flex;align-items:center;gap:5px;background:#16a34a;color:#fff;border:none;border-radius:8px;padding:6px 13px;font-size:12px;font-weight:800;cursor:pointer;box-shadow:0 2px 8px -2px rgba(22,163,74,.6)">✅ Qabul qildim</button>
-                @endif
             </div>
-            @elseif($acceptedName)
-            {{-- Qabul qilingan — kim/qachon --}}
+            @endif
+
+            {{-- Qabul qilingan — kim/qachon (zudlik o'chgach) --}}
+            @if(!$isUrgent && $acceptedName)
             <div style="margin-bottom:8px;padding:7px 11px;border:1.5px solid #bbf7d0;border-radius:10px;background:#f0fdf4;font-size:12px;font-weight:700;color:#15803d;display:inline-flex;align-items:center;gap:6px">
                 ✅ {{ $acceptedName }} ishni qabul qildi — {{ $project->urgent_accepted_at->translatedFormat('d-M, H:i') }}
             </div>
