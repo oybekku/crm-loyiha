@@ -29,6 +29,11 @@ class ShartnomaGenerator
         }
         $xml = $zip->getFromName('word/document.xml');
 
+        // Teglarга qo'yilgan bezakni tozalash: qora fon, kulrang matn, Courier shrift
+        $xml = preg_replace('/<w:shd\b[^>]*w:fill="262626"[^>]*\/>/', '', $xml);
+        $xml = str_replace('<w:color w:val="8C8C8C"/>', '<w:color w:val="000000"/>', $xml);
+        $xml = str_replace('Courier New', 'Times New Roman', $xml);
+
         // Telefon (birinchi raqam)
         $phone  = '';
         $phones = $p->phones;
