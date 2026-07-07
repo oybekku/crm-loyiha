@@ -11,7 +11,7 @@ class Project extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'number', 'owner_name', 'title', 'address', 'oblozhka_address', 'signature_path', 'latitude', 'longitude', 'phones',
+        'number', 'seq_no', 'owner_name', 'title', 'address', 'oblozhka_address', 'signature_path', 'latitude', 'longitude', 'phones',
         'passport_series', 'passport_issued_by', 'pinfl',
         'description', 'category', 'status', 'work_status', 'assigned_user_id',
         'total_price', 'paid_amount', 'deadline_date', 'timer_paused_at',
@@ -39,6 +39,19 @@ class Project extends Model
         static::creating(function ($project) {
             if (empty($project->number)) {
                 $project->number = '#' . str_pad(random_int(1, 999999999), 9, '0', STR_PAD_LEFT);
+            }
+
+            // Ketma-ket tartib raqami (№) — hisoblagichdan, hech qachon takrorlanmaydi.
+            // O'chirilса ham hisoblagich orqaga qaytmaydi.
+            if (empty($project->seq_no)) {
+                $project->seq_no = \Illuminate\Support\Facades\DB::transaction(function () {
+                    $row  = \Illuminate\Support\Facades\DB::table('counters')
+                        ->where('name', 'project_seq')->lockForUpdate()->first();
+                    $next = (int) ($row->value ?? 0) + 1;
+                    \Illuminate\Support\Facades\DB::table('counters')
+                        ->updateOrInsert(['name' => 'project_seq'], ['value' => $next]);
+                    return $next;
+                });
             }
         });
 

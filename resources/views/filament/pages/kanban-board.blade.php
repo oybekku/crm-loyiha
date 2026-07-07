@@ -674,9 +674,12 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             </div>
             @endif
 
-            {{-- Raqam (katta holatda) --}}
-            <div style="margin-bottom:6px">
+            {{-- Raqam (katta holatda) + ketma-ket tartib raqami --}}
+            <div style="margin-bottom:6px;display:inline-flex;align-items:center;gap:5px">
                 <span style="background:{{ $status['color'] }};color:#fff;border-radius:6px;font-size:11px;font-weight:800;padding:2px 9px">{{ $project->number }}</span>
+                @if($project->seq_no)
+                <span style="background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;border-radius:6px;font-size:11px;font-weight:800;padding:2px 9px">№{{ $project->seq_no }}</span>
+                @endif
             </div>
 
             {{-- ADDRESS --}}
