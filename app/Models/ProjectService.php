@@ -70,6 +70,12 @@ class ProjectService extends Model
             } else {
                 $service->final_price = $price;
             }
+
+            // Chegaradan oshmasin (decimal(15,2)) — 500 xato o'rniga cheklab qo'yamiz
+            $MAX = 9999999999999.99;
+            if ((float) $service->price       > $MAX) $service->price       = $MAX;
+            if ((float) $service->final_price > $MAX) $service->final_price = $MAX;
+            if ((float) $service->final_price < 0)    $service->final_price = 0;
         });
 
         static::saved(function ($service) {

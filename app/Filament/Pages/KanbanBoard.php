@@ -1055,6 +1055,17 @@ class KanbanBoard extends Page
         }
         $this->validate();
 
+        // Xizmat narxlari chegaradan oshmasin (decimal(15,2) — maksimum ~9.9 trln). Xato kiritishdan himoya.
+        $MAX_PRICE = 99999999999; // ~100 mlrd so'm — real xizmat narxi undan past bo'ladi
+        foreach ($this->services as $srv) {
+            $p1 = (float) ($srv['custom_price'] ?? 0);
+            $p2 = (float) ($srv['price'] ?? 0);
+            if ($p1 > $MAX_PRICE || $p2 > $MAX_PRICE) {
+                $this->dispatch('notify', type: 'error', message: 'Xizmat narxi juda katta — narxni tekshiring');
+                return;
+            }
+        }
+
         $phones = array_values(
             array_filter(
                 array_map(fn($p) => ['phone' => trim($p)], $this->phones),
