@@ -82,6 +82,8 @@ class User extends Authenticatable implements FilamentUser
             $dbStatuses = \App\Models\ProjectStatus::allOrdered();
             foreach ($dbStatuses as $ps) {
                 $permissions['kanban_' . $ps->key] = "Kanban ustun: {$ps->label}";
+                // Maxsus: bu ustunда FAQAT o'z ishi emas, BARCHA loyihani ko'rish (sukut bo'yicha berilmaydi)
+                $permissions['kanban_all_' . $ps->key] = "Kanban ustun: {$ps->label} — BARCHA loyiha";
             }
         } catch (\Throwable $e) {
             // Baza tayyor bo'lmagan holat uchun
