@@ -1334,7 +1334,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                     <input wire:model.live="passport_issued_by" class="kb-input" placeholder="Masalan: Quyi Chirchiq IIB 04.07.2023">
                 </div>
                 <div>
-                    <label class="kb-label">ПИНФЛ (JSHSHIR)</label>
+                    <label class="kb-label">PINFL (JSHSHIR)</label>
                     <input wire:model.live="pinfl" class="kb-input" inputmode="numeric" placeholder="Masalan: 32209712860013">
                 </div>
             </div>

@@ -55,6 +55,11 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
                 \App\Filament\Widgets\WelcomeHeroWidget::class,
             ])
+            // Brauzer avtomat tarjimasi (Google/Yandex) Livewire DOM'ini buzmasin — o'chiramiz
+            ->renderHook(
+                'panels::head.end',
+                fn () => '<meta name="google" content="notranslate"><meta name="yandex" content="notranslate">',
+            )
             ->renderHook(
                 'panels::head.end',
                 function () {

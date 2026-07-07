@@ -163,7 +163,7 @@
                     <input wire:model="ei_passportSeries" type="text" placeholder="AD 3824135" style="width:100%;padding:8px 11px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box">
                 </div>
                 <div>
-                    <label style="font-size:11px;font-weight:600;color:#374151;display:block;margin-bottom:4px">ПИНФЛ (JSHSHIR)</label>
+                    <label style="font-size:11px;font-weight:600;color:#374151;display:block;margin-bottom:4px">PINFL (JSHSHIR)</label>
                     <input wire:model="ei_pinfl" type="text" inputmode="numeric" placeholder="32209712860013" style="width:100%;padding:8px 11px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box">
                 </div>
             </div>
