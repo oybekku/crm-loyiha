@@ -61,6 +61,11 @@ class ShartnomaGenerator
             $xml = str_replace($tag, htmlspecialchars((string) $val, ENT_XML1, 'UTF-8'), $xml);
         }
 
+        // Shablonда teglanmay qolgan to'liq ism (butun matn — ishonchli almashinadi)
+        if (!empty($p->owner_name)) {
+            $xml = str_replace('Кушманов Элёр Равшанбекович', htmlspecialchars($p->owner_name, ENT_XML1, 'UTF-8'), $xml);
+        }
+
         $zip->deleteName('word/document.xml');
         $zip->addFromString('word/document.xml', $xml);
         $zip->close();
@@ -73,11 +78,11 @@ class ShartnomaGenerator
     /** Summаni rus tilидa so'z bilan: 2400000 → "Два миллиона четыреста тысяч сум" */
     public static function sumWords(float $amount): string
     {
+        // Shablonда {narx_sozda} dan keyin "сум" bor — shuning uchun bu yerда "сум" qo'shilmaydi
         $n = (int) round($amount);
-        if ($n === 0) return 'Ноль сум';
+        if ($n === 0) return 'Ноль';
         $w = self::ruWords($n);
-        $w = mb_convert_case(mb_substr($w, 0, 1), MB_CASE_UPPER, 'UTF-8') . mb_substr($w, 1);
-        return trim($w) . ' сум';
+        return mb_convert_case(mb_substr($w, 0, 1), MB_CASE_UPPER, 'UTF-8') . mb_substr($w, 1);
     }
 
     private static function ruWords(int $n): string
