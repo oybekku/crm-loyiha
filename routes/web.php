@@ -120,6 +120,16 @@ Route::middleware(['auth'])->group(function () {
         ]);
     })->name('print.project.shartnoma');
 
+    // Rozilik xati (Word .docx — my.gov.uz roziligi, avtomat to'ldiriladi)
+    Route::get('/print/project/{project}/rozilik', function (\App\Models\Project $project) {
+        $data  = \App\Services\ShartnomaGenerator::generate($project, 'ru', 'rozilik');
+        $fname = 'rozilik-xati-' . ($project->seq_no ?: $project->id) . '.docx';
+        return response($data, 200, [
+            'Content-Type'        => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'Content-Disposition' => 'attachment; filename="' . $fname . '"',
+        ]);
+    })->name('print.project.rozilik');
+
     // ── PDF ga qo'lda pechat urish (faqat admin) ──
     Route::get('/pechat/{file}', function (\App\Models\ProjectFile $file) {
         abort_unless(auth()->user()?->isAdmin(), 403);

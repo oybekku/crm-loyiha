@@ -154,7 +154,7 @@
 <body>
 
 <!-- Toolbar -->
-<div class="no-print" style="text-align:center;padding:10px 16px;background:#1e40af;border-bottom:1px solid #1d4ed8;position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:center;gap:12px;">
+<div class="no-print" style="text-align:center;padding:10px 16px;background:#1e40af;border-bottom:1px solid #1d4ed8;position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;">
     <!-- Language selector -->
     <div style="display:flex;gap:4px;background:rgba(255,255,255,0.15);border-radius:7px;padding:3px;">
         <button id="btn-uz" onclick="setLang('uz')"
@@ -180,6 +180,11 @@
     <button onclick="window.open('{{ route('print.project.obloshka', $project) }}?qavat=2','_blank')" style="background:#fff;color:#1d4ed8;border:none;padding:8px 18px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;">
         ▦ Ikki qavat
     </button>
+    <div style="width:1px;height:28px;background:rgba(255,255,255,0.3);"></div>
+    <a href="{{ route('print.project.shartnoma', ['project' => $project, 'lang' => 'ru']) }}" style="background:#fff;color:#1d4ed8;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">📄 Shartnoma RU</a>
+    <a href="{{ route('print.project.shartnoma', ['project' => $project, 'lang' => 'uz']) }}" style="background:#fff;color:#15803d;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">📄 Shartnoma UZ</a>
+    <a href="{{ route('print.project.rozilik', $project) }}" style="background:#fff;color:#7c3aed;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">📝 Rozilik xati</a>
+    <button onclick="window.open('{{ route('print.project.chegirma', $project) }}','_blank')" style="background:#fff;color:#b45309;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;">🎟 Chegirma</button>
     <div style="width:1px;height:28px;background:rgba(255,255,255,0.3);"></div>
     <button onclick="window.close()" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.4);padding:8px 18px;border-radius:6px;font-size:14px;cursor:pointer;">
         ✕ Yopish

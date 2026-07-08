@@ -11,12 +11,16 @@ use ZipArchive;
  */
 class ShartnomaGenerator
 {
-    public static function generate(Project $p, string $lang = 'ru'): string
+    public static function generate(Project $p, string $lang = 'ru', string $doc = 'shartnoma'): string
     {
         $lang = $lang === 'uz' ? 'uz' : 'ru';
-        $tpl  = resource_path('templates/' . ($lang === 'uz' ? 'shartnoma-uz.docx' : 'shartnoma.docx'));
+        if ($doc === 'rozilik') {
+            $tpl = resource_path('templates/rozilik.docx');
+        } else {
+            $tpl = resource_path('templates/' . ($lang === 'uz' ? 'shartnoma-uz.docx' : 'shartnoma.docx'));
+        }
         if (!is_file($tpl)) {
-            abort(500, 'Shartnoma shabloni topilmadi');
+            abort(500, 'Hujjat shabloni topilmadi');
         }
 
         // Vaqtinchalik nusxа ustidа ishlaymiz
@@ -58,12 +62,17 @@ class ShartnomaGenerator
             '{telefon}'    => $phone,
         ];
 
-        foreach ($map as $tag => $val) {
-            $xml = str_replace($tag, htmlspecialchars((string) $val, ENT_XML1, 'UTF-8'), $xml);
-        }
+        // Teglarni almashtirish — bo'linishga chidamli (Word teglarni run/proofErr bilan
+        // bo'lib tashlashi mumkin). {teg} ichida XML teglar bo'lsa ham topadi.
+        $xml = preg_replace_callback('/\{((?:<[^>]*>|[A-Za-z_])+)\}/u', function ($mm) use ($map) {
+            $name = '{' . preg_replace('/<[^>]*>/', '', $mm[1]) . '}';
+            return array_key_exists($name, $map)
+                ? htmlspecialchars((string) $map[$name], ENT_XML1, 'UTF-8')
+                : $mm[0];
+        }, $xml);
 
-        // Ruscha shablonда teglanmay qolgan namuna qiymatlarини to'g'rilash (faqat RU)
-        if ($lang === 'ru') {
+        // Ruscha shartnoma shablonида teglanmay qolgan namuna qiymatlарини to'g'rilash
+        if ($doc === 'shartnoma' && $lang === 'ru') {
             if (!empty($p->owner_name)) {
                 $xml = str_replace('Кушманов Элёр Равшанбекович', htmlspecialchars($p->owner_name, ENT_XML1, 'UTF-8'), $xml);
             }
@@ -83,10 +92,13 @@ class ShartnomaGenerator
     /** Summаni so'z bilan (ru yoki uz). Shablonда keyin "сум/so'm" bor — bu yerда qo'shilmaydi. */
     public static function sumWords(float $amount, string $lang = 'ru'): string
     {
+        // RU shablonда {narx_sozda} dan keyin "сум" YO'Q — shu yerда qo'shamiz.
+        // UZ shablonда keyin "so'm" BOR — qo'shmaymiz.
         $n = (int) round($amount);
-        if ($n === 0) return $lang === 'uz' ? 'Nol' : 'Ноль';
+        $suffix = $lang === 'uz' ? '' : ' сум';
+        if ($n === 0) return ($lang === 'uz' ? 'Nol' : 'Ноль') . $suffix;
         $w = $lang === 'uz' ? self::uzWords($n) : self::ruWords($n);
-        return mb_convert_case(mb_substr($w, 0, 1), MB_CASE_UPPER, 'UTF-8') . mb_substr($w, 1);
+        return mb_convert_case(mb_substr($w, 0, 1), MB_CASE_UPPER, 'UTF-8') . mb_substr($w, 1) . $suffix;
     }
 
     /** O'zbekcha: 2400000 → "ikki million to'rt yuz ming" (kelishik yo'q — sodda) */

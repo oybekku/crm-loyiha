@@ -42,12 +42,8 @@
             <button type="button" wire:click="eiGoRoute" style="padding:6px 11px;border-radius:7px;border:1px solid #93c5fd;background:#eff6ff;color:#2563eb;font-size:12px;font-weight:600;cursor:pointer">✈ Yuborish</button>
             @endif
 
+            {{-- Shartnoma RU/UZ, Chegirma, Rozilik xati — endi "Ariza" sahifasi ichida --}}
             <a href="{{ route('print.project.ariza', $editInfoId) }}" target="_blank" style="padding:6px 11px;border-radius:7px;border:1px solid #d1d5db;background:#fff;color:#374151;font-size:12px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:4px">🖨 Ariza</a>
-
-            <a href="{{ route('print.project.shartnoma', ['project' => $editInfoId, 'lang' => 'ru']) }}" style="padding:6px 11px;border-radius:7px;border:1px solid #93c5fd;background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:4px">📄 Shartnoma RU</a>
-            <a href="{{ route('print.project.shartnoma', ['project' => $editInfoId, 'lang' => 'uz']) }}" style="padding:6px 11px;border-radius:7px;border:1px solid #86efac;background:#f0fdf4;color:#15803d;font-size:12px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:4px">📄 Shartnoma UZ</a>
-
-            <a href="{{ route('print.project.chegirma', $editInfoId) }}" target="_blank" style="padding:6px 11px;border-radius:7px;border:1px solid #fcd34d;background:#fffbeb;color:#b45309;font-size:12px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:4px">🎟 Chegirma</a>
 
             @if($canMygov)
             <button type="button" wire:click="eiToggleMygov" style="padding:6px 11px;border-radius:7px;border:1px solid #a5b4fc;background:#eef2ff;color:#4338ca;font-size:12px;font-weight:600;cursor:pointer">🏛 MyGOV</button>
