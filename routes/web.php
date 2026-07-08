@@ -109,10 +109,11 @@ Route::middleware(['auth'])->group(function () {
         return view('print.chegirma', compact('project'));
     })->name('print.project.chegirma');
 
-    // Shartnoma (Word .docx — shablon to'ldiriladi)
-    Route::get('/print/project/{project}/shartnoma', function (\App\Models\Project $project) {
-        $data  = \App\Services\ShartnomaGenerator::generate($project);
-        $fname = 'shartnoma-' . ($project->seq_no ?: $project->id) . '.docx';
+    // Shartnoma (Word .docx — shablon to'ldiriladi). {lang}: ru | uz
+    Route::get('/print/project/{project}/shartnoma/{lang?}', function (\App\Models\Project $project, string $lang = 'ru') {
+        $lang  = $lang === 'uz' ? 'uz' : 'ru';
+        $data  = \App\Services\ShartnomaGenerator::generate($project, $lang);
+        $fname = 'shartnoma-' . $lang . '-' . ($project->seq_no ?: $project->id) . '.docx';
         return response($data, 200, [
             'Content-Type'        => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             'Content-Disposition' => 'attachment; filename="' . $fname . '"',

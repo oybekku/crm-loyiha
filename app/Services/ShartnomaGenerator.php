@@ -11,9 +11,10 @@ use ZipArchive;
  */
 class ShartnomaGenerator
 {
-    public static function generate(Project $p): string
+    public static function generate(Project $p, string $lang = 'ru'): string
     {
-        $tpl = resource_path('templates/shartnoma.docx');
+        $lang = $lang === 'uz' ? 'uz' : 'ru';
+        $tpl  = resource_path('templates/' . ($lang === 'uz' ? 'shartnoma-uz.docx' : 'shartnoma.docx'));
         if (!is_file($tpl)) {
             abort(500, 'Shartnoma shabloni topilmadi');
         }
@@ -48,7 +49,7 @@ class ShartnomaGenerator
             '{ism}'        => $p->owner_name ?? '',
             '{manzil}'     => $p->address ?? '',
             '{narx}'       => number_format($total, 2, ',', ' '),
-            '{narx_sozda}' => self::sumWords($total),
+            '{narx_sozda}' => self::sumWords($total, $lang),
             '{raqam}'      => '№' . ($p->seq_no ?? ''),
             '{sana}'       => $p->created_at ? $p->created_at->format('d.m.Y') : '',
             '{pasport}'    => $p->passport_series ?? '',
@@ -61,14 +62,14 @@ class ShartnomaGenerator
             $xml = str_replace($tag, htmlspecialchars((string) $val, ENT_XML1, 'UTF-8'), $xml);
         }
 
-        // Shablonда teglanmay qolgan to'liq ism (butun matn — ishonchli almashinadi)
-        if (!empty($p->owner_name)) {
-            $xml = str_replace('Кушманов Элёр Равшанбекович', htmlspecialchars($p->owner_name, ENT_XML1, 'UTF-8'), $xml);
+        // Ruscha shablonда teglanmay qolgan namuna qiymatlarини to'g'rilash (faqat RU)
+        if ($lang === 'ru') {
+            if (!empty($p->owner_name)) {
+                $xml = str_replace('Кушманов Элёр Равшанбекович', htmlspecialchars($p->owner_name, ENT_XML1, 'UTF-8'), $xml);
+            }
+            $xml = str_replace('№456', '№' . htmlspecialchars((string) ($p->seq_no ?? ''), ENT_XML1, 'UTF-8'), $xml);
+            $xml = str_replace('/09-24', '', $xml);
         }
-
-        // Aktдаги bo'lak-bo'lak qolgan eski shartnoma raqami "№456/09-24" → "№{raqam}"
-        $xml = str_replace('№456', '№' . htmlspecialchars((string) ($p->seq_no ?? ''), ENT_XML1, 'UTF-8'), $xml);
-        $xml = str_replace('/09-24', '', $xml);
 
         $zip->deleteName('word/document.xml');
         $zip->addFromString('word/document.xml', $xml);
@@ -79,14 +80,42 @@ class ShartnomaGenerator
         return $data;
     }
 
-    /** Summаni rus tilидa so'z bilan: 2400000 → "Два миллиона четыреста тысяч сум" */
-    public static function sumWords(float $amount): string
+    /** Summаni so'z bilan (ru yoki uz). Shablonда keyin "сум/so'm" bor — bu yerда qo'shilmaydi. */
+    public static function sumWords(float $amount, string $lang = 'ru'): string
     {
-        // Shablonда {narx_sozda} dan keyin "сум" bor — shuning uchun bu yerда "сум" qo'shilmaydi
         $n = (int) round($amount);
-        if ($n === 0) return 'Ноль';
-        $w = self::ruWords($n);
+        if ($n === 0) return $lang === 'uz' ? 'Nol' : 'Ноль';
+        $w = $lang === 'uz' ? self::uzWords($n) : self::ruWords($n);
         return mb_convert_case(mb_substr($w, 0, 1), MB_CASE_UPPER, 'UTF-8') . mb_substr($w, 1);
+    }
+
+    /** O'zbekcha: 2400000 → "ikki million to'rt yuz ming" (kelishik yo'q — sodda) */
+    private static function uzWords(int $n): string
+    {
+        if ($n === 0) return 'nol';
+        $ones = ['', 'bir', 'ikki', 'uch', "to'rt", 'besh', 'olti', 'yetti', 'sakkiz', "to'qqiz"];
+        $tens = ['', "o'n", 'yigirma', "o'ttiz", 'qirq', 'ellik', 'oltmish', 'yetmish', 'sakson', "to'qson"];
+        $scales = ['', 'ming', 'million', 'milliard', 'trillion'];
+
+        $groups = [];
+        $x = $n;
+        while ($x > 0) { $groups[] = $x % 1000; $x = intdiv($x, 1000); }
+
+        $parts = [];
+        for ($g = count($groups) - 1; $g >= 0; $g--) {
+            $num = $groups[$g];
+            if ($num === 0) continue;
+            $w = [];
+            $h = intdiv($num, 100);
+            $t = intdiv($num % 100, 10);
+            $u = $num % 10;
+            if ($h) { $w[] = $ones[$h]; $w[] = 'yuz'; }
+            if ($t) $w[] = $tens[$t];
+            if ($u) $w[] = $ones[$u];
+            if ($g > 0) $w[] = $scales[$g];
+            $parts[] = implode(' ', $w);
+        }
+        return implode(' ', $parts);
     }
 
     private static function ruWords(int $n): string

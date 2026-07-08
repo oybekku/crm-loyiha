@@ -46,7 +46,8 @@
             <a href="{{ route('print.project.ariza', $editInfoId) }}" target="_blank" style="padding:6px 11px;border-radius:7px;border:1px solid #d1d5db;background:#fff;color:#374151;font-size:12px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:4px">🖨 Ariza</a>
             --}}
 
-            <a href="{{ route('print.project.shartnoma', $editInfoId) }}" style="padding:6px 11px;border-radius:7px;border:1px solid #93c5fd;background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:4px">📄 Shartnoma</a>
+            <a href="{{ route('print.project.shartnoma', ['project' => $editInfoId, 'lang' => 'ru']) }}" style="padding:6px 11px;border-radius:7px;border:1px solid #93c5fd;background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:4px">📄 Shartnoma RU</a>
+            <a href="{{ route('print.project.shartnoma', ['project' => $editInfoId, 'lang' => 'uz']) }}" style="padding:6px 11px;border-radius:7px;border:1px solid #86efac;background:#f0fdf4;color:#15803d;font-size:12px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:4px">📄 Shartnoma UZ</a>
 
             <a href="{{ route('print.project.chegirma', $editInfoId) }}" target="_blank" style="padding:6px 11px;border-radius:7px;border:1px solid #fcd34d;background:#fffbeb;color:#b45309;font-size:12px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:4px">🎟 Chegirma</a>
 
