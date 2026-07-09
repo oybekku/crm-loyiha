@@ -35,4 +35,15 @@ return [
         ],
     ],
 
+    // Eskiz.uz SMS shlyuzi
+    'eskiz' => [
+        'email'         => env('ESKIZ_EMAIL'),
+        'password'      => env('ESKIZ_PASSWORD'),
+        'from'          => env('ESKIZ_FROM', '4546'),
+        // "Loyiha tayyor" tugmasi bosilganda ketadigan matn.
+        // MUHIM: aynan shu matn Eskiz kabinetida moderatsiyadan o'tishi kerak.
+        'ready_message' => env('ESKIZ_READY_MESSAGE',
+            "Eskiz loyihangiz tayyor. Bog‘lanish: +998 77 091-91-01 MY PERFECT HOME"),
+    ],
+
 ];

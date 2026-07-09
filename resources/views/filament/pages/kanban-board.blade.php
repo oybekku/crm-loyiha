@@ -809,6 +809,17 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             </div>
             @endif
 
+            {{-- OGOHLANTIRISH: egasiga "tayyor" SMS ketmadi (keyin qayta yuborish uchun) --}}
+            @if($project->ready_sms_status === 'failed' && (auth()->user()?->isAdmin() || auth()->user()?->isMenejer()))
+            <div style="display:flex;align-items:center;gap:5px;background:#fff7ed;border:1px solid #fdba74;border-radius:6px;padding:4px 8px;margin-bottom:8px"
+                 title="{{ $project->ready_sms_error }}">
+                <span style="font-size:12px">📵</span>
+                <span style="font-size:11px;font-weight:700;color:#c2410c">
+                    SMS ketmadi — egasiga xabar bormadi
+                </span>
+            </div>
+            @endif
+
             {{-- FOOTER: status label + per-service workers --}}
             @php
                 $srvWorkers = $project->services

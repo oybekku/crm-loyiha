@@ -184,6 +184,22 @@ class KanbanBoard extends Page
         $this->initServices();
     }
 
+    /**
+     * Har so'rov oxirida ishlaydi — shu so'rovda yuborilgan "tayyor" SMS
+     * natijalarini ekranga toast (xabar oynasi) qilib chiqaramiz.
+     * Qaysi yo'l bilan status o'zgarsa ham (drag, tugma, modal) shu yerdan chiqadi.
+     */
+    public function dehydrate(): void
+    {
+        foreach (Project::$pendingSmsNotifications as $note) {
+            $this->dispatch('notify',
+                type: $note['ok'] ? 'success' : 'error',
+                message: $note['message']
+            );
+        }
+        Project::$pendingSmsNotifications = [];
+    }
+
     public function kbChangeMonth(int $delta): void
     {
         $date = \Carbon\Carbon::create($this->kbYear, $this->kbMonth, 1)->addMonths($delta);
@@ -350,6 +366,10 @@ class KanbanBoard extends Page
         // Loyiha tugallanganda — barcha xizmatlar ham tugatilgan deb belgilanadi
         // (hodim tugatilgan ishlari/komissiya hisobiga tushishi uchun)
         $project->services()->whereNull('completed_at')->update(['completed_at' => now()]);
+
+        // Egasiga "loyiha tayyor" SMS (saveQuietly bo'lgani uchun model hodisasi
+        // yonmaydi — shu sababli bu yerda aniq chaqiramiz). Natija dehydrate()da chiqadi.
+        $project->sendReadySms();
 
         $this->dispatch('notify', type: 'success', message: 'Loyiha tugallandi!');
     }

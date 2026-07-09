@@ -18,7 +18,15 @@ class Project extends Model
         'payment_requested_at', 'payment_requested_by',
         'mygov_login', 'mygov_password', 'mygov_fish',
         'is_urgent', 'urgent_accepted_at', 'urgent_accepted_by',
+        'ready_sms_status', 'ready_sms_sent_at', 'ready_sms_error',
     ];
+
+    /**
+     * Shu so'rov davomida yuborilgan "tayyor" SMS natijalari.
+     * KanbanBoard::dehydrate() buni o'qib, ekranda toast (xabar oynasi) chiqaradi.
+     * @var array<int, array{ok:bool, message:string}>
+     */
+    public static array $pendingSmsNotifications = [];
 
     protected $casts = [
         'phones'                => 'array',
@@ -32,6 +40,7 @@ class Project extends Model
         'mygov_password'        => 'encrypted',
         'is_urgent'             => 'boolean',
         'urgent_accepted_at'    => 'datetime',
+        'ready_sms_sent_at'     => 'datetime',
     ];
 
     protected static function booted(): void
@@ -62,6 +71,13 @@ class Project extends Model
             $newStatus = $project->status;
             $prevStatus = $project->getOriginal('status');
             $now       = now();
+
+            // ── AVTOMATIK SMS: loyiha "Tugallangan" bo'limiga o'tsa, egasiga xabar ──
+            // Faqat bir marta muvaffaqiyatli yuboriladi (qayta pul yechilmasin).
+            // Oldin ketmagan bo'lsa (null / 'failed') — qayta urinadi.
+            if ($newStatus === 'tugallangan' && $project->ready_sms_status !== 'sent') {
+                $project->sendReadySms();
+            }
 
             // Joriy statusga mos xizmatni topamiz va work_started_at ni belgilaymiz
             ProjectService::where('project_id', $project->id)
@@ -162,6 +178,61 @@ class Project extends Model
         $this->total_price = $this->services()->sum('final_price');
         $this->paid_amount = $this->payments()->sum('amount');
         $this->saveQuietly();
+    }
+
+    /**
+     * Egasiga "loyiha tayyor" SMS yuboradi va natijani o'zida saqlaydi.
+     * updateQuietly ishlatiladi — "updated" hodisasi qayta yonmasligi uchun.
+     * Natija $pendingSmsNotifications ga qo'shiladi (ekranda toast chiqishi uchun).
+     */
+    public function sendReadySms(): void
+    {
+        // Qulf: bir marta muvaffaqiyatli ketgan bo'lsa — qayta yubormaymiz (pul yechilmasin)
+        if ($this->ready_sms_status === 'sent') return;
+
+        // Egasining birinchi telefoni
+        $phone = '';
+        foreach ((array) $this->phones as $row) {
+            $p = is_array($row) ? ($row['phone'] ?? '') : (string) $row;
+            $p = trim($p);
+            if ($p !== '' && $p !== '+998') { $phone = $p; break; }
+        }
+
+        if ($phone === '') {
+            $this->forceFill([
+                'ready_sms_status' => 'failed',
+                'ready_sms_error'  => 'Telefon raqam kiritilmagan',
+            ])->saveQuietly();
+            self::$pendingSmsNotifications[] = [
+                'ok'      => false,
+                'message' => "«{$this->owner_name}» — SMS ketmadi: telefon raqam yo'q",
+            ];
+            return;
+        }
+
+        $text   = config('services.eskiz.ready_message');
+        $result = \App\Services\EskizSms::send($phone, $text);
+
+        if ($result['ok']) {
+            $this->forceFill([
+                'ready_sms_status' => 'sent',
+                'ready_sms_sent_at'=> now(),
+                'ready_sms_error'  => null,
+            ])->saveQuietly();
+            self::$pendingSmsNotifications[] = [
+                'ok'      => true,
+                'message' => "📱 «{$this->owner_name}» egasiga SMS yuborildi",
+            ];
+        } else {
+            $this->forceFill([
+                'ready_sms_status' => 'failed',
+                'ready_sms_error'  => mb_substr($result['message'], 0, 250),
+            ])->saveQuietly();
+            self::$pendingSmsNotifications[] = [
+                'ok'      => false,
+                'message' => "❌ «{$this->owner_name}» — SMS ketmadi: {$result['message']}",
+            ];
+        }
     }
 
     public static function statusOptions(): array

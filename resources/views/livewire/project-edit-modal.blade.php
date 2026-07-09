@@ -45,6 +45,19 @@
             {{-- Shartnoma RU/UZ, Chegirma, Rozilik xati — endi "Ariza" sahifasi ichida --}}
             <a href="{{ route('print.project.ariza', $editInfoId) }}" target="_blank" style="padding:6px 11px;border-radius:7px;border:1px solid #d1d5db;background:#fff;color:#374151;font-size:12px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:4px">🖨 Ariza</a>
 
+            {{-- Qo'lda "Tayyor SMS" tugmasi — VAQTINCHA YASHIRILGAN.
+                 Hozir SMS avtomatik ketadi (loyiha "Tugallangan"ga o'tsa).
+                 Kerak bo'lsa @if(false) ni qaytadan yoqing. --}}
+            @if(false && (auth()->user()?->isAdmin() || auth()->user()?->isMenejer()))
+            <button type="button" wire:click="eiSendReadySms"
+                    wire:confirm="Egasiga «Loyiha tayyor» SMS yuborilsinmi?"
+                    wire:loading.attr="disabled" wire:target="eiSendReadySms"
+                    style="padding:6px 11px;border-radius:7px;border:1px solid #86efac;background:#f0fdf4;color:#16a34a;font-size:12px;font-weight:600;cursor:pointer">
+                <span wire:loading.remove wire:target="eiSendReadySms">📱 Tayyor SMS</span>
+                <span wire:loading wire:target="eiSendReadySms">⏳ Yuborilmoqda…</span>
+            </button>
+            @endif
+
             @if($canMygov)
             <button type="button" wire:click="eiToggleMygov" style="padding:6px 11px;border-radius:7px;border:1px solid #a5b4fc;background:#eef2ff;color:#4338ca;font-size:12px;font-weight:600;cursor:pointer">🏛 MyGOV</button>
             @endif

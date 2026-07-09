@@ -249,6 +249,30 @@ class ProjectEditModal extends Component
         $this->dispatch('notify', type: 'success', message: "MyGOV login/parol saqlandi");
     }
 
+    // ── "Loyiha tayyor" SMS — egasining 1-telefoniga Eskiz orqali yuboradi ──
+    public function eiSendReadySms(): void
+    {
+        $u = auth()->user();
+        if (!$u || !$u->canSeeAllProjects()) {
+            $this->dispatch('notify', type: 'error', message: "Ruxsat yo'q");
+            return;
+        }
+
+        $phone = trim($this->ei_phones[0] ?? '');
+        if (\App\Services\EskizSms::normalizePhone($phone) === '' || strlen(\App\Services\EskizSms::normalizePhone($phone)) < 12) {
+            $this->dispatch('notify', type: 'error', message: "Egasining telefon raqami noto'g'ri yoki yo'q");
+            return;
+        }
+
+        $text   = config('services.eskiz.ready_message');
+        $result = \App\Services\EskizSms::send($phone, $text);
+
+        $this->dispatch('notify',
+            type: $result['ok'] ? 'success' : 'error',
+            message: $result['ok'] ? "📱 SMS yuborildi: {$phone}" : $result['message']
+        );
+    }
+
     public function eiAddPhone(): void { $this->ei_phones[] = '+998'; }
 
     public function eiRemovePhone(int $i): void
