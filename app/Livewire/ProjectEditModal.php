@@ -139,6 +139,28 @@ class ProjectEditModal extends Component
         $this->dispatch('notify', type: 'success', message: $userId ? "Mas'ul biriktirildi" : "Mas'ul olib tashlandi");
     }
 
+    // Xizmat ish muddati (kun) — admin/menejer belgilaydi. Modal ochiq qoladi.
+    public function eiSetServiceDeadline(int $serviceId, $days): void
+    {
+        $u = auth()->user();
+        if (!$u || !$u->canSeeAllProjects()) {
+            $this->dispatch('notify', type: 'error', message: "Ruxsat yo'q");
+            return;
+        }
+        $svc = ProjectService::find($serviceId);
+        if (!$svc || $svc->project_id !== $this->editInfoId) return;
+
+        $days = trim((string) $days);
+        $val  = ($days === '' || (int) $days <= 0) ? null : min(3650, (int) $days);
+        $svc->update(['deadline_days' => $val]);
+
+        $p = Project::find($this->editInfoId);
+        if ($p) $this->ei_services = $this->buildEiServices($p);
+        $this->dispatch('kb-refresh'); // kartadagi timer yangilansin
+        $this->dispatch('notify', type: 'success',
+            message: $val ? "Muddat: {$val} kun belgilandi" : "Muddat olib tashlandi");
+    }
+
     // GENPLAN: belgilangan PDFlarni muqova+sertifikat bilan yig'ish sahifasini ochadi
     public function eiMerge(): void
     {
@@ -469,6 +491,12 @@ class ProjectEditModal extends Component
                 'employee'  => $s->assignedUser?->name,
                 'assigned_user_id' => $s->assigned_user_id,
                 'completed' => (bool) $s->completed_at,
+                'deadline_days' => $s->deadline_days,
+                'days_left'     => $s->days_left,     // null = boshlanmagan yoki muddat yo'q
+                'is_late'       => $s->is_late,
+                'late_days'     => $s->late_days,
+                'started'       => (bool) $s->work_started_at,
+                'deadline_date' => $s->deadline_date?->translatedFormat('d-M'),
             ];
         })->toArray();
     }

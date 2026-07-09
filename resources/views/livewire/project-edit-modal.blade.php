@@ -78,7 +78,9 @@
                 @endif
             @endif
 
-            @if(!auth()->user()?->isHisobchi())
+            {{-- "👤 Hodim" tugmasi YASHIRILGAN — endi mas'ul hodim va muddat
+                 har bir xizmatga "Xizmatlar va to'lovlar" bo'limidan biriktiriladi. --}}
+            @if(false && !auth()->user()?->isHisobchi())
             <button type="button" wire:click="eiGoAssign" style="padding:6px 11px;border-radius:7px;border:1px solid #e5e7eb;background:#f3f4f6;color:#374151;font-size:12px;font-weight:600;cursor:pointer">👤 Hodim</button>
             @endif
             </div>
@@ -275,6 +277,30 @@
                             <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg> Tugalmagan
                             @endif
                         </button>
+                        @endif
+
+                        {{-- Ish muddati (kun) — admin/menejer belgilaydi --}}
+                        @if(auth()->user()?->canSeeAllProjects())
+                        <div style="margin-top:6px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                            <span style="font-size:11px;color:#6b7280">⏱ Muddat:</span>
+                            <input type="number" min="0" max="3650" value="{{ $svc['deadline_days'] }}"
+                                   @change="$wire.eiSetServiceDeadline({{ $svc['id'] }}, $event.target.value)"
+                                   placeholder="—" title="Ishga necha kun beriladi"
+                                   style="width:56px;font-size:11px;padding:3px 6px;border:1px solid {{ $svc['deadline_days'] ? '#a5b4fc' : '#e5e7eb' }};border-radius:6px;text-align:center;background:{{ $svc['deadline_days'] ? '#eef2ff' : '#fff' }}">
+                            <span style="font-size:11px;color:#6b7280">kun</span>
+                            @if($svc['deadline_days'])
+                                @if(!$svc['started'])
+                                <span style="font-size:10px;color:#9ca3af">(ish hali boshlanmagan)</span>
+                                @elseif($svc['is_late'])
+                                <span style="font-size:10px;font-weight:700;color:#dc2626">🔴 {{ $svc['late_days'] }} kun kech</span>
+                                @elseif($svc['days_left'] !== null)
+                                <span style="font-size:10px;font-weight:700;color:{{ $svc['days_left'] <= 3 ? '#d97706' : '#16a34a' }}">{{ $svc['days_left'] }} kun qoldi</span>
+                                @endif
+                                @if($svc['deadline_date'] && $svc['started'])
+                                <span style="font-size:10px;color:#9ca3af">· {{ $svc['deadline_date'] }}gача</span>
+                                @endif
+                            @endif
+                        </div>
                         @endif
                     </div>
                     <div style="text-align:right">
