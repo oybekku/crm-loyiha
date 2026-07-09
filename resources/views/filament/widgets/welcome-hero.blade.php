@@ -1,9 +1,24 @@
-<div class="bh-page">
+<div class="bh-page" x-data="{ statShown: false }">
 <style>
 
 .bh-page {
     position: relative;
 }
+
+/* ── Maxfiy statistika: xira (blur) holat + ochish ── */
+.bh-secret { transition: filter .35s ease; }
+.bh-secret.bh-locked {
+    filter: blur(11px);
+    pointer-events: none;
+    user-select: none;
+}
+.bh-eye-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #eff6ff; border: 1px solid #bfdbfe; color: #2563eb;
+    border-radius: 9px; padding: 7px 14px; font-size: 13px; font-weight: 700;
+    cursor: pointer; white-space: nowrap; transition: background .15s;
+}
+.bh-eye-btn:hover { background: #dbeafe; }
 
 
 @keyframes bh-grow  { from{height:3px} to{height:var(--h)} }
@@ -358,6 +373,11 @@
                 </div>
             </div>
 
+            {{-- Statistikani ko'rsatish/yashirish (maxfiy raqamlar xira turadi) --}}
+            <button type="button" class="bh-eye-btn" @click="statShown = !statShown"
+                    x-text="statShown ? '🙈 Yashirish' : '👁 Statistikani ko\'rsatish'"
+                    title="Maxfiy moliyaviy raqamlarni ochish/yashirish">👁 Statistikani ko'rsatish</button>
+
         </div>
 
         {{-- Bar chart --}}
@@ -366,6 +386,7 @@
             $mColors = array_fill(0, 12, 'linear-gradient(180deg,#9ca3af,#6b7280)');
             $yMax = $maxIncome > 0 ? $maxIncome : 1;
         @endphp
+        <div class="bh-secret" :class="{ 'bh-locked': !statShown }">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
             <div class="bh-chart-label" style="margin:0">Loyiha dinamikasi &middot; oyni tanlang</div>
             <div style="display:flex;align-items:center;gap:8px">
@@ -398,6 +419,7 @@
                 @endforeach
             </div>
         </div>
+        </div>{{-- /bh-secret: grafik --}}
 
     </div>
 
@@ -406,7 +428,7 @@
 
 {{-- ── SHAXSIY STATISTIKA (bajaruvchi uchun) ── --}}
 @if($isEmployee && $myStats)
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;position:relative;z-index:1">
+<div class="bh-secret" :class="{ 'bh-locked': !statShown }" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;position:relative;z-index:1">
 
     {{-- Bu oy tugallangan --}}
     <div style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.30);border-radius:12px;padding:20px 24px">
@@ -447,7 +469,7 @@
 
 {{-- ── BOTTOM: 4 alohida stat karta (faqat admin/menejer) ── --}}
 @if(!$isEmployee)
-<div class="bh-bottom">
+<div class="bh-bottom bh-secret" :class="{ 'bh-locked': !statShown }">
 
     {{-- Jami loyihalar --}}
     <div class="bh-stat bh-stat--blue">
