@@ -19,12 +19,12 @@
     .btn-close{background:#374151;color:#fff}
     .btn-sign{background:#0ea5e9;color:#fff}
     .btn-sign2{background:#8b5cf6;color:#fff}
-    .sign-ov{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:none;align-items:center;justify-content:center;padding:16px}
-    .sign-box{background:#fff;border-radius:14px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.4);width:96vw;max-width:1400px;display:flex;flex-direction:column}
-    .sign-hd{font-size:17px;font-weight:700;color:#111;margin-bottom:12px}
-    .sign-hd span{font-weight:400;color:#9ca3af;font-size:13px}
-    #signCanvas{border:2px dashed #cbd5e1;border-radius:10px;background:#fff;touch-action:none;cursor:crosshair;display:block;width:100%;height:auto}
-    .sign-actions{display:flex;gap:10px;align-items:center;margin-top:14px}
+    .sign-ov{position:fixed;inset:0;background:#fff;z-index:200;display:none;flex-direction:column}
+    .sign-box{background:#fff;width:100%;height:100%;display:flex;flex-direction:column}
+    .sign-hd{font-size:16px;font-weight:700;color:#111;padding:12px 16px;border-bottom:1px solid #e5e7eb;flex-shrink:0}
+    .sign-hd span{font-weight:400;color:#9ca3af;font-size:12px}
+    #signCanvas{border:none;background:#fff;touch-action:none;cursor:crosshair;display:block;flex:1;width:100%;min-height:0}
+    .sign-actions{display:flex;gap:10px;align-items:center;padding:12px 16px;border-top:1px solid #e5e7eb;flex-shrink:0}
     .sign-actions button{border:none;border-radius:8px;padding:13px 22px;font-size:15px;font-weight:700;cursor:pointer}
     .s-clear{background:#f1f5f9;color:#475569}
     .s-cancel{background:#e5e7eb;color:#374151}
@@ -314,15 +314,19 @@ function hideOv(){ document.getElementById('ov').style.display='none'; }
 let signCtx=null, signDrawn=false, signInit=false, savedSig=null;
 function openSignPad(){
     const c=document.getElementById('signCanvas');
-    // Chizish maydonini planshet/telefon ekraniga moslab kattalashtiramiz
-    const w = Math.round(Math.max(320, Math.min(window.innerWidth*0.90, 1600)));
-    const h = Math.round(Math.max(220, Math.min(window.innerHeight*0.62, 800)));
-    c.width = w; c.height = h;
-    signCtx=c.getContext('2d');
-    signCtx.lineWidth=3; signCtx.lineCap='round'; signCtx.lineJoin='round'; signCtx.strokeStyle='#0a2a6b';
-    clearSign();
     document.getElementById('signOv').style.display='flex';
-    if(!signInit){ setupSignDraw(c); signInit=true; }
+    // Kulrang bo'sh joy qolmasin — chizish maydoni butun ekranni (planshet
+    // sirtining haqiqiy o'lchamiga mos) egallashi kerak, aks holda planshet
+    // qalami chekkaga tegganda chiziq oynadan tashqariga chiqib qoladi.
+    requestAnimationFrame(()=>{
+        const r = c.getBoundingClientRect();
+        c.width = Math.round(r.width);
+        c.height = Math.round(r.height);
+        signCtx=c.getContext('2d');
+        signCtx.lineWidth=3; signCtx.lineCap='round'; signCtx.lineJoin='round'; signCtx.strokeStyle='#0a2a6b';
+        clearSign();
+        if(!signInit){ setupSignDraw(c); signInit=true; }
+    });
 }
 function closeSignPad(){ document.getElementById('signOv').style.display='none'; }
 function clearSign(){ if(!signCtx) return; const c=document.getElementById('signCanvas'); signCtx.clearRect(0,0,c.width,c.height); signDrawn=false; }

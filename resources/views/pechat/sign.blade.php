@@ -16,7 +16,8 @@
     .bar button, .bar a{border:none;border-radius:8px;padding:10px 16px;font-size:13px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
     .btn-close{background:#374151;color:#fff}
 
-    .wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:18px}
+    .wrap{flex:1;display:flex;flex-direction:column;min-height:0}
+    .wrap.centered{align-items:center;justify-content:center;padding:20px;gap:18px}
 
     .saved-box{background:#fff;border-radius:14px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.4);width:96vw;max-width:640px;text-align:center}
     .saved-box img{max-width:100%;max-height:260px;background:repeating-conic-gradient(#f3f4f6 0% 25%, #fff 0% 50%) 50% / 20px 20px;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:16px}
@@ -26,11 +27,11 @@
     .s-redraw{background:#0ea5e9;color:#fff}
     .s-del{background:#fef2f2;color:#dc2626;border:1px solid #fecaca!important}
 
-    .sign-box{background:#fff;border-radius:14px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.4);width:96vw;max-width:1400px;display:flex;flex-direction:column}
-    .sign-hd{font-size:17px;font-weight:700;color:#111;margin-bottom:12px}
-    .sign-hd span{font-weight:400;color:#9ca3af;font-size:13px}
-    #signCanvas{border:2px dashed #cbd5e1;border-radius:10px;background:#fff;touch-action:none;cursor:crosshair;display:block;width:100%;height:auto}
-    .sign-actions{display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap}
+    .sign-box{background:#fff;flex:1;width:100%;min-height:0;display:flex;flex-direction:column}
+    .sign-hd{font-size:16px;font-weight:700;color:#111;padding:12px 16px;border-bottom:1px solid #e5e7eb;flex-shrink:0}
+    .sign-hd span{font-weight:400;color:#9ca3af;font-size:12px}
+    #signCanvas{border:none;background:#fff;touch-action:none;cursor:crosshair;display:block;flex:1;width:100%;min-height:0}
+    .sign-actions{display:flex;gap:10px;align-items:center;padding:12px 16px;border-top:1px solid #e5e7eb;flex-shrink:0}
     .sign-actions button{border:none;border-radius:8px;padding:13px 22px;font-size:15px;font-weight:700;cursor:pointer}
     .s-clear{background:#f1f5f9;color:#475569}
     .s-cancel{background:#e5e7eb;color:#374151}
@@ -67,6 +68,7 @@ function showOv(t){ document.getElementById('ovText').textContent=t; document.ge
 function hideOv(){ document.getElementById('ov').style.display='none'; }
 
 function renderSaved(){
+    wrapEl.className = 'wrap centered';
     wrapEl.innerHTML = `
         <div class="saved-box">
             <div class="lbl">Saqlangan imzo</div>
@@ -79,10 +81,11 @@ function renderSaved(){
 }
 
 function renderPad(){
+    wrapEl.className = 'wrap full';
     wrapEl.innerHTML = `
         <div class="sign-box">
             <div class="sign-hd">✍️ Qo'l qo'ying <span>— sichqoncha yoki barmoq bilan chizing</span></div>
-            <canvas id="signCanvas" width="1200" height="560"></canvas>
+            <canvas id="signCanvas"></canvas>
             <div class="sign-actions">
                 <button class="s-clear" onclick="clearSign()">🧹 Tozalash</button>
                 <span style="flex:1"></span>
@@ -92,13 +95,18 @@ function renderPad(){
         </div>`;
 
     const c = document.getElementById('signCanvas');
-    const w = Math.round(Math.max(320, Math.min(window.innerWidth*0.90, 1600)));
-    const h = Math.round(Math.max(220, Math.min(window.innerHeight*0.62, 800)));
-    c.width = w; c.height = h;
-    signCtx = c.getContext('2d');
-    signCtx.lineWidth=3; signCtx.lineCap='round'; signCtx.lineJoin='round'; signCtx.strokeStyle='#0a2a6b';
-    signDrawn = false;
-    setupSignDraw(c);
+    // Kulrang bo'sh joy qolmasin — chizish maydoni butun ekranni (planshet
+    // sirtining haqiqiy o'lchamiga mos) egallashi kerak, aks holda planshet
+    // qalami chekkaga tegganda chiziq oynadan tashqariga chiqib qoladi.
+    requestAnimationFrame(()=>{
+        const r = c.getBoundingClientRect();
+        c.width = Math.round(r.width);
+        c.height = Math.round(r.height);
+        signCtx = c.getContext('2d');
+        signCtx.lineWidth=3; signCtx.lineCap='round'; signCtx.lineJoin='round'; signCtx.strokeStyle='#0a2a6b';
+        signDrawn = false;
+        setupSignDraw(c);
+    });
 }
 
 let signCtx=null, signDrawn=false;
