@@ -75,17 +75,26 @@ class WelcomeHeroWidget extends Widget
         $baseQuery->whereYear('created_at', $this->selYear)
                   ->whereMonth('created_at', $this->selMonth);
 
+        // Arxiv (yakunlangan) bosqichlar — bazadan olinadi, shu sababli yangi status
+        // qo'shilsa/o'zgarsa ham statistika hisoblagichlari avtomatik to'g'ri qoladi.
+        $archiveStatuses = \App\Models\ProjectStatus::where('is_archive', true)->pluck('key')->all();
+        if (empty($archiveStatuses)) $archiveStatuses = ['tugallangan', 'taqdim_etilgan', 'bekor_qilingan'];
+
         $totalCount   = (clone $baseQuery)->count();
         $yangiCount   = (clone $baseQuery)->where('status', 'yangi')->count();
-        $jarayonCount = (clone $baseQuery)->whereIn('status', ['tolov_jarayonida', 'tekshirish'])->count();
-        $doneCount    = (clone $baseQuery)->where('status', 'tugallangan')->count();
+        // "Jarayonda" — yangi va arxiv bo'lmagan barcha oraliq bosqichlar (masalan:
+        // Toposyomka, Eskiz loyiha, To'langan...). Avval faqat 2 ta statusni sanardi,
+        // shu sababli loyihalar boshqa bosqichlarga o'tganda hisobdan "yo'qolib qolardi".
+        $jarayonCount = (clone $baseQuery)->where('status', '!=', 'yangi')->whereNotIn('status', $archiveStatuses)->count();
+        $doneCount    = (clone $baseQuery)->whereIn('status', $archiveStatuses)->count();
+        $doneSum      = (float) (clone $baseQuery)->whereIn('status', $archiveStatuses)->sum('total_price');
         $totalSum     = (float) (clone $baseQuery)->sum('total_price');
         $paidSum      = (float) (clone $baseQuery)->sum('paid_amount');
         $debtSum      = $totalSum - $paidSum;
         $paidPct      = $totalSum > 0 ? round(($paidSum / $totalSum) * 100) : 0;
 
         // Qilinmagan (arxivda emas) loyihalar — "Qilinmagan loyihalar" kartasi uchun
-        $pendingQ        = (clone $baseQuery)->whereNotIn('status', ['tugallangan', 'taqdim_etilgan', 'bekor_qilingan']);
+        $pendingQ        = (clone $baseQuery)->whereNotIn('status', $archiveStatuses);
         $pendingCountTop = (int)   (clone $pendingQ)->count();
         $pendingSumTop   = (float) (clone $pendingQ)->sum('total_price');
         $pendingPaidTop  = (float) (clone $pendingQ)->sum('paid_amount');
@@ -94,7 +103,6 @@ class WelcomeHeroWidget extends Widget
         // ── Kechikkan / muddati yaqin ishlar (xizmat-asosli — kanban bilan bir xil) ──
         // Tanlangan oy bo'yicha — loyiha OCHILGAN (created_at) oyiga qarab filtrlanadi.
         // Shu sababli o'tgan oy ishlari keyingi oyga "o'tmaydi" — har oy alohida qoladi.
-        $archiveStatuses = ['tugallangan', 'taqdim_etilgan', 'bekor_qilingan'];
         $attnQ = \App\Models\ProjectService::query()
             ->whereNotNull('assigned_user_id')
             ->whereNotNull('work_started_at')
@@ -208,6 +216,7 @@ class WelcomeHeroWidget extends Widget
             'statYangi'     => $yangiCount,
             'statJarayon'   => $jarayonCount,
             'statDone'      => $doneCount,
+            'statDoneSum'   => $doneSum,
             'statTotalSum'  => $totalSum,
             'statPaidSum'   => $paidSum,
             'statDebt'      => $debtSum,

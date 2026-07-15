@@ -505,7 +505,8 @@
             <div style="display:flex;justify-content:space-between"><span style="color:#6b7280">Qilinmagan jami summa</span><span style="font-weight:700;color:#9a3412">{{ number_format($statPendingSum, 0, '.', ' ') }} so'm</span></div>
             <div style="display:flex;justify-content:space-between"><span style="color:#6b7280">To'langan</span><span style="font-weight:700;color:#16a34a">{{ number_format($statPendingPaid, 0, '.', ' ') }} so'm</span></div>
             <div style="display:flex;justify-content:space-between"><span style="color:#6b7280">Qolgan qarz</span><span style="font-weight:700;color:#dc2626">{{ number_format($statPendingDebt, 0, '.', ' ') }} so'm</span></div>
-            <div style="display:flex;justify-content:space-between;border-top:1px dashed #e5e7eb;margin-top:3px;padding-top:5px"><span style="color:#6b7280">Umumiy loyihalar</span><span style="font-weight:700;color:#374151">{{ $statProjects }} ta</span></div>
+            <div style="display:flex;justify-content:space-between;border-top:1px dashed #e5e7eb;margin-top:3px;padding-top:5px"><span style="color:#6b7280">Tugallangan summasi</span><span style="font-weight:700;color:#16a34a">{{ number_format($statDoneSum, 0, '.', ' ') }} so'm</span></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:#6b7280">Umumiy loyihalar</span><span style="font-weight:700;color:#374151">{{ $statProjects }} ta</span></div>
         </div>
     </div>
 
