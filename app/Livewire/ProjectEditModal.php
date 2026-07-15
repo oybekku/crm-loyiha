@@ -39,7 +39,7 @@ class ProjectEditModal extends Component
     public $ei_newFiles              = [];
     public array  $ei_genplan        = [];
     public $ei_newGenplan            = [];
-    public array  $ei_genplanSel     = [];   // yig'ish uchun belgilangan PDF id lar
+    public array  $ei_genplanOrder   = [];   // yig'ish tartibi: [fileId => tartib raqami]
     public string $ei_status         = '';
     public string $ei_workStatus     = 'yangi';
     public bool   $ei_isUrgent       = false;
@@ -77,7 +77,7 @@ class ProjectEditModal extends Component
         $this->ei_genplan     = $this->buildEiFiles($p, 'genplan');
         $this->ei_newFiles    = [];
         $this->ei_newGenplan  = [];
-        $this->ei_genplanSel  = [];
+        $this->ei_genplanOrder = [];
         $this->ei_status      = $p->status;
         $this->ei_workStatus  = $p->work_status ?? 'yangi';
         $this->ei_isUrgent    = (bool) $p->is_urgent;
@@ -161,15 +161,35 @@ class ProjectEditModal extends Component
             message: $val ? "Muddat: {$val} kun belgilandi" : "Muddat olib tashlandi");
     }
 
-    // GENPLAN: belgilangan PDFlarni muqova+sertifikat bilan yig'ish sahifasini ochadi
-    public function eiMerge(): void
+    // GENPLAN: har bir PDFga qo'yilgan tartib raqamini saqlaydi (0/bo'sh = yig'ishga kirmaydi)
+    public function eiSetGenplanOrder(int $fileId, $val): void
     {
-        $ids = array_values(array_filter(array_map('intval', $this->ei_genplanSel)));
+        $n = (int) $val;
+        if ($n <= 0) {
+            unset($this->ei_genplanOrder[$fileId]);
+        } else {
+            $this->ei_genplanOrder[$fileId] = $n;
+        }
+    }
+
+    // GENPLAN: belgilangan PDFlarni (tartib raqamiga qarab) yig'ish sahifasini ochadi.
+    // $withCover — muqova + sertifikat ham qo'shilsinmi (frontendda so'raladi).
+    public function eiMerge(bool $withCover = true): void
+    {
+        $ids = collect($this->ei_genplanOrder)
+            ->filter(fn ($n) => $n > 0)
+            ->sortBy(fn ($n) => $n)
+            ->keys()
+            ->map(fn ($id) => (int) $id)
+            ->values()
+            ->all();
         if (empty($ids)) {
-            $this->dispatch('notify', type: 'error', message: "Avval kamida bitta PDF belgilang");
+            $this->dispatch('notify', type: 'error', message: "Avval kamida bitta PDFga tartib raqami qo'ying");
             return;
         }
-        $url = route('genplan.merge', $this->editInfoId) . '?files=' . implode(',', $ids);
+        $url = route('genplan.merge', $this->editInfoId)
+            . '?files=' . implode(',', $ids)
+            . '&cover=' . ($withCover ? 1 : 0);
         $this->js("window.open(" . json_encode($url) . ", '_blank')");
     }
 

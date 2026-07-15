@@ -267,9 +267,10 @@ Route::middleware(['auth'])->group(function () {
             ->orderByRaw('FIELD(id, ' . (implode(',', $ids) ?: '0') . ')')
             ->get(['id', 'file_name']);
         return view('genplan.merge', [
-            'project' => $project,
-            'files'   => $files,
-            'saveUrl' => route('genplan.merge.save', $project),
+            'project'   => $project,
+            'files'     => $files,
+            'withCover' => request()->boolean('cover', true),
+            'saveUrl'   => route('genplan.merge.save', $project),
         ]);
     })->name('genplan.merge');
 

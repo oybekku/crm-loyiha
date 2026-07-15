@@ -34,10 +34,12 @@
     <div class="sub">{{ $project->owner_name }} — {{ $project->number }}</div>
 
     <div class="list">
+        @if($withCover)
         <div>1. 📄 Muqova (abloshka)</div>
         <div>2. 📄 My perfect home (sertifikat)</div>
+        @endif
         @foreach($files as $i => $f)
-        <div>{{ $i + 3 }}. 📎 {{ $f->file_name }}</div>
+        <div>{{ $withCover ? $i + 3 : $i + 1 }}. 📎 {{ $f->file_name }}</div>
         @endforeach
         @if($files->isEmpty())
         <div style="color:#f87171">⚠️ Hech qanday PDF belgilanmagan</div>
@@ -56,6 +58,7 @@ const SAVE_URL = @json($saveUrl);
 const CERT_URL = @json(route('pechat.asset', 'certificate.pdf'));
 const OBL_URL  = @json(route('pechat.asset', 'obloshka1.png'));
 const SEL_URLS = @json($files->map(fn($f) => route('pechat.pdf', $f->id))->values());
+const WITH_COVER = @json($withCover);
 // Muqova matni
 const MANZIL = @json($manzil);
 const TUMAN  = @json($tuman);
@@ -88,33 +91,35 @@ async function run(){
         const merged = await PDFDocument.create();
         const font   = await merged.embedFont(StandardFonts.TimesRoman);
 
-        // ── 1) MUQOVA (A3 landscape) ──
-        setStatus('Muqova tayyorlanmoqda...');
-        const A3W = mm(420), A3H = mm(297);
-        const page = merged.addPage([A3W, A3H]);
-        const bgBytes = await fetch(OBL_URL).then(r=>r.arrayBuffer());
-        const bg = await merged.embedPng(bgBytes);
-        page.drawImage(bg, {x:0, y:0, width:A3W, height:A3H});
+        if(WITH_COVER){
+            // ── 1) MUQOVA (A3 landscape) ──
+            setStatus('Muqova tayyorlanmoqda...');
+            const A3W = mm(420), A3H = mm(297);
+            const page = merged.addPage([A3W, A3H]);
+            const bgBytes = await fetch(OBL_URL).then(r=>r.arrayBuffer());
+            const bg = await merged.embedPng(bgBytes);
+            page.drawImage(bg, {x:0, y:0, width:A3W, height:A3H});
 
-        const leftX = mm(420*0.06);
-        const blockTop = A3H - mm(297*0.493);   // manzil bloki tepasi
-        // tuman
-        page.drawText(clean(TUMAN), {x:leftX, y: blockTop - mm(5.5), size: mm(5), font, color: rgb(0.1,0.1,0.1)});
-        // manzil (o'ralgan)
-        const maxW = mm(420*0.44);
-        const lines = wrapLines(MANZIL, font, mm(7.9), maxW);
-        let ly = blockTop - mm(14);
-        for(const ln of lines){ page.drawText(ln, {x:leftX, y:ly, size: mm(7.9), font, color: rgb(0.07,0.07,0.07)}); ly -= mm(9); }
-        // yil (markaz, oq)
-        const yt = SHAHAR + ' - ' + YIL;
-        const yw = font.widthOfTextAtSize(yt, mm(9.8));
-        page.drawText(yt, {x:(A3W-yw)/2, y: A3H - mm(297*0.945), size: mm(9.8), font, color: rgb(1,1,1)});
+            const leftX = mm(420*0.06);
+            const blockTop = A3H - mm(297*0.493);   // manzil bloki tepasi
+            // tuman
+            page.drawText(clean(TUMAN), {x:leftX, y: blockTop - mm(5.5), size: mm(5), font, color: rgb(0.1,0.1,0.1)});
+            // manzil (o'ralgan)
+            const maxW = mm(420*0.44);
+            const lines = wrapLines(MANZIL, font, mm(7.9), maxW);
+            let ly = blockTop - mm(14);
+            for(const ln of lines){ page.drawText(ln, {x:leftX, y:ly, size: mm(7.9), font, color: rgb(0.07,0.07,0.07)}); ly -= mm(9); }
+            // yil (markaz, oq)
+            const yt = SHAHAR + ' - ' + YIL;
+            const yw = font.widthOfTextAtSize(yt, mm(9.8));
+            page.drawText(yt, {x:(A3W-yw)/2, y: A3H - mm(297*0.945), size: mm(9.8), font, color: rgb(1,1,1)});
 
-        // ── 2) SERTIFIKAT ──
-        setStatus('Sertifikat qo\'shilmoqda...');
-        const certBytes = await fetch(CERT_URL).then(r=>r.arrayBuffer());
-        const cert = await PDFDocument.load(certBytes, {ignoreEncryption:true});
-        (await merged.copyPages(cert, cert.getPageIndices())).forEach(p=>merged.addPage(p));
+            // ── 2) SERTIFIKAT ──
+            setStatus('Sertifikat qo\'shilmoqda...');
+            const certBytes = await fetch(CERT_URL).then(r=>r.arrayBuffer());
+            const cert = await PDFDocument.load(certBytes, {ignoreEncryption:true});
+            (await merged.copyPages(cert, cert.getPageIndices())).forEach(p=>merged.addPage(p));
+        }
 
         // ── 3) TANLANGAN PDFlar ──
         let n = 0;

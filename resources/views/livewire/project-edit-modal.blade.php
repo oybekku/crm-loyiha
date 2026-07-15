@@ -201,9 +201,12 @@
                     @foreach($ei_genplan as $f)
                     <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px">
                         @if(\Illuminate\Support\Str::endsWith(strtolower($f['name']), '.pdf'))
-                        <input type="checkbox" wire:model.live="ei_genplanSel" value="{{ $f['id'] }}" title="Yig'ishga belgilash" style="width:16px;height:16px;cursor:pointer;accent-color:#16a34a;flex-shrink:0">
+                        <input type="number" min="1" max="99" value="{{ $ei_genplanOrder[$f['id']] ?? '' }}"
+                               @change="$wire.eiSetGenplanOrder({{ $f['id'] }}, $event.target.value)"
+                               placeholder="—" title="Yig'ish tartibi"
+                               style="width:38px;flex-shrink:0;font-size:11px;padding:3px 4px;border:1px solid {{ !empty($ei_genplanOrder[$f['id']]) ? '#86efac' : '#e5e7eb' }};border-radius:6px;text-align:center;background:{{ !empty($ei_genplanOrder[$f['id']]) ? '#f0fdf4' : '#fff' }};color:#166534;font-weight:700">
                         @else
-                        <span style="width:16px;flex-shrink:0"></span>
+                        <span style="width:38px;flex-shrink:0"></span>
                         @endif
                         <span style="font-size:16px">{{ $f['icon'] }}</span>
                         <a href="{{ $f['url'] }}" target="_blank" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#374151;font-size:13px;text-decoration:none">{{ $f['name'] }}</a>
@@ -219,8 +222,10 @@
                 <div style="font-size:12px;color:#9ca3af;margin-bottom:10px">Hali GENPLAN PDF yuklanmagan</div>
                 @endif
                 @if(count($ei_genplan) > 0)
-                <button type="button" wire:click="eiMerge" style="width:100%;margin-bottom:10px;padding:10px;border-radius:8px;border:none;background:#16a34a;color:#fff;font-size:13px;font-weight:700;cursor:pointer">🔗 Yig'ish — muqova + sertifikat + belgilangan PDFlar</button>
-                <div style="font-size:10px;color:#6b7280;margin-bottom:10px;margin-top:-4px">PDFlarni belgilang → yig'ilgan fayl shu yerda paydo bo'ladi</div>
+                <button type="button"
+                        @click="if(confirm('Muqova va sertifikatni ham qo\'shaymi?\n\nOK — ha, qo\'shilsin\nBekor qilish — yo\'q, faqat tanlangan PDFlar')){ $wire.eiMerge(true) } else { $wire.eiMerge(false) }"
+                        style="width:100%;margin-bottom:10px;padding:10px;border-radius:8px;border:none;background:#16a34a;color:#fff;font-size:13px;font-weight:700;cursor:pointer">🔗 Yig'ish — tanlangan PDFlar</button>
+                <div style="font-size:10px;color:#6b7280;margin-bottom:10px;margin-top:-4px">Har bir PDF oldiga tartib raqami qo'ying (1, 2, 3...) → o'sha tartibda yig'iladi</div>
                 @endif
                 <div x-data="{ up:false, prog:0 }"
                      x-on:livewire-upload-start="up=true; prog=0"
