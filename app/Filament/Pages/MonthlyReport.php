@@ -184,15 +184,17 @@ class MonthlyReport extends Page
     {
         [$year, $month] = explode('-', $this->selectedMonth);
 
-        // Komissiya HAR BAJARILGAN ish bo'yicha — xizmat tugatilsa (completed_at) hisoblanadi
-        // (loyiha to'liq arxivga o'tishini kutmaydi). Bekor qilingan loyiha hisobga olinmaydi.
-        // Loyiha OCHILGAN oyiga qarab.
+        // Komissiya HAR BAJARILGAN ish bo'yicha — xizmat AYNAN TUGATILGAN oyiga (completed_at)
+        // qarab hisoblanadi (loyiha to'liq arxivga o'tishini yoki qachon ochilganini kutmaydi).
+        // Shu sababli eski oyda ochilgan loyihaga shu oy qo'shilib tugatilgan xizmat — shu
+        // oy hisobotiga tushadi, eski (allaqachon yopilgan) oy hisobotini o'zgartirmaydi.
+        // Bekor qilingan loyiha hisobga olinmaydi.
         $completedServices = \App\Models\ProjectService::with(['assignedUser', 'project.payments'])
             ->whereNotNull('completed_at')
             ->whereNotNull('assigned_user_id')
-            ->whereHas('project', fn($q) =>
-                $q->whereYear('created_at', $year)->whereMonth('created_at', $month)
-                  ->where('status', '!=', 'bekor_qilingan'))
+            ->whereYear('completed_at', $year)
+            ->whereMonth('completed_at', $month)
+            ->whereHas('project', fn($q) => $q->where('status', '!=', 'bekor_qilingan'))
             ->get();
 
         $projectIds = $completedServices->pluck('project_id')->unique();
@@ -409,15 +411,16 @@ class MonthlyReport extends Page
         $toliqCount  = count($toliqIds);
         $qismanCount = count($qismanIds);
 
-        // Tugatilgan ishlar ro'yxati — shu oyda ochilgan loyihalarning BARCHA tugatilgan xizmatlari
-        // (bekor qilingandan tashqari). Arxiv = daromadga kirgan, Jarayonda = faol loyiha.
+        // Tugatilgan ishlar ro'yxati — shu oy TUGATILGAN barcha xizmatlar (loyiha qaysi oyda
+        // ochilganidan qat'i nazar), bekor qilingandan tashqari. Arxiv = daromadga kirgan,
+        // Jarayonda = faol loyiha.
         $statusLabels = \App\Models\ProjectStatus::pluck('label', 'key')->toArray();
         $tugatilganIshlar = \App\Models\ProjectService::with(['assignedUser', 'project:id,number,owner_name,status'])
             ->whereNotNull('completed_at')
             ->whereNotNull('assigned_user_id')
-            ->whereHas('project', fn($q) =>
-                $q->whereYear('created_at', $year)->whereMonth('created_at', $month)
-                  ->where('status', '!=', 'bekor_qilingan'))
+            ->whereYear('completed_at', $year)
+            ->whereMonth('completed_at', $month)
+            ->whereHas('project', fn($q) => $q->where('status', '!=', 'bekor_qilingan'))
             ->orderByDesc('completed_at')
             ->get()
             ->map(function ($s) use ($statusLabels) {
