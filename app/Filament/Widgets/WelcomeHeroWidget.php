@@ -86,8 +86,6 @@ class WelcomeHeroWidget extends Widget
         // Toposyomka, Eskiz loyiha, To'langan...). Avval faqat 2 ta statusni sanardi,
         // shu sababli loyihalar boshqa bosqichlarga o'tganda hisobdan "yo'qolib qolardi".
         $jarayonCount = (clone $baseQuery)->where('status', '!=', 'yangi')->whereNotIn('status', $archiveStatuses)->count();
-        $doneCount    = (clone $baseQuery)->whereIn('status', $archiveStatuses)->count();
-        $doneSum      = (float) (clone $baseQuery)->whereIn('status', $archiveStatuses)->sum('total_price');
         $totalSum     = (float) (clone $baseQuery)->sum('total_price');
         $paidSum      = (float) (clone $baseQuery)->sum('paid_amount');
         $debtSum      = $totalSum - $paidSum;
@@ -100,6 +98,13 @@ class WelcomeHeroWidget extends Widget
         $pendingPaidTop  = (float) (clone $pendingQ)->sum('paid_amount');
         $pendingDebtTop  = $pendingSumTop - $pendingPaidTop;
         $pendingPctTop   = $pendingSumTop > 0 ? round($pendingPaidTop / $pendingSumTop * 100) : 0;
+
+        // Tugallangan (arxiv) loyihalar — pul qayerga ketganini ko'rsatish uchun
+        $doneQ     = (clone $baseQuery)->whereIn('status', $archiveStatuses);
+        $doneCount = (int)   (clone $doneQ)->count();
+        $doneSum   = (float) (clone $doneQ)->sum('total_price');
+        $donePaid  = (float) (clone $doneQ)->sum('paid_amount');
+        $doneDebt  = $doneSum - $donePaid;
         // ── Kechikkan / muddati yaqin ishlar (xizmat-asosli — kanban bilan bir xil) ──
         // Tanlangan oy bo'yicha — loyiha OCHILGAN (created_at) oyiga qarab filtrlanadi.
         // Shu sababli o'tgan oy ishlari keyingi oyga "o'tmaydi" — har oy alohida qoladi.
@@ -217,6 +222,8 @@ class WelcomeHeroWidget extends Widget
             'statJarayon'   => $jarayonCount,
             'statDone'      => $doneCount,
             'statDoneSum'   => $doneSum,
+            'statDonePaid'  => $donePaid,
+            'statDoneDebt'  => $doneDebt,
             'statTotalSum'  => $totalSum,
             'statPaidSum'   => $paidSum,
             'statDebt'      => $debtSum,

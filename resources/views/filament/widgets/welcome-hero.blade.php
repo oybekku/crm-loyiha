@@ -491,22 +491,32 @@
         </div>
     </div>
 
-    {{-- Qilinmagan loyihalar --}}
+    {{-- Moliyaviy statistika — 58 tani ham, 52 tani ham, 6 tani ham alohida-alohida ko'rsatadi --}}
     <div class="bh-stat bh-stat--red">
         <div class="bh-stat-head" style="display:flex;align-items:center;gap:8px">
             <div class="bh-stat-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             </div>
-            <div class="bh-stat-label">Qilinmagan loyihalar</div>
-            <div class="bh-stat-value" style="margin-left:auto;line-height:1">{{ $statPendingCount }}</div>
+            <div class="bh-stat-label">Moliyaviy statistika</div>
+            <div class="bh-stat-value" style="margin-left:auto;line-height:1">{{ $statProjects }} ta</div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:3px;margin-top:10px;font-size:12.5px">
-            <div style="display:flex;justify-content:space-between"><span style="color:#6b7280">Umumiy summa</span><span style="font-weight:700;color:#374151">{{ number_format($statTotalSum, 0, '.', ' ') }} so'm</span></div>
-            <div style="display:flex;justify-content:space-between"><span style="color:#6b7280">Qilinmagan jami summa</span><span style="font-weight:700;color:#9a3412">{{ number_format($statPendingSum, 0, '.', ' ') }} so'm</span></div>
+        <div style="display:flex;flex-direction:column;gap:3px;margin-top:8px;font-size:12.5px">
+            <div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.4px">Umumiy — {{ $statProjects }} ta</div>
+            <div style="display:flex;justify-content:space-between"><span style="color:#6b7280">Jami summa</span><span style="font-weight:700;color:#374151">{{ number_format($statTotalSum, 0, '.', ' ') }} so'm</span></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:#6b7280">Jami to'langan</span><span style="font-weight:700;color:#16a34a">{{ number_format($statPaidSum, 0, '.', ' ') }} so'm</span></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:#6b7280">Jami qarz</span><span style="font-weight:700;color:#dc2626">{{ number_format($statDebt, 0, '.', ' ') }} so'm</span></div>
+
+            <div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.4px;margin-top:7px;border-top:1px dashed #e5e7eb;padding-top:6px">Qilinmagan — {{ $statPendingCount }} ta</div>
+            <div style="display:flex;justify-content:space-between"><span style="color:#6b7280">Jami summa</span><span style="font-weight:700;color:#9a3412">{{ number_format($statPendingSum, 0, '.', ' ') }} so'm</span></div>
             <div style="display:flex;justify-content:space-between"><span style="color:#6b7280">To'langan</span><span style="font-weight:700;color:#16a34a">{{ number_format($statPendingPaid, 0, '.', ' ') }} so'm</span></div>
             <div style="display:flex;justify-content:space-between"><span style="color:#6b7280">Qolgan qarz</span><span style="font-weight:700;color:#dc2626">{{ number_format($statPendingDebt, 0, '.', ' ') }} so'm</span></div>
-            <div style="display:flex;justify-content:space-between;border-top:1px dashed #e5e7eb;margin-top:3px;padding-top:5px"><span style="color:#6b7280">Tugallangan summasi</span><span style="font-weight:700;color:#16a34a">{{ number_format($statDoneSum, 0, '.', ' ') }} so'm</span></div>
-            <div style="display:flex;justify-content:space-between"><span style="color:#6b7280">Umumiy loyihalar</span><span style="font-weight:700;color:#374151">{{ $statProjects }} ta</span></div>
+
+            <div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.4px;margin-top:7px;border-top:1px dashed #e5e7eb;padding-top:6px">Tugallangan — {{ $statDone }} ta</div>
+            <div style="display:flex;justify-content:space-between"><span style="color:#6b7280">Jami summa</span><span style="font-weight:700;color:#374151">{{ number_format($statDoneSum, 0, '.', ' ') }} so'm</span></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:#6b7280">To'langan</span><span style="font-weight:700;color:#16a34a">{{ number_format($statDonePaid, 0, '.', ' ') }} so'm</span></div>
+            @if($statDoneDebt > 0)
+            <div style="display:flex;justify-content:space-between"><span style="color:#6b7280">Qolgan qarz</span><span style="font-weight:700;color:#dc2626">{{ number_format($statDoneDebt, 0, '.', ' ') }} so'm</span></div>
+            @endif
         </div>
     </div>
 
