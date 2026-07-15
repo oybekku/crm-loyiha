@@ -213,6 +213,51 @@ Route::middleware(['auth'])->group(function () {
         ]);
     })->name('pechat.signature');
 
+    // ── Loyihaga imzo qo'yish — PDF fayl yuklanmagan bo'lsa ham (faqat admin) ──
+    Route::get('/imzo/{project}', function (\App\Models\Project $project) {
+        abort_unless(auth()->user()?->isAdmin(), 403);
+        return view('pechat.sign', [
+            'project'    => $project,
+            'sigSaveUrl' => route('signature.save', $project),
+            'sigDelUrl'  => route('signature.delete', $project),
+            'sigUrl'     => $project->signature_path ? route('signature.view', $project) : null,
+        ]);
+    })->name('signature.editor');
+
+    Route::post('/imzo/{project}/save', function (\Illuminate\Http\Request $request, \App\Models\Project $project) {
+        abort_unless(auth()->user()?->isAdmin(), 403);
+        $data = (string) $request->input('img');
+        $data = preg_replace('#^data:image/\w+;base64,#', '', $data);
+        $bytes = base64_decode($data, true);
+        if ($bytes === false || strlen($bytes) < 50) {
+            return response()->json(['ok' => false, 'message' => "Noto'g'ri imzo"]);
+        }
+        $disk = \Illuminate\Support\Facades\Storage::disk('public');
+        $path = 'signatures/' . $project->id . '.png';
+        $disk->put($path, $bytes);
+        $project->update(['signature_path' => $path]);
+        return response()->json(['ok' => true]);
+    })->name('signature.save');
+
+    Route::delete('/imzo/{project}', function (\App\Models\Project $project) {
+        abort_unless(auth()->user()?->isAdmin(), 403);
+        $disk = \Illuminate\Support\Facades\Storage::disk('public');
+        if ($project->signature_path) $disk->delete($project->signature_path);
+        $project->update(['signature_path' => null]);
+        return response()->json(['ok' => true]);
+    })->name('signature.delete');
+
+    Route::get('/imzo/{project}/view', function (\App\Models\Project $project) {
+        abort_unless(auth()->user()?->isAdmin(), 403);
+        $path = $project->signature_path;
+        $disk = \Illuminate\Support\Facades\Storage::disk('public');
+        abort_unless($path && $disk->exists($path), 404);
+        return response($disk->get($path), 200, [
+            'Content-Type'  => 'image/png',
+            'Cache-Control' => 'no-store',
+        ]);
+    })->name('signature.view');
+
     // ── GENPLAN: tanlangan PDFlarni muqova + sertifikat bilan yig'ish (faqat admin) ──
     Route::get('/genplan/{project}/merge', function (\App\Models\Project $project) {
         abort_unless(auth()->user()?->isAdmin(), 403);

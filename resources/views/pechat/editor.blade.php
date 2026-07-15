@@ -20,12 +20,12 @@
     .btn-sign{background:#0ea5e9;color:#fff}
     .btn-sign2{background:#8b5cf6;color:#fff}
     .sign-ov{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:none;align-items:center;justify-content:center;padding:16px}
-    .sign-box{background:#fff;border-radius:14px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.4);max-width:95vw}
-    .sign-hd{font-size:15px;font-weight:700;color:#111;margin-bottom:12px}
-    .sign-hd span{font-weight:400;color:#9ca3af;font-size:12px}
-    #signCanvas{border:2px dashed #cbd5e1;border-radius:10px;background:#fff;touch-action:none;cursor:crosshair;display:block;max-width:100%}
-    .sign-actions{display:flex;gap:10px;align-items:center;margin-top:12px}
-    .sign-actions button{border:none;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer}
+    .sign-box{background:#fff;border-radius:14px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.4);width:96vw;max-width:1400px;display:flex;flex-direction:column}
+    .sign-hd{font-size:17px;font-weight:700;color:#111;margin-bottom:12px}
+    .sign-hd span{font-weight:400;color:#9ca3af;font-size:13px}
+    #signCanvas{border:2px dashed #cbd5e1;border-radius:10px;background:#fff;touch-action:none;cursor:crosshair;display:block;width:100%;height:auto}
+    .sign-actions{display:flex;gap:10px;align-items:center;margin-top:14px}
+    .sign-actions button{border:none;border-radius:8px;padding:13px 22px;font-size:15px;font-weight:700;cursor:pointer}
     .s-clear{background:#f1f5f9;color:#475569}
     .s-cancel{background:#e5e7eb;color:#374151}
     .s-done{background:#16a34a;color:#fff}
@@ -72,7 +72,7 @@
 <div class="sign-ov" id="signOv">
     <div class="sign-box">
         <div class="sign-hd">✍️ Qo'l qo'ying <span>— sichqoncha yoki barmoq bilan chizing</span></div>
-        <canvas id="signCanvas" width="640" height="260"></canvas>
+        <canvas id="signCanvas" width="1200" height="560"></canvas>
         <div class="sign-actions">
             <button class="s-clear" onclick="clearSign()">🧹 Tozalash</button>
             <span style="flex:1"></span>
@@ -314,8 +314,12 @@ function hideOv(){ document.getElementById('ov').style.display='none'; }
 let signCtx=null, signDrawn=false, signInit=false, savedSig=null;
 function openSignPad(){
     const c=document.getElementById('signCanvas');
+    // Chizish maydonini planshet/telefon ekraniga moslab kattalashtiramiz
+    const w = Math.round(Math.max(320, Math.min(window.innerWidth*0.90, 1600)));
+    const h = Math.round(Math.max(220, Math.min(window.innerHeight*0.62, 800)));
+    c.width = w; c.height = h;
     signCtx=c.getContext('2d');
-    signCtx.lineWidth=2.6; signCtx.lineCap='round'; signCtx.lineJoin='round'; signCtx.strokeStyle='#0a2a6b';
+    signCtx.lineWidth=3; signCtx.lineCap='round'; signCtx.lineJoin='round'; signCtx.strokeStyle='#0a2a6b';
     clearSign();
     document.getElementById('signOv').style.display='flex';
     if(!signInit){ setupSignDraw(c); signInit=true; }

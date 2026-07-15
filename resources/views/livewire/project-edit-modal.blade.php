@@ -45,6 +45,11 @@
             {{-- Shartnoma RU/UZ, Chegirma, Rozilik xati — endi "Ariza" sahifasi ichida --}}
             <a href="{{ route('print.project.ariza', $editInfoId) }}" target="_blank" style="padding:6px 11px;border-radius:7px;border:1px solid #d1d5db;background:#fff;color:#374151;font-size:12px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:4px">🖨 Ariza</a>
 
+            {{-- Imzo chekish — PDF fayl yuklanmagan bo'lsa ham har doim ochiq --}}
+            @if(auth()->user()?->isAdmin())
+            <a href="{{ route('signature.editor', $editInfoId) }}" target="_blank" style="padding:6px 11px;border-radius:7px;border:1px solid #7dd3fc;background:#f0f9ff;color:#0369a1;font-size:12px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:4px">✍️ Imzo chekish</a>
+            @endif
+
             {{-- Qo'lda "Tayyor SMS" tugmasi — VAQTINCHA YASHIRILGAN.
                  Hozir SMS avtomatik ketadi (loyiha "Tugallangan"ga o'tsa).
                  Kerak bo'lsa @if(false) ni qaytadan yoqing. --}}
