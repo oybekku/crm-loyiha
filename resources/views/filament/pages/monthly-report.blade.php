@@ -475,6 +475,13 @@
                                     </td>
                                     <td style="text-align:center;white-space:nowrap;font-size:11px;color:#6b7280">
                                         {{ $it['opened_at'] ? \Carbon\Carbon::parse($it['opened_at'])->format('d.m.Y') : '—' }}
+                                        @php
+                                            $poAt = $it['project_opened_at'] ?? null;
+                                            $diffMonth = $poAt && $it['opened_at'] && \Carbon\Carbon::parse($poAt)->format('Y-m') !== \Carbon\Carbon::parse($it['opened_at'])->format('Y-m');
+                                        @endphp
+                                        @if($diffMonth)
+                                        <div style="color:#c026d3;font-size:9px" title="Loyihaning o'zi bu ishdan oldin ochilgan">🔗 loyiha: {{ \Carbon\Carbon::parse($poAt)->format('d.m.Y') }}</div>
+                                        @endif
                                     </td>
                                     <td style="text-align:center;white-space:nowrap;font-size:11px;color:#6b7280">
                                         {{ $it['completed_at'] ? \Carbon\Carbon::parse($it['completed_at'])->format('d.m.Y') : '—' }}
@@ -866,6 +873,13 @@
                     </td>
                     <td style="padding:8px 10px;text-align:center;font-size:11px;color:#6b7280">
                         {{ $it['opened_at'] ? \Carbon\Carbon::parse($it['opened_at'])->format('d.m.Y') : '—' }}
+                        @php
+                            $poAt = $it['project_opened_at'] ?? null;
+                            $diffMonth = $poAt && $it['opened_at'] && \Carbon\Carbon::parse($poAt)->format('Y-m') !== \Carbon\Carbon::parse($it['opened_at'])->format('Y-m');
+                        @endphp
+                        @if($diffMonth)
+                        <div style="color:#c026d3;font-size:9px" title="Loyihaning o'zi bu ishdan oldin ochilgan">🔗 loyiha: {{ \Carbon\Carbon::parse($poAt)->format('d.m.Y') }}</div>
+                        @endif
                     </td>
                     <td style="padding:8px 10px;text-align:center;font-size:11px;color:#6b7280">
                         {{ $it['completed_at'] ? \Carbon\Carbon::parse($it['completed_at'])->format('d.m.Y') : '—' }}

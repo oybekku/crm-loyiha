@@ -184,17 +184,16 @@ class MonthlyReport extends Page
     {
         [$year, $month] = explode('-', $this->selectedMonth);
 
-        // Komissiya HAR BAJARILGAN (tugatilgan) ish bo'yicha — lekin xizmat AYNAN QAYSI OYDA
-        // OCHILGAN/BIRIKTIRILGAN bo'lsa (ProjectService.created_at), o'sha oy hisobotiga
-        // tushadi — loyiha qachon ochilganidan yoki ish qachon tugatilganidan qat'i nazar.
-        // Masalan: iyunda biriktirilgan ish iyulda tugatilsa, statistikasi IYUN oyiga yoziladi.
-        // Bekor qilingan loyiha hisobga olinmaydi.
+        // Komissiya HAR BAJARILGAN (tugatilgan) ish bo'yicha — LOYIHA qaysi oyda ochilgan
+        // bo'lsa, o'sha oy hisobotiga tushadi (xizmat qachon biriktirilgan/tugatilganidan
+        // qat'i nazar). Shu bilan har oyning loyihalar soni/summasi va hodimlar hisoboti
+        // doim mos keladi — chalkashlik bo'lmaydi. Bekor qilingan loyiha hisobga olinmaydi.
         $completedServices = \App\Models\ProjectService::with(['assignedUser', 'project.payments'])
             ->whereNotNull('completed_at')
             ->whereNotNull('assigned_user_id')
-            ->whereYear('created_at', $year)
-            ->whereMonth('created_at', $month)
-            ->whereHas('project', fn($q) => $q->where('status', '!=', 'bekor_qilingan'))
+            ->whereHas('project', fn($q) =>
+                $q->whereYear('created_at', $year)->whereMonth('created_at', $month)
+                  ->where('status', '!=', 'bekor_qilingan'))
             ->get();
 
         $projectIds = $completedServices->pluck('project_id')->unique();
@@ -281,6 +280,7 @@ class MonthlyReport extends Page
                     'is_late'        => $isLate,
                     'late_days'      => $lateDays,
                     'opened_at'      => $service->created_at,
+                    'project_opened_at' => $project->created_at,
                 ];
 
                 $userStats[$uid]['services_total'] += $price;
@@ -339,15 +339,14 @@ class MonthlyReport extends Page
             $stat['paid_total']   = $paidTotal;
             $stat['net_payable']  = max(0, $stat['commission'] - $stat['advance_total'] - $penalty);
 
-            // Kutayotgan ishlar — shu oyda OCHILGAN/BIRIKTIRILGAN (ish o'zining created_at'i
-            // bo'yicha), hali TUGATILMAGAN xizmatlar (loyiha arxivga o'tgan bo'lsa ham
-            // ko'rsatilmaydi — u holda ish allaqachon yopilgan hisoblanadi).
+            // Kutayotgan ishlar — LOYIHA shu oyda ochilgan bo'lsa, hali TUGATILMAGAN
+            // xizmatlar (loyiha arxivga o'tgan bo'lsa ham ko'rsatilmaydi — u holda ish
+            // allaqachon yopilgan hisoblanadi).
             $pendingServices = \App\Models\ProjectService::where('assigned_user_id', $uid)
                 ->whereNull('completed_at')
-                ->whereYear('created_at', $year)
-                ->whereMonth('created_at', $month)
-                ->whereHas('project', fn($q) => $q->whereNotIn('status', $archiveStatuses))
-                ->with('project:id,number,owner_name,status')
+                ->whereHas('project', fn($q) => $q->whereNotIn('status', $archiveStatuses)
+                    ->whereYear('created_at', $year)->whereMonth('created_at', $month))
+                ->with('project:id,number,owner_name,status,created_at')
                 ->get();
 
             $stat['pending_count'] = $pendingServices->count();
@@ -384,6 +383,7 @@ class MonthlyReport extends Page
                     'deadline_days'  => $s->deadline_days,
                     'work_started'   => $s->work_started_at,
                     'opened_at'      => $s->created_at,
+                    'project_opened_at' => $s->project?->created_at,
                 ];
             })->toArray();
 
@@ -403,6 +403,7 @@ class MonthlyReport extends Page
                 'is_late'        => $s['is_late'],
                 'late_days'      => $s['late_days'],
                 'days_left'      => null,
+                'project_opened_at' => $s['project_opened_at'],
             ]);
             $pending = collect($stat['pending_items'])->map(fn($p) => [
                 'project_number' => $p['project_number'],
@@ -420,6 +421,7 @@ class MonthlyReport extends Page
                 'service_id'     => $p['service_id'],
                 'user_id'        => $p['user_id'],
                 'is_paid'        => $p['is_paid'],
+                'project_opened_at' => $p['project_opened_at'],
             ]);
             $stat['all_items'] = $done->concat($pending)
                 ->sortByDesc(fn($it) => $it['opened_at'])
@@ -456,16 +458,16 @@ class MonthlyReport extends Page
         $toliqCount  = count($toliqIds);
         $qismanCount = count($qismanIds);
 
-        // Tugatilgan ishlar ro'yxati — shu oy OCHILGAN/BIRIKTIRILGAN (created_at) barcha
-        // tugatilgan xizmatlar, bekor qilingandan tashqari. Arxiv = daromadga kirgan,
+        // Tugatilgan ishlar ro'yxati — LOYIHA shu oy ochilgan bo'lsa barcha tugatilgan
+        // xizmatlari, bekor qilingandan tashqari. Arxiv = daromadga kirgan,
         // Jarayonda = faol loyiha.
         $statusLabels = \App\Models\ProjectStatus::pluck('label', 'key')->toArray();
         $tugatilganIshlar = \App\Models\ProjectService::with(['assignedUser', 'project:id,number,owner_name,status'])
             ->whereNotNull('completed_at')
             ->whereNotNull('assigned_user_id')
-            ->whereYear('created_at', $year)
-            ->whereMonth('created_at', $month)
-            ->whereHas('project', fn($q) => $q->where('status', '!=', 'bekor_qilingan'))
+            ->whereHas('project', fn($q) =>
+                $q->whereYear('created_at', $year)->whereMonth('created_at', $month)
+                  ->where('status', '!=', 'bekor_qilingan'))
             ->orderByDesc('completed_at')
             ->get()
             ->map(function ($s) use ($statusLabels) {
@@ -495,13 +497,12 @@ class MonthlyReport extends Page
         $pendingProjectsPct   = $pendingProjectsSum > 0 ? round($pendingProjectsPaid / $pendingProjectsSum * 100) : 0;
         $pendingProjectsCount = (clone $pendingQuery)->count();
 
-        // Taxminiy hodimlar ulushi — shu oyda ochilgan/biriktirilgan (ish o'zining
-        // created_at'i bo'yicha), hali tugatilmagan xizmatlar
+        // Taxminiy hodimlar ulushi — LOYIHA shu oyda ochilgan bo'lsa, hali tugatilmagan
+        // xizmatlar
         $pendingServices = \App\Models\ProjectService::with('assignedUser')
             ->whereNull('completed_at')
-            ->whereYear('created_at', $year)
-            ->whereMonth('created_at', $month)
-            ->whereHas('project', fn($q) => $q->whereNotIn('status', $archiveStatuses))
+            ->whereHas('project', fn($q) => $q->whereNotIn('status', $archiveStatuses)
+                ->whereYear('created_at', $year)->whereMonth('created_at', $month))
             ->whereNotNull('assigned_user_id')
             ->get();
 

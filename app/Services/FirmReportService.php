@@ -16,17 +16,16 @@ class FirmReportService
         [$year, $mon] = array_pad(explode('-', $month), 2, null);
         $archiveStatuses = ['tugallangan', 'taqdim_etilgan', 'bekor_qilingan'];
 
-        // Komissiya HAR BAJARILGAN (tugatilgan) ish bo'yicha — lekin xizmat AYNAN QAYSI OYDA
-        // OCHILGAN/BIRIKTIRILGAN bo'lsa (ProjectService.created_at), o'sha oy hisobotiga
-        // tushadi — loyiha qachon ochilganidan yoki ish qachon tugatilganidan qat'i nazar.
-        // Masalan: iyunda biriktirilgan ish iyulda tugatilsa, statistikasi IYUN oyiga yoziladi.
-        // Bekor qilingan loyiha hisobga olinmaydi.
+        // Komissiya HAR BAJARILGAN (tugatilgan) ish bo'yicha — LOYIHA qaysi oyda ochilgan
+        // bo'lsa, o'sha oy hisobotiga tushadi (xizmat qachon biriktirilgan/tugatilganidan
+        // qat'i nazar). Shu bilan har oyning loyihalar soni/summasi va hodimlar hisoboti
+        // doim mos keladi — chalkashlik bo'lmaydi. Bekor qilingan loyiha hisobga olinmaydi.
         $completed = ProjectService::with('assignedUser')
             ->whereNotNull('completed_at')
             ->whereNotNull('assigned_user_id')
-            ->whereYear('created_at', $year)
-            ->whereMonth('created_at', $mon)
-            ->whereHas('project', fn ($q) => $q->where('status', '!=', 'bekor_qilingan'))
+            ->whereHas('project', fn ($q) =>
+                $q->whereYear('created_at', $year)->whereMonth('created_at', $mon)
+                  ->where('status', '!=', 'bekor_qilingan'))
             ->get();
 
         $jamiTushum     = 0.0;
