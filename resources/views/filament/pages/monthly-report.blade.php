@@ -530,10 +530,11 @@
     @endif
 </div>
 
-{{-- XODIMLARGA BIRIKTIRILGAN ISHLAR — har bir hodim uchun alohida, ochiladigan.
+{{-- XODIMLARGA BIRIKTIRILGAN ISHLAR — vaqtincha yashirilgan.
      Faqat LOYIHA shu oyda ochilgan bo'lsa ko'rinadi (ish qachon biriktirilgan/
      tugatilganidan qat'i nazar) — masalan iyunda ochilgan loyihaga iyulda
      biriktirilgan ish, shu jadvalda IYUN oyi hisobotida turadi. --}}
+@if(false)
 <div class="mr-card">
     <div style="font-size:15px;font-weight:700;color:#111827;margin-bottom:4px;display:flex;align-items:center;gap:8px">
         <svg width="16" height="16" fill="none" stroke="#7c3aed" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -633,6 +634,7 @@
     </table>
     @endif
 </div>
+@endif
 
 {{-- FIRMA HISOBOTI --}}
 <div class="mr-card">
