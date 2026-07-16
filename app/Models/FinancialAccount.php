@@ -20,15 +20,26 @@ class FinancialAccount extends Model
         return $this->hasMany(Payment::class, 'account_id');
     }
 
-    /** Balans — shu hisobga biriktirilgan barcha to'lovlar yig'indisi.
-     *  withSum('payments','amount') orqali oldindan yuklangan bo'lsa o'shani
-     *  ishlatadi (tez), aks holda to'g'ridan-to'g'ri so'rov yuboradi. */
+    public function expenses()
+    {
+        return $this->hasMany(Expense::class, 'account_id');
+    }
+
+    /** Balans — kirim (to'lovlar) minus chiqim (xarajatlar).
+     *  withSum('payments','amount') / withSum('expenses','amount') orqali
+     *  oldindan yuklangan bo'lsa o'shani ishlatadi (tez), aks holda
+     *  to'g'ridan-to'g'ri so'rov yuboradi. */
     public function getBalanceAttribute(): float
     {
-        if (array_key_exists('payments_sum_amount', $this->attributes)) {
-            return (float) $this->attributes['payments_sum_amount'];
-        }
-        return (float) $this->payments()->sum('amount');
+        $income = array_key_exists('payments_sum_amount', $this->attributes)
+            ? (float) $this->attributes['payments_sum_amount']
+            : (float) $this->payments()->sum('amount');
+
+        $spent = array_key_exists('expenses_sum_amount', $this->attributes)
+            ? (float) $this->attributes['expenses_sum_amount']
+            : (float) $this->expenses()->sum('amount');
+
+        return $income - $spent;
     }
 
     public static function typeOptions(): array

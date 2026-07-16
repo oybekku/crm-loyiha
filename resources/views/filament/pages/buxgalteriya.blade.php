@@ -83,6 +83,26 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
 .bx-month-btn{background:#1a1a1d;border:none;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:15px;color:#94a3b8;line-height:1}
 .bx-month-btn:hover{background:#232326;color:#e2e8f0}
 .bx-month-lbl{font-size:13px;font-weight:700;color:#60a5fa;min-width:112px;text-align:center;white-space:nowrap}
+
+/* Xarajatlar (rasxodlar) bo'limi */
+.exp-panel{margin-top:22px;background:#161b22;border:1.5px solid #2a2a2e;border-radius:14px;overflow:hidden}
+.exp-head{display:flex;align-items:center;gap:10px;padding:16px 18px;cursor:pointer;user-select:none}
+.exp-head-title{font-size:14px;font-weight:800;color:#f1f5f9;display:flex;align-items:center;gap:8px}
+.exp-head-total{font-size:15px;font-weight:800;color:#f87171;margin-left:auto}
+.exp-head-chev{color:#64748b;transition:transform .2s;flex-shrink:0}
+.exp-head-add{background:#7f1d1d;color:#fca5a5;border:none;border-radius:8px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;flex-shrink:0}
+.exp-head-add:hover{background:#991b1b;color:#fecaca}
+.exp-list{border-top:1px solid #2a2a2e}
+.exp-row{display:flex;align-items:center;gap:12px;padding:11px 18px;border-bottom:1px solid #1f242c}
+.exp-row:last-child{border-bottom:none}
+.exp-row:hover{background:#1a1f28}
+.exp-date{font-size:11px;color:#64748b;font-family:monospace;flex-shrink:0;width:66px}
+.exp-acc-badge{font-size:10px;font-weight:700;color:#93c5fd;background:#12224a;border-radius:5px;padding:3px 8px;white-space:nowrap;flex-shrink:0}
+.exp-comment{font-size:12.5px;color:#cbd5e1;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.exp-amount{font-size:13.5px;font-weight:800;color:#f87171;flex-shrink:0;white-space:nowrap}
+.exp-row-actions{display:flex;gap:4px;flex-shrink:0;opacity:0;transition:opacity .15s}
+.exp-row:hover .exp-row-actions{opacity:1}
+.exp-empty{padding:26px;text-align:center;color:#64748b;font-size:12.5px}
 </style>
 
 <div class="bx-wrap">
@@ -160,6 +180,35 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
         @endforelse
     </div>
 
+    {{-- ── Xarajatlar (rasxodlar) — svernut qilinadigan ro'yxat ── --}}
+    <div class="exp-panel" x-data="{ open: true }">
+        <div class="exp-head" @click="open = !open">
+            <span class="exp-head-title">🧾 Xarajatlar <span style="font-size:11px;color:#64748b;font-weight:600">({{ $bxMonthLabel }})</span></span>
+            <span class="exp-head-total">− {{ number_format($totalSpent, 0, '.', ' ') }} so'm</span>
+            <button class="exp-head-add" @click.stop="open = true" wire:click.stop="openExpenseModal">
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                Xarajat qo'shish
+            </button>
+            <svg class="exp-head-chev" :style="open ? 'transform:rotate(180deg)' : ''" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="exp-list" x-show="open" x-collapse>
+            @forelse($expenses as $exp)
+            <div class="exp-row">
+                <span class="exp-date">{{ $exp->expense_date->format('d.m.Y') }}</span>
+                <span class="exp-acc-badge">{{ $exp->account ? ($exp->account->name ?: $typeOptions[$exp->account->type]) : '—' }}</span>
+                <span class="exp-comment">{{ $exp->comment ?: '—' }}</span>
+                <span class="exp-amount">− {{ number_format($exp->amount, 0, '.', ' ') }} so'm</span>
+                <div class="exp-row-actions">
+                    <button class="acc-act-btn" wire:click="openExpenseModal({{ $exp->id }})" title="Tahrirlash">✎</button>
+                    <button class="acc-act-btn" wire:click="deleteExpense({{ $exp->id }})" wire:confirm="Ushbu xarajatni o'chirasizmi?" title="O'chirish">✕</button>
+                </div>
+            </div>
+            @empty
+            <div class="exp-empty">Bu oyda hali xarajat kiritilmagan</div>
+            @endforelse
+        </div>
+    </div>
+
     {{-- ── Hisob qo'shish/tahrirlash oynasi ── --}}
     @if($showAccountModal)
     <div class="bx-modal-ov" wire:click.self="closeAccountModal">
@@ -214,6 +263,52 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
             <div style="display:flex;gap:10px">
                 <button wire:click="closeAccountModal" style="flex:1;padding:11px;border-radius:9px;border:1px solid #2a2a2e;background:#0d1117;color:#94a3b8;font-weight:700;font-size:13px;cursor:pointer">Bekor</button>
                 <button wire:click="saveAccount" style="flex:1;padding:11px;border-radius:9px;border:none;background:#16a34a;color:#fff;font-weight:700;font-size:13px;cursor:pointer">Saqlash</button>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    {{-- ── Xarajat qo'shish/tahrirlash oynasi ── --}}
+    @if($showExpenseModal)
+    <div class="bx-modal-ov" wire:click.self="closeExpenseModal">
+        <div class="bx-modal">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+                <div style="font-size:16px;font-weight:800">{{ $editExpenseId ? 'Xarajatni tahrirlash' : 'Xarajat qo\'shish' }}</div>
+                <button wire:click="closeExpenseModal" style="background:none;border:none;font-size:20px;cursor:pointer;color:#64748b;line-height:1">×</button>
+            </div>
+
+            <div class="bx-field">
+                <label>Qaysi hisobdan?</label>
+                <select wire:model="expAccountId">
+                    <option value="">— tanlang —</option>
+                    @foreach($allAccounts as $a)
+                    <option value="{{ $a->id }}">{{ $a->name ?: $typeOptions[$a->type] }}</option>
+                    @endforeach
+                </select>
+                @error('expAccountId')<span style="font-size:11px;color:#f87171">{{ $message }}</span>@enderror
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <div class="bx-field">
+                    <label>Summa (so'm)</label>
+                    <input type="number" wire:model="expAmount" placeholder="200000">
+                    @error('expAmount')<span style="font-size:11px;color:#f87171">{{ $message }}</span>@enderror
+                </div>
+                <div class="bx-field">
+                    <label>Sana</label>
+                    <input type="date" wire:model="expDate">
+                    @error('expDate')<span style="font-size:11px;color:#f87171">{{ $message }}</span>@enderror
+                </div>
+            </div>
+
+            <div class="bx-field">
+                <label>Izoh</label>
+                <input type="text" wire:model="expComment" placeholder="Masalan: Ofis ijarasi, xodim ulushi...">
+            </div>
+
+            <div style="display:flex;gap:10px;margin-top:4px">
+                <button wire:click="closeExpenseModal" style="flex:1;padding:11px;border-radius:9px;border:1px solid #2a2a2e;background:#0d1117;color:#94a3b8;font-weight:700;font-size:13px;cursor:pointer">Bekor</button>
+                <button wire:click="saveExpense" style="flex:1;padding:11px;border-radius:9px;border:none;background:#dc2626;color:#fff;font-weight:700;font-size:13px;cursor:pointer">Saqlash</button>
             </div>
         </div>
     </div>

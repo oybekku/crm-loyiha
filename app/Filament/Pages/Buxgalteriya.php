@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\Expense;
 use App\Models\FinancialAccount;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -33,6 +34,14 @@ class Buxgalteriya extends Page
     // ── Oy/yil filtri (har bir hisobning shu oydagi to'lovlar yig'indisi) ──
     public ?int $bxYear  = null;
     public ?int $bxMonth = null;
+
+    // ── Xarajat qo'shish/tahrirlash oynasi ──
+    public bool   $showExpenseModal = false;
+    public ?int   $editExpenseId    = null;
+    public ?int   $expAccountId     = null;
+    public string $expAmount        = '';
+    public string $expComment       = '';
+    public string $expDate          = '';
 
     public static function canAccess(): bool
     {
@@ -132,6 +141,76 @@ class Buxgalteriya extends Page
         if ($acc) $acc->update(['is_favorite' => !$acc->is_favorite]);
     }
 
+    // ── Xarajatlar (rasxodlar) ──────────────────────────────────────────────
+    public function openExpenseModal(?int $id = null): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+
+        $this->editExpenseId = $id;
+
+        if ($id) {
+            $exp = Expense::find($id);
+            if (!$exp) return;
+            $this->expAccountId = $exp->account_id;
+            $this->expAmount    = (string) $exp->amount;
+            $this->expComment   = (string) $exp->comment;
+            $this->expDate      = $exp->expense_date->format('Y-m-d');
+        } else {
+            $this->expAccountId = null;
+            $this->expAmount    = '';
+            $this->expComment   = '';
+            $isCurrentMonth     = $this->bxYear === (int) now()->year && $this->bxMonth === (int) now()->month;
+            $this->expDate      = $isCurrentMonth
+                ? now()->format('Y-m-d')
+                : \Carbon\Carbon::create($this->bxYear, $this->bxMonth, 1)->format('Y-m-d');
+        }
+
+        $this->showExpenseModal = true;
+    }
+
+    public function closeExpenseModal(): void
+    {
+        $this->showExpenseModal = false;
+        $this->editExpenseId    = null;
+    }
+
+    public function saveExpense(): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+
+        $this->validate([
+            'expAccountId' => 'required|exists:financial_accounts,id',
+            'expAmount'    => 'required|numeric|min:0.01',
+            'expDate'      => 'required|date',
+        ]);
+
+        $data = [
+            'account_id'   => $this->expAccountId,
+            'amount'       => (float) $this->expAmount,
+            'comment'      => trim($this->expComment) ?: null,
+            'expense_date' => $this->expDate,
+        ];
+
+        if ($this->editExpenseId) {
+            Expense::whereKey($this->editExpenseId)->update($data);
+            Notification::make()->title('Xarajat yangilandi')->success()->send();
+        } else {
+            $data['created_by'] = auth()->id();
+            Expense::create($data);
+            Notification::make()->title('Xarajat qo\'shildi')->success()->send();
+        }
+
+        $this->closeExpenseModal();
+    }
+
+    public function deleteExpense(int $id): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+
+        Expense::whereKey($id)->delete();
+        Notification::make()->title('Xarajat o\'chirildi')->warning()->send();
+    }
+
     public function getViewData(): array
     {
         $year  = $this->bxYear;
@@ -140,10 +219,14 @@ class Buxgalteriya extends Page
         // Dashboarddagi "loyiha ochilgan oyi" mantig'i bilan bir xil bo'lishi uchun —
         // to'lov sanasi emas, balki shu to'lov tegishli LOYIHANING ochilgan (created_at)
         // oyi bo'yicha filtrlanadi. Shu bilan ikkala sahifadagi summalar mos keladi.
+        // Xarajatlar esa loyihaga bog'liq emas — o'zining sanasi (expense_date) bo'yicha.
         $accounts = FinancialAccount::withSum(['payments as payments_sum_amount' => function ($q) use ($year, $month) {
                 $q->whereHas('project', function ($pq) use ($year, $month) {
                     $pq->whereYear('created_at', $year)->whereMonth('created_at', $month);
                 });
+            }], 'amount')
+            ->withSum(['expenses as expenses_sum_amount' => function ($q) use ($year, $month) {
+                $q->whereYear('expense_date', $year)->whereMonth('expense_date', $month);
             }], 'amount')
             ->orderByDesc('is_favorite')
             ->orderBy('sort_order')
@@ -156,14 +239,26 @@ class Buxgalteriya extends Page
             'bank'  => $accounts->where('type', 'bank')->values(),
         ];
 
-        $totalBalance = (float) $accounts->sum('payments_sum_amount');
+        $totalIncome  = (float) $accounts->sum('payments_sum_amount');
+        $totalSpent   = (float) $accounts->sum('expenses_sum_amount');
+        $totalBalance = $totalIncome - $totalSpent;
         $bxMonthLabel = \Carbon\Carbon::create($year, $month, 1)->translatedFormat('F Y');
+
+        $expenses = Expense::with('account')
+            ->whereYear('expense_date', $year)
+            ->whereMonth('expense_date', $month)
+            ->orderByDesc('expense_date')
+            ->orderByDesc('id')
+            ->get();
 
         return [
             'byType'       => $byType,
             'totalBalance' => $totalBalance,
+            'totalSpent'   => $totalSpent,
             'typeOptions'  => FinancialAccount::typeOptions(),
             'bxMonthLabel' => $bxMonthLabel,
+            'expenses'     => $expenses,
+            'allAccounts'  => FinancialAccount::orderBy('name')->get(),
         ];
     }
 }
