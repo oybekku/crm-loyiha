@@ -338,10 +338,14 @@ class MonthlyReport extends Page
             $stat['paid_total']   = $paidTotal;
             $stat['net_payable']  = max(0, $stat['commission'] - $stat['advance_total'] - $penalty);
 
-            // Kutayotgan ishlar (shu oyda ochilgan, tugatilmagan / to'lanmagan)
+            // Kutayotgan ishlar — shu oyda OCHILGAN/BIRIKTIRILGAN (ish o'zining created_at'i
+            // bo'yicha), hali TUGATILMAGAN xizmatlar (loyiha arxivga o'tgan bo'lsa ham
+            // ko'rsatilmaydi — u holda ish allaqachon yopilgan hisoblanadi).
             $pendingServices = \App\Models\ProjectService::where('assigned_user_id', $uid)
-                ->whereHas('project', fn($q) => $q->whereNotIn('status', $archiveStatuses)
-                    ->whereYear('created_at', $year)->whereMonth('created_at', $month))
+                ->whereNull('completed_at')
+                ->whereYear('created_at', $year)
+                ->whereMonth('created_at', $month)
+                ->whereHas('project', fn($q) => $q->whereNotIn('status', $archiveStatuses))
                 ->with('project:id,number,owner_name,status')
                 ->get();
 
@@ -450,10 +454,13 @@ class MonthlyReport extends Page
         $pendingProjectsPct   = $pendingProjectsSum > 0 ? round($pendingProjectsPaid / $pendingProjectsSum * 100) : 0;
         $pendingProjectsCount = (clone $pendingQuery)->count();
 
-        // Taxminiy hodimlar ulushi (shu oyda ochilgan faol loyihalar bo'yicha)
+        // Taxminiy hodimlar ulushi — shu oyda ochilgan/biriktirilgan (ish o'zining
+        // created_at'i bo'yicha), hali tugatilmagan xizmatlar
         $pendingServices = \App\Models\ProjectService::with('assignedUser')
-            ->whereHas('project', fn($q) => $q->whereNotIn('status', $archiveStatuses)
-                ->whereYear('created_at', $year)->whereMonth('created_at', $month))
+            ->whereNull('completed_at')
+            ->whereYear('created_at', $year)
+            ->whereMonth('created_at', $month)
+            ->whereHas('project', fn($q) => $q->whereNotIn('status', $archiveStatuses))
             ->whereNotNull('assigned_user_id')
             ->get();
 
