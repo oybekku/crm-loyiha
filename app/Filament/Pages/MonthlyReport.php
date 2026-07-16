@@ -436,11 +436,20 @@ class MonthlyReport extends Page
         $assignedByEmployee = collect($userStats)
             ->map(function ($stat) {
                 $items = collect($stat['all_items'])->sortByDesc('opened_at')->values();
+                // Chinakam dublikat — bir xil loyihada bir xil XIZMAT TURI bir necha
+                // marta yozilgan bo'lsa (masalan "toposyomka" ikki marta). Bitta
+                // loyihada ikki XIL xizmat (masalan toposyomka + eskiz_loyiha) borligi
+                // — bu tabiiy holat, xato emas.
+                $dupCount = $items
+                    ->groupBy(fn ($it) => $it['project_number'] . '|' . $it['service_label'])
+                    ->filter(fn ($g) => $g->count() > 1)
+                    ->count();
                 return [
                     'user'            => $stat['user'],
                     'items'           => $items->toArray(),
                     'count'           => $items->count(),
                     'unique_projects' => $items->pluck('project_number')->unique()->count(),
+                    'duplicate_count' => $dupCount,
                     'total_price'     => $items->sum('price'),
                     'total_share'     => $items->sum('share'),
                 ];
