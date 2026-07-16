@@ -287,7 +287,7 @@
                 <th style="width:28px"></th>
                 <th>#</th>
                 <th>Hodim</th>
-                <th style="text-align:center">Loyihalar</th>
+                <th style="text-align:center" title="Bu oyda kamida bitta xizmati tugallangan loyihalar soni">Tugallangan</th>
                 <th style="text-align:center">O'z vaqtida</th>
                 <th style="text-align:center">Kechikkan</th>
                 <th style="text-align:right">Xizmatlar jami</th>
@@ -408,7 +408,7 @@
                         <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap">
                             <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:8px 14px;min-width:130px;text-align:center">
                                 <div style="font-size:18px;font-weight:800;color:#374151">{{ count($stat['services']) }}</div>
-                                <div style="font-size:10px;color:#9ca3af;margin-top:2px">Jami xizmatlar</div>
+                                <div style="font-size:10px;color:#9ca3af;margin-top:2px" title="Kutayotgan (hali tugallanmagan) ishlar bu songa kirmaydi">Tugallangan xizmatlar</div>
                             </div>
                             @if($ontime > 0)
                             <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 14px;min-width:130px;text-align:center">
@@ -816,7 +816,7 @@
         @endphp
         <div style="background:#fff;padding:16px;text-align:center">
             <div style="font-size:26px;font-weight:800;color:#374151">{{ $ds['project_count'] }}</div>
-            <div style="font-size:11px;color:#6b7280;margin-top:2px">Loyihalar</div>
+            <div style="font-size:11px;color:#6b7280;margin-top:2px" title="Bu oyda kamida bitta xizmati tugallangan loyihalar soni">Tugallangan loyihalar</div>
         </div>
         <div style="background:#fff;padding:16px;text-align:center">
             <div style="font-size:26px;font-weight:800;color:#16a34a">{{ $dOntime }}</div>
