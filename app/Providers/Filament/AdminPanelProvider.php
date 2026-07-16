@@ -60,6 +60,24 @@ class AdminPanelProvider extends PanelProvider
                 'panels::head.end',
                 fn () => '<meta name="google" content="notranslate"><meta name="yandex" content="notranslate">',
             )
+            // Filament v3.3.0'ning tayyor CSS to'plamida "theme-switcher" (kunduzgi/
+            // tungi rejim) tugmasining hover/rang stillari yo'q ekan (paket ichidagi
+            // nomuvofiqlik) — shu sababli sichqoncha ustiga kelganda tugma oq/bo'sh
+            // bo'lib qolardi. Shu yerda qo'lda tiklaymiz.
+            ->renderHook(
+                'panels::head.end',
+                fn () => '<style>
+                    .fi-theme-switcher-btn{background:transparent}
+                    .fi-theme-switcher-btn svg{color:#9ca3af}
+                    .fi-theme-switcher-btn:hover,.fi-theme-switcher-btn:focus-visible{background-color:#f9fafb}
+                    .fi-theme-switcher-btn:hover svg,.fi-theme-switcher-btn:focus-visible svg{color:#6b7280}
+                    .fi-theme-switcher-btn.fi-active{background-color:#f9fafb}
+                    .dark .fi-theme-switcher-btn svg{color:#6b7280}
+                    .dark .fi-theme-switcher-btn:hover,.dark .fi-theme-switcher-btn:focus-visible{background-color:rgba(255,255,255,.05)}
+                    .dark .fi-theme-switcher-btn:hover svg,.dark .fi-theme-switcher-btn:focus-visible svg{color:#9ca3af}
+                    .dark .fi-theme-switcher-btn.fi-active{background-color:rgba(255,255,255,.05)}
+                </style>',
+            )
             ->renderHook(
                 'panels::head.end',
                 function () {
