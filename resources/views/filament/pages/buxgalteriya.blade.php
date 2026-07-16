@@ -12,7 +12,7 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
 .bx-back{display:inline-flex;align-items:center;gap:6px;color:#94a3b8;font-size:13px;text-decoration:none;margin-bottom:18px}
 .bx-back:hover{color:#e2e8f0}
 .bx-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:22px}
-.bx-title{font-size:20px;font-weight:800;color:#f1f5f9}
+.bx-title{font-size:20px;font-weight:800;color:#f1f5f9 !important}
 .bx-add{background:#2563eb;color:#fff;border:none;border-radius:10px;padding:11px 20px;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
 .bx-add:hover{background:#1d4ed8}
 
@@ -181,7 +181,7 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
     </div>
 
     {{-- ── Xarajatlar (rasxodlar) — svernut qilinadigan ro'yxat ── --}}
-    <div class="exp-panel" x-data="{ open: true }">
+    <div class="exp-panel" x-data="{ open: false }">
         <div class="exp-head" @click="open = !open">
             <span class="exp-head-title">🧾 Xarajatlar <span style="font-size:11px;color:#64748b;font-weight:600">({{ $bxMonthLabel }})</span></span>
             <span class="exp-head-total">− {{ number_format($totalSpent, 0, '.', ' ') }} so'm</span>
