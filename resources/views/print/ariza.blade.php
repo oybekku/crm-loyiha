@@ -342,9 +342,14 @@
             ushbu bildirishnoma bilan shuni ma'lum qilamanki, Vazirlar Mahkamasining 2026 yil 13 apreldagi
             167-son qarori bilan tasdiqlangan "Yakka tartibdagi uy-joylar hamda kichik hajmdagi noturar bino va
             inshootlarni qurish hamda rekonstruksiya qilish ishlari yuzasidan xususiy qurilish nazoratini amalga
-            oshirish tartibi to'g'risidagi nizom"ga muvofiq mazkur obyektning loyiha hujjatlarini ishlab
-            chiqilishi bilan cheklanaman va buyurtmachi (mulkdor) sifatida loyiha tashkiloti tomonidan xususiy
-            qurilish nazoratini amalga oshirish zarurati mavjud emasligini ma'lum qilaman.
+            oshirish tartibi to'g'risidagi nizom"ning 1-bob 5-bandiga (Xususiy qurilish nazorati buyurtmachining
+            (mulkdor) ixtiyori bilan amalga oshiriladi. Mazkur holatlarda buyurtmachi (mulkdor) xususiy qurilish
+            nazoratini amalga oshirish zarurati mavjud emasligi to'g'risida obyektning loyiha hujjatlarini ishlab
+            chiqqan loyiha tashkilotiga u bilan obyektning loyiha hujjatlarini ishlab chiqish bo'yicha
+            shartnomani tuzish jarayonida yozma ravishda bildirishnomani taqdim etadi) muvofiq mazkur
+            obyektning loyiha hujjatlarini ishlab chiqilishi bilan cheklanaman va buyurtmachi (mulkdor) sifatida
+            loyiha tashkiloti tomonidan xususiy qurilish nazoratini amalga oshirish zarurati mavjud emasligini
+            ma'lum qilaman.
         </p>
         <p style="margin-top:10px;line-height:1.7;color:#444;">
             Yuqoridagi bildirishnomani o'qib chiqdim, unga nisbatan e'tiroz va qo'shimchalarim yo'q.
@@ -472,9 +477,14 @@
             ushbu bildirishnoma bilan shuni ma'lum qilamanki, Vazirlar Mahkamasining 2026 yil 13 apreldagi
             167-son qarori bilan tasdiqlangan "Yakka tartibdagi uy-joylar hamda kichik hajmdagi noturar bino va
             inshootlarni qurish hamda rekonstruksiya qilish ishlari yuzasidan xususiy qurilish nazoratini amalga
-            oshirish tartibi to'g'risidagi nizom"ga muvofiq mazkur obyektning loyiha hujjatlarini ishlab
-            chiqilishi bilan cheklanaman va buyurtmachi (mulkdor) sifatida loyiha tashkiloti tomonidan xususiy
-            qurilish nazoratini amalga oshirish zarurati mavjud emasligini ma'lum qilaman.
+            oshirish tartibi to'g'risidagi nizom"ning 1-bob 5-bandiga (Xususiy qurilish nazorati buyurtmachining
+            (mulkdor) ixtiyori bilan amalga oshiriladi. Mazkur holatlarda buyurtmachi (mulkdor) xususiy qurilish
+            nazoratini amalga oshirish zarurati mavjud emasligi to'g'risida obyektning loyiha hujjatlarini ishlab
+            chiqqan loyiha tashkilotiga u bilan obyektning loyiha hujjatlarini ishlab chiqish bo'yicha
+            shartnomani tuzish jarayonida yozma ravishda bildirishnomani taqdim etadi) muvofiq mazkur
+            obyektning loyiha hujjatlarini ishlab chiqilishi bilan cheklanaman va buyurtmachi (mulkdor) sifatida
+            loyiha tashkiloti tomonidan xususiy qurilish nazoratini amalga oshirish zarurati mavjud emasligini
+            ma'lum qilaman.
         </p>
         <p style="margin-top:10px;line-height:1.7;color:#444;">
             Yuqoridagi bildirishnomani o'qib chiqdim, unga nisbatan e'tiroz va qo'shimchalarim yo'q.
