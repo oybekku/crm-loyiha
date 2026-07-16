@@ -398,7 +398,7 @@
         <p style="font-weight:700;margin-bottom:8px;font-size:13px;">Bildirishnoma</p>
         <p style="line-height:1.75;text-align:justify;">
             Men {{ $project->created_at->format('d.m.Y') }} yildagi
-            <strong>{{ $project->number }}</strong> sonli obyektning loyiha hujjatlarini ishlab chiqish haqidagi
+            <strong>№{{ $project->seq_no }}</strong> sonli obyektning loyiha hujjatlarini ishlab chiqish haqidagi
             shartnomaga ko'ra buyurtmachi (mulkdor)
             <strong>{{ $project->owner_name }}</strong>
             ushbu bildirishnoma bilan shuni ma'lum qilamanki, Vazirlar Mahkamasining 2026 yil 13 apreldagi
@@ -424,7 +424,7 @@
         <h3>Приложение к договору № {{ $project->number }}</h3>
         <p style="font-weight:700;margin-bottom:8px;font-size:12px;">Уведомление</p>
         <p style="line-height:1.75;text-align:justify;">
-            Я, являясь Заказчиком (собственником) по договору № <strong>{{ $project->number }}</strong>
+            Я, являясь Заказчиком (собственником) по договору № <strong>{{ $project->seq_no }}</strong>
             от {{ $project->created_at->format('d.m.Y') }} года на разработку проектной документации объекта
             <strong>{{ $project->owner_name }}</strong>,
             настоящим уведомлением сообщаю, что в соответствии с «Положением о порядке осуществления частного
@@ -477,7 +477,7 @@
         <hr class="bild-title-line">
         <p style="line-height:1.75;text-align:justify;">
             Men {{ $project->created_at->format('d.m.Y') }} yildagi
-            <strong>{{ $project->number }}</strong> sonli obyektning loyiha hujjatlarini ishlab chiqish haqidagi
+            <strong>№{{ $project->seq_no }}</strong> sonli obyektning loyiha hujjatlarini ishlab chiqish haqidagi
             shartnomaga ko'ra buyurtmachi (mulkdor) <strong>{{ $project->owner_name }}</strong>
             ushbu bildirishnoma bilan shuni ma'lum qilamanki, Vazirlar Mahkamasining 2026 yil 13 apreldagi
             167-son qarori bilan tasdiqlangan "Yakka tartibdagi uy-joylar hamda kichik hajmdagi noturar bino va
@@ -500,7 +500,7 @@
         <div class="bild-title">УВЕДОМЛЕНИЕ</div>
         <hr class="bild-title-line">
         <p style="line-height:1.75;text-align:justify;">
-            Я, являясь Заказчиком (собственником) по договору № <strong>{{ $project->number }}</strong>
+            Я, являясь Заказчиком (собственником) по договору № <strong>{{ $project->seq_no }}</strong>
             от {{ $project->created_at->format('d.m.Y') }} года на разработку проектной документации объекта
             <strong>{{ $project->owner_name }}</strong>, настоящим уведомлением сообщаю, что в соответствии с
             «Положением о порядке осуществления частного строительного контроля», утвержденным Постановлением
