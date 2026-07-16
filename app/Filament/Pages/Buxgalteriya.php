@@ -30,9 +30,26 @@ class Buxgalteriya extends Page
     public string $formAccountNumber = '';
     public bool   $formIsFavorite   = false;
 
+    // ── Oy/yil filtri (har bir hisobning shu oydagi to'lovlar yig'indisi) ──
+    public ?int $bxYear  = null;
+    public ?int $bxMonth = null;
+
     public static function canAccess(): bool
     {
         return (bool) auth()->user()?->isAdmin();
+    }
+
+    public function mount(): void
+    {
+        $this->bxYear  ??= (int) now()->year;
+        $this->bxMonth ??= (int) now()->month;
+    }
+
+    public function bxChangeMonth(int $delta): void
+    {
+        $date = \Carbon\Carbon::create($this->bxYear, $this->bxMonth, 1)->addMonths($delta);
+        $this->bxYear  = (int) $date->year;
+        $this->bxMonth = (int) $date->month;
     }
 
     public function openAccountModal(?int $id = null): void
@@ -117,7 +134,12 @@ class Buxgalteriya extends Page
 
     public function getViewData(): array
     {
-        $accounts = FinancialAccount::withSum('payments', 'amount')
+        $year  = $this->bxYear;
+        $month = $this->bxMonth;
+
+        $accounts = FinancialAccount::withSum(['payments as payments_sum_amount' => function ($q) use ($year, $month) {
+                $q->whereYear('payment_date', $year)->whereMonth('payment_date', $month);
+            }], 'amount')
             ->orderByDesc('is_favorite')
             ->orderBy('sort_order')
             ->orderBy('name')
@@ -130,11 +152,13 @@ class Buxgalteriya extends Page
         ];
 
         $totalBalance = (float) $accounts->sum('payments_sum_amount');
+        $bxMonthLabel = \Carbon\Carbon::create($year, $month, 1)->translatedFormat('F Y');
 
         return [
             'byType'       => $byType,
             'totalBalance' => $totalBalance,
             'typeOptions'  => FinancialAccount::typeOptions(),
+            'bxMonthLabel' => $bxMonthLabel,
         ];
     }
 }

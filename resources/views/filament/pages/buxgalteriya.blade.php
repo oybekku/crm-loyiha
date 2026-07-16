@@ -78,6 +78,11 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
 .bx-type-tabs{display:flex;gap:6px;margin-bottom:16px}
 .bx-type-tab{flex:1;padding:9px;border-radius:9px;border:1.5px solid #2a2a2e;background:#0d1117;color:#94a3b8;font-size:12px;font-weight:700;cursor:pointer;text-align:center}
 .bx-type-tab.active{border-color:#2563eb;background:#12224a;color:#93c5fd}
+
+.bx-month{display:flex;align-items:center;gap:4px;background:#161b22;border:1.5px solid #2a2a2e;border-radius:9px;padding:3px 5px}
+.bx-month-btn{background:#1a1a1d;border:none;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:15px;color:#94a3b8;line-height:1}
+.bx-month-btn:hover{background:#232326;color:#e2e8f0}
+.bx-month-lbl{font-size:13px;font-weight:700;color:#60a5fa;min-width:112px;text-align:center;white-space:nowrap}
 </style>
 
 <div class="bx-wrap">
@@ -85,10 +90,17 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
 
     <div class="bx-top">
         <div class="bx-title">💳 Buxgalteriya</div>
-        <button class="bx-add" wire:click="openAccountModal">
-            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-            Yangi hisob qo'shish
-        </button>
+        <div style="display:flex;align-items:center;gap:10px">
+            <div class="bx-month">
+                <button class="bx-month-btn" wire:click="bxChangeMonth(-1)" title="Oldingi oy">‹</button>
+                <span class="bx-month-lbl">📅 {{ $bxMonthLabel }}</span>
+                <button class="bx-month-btn" wire:click="bxChangeMonth(1)" title="Keyingi oy">›</button>
+            </div>
+            <button class="bx-add" wire:click="openAccountModal">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                Yangi hisob qo'shish
+            </button>
+        </div>
     </div>
 
     <div class="bx-grid">
@@ -98,7 +110,7 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
                 <span class="acc-icon">💰</span>
             </div>
             <div>
-                <div class="acc-name">Jami balans</div>
+                <div class="acc-name">Jami balans ({{ $bxMonthLabel }})</div>
                 <div class="acc-balance" style="font-size:24px;margin-top:10px">{{ number_format($totalBalance, 0, '.', ' ') }} <span style="font-size:13px;opacity:.7">so'm</span></div>
             </div>
         </div>
