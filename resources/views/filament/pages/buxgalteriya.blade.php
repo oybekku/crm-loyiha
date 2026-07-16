@@ -21,7 +21,7 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
 @media (max-width:600px){.bx-grid{grid-template-columns:1fr}}
 
 .acc-card{
-    background:linear-gradient(135deg,#0d0d0f,#1a1a1d 55%,#232326);
+    background:linear-gradient(135deg,#0d0d0f,#1a1a1d 55%,#232326) !important;
     border:2px solid #2a2a2e;
     border-radius:16px;
     padding:20px;
@@ -34,7 +34,13 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
     display:flex;
     flex-direction:column;
     justify-content:space-between;
+    color:#e2e8f0 !important;
 }
+/* Filament'ning dark-mode/light-mode standart matn ranglari bu kartalar
+   ichidagi matnni "yutib" yuborayotgan edi (fon qora, matn ham qorong'i
+   chiqib, deyarli ko'rinmas bo'lib qolgan edi) — shu sababli har bir
+   matn elementiga aniq rang !important bilan mahkamlanadi. */
+.acc-card *{color:inherit}
 .acc-card::before{
     content:'';
     position:absolute; right:-30px; top:-30px; width:140px; height:140px;
@@ -42,25 +48,26 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
 }
 .acc-card:hover{transform:translateY(-3px);box-shadow:0 0 16px rgba(56,189,248,.35),0 14px 30px rgba(0,0,0,.4)}
 .acc-card.is-fav{border-color:#3b82f6;box-shadow:0 0 0 1px #3b82f6,0 0 18px rgba(59,130,246,.45)}
-.acc-card.is-total{background:linear-gradient(135deg,#052e1a,#0a3d24 55%,#0f4a2c);border-color:#166534;cursor:default}
+.acc-card.is-total{background:linear-gradient(135deg,#052e1a,#0a3d24 55%,#0f4a2c) !important;border-color:#166534;cursor:default}
+.acc-card.is-total .acc-name{color:#bbf7d0 !important}
 
-.acc-star{position:absolute;top:14px;right:14px;font-size:15px;color:#475569;transition:color .2s,transform .2s;z-index:2}
-.acc-star.on{color:#3b82f6;transform:scale(1.15)}
+.acc-star{position:absolute;top:14px;right:14px;font-size:15px;color:#475569 !important;transition:color .2s,transform .2s;z-index:2}
+.acc-star.on{color:#3b82f6 !important;transform:scale(1.15)}
 .acc-actions{position:absolute;top:14px;right:38px;display:flex;gap:4px;opacity:0;transition:opacity .2s;z-index:2}
 .acc-card:hover .acc-actions{opacity:1}
-.acc-act-btn{width:24px;height:24px;border-radius:6px;border:none;background:rgba(255,255,255,.1);color:#e2e8f0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px}
+.acc-act-btn{width:24px;height:24px;border-radius:6px;border:none;background:rgba(255,255,255,.1);color:#e2e8f0 !important;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px}
 .acc-act-btn:hover{background:rgba(255,255,255,.22)}
 
 .acc-icon{font-size:20px;opacity:.9}
-.acc-badge{font-size:9px;font-weight:800;color:#0f172a;background:#38bdf8;border-radius:5px;padding:3px 8px;white-space:nowrap;align-self:flex-start}
-.acc-name{font-size:13px;font-weight:700;color:#f1f5f9;margin-top:10px}
-.acc-num{font-size:15px;letter-spacing:.15em;font-weight:700;color:#e2e8f0;font-family:'Courier New',monospace;margin:12px 0 0;word-break:break-all}
+.acc-badge{font-size:9px;font-weight:800;color:#0f172a !important;background:#38bdf8;border-radius:5px;padding:3px 8px;white-space:nowrap;align-self:flex-start}
+.acc-name{font-size:13px;font-weight:700;color:#f1f5f9 !important;margin-top:10px}
+.acc-num{font-size:15px;letter-spacing:.15em;font-weight:700;color:#e2e8f0 !important;font-family:'Courier New',monospace;margin:12px 0 0;word-break:break-all}
 .acc-bottom{display:flex;justify-content:space-between;align-items:flex-end;margin-top:14px}
-.acc-balance-lbl{font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px}
-.acc-balance{font-size:19px;font-weight:900;color:#4ade80}
-.acc-sub-right{font-size:9px;color:#94a3af;text-align:right}
+.acc-balance-lbl{font-size:9px;color:#94a3b8 !important;text-transform:uppercase;letter-spacing:.5px}
+.acc-balance{font-size:19px;font-weight:900;color:#4ade80 !important}
+.acc-sub-right{font-size:9px;color:#94a3af !important;text-align:right}
 
-.bx-empty{grid-column:1/-1;text-align:center;color:#64748b;padding:30px;font-size:13px;background:#1a1a1d;border-radius:14px;border:1px dashed #2a2a2e}
+.bx-empty{grid-column:1/-1;text-align:center;color:#64748b !important;padding:30px;font-size:13px;background:#1a1a1d;border-radius:14px;border:1px dashed #2a2a2e}
 
 /* Modal */
 .bx-modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px}
@@ -72,6 +79,25 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
 .bx-type-tab{flex:1;padding:9px;border-radius:9px;border:1.5px solid #2a2a2e;background:#0d1117;color:#94a3b8;font-size:12px;font-weight:700;cursor:pointer;text-align:center}
 .bx-type-tab.active{border-color:#2563eb;background:#12224a;color:#93c5fd}
 </style>
+
+<script>
+// Shu sahifaga kirilganda rejim avtomatik QORA bo'lsin (foydalanuvchining
+// umumiy tanlovidan qat'i nazar) — boshqa sahifaga o'tilganda esa asl
+// holatga qaytariladi (localStorage'dagi saqlangan tanlovga tegilmaydi).
+(function(){
+    var root = document.documentElement;
+    var wasDark = root.classList.contains('dark');
+    root.classList.add('dark');
+    function restore(e){
+        var toUrl = (e && e.detail && e.detail.url) ? e.detail.url : '';
+        if (toUrl.indexOf('buxgalteriya') === -1) {
+            if (!wasDark) root.classList.remove('dark');
+            document.removeEventListener('livewire:navigate', restore);
+        }
+    }
+    document.addEventListener('livewire:navigate', restore);
+})();
+</script>
 
 <div class="bx-wrap">
     <a href="{{ route('filament.admin.pages.kanban-board') }}" class="bx-back">← Ortga</a>
@@ -91,7 +117,7 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
                 <span class="acc-icon">💰</span>
             </div>
             <div>
-                <div class="acc-name" style="color:#bbf7d0">Jami balans</div>
+                <div class="acc-name">Jami balans</div>
                 <div class="acc-balance" style="font-size:24px;margin-top:10px">{{ number_format($totalBalance, 0, '.', ' ') }} <span style="font-size:13px;opacity:.7">so'm</span></div>
             </div>
         </div>
