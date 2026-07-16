@@ -72,7 +72,7 @@ function renderSaved(){
     wrapEl.innerHTML = `
         <div class="saved-box">
             <div class="lbl">Saqlangan imzo</div>
-            <img src="${SIG_URL}&t=${Date.now()}" alt="imzo">
+            <img src="${SIG_URL}?t=${Date.now()}" alt="imzo">
             <div class="saved-actions">
                 <button class="s-redraw" onclick="renderPad()">✍️ Qayta chizish</button>
                 <button class="s-del" onclick="deleteSig()">🗑 O'chirish</button>
