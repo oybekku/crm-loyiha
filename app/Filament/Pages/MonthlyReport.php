@@ -280,6 +280,7 @@ class MonthlyReport extends Page
                     'paid_at'        => $paidAt,
                     'is_late'        => $isLate,
                     'late_days'      => $lateDays,
+                    'opened_at'      => $service->created_at,
                 ];
 
                 $userStats[$uid]['services_total'] += $price;
@@ -385,6 +386,45 @@ class MonthlyReport extends Page
                     'opened_at'      => $s->created_at,
                 ];
             })->toArray();
+
+            // Bitta ro'yxat — tugallangan VA kutayotgan ishlar birga, ochilgan sanasi
+            // bo'yicha tartiblangan. Ikkita alohida jadval (Tugallangan/Qilinmagan)
+            // odamni chalg'itardi — endi hammasi bitta joyda, holati bilan.
+            $done = collect($stat['services'])->map(fn($s) => [
+                'project_number' => $s['project_number'],
+                'owner_name'     => $s['owner_name'],
+                'service_label'  => $s['service_label'],
+                'price'          => $s['price'],
+                'share'          => $s['commission'],
+                'share_paid'     => $s['comm_paid'],
+                'opened_at'      => $s['opened_at'],
+                'completed_at'   => $s['paid_at'],
+                'is_done'        => true,
+                'is_late'        => $s['is_late'],
+                'late_days'      => $s['late_days'],
+                'days_left'      => null,
+            ]);
+            $pending = collect($stat['pending_items'])->map(fn($p) => [
+                'project_number' => $p['project_number'],
+                'owner_name'     => $p['owner_name'],
+                'service_label'  => $p['service_label'],
+                'price'          => $p['price'],
+                'share'          => $p['my_share'],
+                'share_paid'     => null,
+                'opened_at'      => $p['opened_at'],
+                'completed_at'   => null,
+                'is_done'        => false,
+                'is_late'        => $p['is_late'],
+                'late_days'      => $p['late_days'],
+                'days_left'      => $p['days_left'],
+                'service_id'     => $p['service_id'],
+                'user_id'        => $p['user_id'],
+                'is_paid'        => $p['is_paid'],
+            ]);
+            $stat['all_items'] = $done->concat($pending)
+                ->sortByDesc(fn($it) => $it['opened_at'])
+                ->values()
+                ->toArray();
         }
         unset($stat);
 

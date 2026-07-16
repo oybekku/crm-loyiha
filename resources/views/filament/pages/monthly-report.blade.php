@@ -26,6 +26,8 @@
 .badge-ontime{background:#dcfce7;color:#16a34a;font-size:10px;font-weight:700;border-radius:4px;padding:2px 8px;white-space:nowrap}
 .badge-late   {background:#fee2e2;color:#dc2626;font-size:10px;font-weight:700;border-radius:4px;padding:2px 8px;white-space:nowrap}
 .badge-nodate {background:#f1f5f9;color:#94a3b8;font-size:10px;border-radius:4px;padding:2px 8px;white-space:nowrap}
+.badge-pending{background:#fff7ed;color:#ea580c;font-size:10px;font-weight:700;border-radius:4px;padding:2px 8px;white-space:nowrap}
+.badge-done   {background:#dcfce7;color:#16a34a;font-size:10px;font-weight:700;border-radius:4px;padding:2px 8px;white-space:nowrap}
 .mr-warn-row{background:#fef2f2}
 
 /* ════ DARK MODE ════ */
@@ -48,6 +50,8 @@
 .dark .badge-ontime{background:#0d2818;color:#3fb950}
 .dark .badge-late   {background:#2d1515;color:#f87171}
 .dark .badge-nodate {background:#21262d;color:#6b7280}
+.dark .badge-pending{background:#2a1d05;color:#fb923c}
+.dark .badge-done   {background:#0d2818;color:#3fb950}
 .dark .mr-warn-row td{background:#2d1515}
 </style>
 
@@ -430,7 +434,8 @@
                             </div>
                         </div>
 
-                        {{-- Service detail table --}}
+                        {{-- Barcha ishlar (tugallangan + kutayotgan) — bitta ro'yxatda --}}
+                        @php $allItems = $stat['all_items'] ?? []; @endphp
                         <div style="overflow-x:auto;border-radius:8px;border:1px solid #e2e8f0">
                         <table class="mr-detail-table">
                             <thead>
@@ -440,63 +445,57 @@
                                     <th>Xizmat turi</th>
                                     <th style="text-align:right">Narx</th>
                                     <th style="text-align:right">Ulush</th>
-                                    <th style="text-align:center">Muddat</th>
+                                    <th style="text-align:center">Ochilgan</th>
+                                    <th style="text-align:center">Tugatilgan</th>
                                     <th style="text-align:center">Holat</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($stat['services'] as $j => $srv)
+                                @foreach($allItems as $j => $it)
                                 <tr>
                                     <td style="color:#9ca3af;font-size:11px">{{ $j + 1 }}</td>
                                     <td>
-                                        <div style="font-weight:700;color:#111827;font-family:monospace;font-size:12px">{{ $srv['project_number'] }}</div>
-                                        <div style="font-size:12px;color:#374151;margin-top:1px">{{ $srv['owner_name'] }}</div>
+                                        <div style="font-weight:700;color:#111827;font-family:monospace;font-size:12px">{{ $it['project_number'] }}</div>
+                                        <div style="font-size:12px;color:#374151;margin-top:1px">{{ $it['owner_name'] }}</div>
                                     </td>
                                     <td>
                                         <span style="display:inline-block;background:#eff6ff;color:#2563eb;font-size:10px;font-weight:600;border-radius:4px;padding:2px 7px">
-                                            {{ $srv['service_label'] ?? $srv['service_name'] ?? '—' }}
+                                            {{ $it['service_label'] ?? '—' }}
                                         </span>
                                     </td>
                                     <td style="text-align:right;font-weight:600;white-space:nowrap">
-                                        {{ number_format($srv['price'], 0, '.', ' ') }}
+                                        {{ number_format($it['price'], 0, '.', ' ') }}
                                     </td>
                                     <td style="text-align:right;white-space:nowrap">
-                                        @if($srv['commission'] > 0)
-                                        <span style="color:#d97706;font-weight:700">{{ number_format($srv['commission'], 0, '.', ' ') }}</span>
+                                        @if($it['share'] > 0)
+                                        <span style="color:#d97706;font-weight:700">{{ number_format($it['share'], 0, '.', ' ') }}</span>
                                         @else
                                         <span style="color:#d1d5db">—</span>
                                         @endif
                                     </td>
-                                    <td style="text-align:center;white-space:nowrap;font-size:11px">
-                                        @if($srv['deadline_date'])
-                                        {{ $srv['deadline_date']->format('d.m.Y') }}
-                                        @else
-                                        <span style="color:#d1d5db">—</span>
-                                        @endif
+                                    <td style="text-align:center;white-space:nowrap;font-size:11px;color:#6b7280">
+                                        {{ $it['opened_at'] ? \Carbon\Carbon::parse($it['opened_at'])->format('d.m.Y') : '—' }}
                                     </td>
-                                    <td style="text-align:center;white-space:nowrap;font-size:11px">
-                                        @if($srv['paid_at'])
-                                        {{ $srv['paid_at']->format('d.m.Y') }}
-                                        @else
-                                        <span style="color:#d1d5db">—</span>
-                                        @endif
+                                    <td style="text-align:center;white-space:nowrap;font-size:11px;color:#6b7280">
+                                        {{ $it['completed_at'] ? \Carbon\Carbon::parse($it['completed_at'])->format('d.m.Y') : '—' }}
                                     </td>
                                     <td style="text-align:center;white-space:nowrap">
-                                        @if(!$srv['deadline_date'])
-                                        <span class="badge-nodate">Muddat yo'q</span>
-                                        @elseif($srv['is_late'])
-                                        <span class="badge-late">Kechikkan {{ $srv['late_days'] }} kun</span>
+                                        @if($it['is_done'])
+                                        <span class="badge-done">✓ Tugallandi</span>
+                                        @elseif($it['is_late'])
+                                        <span class="badge-late">Kechikkan {{ $it['late_days'] }} kun</span>
+                                        @elseif(($it['days_left'] ?? null) !== null && $it['days_left'] <= 3)
+                                        <span class="badge-pending">{{ $it['days_left'] }} kun qoldi</span>
                                         @else
-                                        <span class="badge-ontime">O'z vaqtida</span>
+                                        <span class="badge-pending">Kutayotgan</span>
                                         @endif
                                     </td>
                                 </tr>
                                 @endforeach
                                 <tr style="background:#fafafa;font-weight:700;border-top:2px solid #e2e8f0">
-                                    <td colspan="4" style="text-align:right;color:#374151">Jami:</td>
-                                    <td style="text-align:right">{{ number_format($sTotal, 0, '.', ' ') }}</td>
-                                    <td></td>
-                                    <td style="text-align:right;color:#d97706">{{ number_format($comm, 0, '.', ' ') }}</td>
+                                    <td colspan="3" style="text-align:right;color:#374151">Jami ({{ count($allItems) }} ta):</td>
+                                    <td style="text-align:right">{{ number_format(collect($allItems)->sum('price'), 0, '.', ' ') }}</td>
+                                    <td style="text-align:right;color:#d97706">{{ number_format(collect($allItems)->sum('share'), 0, '.', ' ') }}</td>
                                     <td colspan="3"></td>
                                 </tr>
                             </tbody>
@@ -826,10 +825,11 @@
         </div>
     </div>
 
-    {{-- Loyihalar jadvali --}}
+    {{-- Barcha ishlar (tugallangan + kutayotgan) — bitta ro'yxatda --}}
+    @php $dAllItems = $ds['all_items'] ?? []; @endphp
     <div style="padding:20px;max-height:420px;overflow-y:auto">
         <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:12px">
-            Tugallangan ishlari
+            Barcha ishlar <span style="font-weight:400;color:#9ca3af">({{ count($dAllItems) }} ta — tugallangan va kutayotgan birga)</span>
         </div>
         <table style="width:100%;border-collapse:collapse;font-size:12px">
             <thead>
@@ -837,53 +837,76 @@
                     <th style="padding:8px 10px;text-align:left;font-weight:600;color:#475569;border-bottom:2px solid #e2e8f0">Loyiha</th>
                     <th style="padding:8px 10px;text-align:left;font-weight:600;color:#475569;border-bottom:2px solid #e2e8f0">Xizmat</th>
                     <th style="padding:8px 10px;text-align:right;font-weight:600;color:#475569;border-bottom:2px solid #e2e8f0">Narxi</th>
-                    <th style="padding:8px 10px;text-align:right;font-weight:600;color:#d97706;border-bottom:2px solid #e2e8f0">Komissiya</th>
+                    <th style="padding:8px 10px;text-align:right;font-weight:600;color:#d97706;border-bottom:2px solid #e2e8f0">Ulush</th>
                     <th style="padding:8px 10px;text-align:right;font-weight:600;color:#16a34a;border-bottom:2px solid #e2e8f0">To'landi</th>
-                    <th style="padding:8px 10px;text-align:right;font-weight:600;color:#dc2626;border-bottom:2px solid #e2e8f0">Qoldi</th>
-                    <th style="padding:8px 10px;text-align:center;font-weight:600;color:#475569;border-bottom:2px solid #e2e8f0">Muddat</th>
+                    <th style="padding:8px 10px;text-align:center;font-weight:600;color:#475569;border-bottom:2px solid #e2e8f0">Ochilgan</th>
+                    <th style="padding:8px 10px;text-align:center;font-weight:600;color:#475569;border-bottom:2px solid #e2e8f0">Tugatilgan</th>
                     <th style="padding:8px 10px;text-align:center;font-weight:600;color:#475569;border-bottom:2px solid #e2e8f0">Holat</th>
+                    @if(auth()->user()?->isAdmin())
+                    <th style="padding:8px 10px;text-align:center;font-weight:600;color:#16a34a;border-bottom:2px solid #e2e8f0">To'lov</th>
+                    @endif
                 </tr>
             </thead>
             <tbody>
-                @foreach($dSvc as $srv)
+                @foreach($dAllItems as $it)
                 <tr style="border-bottom:1px solid #f1f5f9">
                     <td style="padding:8px 10px">
-                        <div style="font-weight:600;color:#111827;font-size:12px">{{ $srv['owner_name'] }}</div>
-                        <div style="font-size:10px;color:#9ca3af">{{ $srv['project_number'] }}</div>
+                        <div style="font-weight:600;color:#111827;font-size:12px">{{ $it['owner_name'] }}</div>
+                        <div style="font-size:10px;color:#9ca3af">{{ $it['project_number'] }}</div>
                     </td>
-                    <td style="padding:8px 10px;color:#374151">{{ $srv['service_label'] ?? $srv['service_name'] }}</td>
-                    <td style="padding:8px 10px;text-align:right;font-weight:600;color:#111827">{{ number_format($srv['price'],0,'.',' ') }}</td>
-                    <td style="padding:8px 10px;text-align:right;font-weight:700;color:#d97706">{{ number_format($srv['commission'],0,'.',' ') }}</td>
+                    <td style="padding:8px 10px;color:#374151">{{ $it['service_label'] ?? '—' }}</td>
+                    <td style="padding:8px 10px;text-align:right;font-weight:600;color:#111827">{{ number_format($it['price'],0,'.',' ') }}</td>
+                    <td style="padding:8px 10px;text-align:right;font-weight:700;color:#d97706">{{ number_format($it['share'],0,'.',' ') }}</td>
                     <td style="padding:8px 10px;text-align:right;font-weight:700;color:#16a34a">
-                        {{ number_format($srv['comm_paid'] ?? 0, 0, '.', ' ') }}
-                        @if(isset($srv['paid_ratio']) && $srv['paid_ratio'] > 0)
-                        <div style="font-size:10px;color:#9ca3af;font-weight:400">{{ $srv['paid_ratio'] }}%</div>
+                        @if($it['share_paid'] !== null)
+                        {{ number_format($it['share_paid'], 0, '.', ' ') }}
+                        @else
+                        <span style="color:#d1d5db;font-weight:400">—</span>
                         @endif
                     </td>
-                    <td style="padding:8px 10px;text-align:right;font-weight:700;color:{{ ($srv['comm_remaining'] ?? 0) > 0 ? '#dc2626' : '#16a34a' }}">
-                        {{ number_format($srv['comm_remaining'] ?? 0, 0, '.', ' ') }}
+                    <td style="padding:8px 10px;text-align:center;font-size:11px;color:#6b7280">
+                        {{ $it['opened_at'] ? \Carbon\Carbon::parse($it['opened_at'])->format('d.m.Y') : '—' }}
                     </td>
-                    <td style="padding:8px 10px;text-align:center;font-size:11px;color:#9ca3af">
-                        {{ $srv['deadline_date'] ? $srv['deadline_date']->format('d.m.Y') : '—' }}
+                    <td style="padding:8px 10px;text-align:center;font-size:11px;color:#6b7280">
+                        {{ $it['completed_at'] ? \Carbon\Carbon::parse($it['completed_at'])->format('d.m.Y') : '—' }}
                     </td>
                     <td style="padding:8px 10px;text-align:center">
-                        @if($srv['is_late'])
-                            <span style="background:#fee2e2;color:#dc2626;font-size:10px;font-weight:700;border-radius:4px;padding:2px 7px">{{ $srv['late_days'] }} kun kechikdi</span>
-                        @elseif($srv['deadline_date'])
-                            <span style="background:#dcfce7;color:#16a34a;font-size:10px;font-weight:700;border-radius:4px;padding:2px 7px">O'z vaqtida</span>
+                        @if($it['is_done'])
+                            <span class="badge-done">✓ Tugallandi</span>
+                        @elseif($it['is_late'])
+                            <span class="badge-late">{{ $it['late_days'] }} kun kechikdi</span>
+                        @elseif(($it['days_left'] ?? null) !== null && $it['days_left'] <= 3)
+                            <span class="badge-pending">{{ $it['days_left'] }} kun qoldi</span>
                         @else
-                            <span style="background:#f3f4f6;color:#9ca3af;font-size:10px;border-radius:4px;padding:2px 7px">Muddatsiz</span>
+                            <span class="badge-pending">Kutayotgan</span>
                         @endif
                     </td>
+                    @if(auth()->user()?->isAdmin())
+                    <td style="padding:8px 10px;text-align:center">
+                        @if(!$it['is_done'] && ($it['share'] ?? 0) > 0)
+                            @if($it['is_paid'] ?? false)
+                            <span style="background:#dcfce7;border:1px solid #86efac;color:#16a34a;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;white-space:nowrap">✓ To'langan</span>
+                            @else
+                            <button wire:click="payServiceShare({{ $it['service_id'] }}, {{ $it['user_id'] }}, {{ $it['share'] }})"
+                                    wire:confirm="{{ number_format($it['share'],0,'.',',') }} so'm to'lov yozilsinmi?"
+                                    style="background:#eff6ff;border:1px solid #93c5fd;color:#2563eb;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap">
+                                To'lash
+                            </button>
+                            @endif
+                        @else
+                        <span style="color:#d1d5db;font-size:11px">—</span>
+                        @endif
+                    </td>
+                    @endif
                 </tr>
                 @endforeach
             </tbody>
             <tfoot>
                 <tr style="background:#f0fdf4;border-top:2px solid #86efac">
                     <td colspan="2" style="padding:10px;font-weight:700;color:#374151">Jami</td>
-                    <td style="padding:10px;text-align:right;font-weight:700">{{ number_format($ds['services_total'],0,'.',' ') }}</td>
-                    <td style="padding:10px;text-align:right;font-weight:700;color:#d97706">{{ number_format($dCom,0,'.',' ') }}</td>
-                    <td colspan="2"></td>
+                    <td style="padding:10px;text-align:right;font-weight:700">{{ number_format(collect($dAllItems)->sum('price'),0,'.',' ') }}</td>
+                    <td style="padding:10px;text-align:right;font-weight:700;color:#d97706">{{ number_format(collect($dAllItems)->sum('share'),0,'.',' ') }}</td>
+                    <td colspan="{{ auth()->user()?->isAdmin() ? 4 : 3 }}"></td>
                 </tr>
             </tfoot>
         </table>
@@ -911,86 +934,6 @@
         </div>
     </div>
 
-    {{-- QILINMAGAN ISHLAR --}}
-    @php
-        $dPending = $ds['pending_items'] ?? [];
-        $dPendingCnt = $ds['pending_count'] ?? 0;
-        $dPendingSum = $ds['pending_sum'] ?? 0;
-    @endphp
-    @if($dPendingCnt > 0)
-    <div style="padding:16px 24px;border-top:1px solid #e5e7eb">
-        <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:12px;display:flex;align-items:center;gap:8px">
-            <svg width="14" height="14" fill="none" stroke="#f97316" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            Qilinmagan ishlar
-            <span style="background:#fff7ed;color:#ea580c;font-size:11px;border-radius:6px;padding:2px 8px">{{ $dPendingCnt }} ta · {{ number_format($dPendingSum,0,'.',' ') }} so'm</span>
-        </div>
-        <div style="overflow-x:auto">
-        <table style="width:100%;border-collapse:collapse;font-size:12px">
-            <thead>
-                <tr style="background:#fff7ed">
-                    <th style="padding:7px 10px;text-align:left;color:#9a3412;font-weight:600">Loyiha / Egasi</th>
-                    <th style="padding:7px 10px;text-align:left;color:#9a3412;font-weight:600">Xizmat</th>
-                    <th style="padding:7px 10px;text-align:center;color:#9a3412;font-weight:600">Ochilgan</th>
-                    <th style="padding:7px 10px;text-align:right;color:#9a3412;font-weight:600">Loyiha narxi</th>
-                    <th style="padding:7px 10px;text-align:right;color:#9a3412;font-weight:600">Mening ulushim</th>
-                    <th style="padding:7px 10px;text-align:center;color:#9a3412;font-weight:600">Holat</th>
-                    <th style="padding:7px 10px;text-align:center;color:#9a3412;font-weight:600">Vaqt</th>
-                    @if(auth()->user()?->isAdmin())
-                    <th style="padding:7px 10px;text-align:center;color:#16a34a;font-weight:600">To'lov</th>
-                    @endif
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($dPending as $pi)
-                <tr style="border-bottom:1px solid #fef3c7">
-                    <td style="padding:6px 10px">
-                        <div style="font-weight:600;font-size:11px;font-family:monospace;color:#374151">{{ $pi['project_number'] }}</div>
-                        <div style="font-size:11px;color:#6b7280">{{ $pi['owner_name'] }}</div>
-                    </td>
-                    <td style="padding:6px 10px;color:#374151">{{ $pi['service_label'] }}</td>
-                    <td style="padding:6px 10px;text-align:center;color:#6b7280;font-size:11px;white-space:nowrap">{{ $pi['opened_at'] ? \Carbon\Carbon::parse($pi['opened_at'])->format('d.m.Y') : '—' }}</td>
-                    <td style="padding:6px 10px;text-align:right;color:#9ca3af;font-size:11px">{{ number_format($pi['price'],0,'.',' ') }}</td>
-                    <td style="padding:6px 10px;text-align:right;font-weight:700;color:#d97706">{{ number_format($pi['my_share'] ?? 0,0,'.',' ') }}</td>
-                    <td style="padding:6px 10px;text-align:center">
-                        <span style="font-size:10px;background:#e0f2fe;color:#0284c7;border-radius:4px;padding:2px 6px">{{ $pi['status'] }}</span>
-                    </td>
-                    <td style="padding:6px 10px;text-align:center">
-                        @if($pi['days_left'] !== null)
-                            @if($pi['is_late'])
-                            <span style="font-size:10px;font-weight:700;background:#fee2e2;color:#dc2626;border-radius:4px;padding:2px 6px;white-space:nowrap">{{ $pi['late_days'] }} kun kechikdi</span>
-                            @elseif($pi['days_left'] <= 3)
-                            <span style="font-size:10px;font-weight:700;background:#fef3c7;color:#d97706;border-radius:4px;padding:2px 6px;white-space:nowrap">{{ $pi['days_left'] }} kun qoldi</span>
-                            @else
-                            <span style="font-size:10px;background:#f0fdf4;color:#16a34a;border-radius:4px;padding:2px 6px;white-space:nowrap">{{ $pi['days_left'] }} kun</span>
-                            @endif
-                        @else
-                        <span style="color:#d1d5db;font-size:11px">—</span>
-                        @endif
-                    </td>
-                    @if(auth()->user()?->isAdmin())
-                    <td style="padding:6px 10px;text-align:center">
-                        @if(($pi['my_share'] ?? 0) > 0)
-                            @if($pi['is_paid'] ?? false)
-                            <span style="background:#dcfce7;border:1px solid #86efac;color:#16a34a;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;white-space:nowrap">
-                                ✓ To'langan
-                            </span>
-                            @else
-                            <button wire:click="payServiceShare({{ $pi['service_id'] }}, {{ $pi['user_id'] }}, {{ $pi['my_share'] }})"
-                                    wire:confirm="{{ number_format($pi['my_share'],0,'.',',') }} so'm to'lov yozilsinmi?"
-                                    style="background:#eff6ff;border:1px solid #93c5fd;color:#2563eb;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap">
-                                To'lash
-                            </button>
-                            @endif
-                        @endif
-                    </td>
-                    @endif
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-        </div>
-    </div>
-    @endif
     {{-- ISH HAQI TO'LOVLARI --}}
     <div style="padding:16px 24px;border-top:1px solid #e5e7eb">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
