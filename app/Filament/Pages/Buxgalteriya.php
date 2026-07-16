@@ -137,8 +137,13 @@ class Buxgalteriya extends Page
         $year  = $this->bxYear;
         $month = $this->bxMonth;
 
+        // Dashboarddagi "loyiha ochilgan oyi" mantig'i bilan bir xil bo'lishi uchun —
+        // to'lov sanasi emas, balki shu to'lov tegishli LOYIHANING ochilgan (created_at)
+        // oyi bo'yicha filtrlanadi. Shu bilan ikkala sahifadagi summalar mos keladi.
         $accounts = FinancialAccount::withSum(['payments as payments_sum_amount' => function ($q) use ($year, $month) {
-                $q->whereYear('payment_date', $year)->whereMonth('payment_date', $month);
+                $q->whereHas('project', function ($pq) use ($year, $month) {
+                    $pq->whereYear('created_at', $year)->whereMonth('created_at', $month);
+                });
             }], 'amount')
             ->orderByDesc('is_favorite')
             ->orderBy('sort_order')
