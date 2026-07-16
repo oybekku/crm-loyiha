@@ -567,34 +567,65 @@
 
 {{-- ⏰ DIQQAT TALAB ISHLAR: Kechikkan + Muddati yaqin (xizmat-asosli) --}}
 @if($statOverdue > 0 || $statSoon > 0)
-<style>[x-cloak]{display:none!important}</style>
-<div style="margin-top:16px;background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
+<style>
+[x-cloak]{display:none!important}
+/* "Diqqat talab ishlar" paneli — avval qattiq oq fon bilan yozilgan edi,
+   tungi rejimda qora sahifa ustida yorqin oq quti bo'lib chiqib qolardi.
+   Shu sababli qora rejim uchun alohida rang beriladi (kunduzgiga tegmasdan). */
+.dtj-panel{background:#fff;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.dark .dtj-panel{background:#1e293b;border-color:#334155;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.dtj-title{color:#111827}
+.dark .dtj-title{color:#f1f5f9}
+.dtj-muted{color:#9ca3af}
+.dark .dtj-muted{color:#64748b}
+.dtj-emp{color:#374151}
+.dark .dtj-emp{color:#cbd5e1}
+.dtj-red-txt{color:#dc2626}
+.dark .dtj-red-txt{color:#f87171}
+.dtj-amber-txt{color:#d97706}
+.dark .dtj-amber-txt{color:#fbbf24}
+.dtj-item-sub{color:#6b7280}
+.dark .dtj-item-sub{color:#94a3b8}
+.dtj-count-red{background:#fef2f2}
+.dark .dtj-count-red{background:#4c0519}
+.dtj-count-yellow{background:#fffbeb}
+.dark .dtj-count-yellow{background:#422006}
+.dtj-item-red{background:#fef2f2;border:1px solid #fecaca}
+.dark .dtj-item-red{background:#3f0d16;border-color:#7f1d1d}
+.dtj-item-yellow{background:#fffbeb;border:1px solid #fde68a}
+.dark .dtj-item-yellow{background:#3a2a06;border-color:#78350f}
+.dtj-more-red{background:#fef2f2;border:1px solid #fecaca;color:#dc2626}
+.dark .dtj-more-red{background:#3f0d16;border-color:#7f1d1d;color:#f87171}
+.dtj-more-yellow{background:#fffbeb;border:1px solid #fde68a;color:#d97706}
+.dark .dtj-more-yellow{background:#3a2a06;border-color:#78350f;color:#fbbf24}
+</style>
+<div class="dtj-panel" style="margin-top:16px;border-radius:14px;padding:16px">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
         <svg width="18" height="18" fill="none" stroke="#dc2626" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        <span style="font-size:14px;font-weight:700;color:#111827">Diqqat talab ishlar</span>
-        @if($isEmployee)<span style="font-size:11px;color:#9ca3af">(sizning ishlaringiz)</span>@endif
+        <span class="dtj-title" style="font-size:14px;font-weight:700">Diqqat talab ishlar</span>
+        @if($isEmployee)<span class="dtj-muted" style="font-size:11px">(sizning ishlaringiz)</span>@endif
     </div>
     <div style="{{ $isEmployee ? 'display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px' : 'display:flex;flex-direction:column;gap:18px' }}">
 
         {{-- 🔴 Kechikkan --}}
         <div>
-            <div style="font-size:12px;font-weight:700;color:#dc2626;margin-bottom:8px;display:flex;align-items:center;gap:6px">
-                🔴 Kechikkan ishlar <span style="background:#fef2f2;border-radius:10px;padding:1px 8px">{{ $statOverdue }}</span>
+            <div class="dtj-red-txt" style="font-size:12px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px">
+                🔴 Kechikkan ishlar <span class="dtj-count-red" style="border-radius:10px;padding:1px 8px">{{ $statOverdue }}</span>
             </div>
             @if($statOverdue === 0)
-            <div style="font-size:12px;color:#9ca3af;padding:8px 0">Kechikkan ish yo'q ✓</div>
+            <div class="dtj-muted" style="font-size:12px;padding:8px 0">Kechikkan ish yo'q ✓</div>
             @else
                 @foreach(($isEmployee ? [['name'=>null,'count'=>count($overdueItems),'items'=>$overdueItems]] : $overdueByEmployee) as $emp)
                 @php $vis = $isEmployee ? $emp['items'] : array_slice($emp['items'], 0, 2); $hid = $isEmployee ? [] : array_slice($emp['items'], 2); @endphp
                 <div @if(!$isEmployee)x-data="{showAll:false}"@endif style="margin-bottom:6px">
                     @if(!$isEmployee)
-                    <div style="font-size:12px;font-weight:700;color:#374151;margin:6px 0 4px">👷 {{ $emp['name'] }} <span style="font-size:10px;font-weight:700;background:#fef2f2;color:#dc2626;border-radius:10px;padding:1px 7px">{{ $emp['count'] }} ta</span></div>
+                    <div class="dtj-emp" style="font-size:12px;font-weight:700;margin:6px 0 4px">👷 {{ $emp['name'] }} <span class="dtj-count-red dtj-red-txt" style="font-size:10px;font-weight:700;border-radius:10px;padding:1px 7px">{{ $emp['count'] }} ta</span></div>
                     @endif
                     @foreach($vis as $it)
-                    <a href="/admin/projects/{{ $it['project_id'] }}/edit" style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:6px 10px;text-decoration:none;margin-bottom:5px">
+                    <a href="/admin/projects/{{ $it['project_id'] }}/edit" class="dtj-item-red" style="display:flex;justify-content:space-between;align-items:center;gap:8px;border-radius:8px;padding:6px 10px;text-decoration:none;margin-bottom:5px">
                         <div style="min-width:0">
-                            <div style="font-size:12px;font-weight:700;color:#dc2626;font-family:monospace">{{ $it['number'] }}</div>
-                            <div style="font-size:10px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $it['owner'] }} · {{ $it['service'] }}</div>
+                            <div class="dtj-red-txt" style="font-size:12px;font-weight:700;font-family:monospace">{{ $it['number'] }}</div>
+                            <div class="dtj-item-sub" style="font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $it['owner'] }} · {{ $it['service'] }}</div>
                         </div>
                         <span style="font-size:10px;font-weight:700;background:#dc2626;color:#fff;border-radius:5px;padding:2px 7px;white-space:nowrap">{{ $it['over_days'] }} kun kech</span>
                     </a>
@@ -602,16 +633,16 @@
                     @if(count($hid) > 0)
                     <div x-show="showAll" x-cloak>
                         @foreach($hid as $it)
-                        <a href="/admin/projects/{{ $it['project_id'] }}/edit" style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:6px 10px;text-decoration:none;margin-bottom:5px">
+                        <a href="/admin/projects/{{ $it['project_id'] }}/edit" class="dtj-item-red" style="display:flex;justify-content:space-between;align-items:center;gap:8px;border-radius:8px;padding:6px 10px;text-decoration:none;margin-bottom:5px">
                             <div style="min-width:0">
-                                <div style="font-size:12px;font-weight:700;color:#dc2626;font-family:monospace">{{ $it['number'] }}</div>
-                                <div style="font-size:10px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $it['owner'] }} · {{ $it['service'] }}</div>
+                                <div class="dtj-red-txt" style="font-size:12px;font-weight:700;font-family:monospace">{{ $it['number'] }}</div>
+                                <div class="dtj-item-sub" style="font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $it['owner'] }} · {{ $it['service'] }}</div>
                             </div>
                             <span style="font-size:10px;font-weight:700;background:#dc2626;color:#fff;border-radius:5px;padding:2px 7px;white-space:nowrap">{{ $it['over_days'] }} kun kech</span>
                         </a>
                         @endforeach
                     </div>
-                    <button @click="showAll=!showAll" x-text="showAll ? '▲ Yashirish' : '▾ Batafsil (yana {{ count($hid) }} ta)'" style="background:#fef2f2;border:1px solid #fecaca;color:#dc2626;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:600;cursor:pointer;margin-top:2px"></button>
+                    <button @click="showAll=!showAll" x-text="showAll ? '▲ Yashirish' : '▾ Batafsil (yana {{ count($hid) }} ta)'" class="dtj-more-red" style="border-radius:6px;padding:3px 10px;font-size:11px;font-weight:600;cursor:pointer;margin-top:2px"></button>
                     @endif
                 </div>
                 @endforeach
@@ -620,23 +651,23 @@
 
         {{-- 🟡 Muddati yaqin --}}
         <div>
-            <div style="font-size:12px;font-weight:700;color:#d97706;margin-bottom:8px;display:flex;align-items:center;gap:6px">
-                🟡 Muddati yaqin (≤3 kun) <span style="background:#fffbeb;border-radius:10px;padding:1px 8px">{{ $statSoon }}</span>
+            <div class="dtj-amber-txt" style="font-size:12px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px">
+                🟡 Muddati yaqin (≤3 kun) <span class="dtj-count-yellow" style="border-radius:10px;padding:1px 8px">{{ $statSoon }}</span>
             </div>
             @if($statSoon === 0)
-            <div style="font-size:12px;color:#9ca3af;padding:8px 0">Muddati yaqin ish yo'q</div>
+            <div class="dtj-muted" style="font-size:12px;padding:8px 0">Muddati yaqin ish yo'q</div>
             @else
                 @foreach(($isEmployee ? [['name'=>null,'count'=>count($soonItems),'items'=>$soonItems]] : $soonByEmployee) as $emp)
                 @php $vis = $isEmployee ? $emp['items'] : array_slice($emp['items'], 0, 2); $hid = $isEmployee ? [] : array_slice($emp['items'], 2); @endphp
                 <div @if(!$isEmployee)x-data="{showAll:false}"@endif style="margin-bottom:6px">
                     @if(!$isEmployee)
-                    <div style="font-size:12px;font-weight:700;color:#374151;margin:6px 0 4px">👷 {{ $emp['name'] }} <span style="font-size:10px;font-weight:700;background:#fffbeb;color:#d97706;border-radius:10px;padding:1px 7px">{{ $emp['count'] }} ta</span></div>
+                    <div class="dtj-emp" style="font-size:12px;font-weight:700;margin:6px 0 4px">👷 {{ $emp['name'] }} <span class="dtj-count-yellow dtj-amber-txt" style="font-size:10px;font-weight:700;border-radius:10px;padding:1px 7px">{{ $emp['count'] }} ta</span></div>
                     @endif
                     @foreach($vis as $it)
-                    <a href="/admin/projects/{{ $it['project_id'] }}/edit" style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:6px 10px;text-decoration:none;margin-bottom:5px">
+                    <a href="/admin/projects/{{ $it['project_id'] }}/edit" class="dtj-item-yellow" style="display:flex;justify-content:space-between;align-items:center;gap:8px;border-radius:8px;padding:6px 10px;text-decoration:none;margin-bottom:5px">
                         <div style="min-width:0">
-                            <div style="font-size:12px;font-weight:700;color:#d97706;font-family:monospace">{{ $it['number'] }}</div>
-                            <div style="font-size:10px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $it['owner'] }} · {{ $it['service'] }}</div>
+                            <div class="dtj-amber-txt" style="font-size:12px;font-weight:700;font-family:monospace">{{ $it['number'] }}</div>
+                            <div class="dtj-item-sub" style="font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $it['owner'] }} · {{ $it['service'] }}</div>
                         </div>
                         <span style="font-size:10px;font-weight:700;background:#d97706;color:#fff;border-radius:5px;padding:2px 7px;white-space:nowrap">{{ $it['days_left'] > 0 ? $it['days_left'].' kun qoldi' : 'bugun' }}</span>
                     </a>
@@ -644,16 +675,16 @@
                     @if(count($hid) > 0)
                     <div x-show="showAll" x-cloak>
                         @foreach($hid as $it)
-                        <a href="/admin/projects/{{ $it['project_id'] }}/edit" style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:6px 10px;text-decoration:none;margin-bottom:5px">
+                        <a href="/admin/projects/{{ $it['project_id'] }}/edit" class="dtj-item-yellow" style="display:flex;justify-content:space-between;align-items:center;gap:8px;border-radius:8px;padding:6px 10px;text-decoration:none;margin-bottom:5px">
                             <div style="min-width:0">
-                                <div style="font-size:12px;font-weight:700;color:#d97706;font-family:monospace">{{ $it['number'] }}</div>
-                                <div style="font-size:10px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $it['owner'] }} · {{ $it['service'] }}</div>
+                                <div class="dtj-amber-txt" style="font-size:12px;font-weight:700;font-family:monospace">{{ $it['number'] }}</div>
+                                <div class="dtj-item-sub" style="font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $it['owner'] }} · {{ $it['service'] }}</div>
                             </div>
                             <span style="font-size:10px;font-weight:700;background:#d97706;color:#fff;border-radius:5px;padding:2px 7px;white-space:nowrap">{{ $it['days_left'] > 0 ? $it['days_left'].' kun qoldi' : 'bugun' }}</span>
                         </a>
                         @endforeach
                     </div>
-                    <button @click="showAll=!showAll" x-text="showAll ? '▲ Yashirish' : '▾ Batafsil (yana {{ count($hid) }} ta)'" style="background:#fffbeb;border:1px solid #fde68a;color:#d97706;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:600;cursor:pointer;margin-top:2px"></button>
+                    <button @click="showAll=!showAll" x-text="showAll ? '▲ Yashirish' : '▾ Batafsil (yana {{ count($hid) }} ta)'" class="dtj-more-yellow" style="border-radius:6px;padding:3px 10px;font-size:11px;font-weight:600;cursor:pointer;margin-top:2px"></button>
                     @endif
                 </div>
                 @endforeach
