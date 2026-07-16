@@ -80,25 +80,6 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
 .bx-type-tab.active{border-color:#2563eb;background:#12224a;color:#93c5fd}
 </style>
 
-<script>
-// Shu sahifaga kirilganda rejim avtomatik QORA bo'lsin (foydalanuvchining
-// umumiy tanlovidan qat'i nazar) — boshqa sahifaga o'tilganda esa asl
-// holatga qaytariladi (localStorage'dagi saqlangan tanlovga tegilmaydi).
-(function(){
-    var root = document.documentElement;
-    var wasDark = root.classList.contains('dark');
-    root.classList.add('dark');
-    function restore(e){
-        var toUrl = (e && e.detail && e.detail.url) ? e.detail.url : '';
-        if (toUrl.indexOf('buxgalteriya') === -1) {
-            if (!wasDark) root.classList.remove('dark');
-            document.removeEventListener('livewire:navigate', restore);
-        }
-    }
-    document.addEventListener('livewire:navigate', restore);
-})();
-</script>
-
 <div class="bx-wrap">
     <a href="{{ route('filament.admin.pages.kanban-board') }}" class="bx-back">← Ortga</a>
 
