@@ -203,6 +203,26 @@ class WelcomeHeroWidget extends Widget
             ];
         }
 
+        // Xizmat turlari bo'yicha statistika (tanlangan oy) — masalan:
+        // Toposyomka 100 ta 10 000 000, Eskiz loyiha 50 ta 50 000 000...
+        $svcTypeQuery = \App\Models\ProjectService::whereHas('project', fn ($q) => $q
+            ->whereYear('created_at', $this->selYear)
+            ->whereMonth('created_at', $this->selMonth));
+        if ($isEmployee) {
+            $svcTypeQuery->where('assigned_user_id', $user->id);
+        }
+        $byServiceType = $svcTypeQuery
+            ->selectRaw('service_name, COUNT(*) as cnt, SUM(final_price) as total')
+            ->groupBy('service_name')
+            ->orderByDesc('total')
+            ->get()
+            ->map(fn ($r) => [
+                'label' => $svcLabels[$r->service_name] ?? $r->service_name,
+                'count' => (int) $r->cnt,
+                'total' => (float) $r->total,
+            ])
+            ->toArray();
+
         return [
             'userName'      => $user?->name ?? 'Foydalanuvchi',
             'userRole'      => $user?->role_name ?? ucfirst($user?->role ?? ''),
@@ -228,6 +248,7 @@ class WelcomeHeroWidget extends Widget
             'statPaidSum'   => $paidSum,
             'statDebt'      => $debtSum,
             'statPaidPct'   => $paidPct,
+            'byServiceType'      => $byServiceType,
             'statOverdue'        => $overdueCount,
             'statSoon'           => $soonCount,
             'overdueItems'       => $overdueItems,

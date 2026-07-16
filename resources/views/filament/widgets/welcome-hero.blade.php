@@ -506,16 +506,11 @@
             <div style="display:flex;justify-content:space-between"><span style="color:#6b7280">Jami to'langan</span><span style="font-weight:700;color:#16a34a">{{ number_format($statPaidSum, 0, '.', ' ') }} so'm</span></div>
             <div style="display:flex;justify-content:space-between"><span style="color:#6b7280">Jami qarz</span><span style="font-weight:700;color:#dc2626">{{ number_format($statDebt, 0, '.', ' ') }} so'm</span></div>
 
-            <div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.4px;margin-top:7px;border-top:1px dashed #e5e7eb;padding-top:6px">Qilinmagan — {{ $statPendingCount }} ta</div>
-            <div style="display:flex;justify-content:space-between"><span style="color:#6b7280">Jami summa</span><span style="font-weight:700;color:#9a3412">{{ number_format($statPendingSum, 0, '.', ' ') }} so'm</span></div>
-            <div style="display:flex;justify-content:space-between"><span style="color:#6b7280">To'langan</span><span style="font-weight:700;color:#16a34a">{{ number_format($statPendingPaid, 0, '.', ' ') }} so'm</span></div>
-            <div style="display:flex;justify-content:space-between"><span style="color:#6b7280">Qolgan qarz</span><span style="font-weight:700;color:#dc2626">{{ number_format($statPendingDebt, 0, '.', ' ') }} so'm</span></div>
-
-            <div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.4px;margin-top:7px;border-top:1px dashed #e5e7eb;padding-top:6px">Tugallangan — {{ $statDone }} ta</div>
-            <div style="display:flex;justify-content:space-between"><span style="color:#6b7280">Jami summa</span><span style="font-weight:700;color:#374151">{{ number_format($statDoneSum, 0, '.', ' ') }} so'm</span></div>
-            <div style="display:flex;justify-content:space-between"><span style="color:#6b7280">To'langan</span><span style="font-weight:700;color:#16a34a">{{ number_format($statDonePaid, 0, '.', ' ') }} so'm</span></div>
-            @if($statDoneDebt > 0)
-            <div style="display:flex;justify-content:space-between"><span style="color:#6b7280">Qolgan qarz</span><span style="font-weight:700;color:#dc2626">{{ number_format($statDoneDebt, 0, '.', ' ') }} so'm</span></div>
+            @if(count($byServiceType) > 0)
+            <div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.4px;margin-top:7px;border-top:1px dashed #e5e7eb;padding-top:6px">Ishlar turlari bo'yicha</div>
+            @foreach($byServiceType as $svc)
+            <div style="display:flex;justify-content:space-between"><span style="color:#6b7280">{{ $svc['label'] }} <span style="color:#9ca3af">({{ $svc['count'] }} ta)</span></span><span style="font-weight:700;color:#374151">{{ number_format($svc['total'], 0, '.', ' ') }} so'm</span></div>
+            @endforeach
             @endif
         </div>
     </div>
