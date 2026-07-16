@@ -122,6 +122,8 @@
     $nrmMonths = ['Yan','Fev','Mar','Apr','May','Iyun','Iyul','Avg','Sen','Okt','Noy','Dek'];
     $nrmPalette = ['#f97316','#3b82f6','#8b5cf6','#14b8a6','#eab308','#ec4899','#ef4444','#0ea5e9','#22c55e','#a855f7'];
 @endphp
+{{-- Hodimlar oylik norma bajarilishi — vaqtincha yashirilgan --}}
+@if(false)
 <div class="mr-card">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px">
         <div>
@@ -198,6 +200,7 @@
     </div>
     @endif
 </div>
+@endif
 
 {{-- ══ MyGOV — kim orqali kelgan (FISH) ══ --}}
 <style>
