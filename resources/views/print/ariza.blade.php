@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <title>Qabul arizasi — {{ $project->number }}</title>
 <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -109,8 +110,8 @@
     .sig-block { flex: 1; position: relative; min-height: 110px; }
     .stamp-img {
         position: absolute;
-        bottom: 0px;
-        left: -8px;
+        top: -45px;
+        left: 19px;
         width: 280px;
         opacity: 0.92;
         pointer-events: none;
@@ -135,17 +136,75 @@
     .lang-uz, .lang-ru { display: none; }
     .lang-uz.active, .lang-ru.active { display: block; }
 
-    .copy2 { display: none; }
-    @media print {
-        body.print-firma .copy2 { display: none !important; }
-        body.print-mijoz .copy1 { display: none !important; }
-        body.print-mijoz .copy2 { display: flex !important; flex-direction: column; }
+    /* Mijoz nusxasi — ramkasiz, sof matn ko'rinishi */
+    .conditions-plain {
+        border: none;
+        border-radius: 0;
+        background: transparent;
+        padding: 0;
     }
+
+    /* Mijoz nusxasidagi katta BILDIRISHNOMA sarlavhasi */
+    .bild-title {
+        font-size: 24px;
+        font-weight: 800;
+        color: #1e3a5f;
+        text-align: center;
+        letter-spacing: 1px;
+        margin-bottom: 10px;
+    }
+    .bild-title-line {
+        border: none;
+        border-top: 2px solid #cbd5e1;
+        margin-bottom: 16px;
+    }
+
+    /* Mijoz imzosi — sudrab (drag) joylashtiriladigan, o'lchami o'zgartiriladigan rasm */
+    .client-sig-wrap {
+        position: absolute;
+        top: 10px;
+        left: 60px;
+        width: 240px;
+        cursor: move;
+        z-index: 2;
+    }
+    .client-sig-img { width: 100%; display: block; filter: contrast(1.3); pointer-events: none; }
+    .sig-rsz {
+        position: absolute; right: -8px; bottom: -8px; width: 16px; height: 16px;
+        border-radius: 50%; background: #2563eb; border: 2px solid #fff;
+        cursor: nwse-resize; z-index: 3;
+    }
+    .sig-btn {
+        margin-top: 10px; padding: 6px 14px; border-radius: 6px;
+        border: 1px solid #93c5fd; background: #eff6ff; color: #1d4ed8;
+        font-size: 12px; font-weight: 700; cursor: pointer;
+    }
+
+    /* Mijoz imzo chizish oynasi (to'liq ekran) */
+    .sign-ov { position: fixed; inset: 0; background: #fff; z-index: 300; display: none; flex-direction: column; }
+    .sign-box { background: #fff; width: 100%; height: 100%; display: flex; flex-direction: column; }
+    .sign-hd { font-size: 16px; font-weight: 700; color: #111; padding: 12px 16px; border-bottom: 1px solid #e5e7eb; flex-shrink: 0; }
+    .sign-hd span { font-weight: 400; color: #9ca3af; font-size: 12px; }
+    #signCanvas { border: none; background: #fff; touch-action: none; cursor: crosshair; display: block; flex: 1; width: 100%; min-height: 0; }
+    .sign-actions { display: flex; gap: 10px; align-items: center; padding: 12px 16px; border-top: 1px solid #e5e7eb; flex-shrink: 0; }
+    .sign-actions button { border: none; border-radius: 8px; padding: 13px 22px; font-size: 15px; font-weight: 700; cursor: pointer; }
+    .s-clear { background: #f1f5f9; color: #475569; }
+    .s-cancel { background: #e5e7eb; color: #374151; }
+    .s-done { background: #16a34a; color: #fff; }
+
+    /* Ko'rinish rejimi — ekranda ham, chop etishda ham bir xil (WYSIWYG):
+       "Mijoz nusxasi" tanlansa, mijoz shu yerda o'z imzosini qo'ya oladi,
+       keyin xohlagan payt "Chop etish" bosiladi. */
+    .copy2 { display: none; }
+    body.view-mijoz .copy1 { display: none; }
+    body.view-mijoz .copy2 { display: flex; flex-direction: column; }
+    .view-btn.active { outline: 2px solid #fff; outline-offset: -2px; }
 
     @media print {
         body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .page { padding: 10mm 12mm; }
         .no-print { display: none !important; }
+        .sign-ov { display: none !important; }
     }
 
     @page { size: A4; margin: 0; }
@@ -167,11 +226,14 @@
         </button>
     </div>
     <div style="width:1px;height:28px;background:rgba(255,255,255,0.3);"></div>
-    <button onclick="printMode('firma')" style="background:#fff;color:#1d4ed8;border:none;padding:8px 22px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;">
-        🖨 Firma nusxasi
+    <button id="btn-view-firma" class="view-btn" onclick="viewMode('firma')" style="background:#fff;color:#1d4ed8;border:none;padding:8px 22px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;">
+        👁 Firma nusxasi
     </button>
-    <button onclick="printMode('mijoz')" style="background:#22c55e;color:#fff;border:none;padding:8px 22px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;">
-        🖨 Mijoz nusxasi
+    <button id="btn-view-mijoz" class="view-btn" onclick="viewMode('mijoz')" style="background:#22c55e;color:#fff;border:none;padding:8px 22px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;">
+        👁 Mijoz nusxasi
+    </button>
+    <button onclick="window.print()" style="background:#fbbf24;color:#78350f;border:none;padding:8px 22px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;">
+        🖨 Chop etish
     </button>
     <div style="width:1px;height:28px;background:rgba(255,255,255,0.3);"></div>
     <button onclick="window.open('{{ route('print.project.obloshka', $project) }}?qavat=1','_blank')" style="background:#fff;color:#1d4ed8;border:none;padding:8px 18px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;">
@@ -410,66 +472,9 @@
 
 <!-- ===== MIJOZ UCHUN 2-NUSXA (summalar yo'q) ===== -->
 <div class="copy2">
-    <div class="header">
-        <div class="header-left">
-            <h1>Qabul arizasi</h1>
-            <div class="order-num">
-                <span>Ariza</span>
-                <span class="num-badge">{{ $project->number }}</span>
-                &nbsp;&nbsp;{{ $project->created_at->format('d.m.Y') }}
-            </div>
-        </div>
-        <div class="header-right">
-            <strong>BESTHOME CRM</strong>
-            +998 99 468 19 91<br>
-            {{ now()->format('d.m.Y H:i') }}
-        </div>
-    </div>
-
-    <table class="main-table">
-        <tr>
-            <td class="label">Mijoz (F.I.Sh)</td>
-            <td class="value" colspan="2">
-                <strong>{{ $project->owner_name }}</strong>
-                @if($project->phones)
-                    @foreach($project->phones as $phone)
-                        &nbsp;&nbsp;{{ is_array($phone) ? ($phone['phone'] ?? '') : $phone }}@if(!$loop->last),@endif
-                    @endforeach
-                @endif
-            </td>
-        </tr>
-        <tr>
-            <td class="label">Loyiha turi</td>
-            <td class="value" colspan="2">
-                @php $cats=['turar'=>'Turar-joy','tijorat'=>'Tijorat binosi','qishloq'=>'Qishloq qurilishi','sanoat'=>'Sanoat binosi','boshqa'=>'Boshqa']; @endphp
-                {{ $cats[$project->category] ?? $project->category }}
-            </td>
-        </tr>
-        <tr>
-            <td class="label">Loyiha nomi</td>
-            <td class="value" colspan="2">{{ $project->title ?: '—' }}</td>
-        </tr>
-        <tr>
-            <td class="label">Ob'ekt manzili</td>
-            <td class="value" colspan="2">{{ $project->address }}</td>
-        </tr>
-        <tr>
-            <td class="label">Mas'ul xodim</td>
-            <td class="value" colspan="2">{{ $project->assignedUsers->pluck('name')->join(', ') ?: '—' }}</td>
-        </tr>
-        <tr>
-            <td class="label">Taxminiy muddat</td>
-            <td class="value" colspan="2">{{ $project->deadline_date ? $project->deadline_date->format('d.m.Y') : '—' }}</td>
-        </tr>
-        <tr>
-            <td class="label">Izohlar</td>
-            <td class="value" colspan="2">{{ $project->description ?: '—' }}</td>
-        </tr>
-    </table>
-
-    <div class="conditions lang-uz active">
-        <h3>{{ $project->number }} sonli shartnomaga ilova</h3>
-        <p style="font-weight:700;margin-bottom:8px;font-size:12px;">Bildirishnoma</p>
+    <div class="conditions conditions-plain lang-uz active">
+        <div class="bild-title">BILDIRISHNOMA</div>
+        <hr class="bild-title-line">
         <p style="line-height:1.75;text-align:justify;">
             Men {{ $project->created_at->format('d.m.Y') }} yildagi
             <strong>{{ $project->number }}</strong> sonli obyektning loyiha hujjatlarini ishlab chiqish haqidagi
@@ -491,9 +496,9 @@
             Kelib chiqadigan salbiy oqibatlar uchun javobgarlikni o'z zimmamda bo'lishidan xabardorman.
         </p>
     </div>
-    <div class="conditions lang-ru">
-        <h3>Приложение к договору № {{ $project->number }}</h3>
-        <p style="font-weight:700;margin-bottom:8px;font-size:12px;">Уведомление</p>
+    <div class="conditions conditions-plain lang-ru">
+        <div class="bild-title">УВЕДОМЛЕНИЕ</div>
+        <hr class="bild-title-line">
         <p style="line-height:1.75;text-align:justify;">
             Я, являясь Заказчиком (собственником) по договору № <strong>{{ $project->number }}</strong>
             от {{ $project->created_at->format('d.m.Y') }} года на разработку проектной документации объекта
@@ -514,18 +519,28 @@
 
     <div class="signatures">
         <div class="sig-block">
-            <div class="sig-title">Kompaniya vakili:</div>
+            <div class="sig-title">Direktor:</div>
             <div class="sig-line"></div>
             <div class="sig-label">Imzo / muhr</div>
-            <div class="sig-name">{{ $project->assignedUsers->first()?->name ?: '________________' }}</div>
+            <div class="sig-name">Akimdjanov N.U</div>
             <img src="/images/imzo.png" class="stamp-img" alt="">
         </div>
         <div class="sig-block sig-right">
-            <div class="sig-title">Buyurtmachi:</div>
+            <div class="sig-title">Mulkdor:</div>
+            @if($project->signature_path)
+            <div class="client-sig-wrap" id="clientSigWrap">
+                <img src="{{ route('signature.view', $project) }}?t={{ time() }}" class="client-sig-img" id="clientSigImg" alt="">
+                <div class="sig-rsz no-print" id="clientSigRsz" title="O'lcham"></div>
+            </div>
+            @endif
             <div class="sig-line"></div>
             <div class="sig-label">Imzo</div>
             <div class="sig-name">{{ $project->owner_name }}</div>
             <div style="font-size:11px;color:#888;margin-top:3px;">shartlar bilan tanishib, rozilik bildirdi</div>
+            <button type="button" class="no-print sig-btn" onclick="openSignPad()">✍️ Mijoz imzosi</button>
+            @if($project->signature_path)
+            <button type="button" class="no-print sig-btn" onclick="resetSigPos()" style="background:#f3f4f6;border-color:#d1d5db;color:#374151">↺ Joylashuvni tiklash</button>
+            @endif
         </div>
     </div>
 
@@ -537,6 +552,159 @@
 </div><!-- /copy2 -->
 
 </div><!-- /page -->
+
+{{-- ✍️ Mijoz imzo chizish oynasi (to'liq ekran) --}}
+<div class="sign-ov no-print" id="signOv">
+    <div class="sign-box">
+        <div class="sign-hd">✍️ Mijoz qo'l qo'ysin <span>— sichqoncha yoki barmoq bilan chizing</span></div>
+        <canvas id="signCanvas"></canvas>
+        <div class="sign-actions">
+            <button class="s-clear" type="button" onclick="clearSign()">🧹 Tozalash</button>
+            <span style="flex:1"></span>
+            <button class="s-cancel" type="button" onclick="closeSignPad()">Bekor</button>
+            <button class="s-done" type="button" onclick="finishSign()">✓ Saqlash</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const SIG_SAVE_URL = @json(route('signature.save', $project));
+const CSRF_TOKEN    = document.querySelector('meta[name=csrf-token]').content;
+let signCtx = null, signDrawn = false, signInit = false;
+
+function openSignPad(){
+    const c = document.getElementById('signCanvas');
+    document.getElementById('signOv').style.display = 'flex';
+    requestAnimationFrame(() => {
+        const r = c.getBoundingClientRect();
+        c.width  = Math.round(r.width);
+        c.height = Math.round(r.height);
+        signCtx = c.getContext('2d');
+        signCtx.lineWidth = 4; signCtx.lineCap = 'round'; signCtx.lineJoin = 'round'; signCtx.strokeStyle = '#152a6e';
+        clearSign();
+        if (!signInit) { setupSignDraw(c); signInit = true; }
+    });
+}
+function closeSignPad(){ document.getElementById('signOv').style.display = 'none'; }
+function clearSign(){
+    if (!signCtx) return;
+    const c = document.getElementById('signCanvas');
+    signCtx.clearRect(0, 0, c.width, c.height);
+    signDrawn = false;
+}
+function setupSignDraw(c){
+    let drawing = false, lx = 0, ly = 0;
+    const pos = e => { const r = c.getBoundingClientRect(); const sx = c.width / r.width, sy = c.height / r.height;
+        const p = e.touches ? e.touches[0] : e; return [(p.clientX - r.left) * sx, (p.clientY - r.top) * sy]; };
+    const start = e => { drawing = true; [lx, ly] = pos(e); e.preventDefault(); };
+    const move  = e => { if (!drawing) return; const [x, y] = pos(e); signCtx.beginPath(); signCtx.moveTo(lx, ly); signCtx.lineTo(x, y); signCtx.stroke(); lx = x; ly = y; signDrawn = true; e.preventDefault(); };
+    const end   = () => { drawing = false; };
+    c.addEventListener('mousedown', start); c.addEventListener('mousemove', move); window.addEventListener('mouseup', end);
+    c.addEventListener('touchstart', start, {passive:false}); c.addEventListener('touchmove', move, {passive:false}); window.addEventListener('touchend', end);
+}
+// Imzo atrofidagi bo'sh (shaffof) joyni kesib tashlaydi — shunda imzo
+// hujjatda chiziqqa yaqin, "bitta chiziqda" turadi (katta bo'sh maydonda
+// suzib qolmaydi).
+function cropSignature(c){
+    const ctx = c.getContext('2d');
+    const {width: w, height: h} = c;
+    const data = ctx.getImageData(0, 0, w, h).data;
+    let minX = w, minY = h, maxX = 0, maxY = 0, found = false;
+    for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+            if (data[(y * w + x) * 4 + 3] > 10) {
+                found = true;
+                if (x < minX) minX = x; if (x > maxX) maxX = x;
+                if (y < minY) minY = y; if (y > maxY) maxY = y;
+            }
+        }
+    }
+    if (!found) return c;
+    const pad = 8;
+    minX = Math.max(0, minX - pad); minY = Math.max(0, minY - pad);
+    maxX = Math.min(w - 1, maxX + pad); maxY = Math.min(h - 1, maxY + pad);
+    const cw = maxX - minX + 1, ch = maxY - minY + 1;
+    const out = document.createElement('canvas');
+    out.width = cw; out.height = ch;
+    out.getContext('2d').drawImage(c, minX, minY, cw, ch, 0, 0, cw, ch);
+    return out;
+}
+async function finishSign(){
+    if (!signDrawn) { alert("Avval mijoz qo'l qo'ysin"); return; }
+    const c = document.getElementById('signCanvas');
+    const dataUrl = cropSignature(c).toDataURL('image/png');
+    try {
+        const resp = await fetch(SIG_SAVE_URL, {method:'POST', headers:{'Content-Type':'application/json','X-CSRF-TOKEN':CSRF_TOKEN}, body: JSON.stringify({img: dataUrl})});
+        const data = await resp.json();
+        if (!data.ok) { alert('Xato: ' + (data.message || 'saqlanmadi')); return; }
+        location.reload();
+    } catch (e) { alert('Xatolik: ' + e.message); }
+}
+
+// ── Mijoz imzosini sudrab joylashtirish / o'lchamini o'zgartirish ──
+// Joylashuv brauzerda (shu kompyuterda, shu loyiha uchun) eslab qolinadi.
+const SIG_POS_KEY     = 'clientSigPos_' + {{ (int) $project->id }};
+const SIG_POS_DEFAULT = {top: 10, left: 60, width: 240};
+
+function applySigPos(pos){
+    const wrap = document.getElementById('clientSigWrap');
+    if (!wrap) return;
+    wrap.style.top   = pos.top + 'px';
+    wrap.style.left  = pos.left + 'px';
+    wrap.style.width = pos.width + 'px';
+}
+function loadSigPos(){
+    try { const raw = localStorage.getItem(SIG_POS_KEY); if (raw) return JSON.parse(raw); } catch (e) {}
+    return null;
+}
+function saveSigPos(pos){
+    try { localStorage.setItem(SIG_POS_KEY, JSON.stringify(pos)); } catch (e) {}
+}
+function resetSigPos(){
+    try { localStorage.removeItem(SIG_POS_KEY); } catch (e) {}
+    applySigPos(SIG_POS_DEFAULT);
+}
+function setupSigDrag(){
+    const wrap = document.getElementById('clientSigWrap');
+    if (!wrap) return;
+    const rsz = document.getElementById('clientSigRsz');
+    let mode = null, sx = 0, sy = 0, ol = 0, ot = 0, ow = 0;
+
+    applySigPos(loadSigPos() || SIG_POS_DEFAULT);
+
+    const posNow = () => ({
+        top:   parseFloat(wrap.style.top)   || 0,
+        left:  parseFloat(wrap.style.left)  || 0,
+        width: parseFloat(wrap.style.width) || SIG_POS_DEFAULT.width,
+    });
+    const start = (x, y, isResize) => {
+        mode = isResize ? 'resize' : 'move';
+        sx = x; sy = y;
+        const p = posNow(); ol = p.left; ot = p.top; ow = p.width;
+    };
+    const move = (x, y) => {
+        if (!mode) return;
+        if (mode === 'move') {
+            wrap.style.left = (ol + (x - sx)) + 'px';
+            wrap.style.top  = (ot + (y - sy)) + 'px';
+        } else {
+            wrap.style.width = Math.max(40, ow + (x - sx)) + 'px';
+        }
+    };
+    const end = () => { if (mode) saveSigPos(posNow()); mode = null; };
+
+    wrap.addEventListener('mousedown', e => { if (e.target === rsz) return; start(e.clientX, e.clientY, false); e.preventDefault(); });
+    rsz.addEventListener('mousedown', e => { start(e.clientX, e.clientY, true); e.stopPropagation(); e.preventDefault(); });
+    window.addEventListener('mousemove', e => move(e.clientX, e.clientY));
+    window.addEventListener('mouseup', end);
+
+    wrap.addEventListener('touchstart', e => { if (e.target === rsz) return; const t = e.touches[0]; start(t.clientX, t.clientY, false); }, {passive:true});
+    rsz.addEventListener('touchstart', e => { const t = e.touches[0]; start(t.clientX, t.clientY, true); e.stopPropagation(); }, {passive:true});
+    window.addEventListener('touchmove', e => { if (!mode) return; const t = e.touches[0]; move(t.clientX, t.clientY); }, {passive:true});
+    window.addEventListener('touchend', end);
+}
+setupSigDrag();
+</script>
 
 <script>
 const translations = {
@@ -623,12 +791,19 @@ function setLang(lang) {
     }
 }
 
-function printMode(mode) {
-    document.body.classList.remove('print-firma', 'print-mijoz');
-    document.body.classList.add('print-' + mode);
-    window.print();
-    document.body.classList.remove('print-firma', 'print-mijoz');
+function viewMode(mode) {
+    document.body.classList.remove('view-firma', 'view-mijoz');
+    document.body.classList.add('view-' + mode);
+    document.getElementById('btn-view-firma').classList.toggle('active', mode === 'firma');
+    document.getElementById('btn-view-mijoz').classList.toggle('active', mode === 'mijoz');
+    // URL'ga yozib qo'yamiz — imzo saqlangach sahifa qayta yuklanganda ham
+    // shu ko'rinish (Mijoz nusxasi) saqlanib qolishi uchun.
+    const url = new URL(location.href);
+    url.searchParams.set('view', mode);
+    history.replaceState(null, '', url);
 }
+// Sahifa ochilganda — URL'dagi ?view= parametriga qarab boshlang'ich ko'rinish
+viewMode(new URLSearchParams(location.search).get('view') === 'mijoz' ? 'mijoz' : 'firma');
 </script>
 </body>
 </html>
