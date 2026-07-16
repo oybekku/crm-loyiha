@@ -45,7 +45,22 @@
 .kbn-paid{color:#16a34a!important}
 .kbn-debt{color:#e11d48!important}
 .kbn-muted{color:#94a3b8!important}
+.kbn-total{color:#334155!important}
 @media(prefers-reduced-motion:reduce){.kbn-vside::after,.kbn-badge{animation:none}}
+/* ══ Tungi rejim: NEON karta shaffof-oq fon (rgba white glass) qorong'i sahifada
+   past kontrastga aylanadi — shu sababli qora, xiraroq shaffof fon + och matn
+   ranglari alohida beriladi (kunduzgi dizaynga tegmasdan) ══ */
+.dark .kbn-card{background:rgba(15,23,42,.72)!important;border-color:color-mix(in srgb,var(--acc) 55%,#334155)!important}
+.dark .kbn-name{color:#f1f5f9!important}
+.dark .kbn-emp{color:#94a3b8!important}
+.dark .kbn-tag{background:color-mix(in srgb,var(--acc) 18%,#0f172a)!important;border-color:color-mix(in srgb,var(--acc) 55%,#334155)!important}
+.dark .kbn-tag.done{color:#64748b!important;border-color:#334155!important;background:#1e293b!important}
+.dark .kbn-st{color:#94a3b8!important;border-color:#334155!important}
+.dark .kbn-st.ok{color:#4ade80!important;border-color:#166534!important;background:#052e1b!important}
+.dark .kbn-paid{color:#4ade80!important}
+.dark .kbn-debt{color:#fb7185!important}
+.dark .kbn-muted{color:#94a3b8!important}
+.dark .kbn-total{color:#e2e8f0!important}
 /* ══ ZUDLIK (bayroq + qizil neon) ══ */
 @keyframes kbn-redneon{0%,100%{box-shadow:0 0 0 1.5px #cd201f,0 0 16px -2px rgba(205,32,31,.55),0 0 34px -6px rgba(205,32,31,.45)}50%{box-shadow:0 0 0 1.5px #a01518,0 0 28px 0 rgba(205,32,31,.8),0 0 54px -4px rgba(160,20,24,.6)}}
 .kbn-card.kbn-fire{border-color:#cd201f!important;animation:kbn-redneon 1.8s ease-in-out infinite}
@@ -74,22 +89,33 @@
 /* Move button */
 .p-move-btn{position:relative;display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:3px 8px;border-radius:6px;border:1px solid #e5e7eb;background:#f9fafb;color:#374151;cursor:pointer;white-space:nowrap}
 .p-move-btn:hover{background:#eff6ff;border-color:#93c5fd;color:#2563eb}
+.dark .p-move-btn{background:#273244;border-color:#374151;color:#cbd5e1}
+.dark .p-move-btn:hover{background:#1e3a5f;border-color:#3b82f6;color:#93c5fd}
 .p-move-dropdown{position:absolute;bottom:calc(100% + 4px);left:0;z-index:200;background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:180px;padding:4px}
+.dark .p-move-dropdown{background:#1f2937;border-color:#374151;box-shadow:0 8px 24px rgba(0,0,0,.4)}
 .p-move-item{display:block;width:100%;text-align:left;padding:6px 10px;font-size:11px;font-weight:500;border-radius:6px;border:none;background:none;cursor:pointer;color:#374151}
 .p-move-item:hover{background:#f3f4f6}
+.dark .p-move-item{color:#cbd5e1}
+.dark .p-move-item:hover{background:#273244}
 .p-num{font-size:11px;color:#6b7280;font-family:monospace}
+.dark .p-num{color:#94a3b8}
 .p-owner{font-weight:400;font-size:13px;margin:4px 0 8px;color:#374151;letter-spacing:0.01em}
 .dark .p-owner{color:#f9fafb}
 .p-addr{font-size:11px;color:#6b7280;margin-bottom:6px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.dark .p-addr{color:#94a3b8}
 .p-services{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:6px}
 .p-srv-tag{background:#fef2f2;color:#dc2626;font-size:10px;padding:2px 7px;border-radius:4px;font-weight:500}
 .dark .p-srv-tag{background:#7f1d1d;color:#fca5a5}
 .p-phone{font-size:11px;color:#6b7280;margin-bottom:6px;display:flex;align-items:center;gap:4px}
+.dark .p-phone{color:#94a3b8}
 .p-money{font-size:12px;margin-bottom:3px}
 .p-money-total{color:#2563eb;font-weight:600}
+.dark .p-money-total{color:#60a5fa}
 .p-money-paid{color:#6b7280;font-size:11px}
+.dark .p-money-paid{color:#94a3b8}
 /* p-bar-wrap va p-bar — yuqorida qayta aniqlangan */
 .p-footer{display:flex;justify-content:space-between;align-items:center;font-size:10px;color:#9ca3af;margin-top:4px}
+.dark .p-footer{color:#64748b}
 /* Top bar */
 .kb-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
 .kb-title{font-size:18px;font-weight:800;color:#111827}
@@ -98,7 +124,9 @@
 .kb-stat{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:6px 12px;text-align:center}
 .dark .kb-stat{background:#1f2937;border-color:#374151}
 .kb-stat-num{font-size:16px;font-weight:800;color:#2563eb}
+.dark .kb-stat-num{color:#60a5fa}
 .kb-stat-lbl{font-size:10px;color:#6b7280}
+.dark .kb-stat-lbl{color:#94a3b8}
 .btn-new{background:#2563eb;color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s}
 .btn-new:hover{background:#1d4ed8}
 
@@ -327,29 +355,55 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 .dark .p-delay-warn{background:#4c0519;color:#f87171}
 .p-delay-info{font-size:10px;color:#6b7280;background:#f3f4f6;border-radius:5px;padding:3px 7px;margin-bottom:7px;display:inline-block}
 .dark .p-delay-info{color:#94a3b8;background:#1e293b}
+
+/* ══ To'lov navbati (kassir + admin) — tungi rejim ══ */
+.pq-panel{background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.07)}
+.dark .pq-panel{background:#1e293b;box-shadow:0 1px 6px rgba(0,0,0,.35)}
+.pq-panel2{border-top:1px solid #e5e7eb}
+.dark .pq-panel2{border-top-color:#334155}
+.pq-title{color:#111827}
+.dark .pq-title{color:#f1f5f9}
+.pq-title2{color:#374151}
+.dark .pq-title2{color:#cbd5e1}
+.pq-count{color:#9ca3af}
+.dark .pq-count{color:#64748b}
+.pq-row-green{background:#f0fdf4;border:1px solid #bbf7d0}
+.dark .pq-row-green{background:#052e1b;border-color:#166534}
+.pq-row-gray{background:#f9fafb}
+.dark .pq-row-gray{background:#1e293b}
+.pq-num{color:#9ca3af}
+.dark .pq-num{color:#64748b}
+.pq-name{color:#111827}
+.dark .pq-name{color:#f1f5f9}
+.pq-addr{color:#6b7280}
+.dark .pq-addr{color:#94a3b8}
+.pq-remain{color:#dc2626}
+.dark .pq-remain{color:#f87171}
+.pq-meta{color:#9ca3af}
+.dark .pq-meta{color:#64748b}
 </style>
 
 
 {{-- TO'LOV NAVBATI (KASSIR — tepaда) --}}
 @if(auth()->user()?->isHisobchi() && $paymentQueue->count() > 0)
-<div style="margin-bottom:20px;background:#fff;border-radius:10px;padding:14px 18px;box-shadow:0 1px 6px rgba(0,0,0,.07)">
+<div class="pq-panel" style="margin-bottom:20px;border-radius:10px;padding:14px 18px">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
         <svg width="15" height="15" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-        <span style="font-size:13px;font-weight:700;color:#111827">To'lov navbati</span>
+        <span class="pq-title" style="font-size:13px;font-weight:700">To'lov navbati</span>
         <span style="background:#dcfce7;color:#16a34a;font-size:11px;font-weight:700;border-radius:10px;padding:1px 8px">{{ $paymentQueue->count() }} ta</span>
     </div>
     <div style="display:flex;flex-direction:column;gap:6px">
         @foreach($paymentQueue as $qp)
         @php $remaining = $qp->total_price - $qp->paid_amount; @endphp
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:10px 14px;border-radius:8px;background:#f0fdf4;border:1px solid #bbf7d0">
+        <div class="pq-row-green" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:10px 14px;border-radius:8px">
             <div style="flex:1;min-width:180px">
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
-                    <span style="font-size:11px;color:#9ca3af;font-family:monospace">{{ $qp->number }}</span>
-                    <span style="font-size:13px;font-weight:600;color:#111827">{{ $qp->owner_name }}</span>
-                    <span style="font-size:11px;color:#6b7280">— {{ $qp->address }}</span>
+                    <span class="pq-num" style="font-size:11px;font-family:monospace">{{ $qp->number }}</span>
+                    <span class="pq-name" style="font-size:13px;font-weight:600">{{ $qp->owner_name }}</span>
+                    <span class="pq-addr" style="font-size:11px">— {{ $qp->address }}</span>
                 </div>
-                <div style="display:flex;align-items:center;gap:12px;font-size:11px;color:#9ca3af">
-                    <span style="color:#dc2626;font-weight:600">Qoldiq: {{ number_format($remaining, 0, '.', ' ') }} so'm</span>
+                <div class="pq-meta" style="display:flex;align-items:center;gap:12px;font-size:11px">
+                    <span class="pq-remain" style="font-weight:600">Qoldiq: {{ number_format($remaining, 0, '.', ' ') }} so'm</span>
                     @if($qp->paymentRequester)
                     <span>{{ $qp->paymentRequester->name }} yubordi</span>
                     @endif
@@ -591,7 +645,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                             <span class="kbn-badge" style="background:{{ $wsC['color'] }};display:inline-block;padding:3px 12px;border-radius:20px;font-size:10px;font-weight:800;letter-spacing:.03em;white-space:nowrap">{{ $wsC['label'] }}</span>
                         </div>
                         @if($project->total_price > 0)
-                        <div style="font-size:11px;white-space:nowrap"><span class="kbn-muted">Umumiy</span> <b style="color:#334155">{{ number_format($project->total_price,0,'.',' ') }}</b></div>
+                        <div style="font-size:11px;white-space:nowrap"><span class="kbn-muted">Umumiy</span> <b class="kbn-total">{{ number_format($project->total_price,0,'.',' ') }}</b></div>
                         <div style="font-size:11px;white-space:nowrap"><span class="kbn-muted">To'langan</span> <b class="kbn-paid">{{ number_format($project->paid_amount,0,'.',' ') }}</b></div>
                         @if($qcC>0)<div style="font-size:11px;white-space:nowrap"><span class="kbn-muted">Qoldiq</span> <b class="kbn-debt">{{ number_format($qcC,0,'.',' ') }}</b></div>
                         @else<div style="font-size:11px;white-space:nowrap"><span class="kbn-paid">✓ To'liq to'langan</span></div>@endif
@@ -1093,24 +1147,24 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 
 {{-- TO'LOV NAVBATI (ADMIN/MENEJER — pastda) --}}
 @if(auth()->user()?->canSeeAllProjects() && $paymentQueue->count() > 0)
-<div style="margin-top:28px;padding-top:20px;border-top:1px solid #e5e7eb">
+<div class="pq-panel2" style="margin-top:28px;padding-top:20px">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
         <svg width="15" height="15" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-        <span style="font-size:13px;font-weight:600;color:#374151">To'lov navbati</span>
-        <span style="font-size:12px;color:#9ca3af">({{ $paymentQueue->count() }} ta)</span>
+        <span class="pq-title2" style="font-size:13px;font-weight:600">To'lov navbati</span>
+        <span class="pq-count" style="font-size:12px">({{ $paymentQueue->count() }} ta)</span>
     </div>
     <div style="display:flex;flex-direction:column;gap:6px">
         @foreach($paymentQueue as $qp)
         @php $remaining = $qp->total_price - $qp->paid_amount; @endphp
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:10px 14px;border-radius:8px;background:#f9fafb">
+        <div class="pq-row-gray" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:10px 14px;border-radius:8px">
             <div style="flex:1;min-width:200px">
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
-                    <span style="font-size:11px;color:#9ca3af;font-family:monospace">{{ $qp->number }}</span>
-                    <span style="font-size:13px;font-weight:600;color:#111827">{{ $qp->owner_name }}</span>
-                    <span style="font-size:11px;color:#6b7280">— {{ $qp->address }}</span>
+                    <span class="pq-num" style="font-size:11px;font-family:monospace">{{ $qp->number }}</span>
+                    <span class="pq-name" style="font-size:13px;font-weight:600">{{ $qp->owner_name }}</span>
+                    <span class="pq-addr" style="font-size:11px">— {{ $qp->address }}</span>
                 </div>
-                <div style="display:flex;align-items:center;gap:12px;font-size:11px;color:#9ca3af">
-                    <span style="color:#dc2626;font-weight:600">Qoldiq: {{ number_format($remaining, 0, '.', ' ') }} so'm</span>
+                <div class="pq-meta" style="display:flex;align-items:center;gap:12px;font-size:11px">
+                    <span class="pq-remain" style="font-weight:600">Qoldiq: {{ number_format($remaining, 0, '.', ' ') }} so'm</span>
                     @if($qp->paymentRequester)
                     <span>{{ $qp->paymentRequester->name }} yubordi</span>
                     @endif
