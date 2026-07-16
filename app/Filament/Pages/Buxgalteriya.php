@@ -6,6 +6,10 @@ use App\Models\FinancialAccount;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 
+// Eslatma: SimplePage (login sahifalari andozasi) sinab ko'rildi — u avtomatik
+// route ro'yxatiga qo'shilmas ekan (Filamentning HasRoutes xususiyati faqat
+// oddiy Page'da bor). Shu sababli oddiy Page qoldirildi, chap navigatsiya
+// menyusi esa view faylida CSS orqali shu sahifada yashiriladi.
 class Buxgalteriya extends Page
 {
     protected static string  $view            = 'filament.pages.buxgalteriya';

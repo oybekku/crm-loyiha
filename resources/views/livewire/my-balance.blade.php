@@ -45,7 +45,7 @@
             <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:16px">
 
                 {{-- Virtual karta --}}
-                <div style="background:linear-gradient(135deg,#3b1d18,#5c2a1a 55%,#7c3a1f);border-radius:16px;padding:22px;color:#f8e7c8;position:relative;overflow:hidden;min-height:185px;box-shadow:0 12px 30px rgba(60,20,10,.3)">
+                <div style="background:linear-gradient(135deg,#0d0d0f,#1a1a1d 55%,#232326);border-radius:16px;padding:22px;color:#e2e8f0;position:relative;overflow:hidden;min-height:185px;box-shadow:0 12px 30px rgba(0,0,0,.4)">
                     <div style="position:absolute;right:-30px;top:-30px;width:140px;height:140px;background:rgba(255,255,255,.06);border-radius:50%"></div>
                     <div style="display:flex;justify-content:space-between;align-items:flex-start">
                         <div style="font-size:22px;font-style:italic;font-weight:700;opacity:.85">BV</div>
