@@ -566,6 +566,9 @@
             <td style="text-align:center">
                 <span style="font-size:16px;font-weight:800;color:#374151">{{ $grp['count'] }}</span>
                 <div style="font-size:10px;color:#9ca3af">ish</div>
+                @if($grp['unique_projects'] !== $grp['count'])
+                <div style="font-size:10px;color:#dc2626;font-weight:700" title="Ba'zi loyihalarda bir xil xizmat bir necha marta yozilgan bo'lishi mumkin">⚠️ {{ $grp['unique_projects'] }} noyob loyiha</div>
+                @endif
             </td>
             <td style="text-align:right">{{ number_format($grp['total_price'], 0, '.', ' ') }} so'm</td>
             <td style="text-align:right;padding-right:14px">

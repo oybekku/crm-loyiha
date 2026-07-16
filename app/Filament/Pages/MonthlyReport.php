@@ -437,11 +437,12 @@ class MonthlyReport extends Page
             ->map(function ($stat) {
                 $items = collect($stat['all_items'])->sortByDesc('opened_at')->values();
                 return [
-                    'user'        => $stat['user'],
-                    'items'       => $items->toArray(),
-                    'count'       => $items->count(),
-                    'total_price' => $items->sum('price'),
-                    'total_share' => $items->sum('share'),
+                    'user'            => $stat['user'],
+                    'items'           => $items->toArray(),
+                    'count'           => $items->count(),
+                    'unique_projects' => $items->pluck('project_number')->unique()->count(),
+                    'total_price'     => $items->sum('price'),
+                    'total_share'     => $items->sum('share'),
                 ];
             })
             ->filter(fn ($g) => $g['count'] > 0)
