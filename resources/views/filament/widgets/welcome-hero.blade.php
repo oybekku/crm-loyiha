@@ -348,6 +348,13 @@
 @media(max-width:700px) {
     .bh-bottom { grid-template-columns: 1fr; }
     .bh-row3  { grid-template-columns: 1fr 1fr; }
+    /* Mobilda "Statistikani ko'rsatish" tugmasi sarlavha bilan bitta qatorga
+       sig'may, .bh-wrap ning overflow:hidden'i tomonidan kesib tashlanardi —
+       shu sababli qator pastga o'tkaziladi (wrap) va tugma to'liq kenglikda
+       o'z qatoriga chiqariladi. */
+    .bh-top-row { flex-wrap: wrap; }
+    .bh-eye-btn { width: 100%; justify-content: center; }
+    .bh-greeting { font-size: 26px; }
 }
 </style>
 
@@ -573,7 +580,7 @@
    tungi rejimda qora sahifa ustida yorqin oq quti bo'lib chiqib qolardi.
    Shu sababli qora rejim uchun alohida rang beriladi (kunduzgiga tegmasdan). */
 .dtj-panel{background:#fff;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,.05)}
-.dark .dtj-panel{background:#1e293b;border-color:#334155;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.dark .dtj-panel{background:transparent;border-color:#334155;box-shadow:none}
 .dtj-title{color:#111827}
 .dark .dtj-title{color:#f1f5f9}
 .dtj-muted{color:#9ca3af}
