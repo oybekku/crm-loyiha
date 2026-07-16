@@ -530,6 +530,75 @@
     @endif
 </div>
 
+{{-- XODIMLARGA BIRIKTIRILGAN ISHLAR — barcha hodimlar, bitta oddiy ro'yxatda.
+     Faqat LOYIHA shu oyda ochilgan bo'lsa ko'rinadi (ish qachon biriktirilgan/
+     tugatilganidan qat'i nazar) — masalan iyunda ochilgan loyihaga iyulda
+     biriktirilgan ish, shu jadvalda IYUN oyi hisobotida turadi. --}}
+<div class="mr-card">
+    <div style="font-size:15px;font-weight:700;color:#111827;margin-bottom:4px;display:flex;align-items:center;gap:8px">
+        <svg width="16" height="16" fill="none" stroke="#7c3aed" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Xodimlarga biriktirilgan ishlar
+        <span style="font-size:12px;font-weight:400;color:#9ca3af">({{ count($assignedWork) }} ta — loyiha shu oyda ochilgan bo'lsa)</span>
+    </div>
+    <div style="font-size:12px;color:#9ca3af;margin-bottom:14px">Har bir ish — loyihasi <b>shu oyda ochilgan</b> bo'lsa ko'rinadi, ishning o'zi qachon biriktirilgan/tugatilganidan qat'i nazar.</div>
+
+    @if(count($assignedWork) === 0)
+    <div style="text-align:center;color:#9ca3af;padding:24px;font-size:13px">Bu oyda ochilgan loyihalarga biriktirilgan ish yo'q</div>
+    @else
+    <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead>
+            <tr style="background:#f8fafc">
+                <th style="padding:8px 10px;text-align:left;font-weight:600;color:#475569;border-bottom:2px solid #e2e8f0">#</th>
+                <th style="padding:8px 10px;text-align:left;font-weight:600;color:#475569;border-bottom:2px solid #e2e8f0">Hodim</th>
+                <th style="padding:8px 10px;text-align:left;font-weight:600;color:#475569;border-bottom:2px solid #e2e8f0">Loyiha / FISH</th>
+                <th style="padding:8px 10px;text-align:left;font-weight:600;color:#475569;border-bottom:2px solid #e2e8f0">Xizmat</th>
+                <th style="padding:8px 10px;text-align:right;font-weight:600;color:#475569;border-bottom:2px solid #e2e8f0">Narx</th>
+                <th style="padding:8px 10px;text-align:right;font-weight:600;color:#d97706;border-bottom:2px solid #e2e8f0">Ulush</th>
+                <th style="padding:8px 10px;text-align:center;font-weight:600;color:#475569;border-bottom:2px solid #e2e8f0">Biriktirilgan</th>
+                <th style="padding:8px 10px;text-align:center;font-weight:600;color:#475569;border-bottom:2px solid #e2e8f0">Holat</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($assignedWork as $j => $aw)
+            <tr style="border-bottom:1px solid #f1f5f9">
+                <td style="padding:6px 10px;color:#9ca3af;font-size:11px">{{ $j + 1 }}</td>
+                <td style="padding:6px 10px;font-weight:600;color:#374151">{{ $aw['employee_name'] }}</td>
+                <td style="padding:6px 10px">
+                    <div style="font-weight:600;font-size:11px;font-family:monospace;color:#374151">{{ $aw['project_number'] }}</div>
+                    <div style="font-size:11px;color:#6b7280">{{ $aw['owner_name'] }}</div>
+                </td>
+                <td style="padding:6px 10px;color:#374151">{{ $aw['service_label'] ?? '—' }}</td>
+                <td style="padding:6px 10px;text-align:right;color:#111827">{{ number_format($aw['price'], 0, '.', ' ') }}</td>
+                <td style="padding:6px 10px;text-align:right;font-weight:700;color:#d97706">{{ number_format($aw['share'], 0, '.', ' ') }}</td>
+                <td style="padding:6px 10px;text-align:center;font-size:11px;color:#6b7280">
+                    {{ $aw['opened_at'] ? \Carbon\Carbon::parse($aw['opened_at'])->format('d.m.Y') : '—' }}
+                </td>
+                <td style="padding:6px 10px;text-align:center">
+                    @if($aw['is_done'])
+                        <span class="badge-done">✓ Tugallandi</span>
+                    @elseif($aw['is_late'])
+                        <span class="badge-late">{{ $aw['late_days'] }} kun kechikdi</span>
+                    @else
+                        <span class="badge-pending">Kutayotgan</span>
+                    @endif
+                </td>
+            </tr>
+            @endforeach
+        </tbody>
+        <tfoot>
+            <tr style="background:#f0fdf4;border-top:2px solid #86efac;font-weight:700">
+                <td colspan="4" style="padding:10px;text-align:right;color:#374151">Jami ({{ count($assignedWork) }} ta):</td>
+                <td style="padding:10px;text-align:right">{{ number_format(collect($assignedWork)->sum('price'), 0, '.', ' ') }}</td>
+                <td style="padding:10px;text-align:right;color:#d97706">{{ number_format(collect($assignedWork)->sum('share'), 0, '.', ' ') }}</td>
+                <td colspan="2"></td>
+            </tr>
+        </tfoot>
+    </table>
+    </div>
+    @endif
+</div>
+
 {{-- FIRMA HISOBOTI --}}
 <div class="mr-card">
     <div style="font-size:15px;font-weight:700;color:#111827;margin-bottom:16px;display:flex;align-items:center;gap:8px">

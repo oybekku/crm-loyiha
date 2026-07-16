@@ -430,6 +430,18 @@ class MonthlyReport extends Page
         }
         unset($stat);
 
+        // ══ XODIMLARGA BIRIKTIRILGAN ISHLAR — barcha hodimlar, bitta oddiy ro'yxatda ══
+        // Faqat LOYIHA shu oyda ochilgan bo'lsa (yuqoridagi $stat['all_items'] mantig'iga
+        // mos) — ish qachon biriktirilgan/tugatilganidan qat'i nazar.
+        $assignedWork = collect($userStats)
+            ->flatMap(fn($stat) => collect($stat['all_items'])->map(fn($it) => $it + [
+                'employee_name' => $stat['user']->name,
+            ]))
+            ->sortByDesc('opened_at')   // ikkilamchi mezon (barqaror saralash tufayli saqlanadi)
+            ->sortBy('employee_name')   // asosiy mezon
+            ->values()
+            ->toArray();
+
         $warnings = $projects->filter(
             fn($p) => $p->paid_amount < $p->total_price && $p->total_price > 0
         );
@@ -617,7 +629,8 @@ class MonthlyReport extends Page
             'allProjectsCount', 'allProjectsSum',
             'toliqTugatilgan', 'qismanTugatilgan', 'toliqCount', 'qismanCount',
             'tugatilganIshlar',
-            'normRows', 'normYear', 'mygovRows'
+            'normRows', 'normYear', 'mygovRows',
+            'assignedWork'
         );
     }
 }
