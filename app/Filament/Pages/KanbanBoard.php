@@ -74,6 +74,7 @@ class KanbanBoard extends Page
     public string $paymentAmount        = '';
     public string $paymentDate          = '';
     public string $paymentMethod        = 'naqd';
+    public ?int   $paymentAccountId     = null;
     public string $paymentNote          = '';
     public bool   $paymentMoveToEskiz   = true;
     public bool   $paymentFromQueue     = false;
@@ -664,6 +665,7 @@ class KanbanBoard extends Page
         $this->paymentAmount    = '';
         $this->paymentDate      = now()->format('Y-m-d');
         $this->paymentMethod    = 'naqd';
+        $this->paymentAccountId = null;
         $this->paymentNote      = '';
         $this->paymentFromQueue = $fromQueue;
 
@@ -683,6 +685,13 @@ class KanbanBoard extends Page
         $this->paymentToposyomkaUserId = null;
         $this->paymentEskizUserId      = null;
         $this->paymentAmountConfirm    = false;
+    }
+
+    // To'lov usuli o'zgarsa — avval tanlangan hisob boshqa turga tegishli bo'lib
+    // qolmasligi uchun tozalaymiz (masalan "Karta"dan "Naqd"ga o'tilsa).
+    public function updatedPaymentMethod(): void
+    {
+        $this->paymentAccountId = null;
     }
 
     public function savePayment(): void
@@ -725,6 +734,7 @@ class KanbanBoard extends Page
                 'amount'       => (float) $this->paymentAmount,
                 'payment_date' => $this->paymentDate,
                 'method'       => $this->paymentMethod,
+                'account_id'   => $this->paymentAccountId ?: null,
                 'note'         => trim($this->paymentNote) ?: null,
                 'created_by'   => auth()->id(),
                 'services'     => !empty($this->paymentSelectedServices) ? $this->paymentSelectedServices : null,
@@ -1428,6 +1438,11 @@ class KanbanBoard extends Page
         // Qidiruv tekis ro'yxati uchun — barcha statuslar belgisi
         $statusMap = $dbStatuses->keyBy('key')->map(fn($s) => ['label' => $s->label, 'color' => $s->color])->toArray();
 
-        return compact('statuses', 'allStatuses', 'routeStatuses', 'projects', 'users', 'serviceOptions', 'categoryOptions', 'priceTiers', 'paymentQueue', 'existingOwners', 'mygovFishList', 'kbMonthLabel', 'statusMap');
+        // To'lov oynasida "qaysi hisobga tushdi" tanlash uchun — faqat oyna ochiq bo'lsa
+        $paymentAccounts = $this->showPaymentModal
+            ? \App\Models\FinancialAccount::orderBy('sort_order')->orderBy('name')->get()
+            : collect();
+
+        return compact('statuses', 'allStatuses', 'routeStatuses', 'projects', 'users', 'serviceOptions', 'categoryOptions', 'priceTiers', 'paymentQueue', 'existingOwners', 'mygovFishList', 'kbMonthLabel', 'statusMap', 'paymentAccounts');
     }
 }

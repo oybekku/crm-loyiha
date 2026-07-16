@@ -1956,7 +1956,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                 </div>
                 <div>
                     <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:6px">To'lov usuli</label>
-                    <select wire:model="paymentMethod"
+                    <select wire:model.live="paymentMethod"
                             style="width:100%;padding:10px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;background:#fff">
                         <option value="naqd">Naqd pul</option>
                         <option value="bank">Bank o'tkazma</option>
@@ -1964,6 +1964,23 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                     </select>
                 </div>
             </div>
+            @php $payAccOpts = $paymentAccounts->where('type', $paymentMethod); @endphp
+            @if($payAccOpts->count() > 0)
+            <div>
+                <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Qaysi hisobga tushdi?</label>
+                <select wire:model="paymentAccountId"
+                        style="width:100%;padding:10px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;background:#fff">
+                    <option value="">— tanlanmagan —</option>
+                    @foreach($payAccOpts as $acc)
+                    <option value="{{ $acc->id }}">
+                        {{ $acc->name ?: ucfirst($acc->type) }}
+                        @if($acc->type === 'karta' && $acc->card_number) — {{ $acc->card_number }}@endif
+                        @if($acc->type === 'bank' && $acc->account_number) — {{ $acc->account_number }}@endif
+                    </option>
+                    @endforeach
+                </select>
+            </div>
+            @endif
             <div>
                 <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Izoh</label>
                 <textarea wire:model="paymentNote" rows="2"

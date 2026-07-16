@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Payment extends Model
 {
     protected $fillable = [
-        'project_id', 'amount', 'payment_date', 'method', 'note', 'created_by', 'services',
+        'project_id', 'amount', 'payment_date', 'method', 'account_id', 'note', 'created_by', 'services',
     ];
 
     protected $casts = [
@@ -35,6 +35,11 @@ class Payment extends Model
     public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function account()
+    {
+        return $this->belongsTo(FinancialAccount::class, 'account_id');
     }
 
     public static function methodOptions(): array
