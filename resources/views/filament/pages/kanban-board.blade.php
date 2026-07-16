@@ -1000,22 +1000,28 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
         inner.style.width = wrap.scrollWidth + 'px';
         if(top._bhBound) return;
         top._bhBound = true;
-        // "lock"ni darhol (sinxron) qaytarib qo'yish xato edi — brauzer aks-sado
-        // scroll hodisasini keyingi freymda (asinxron) yuboradi, shu sababli himoya
-        // ulgurmay, ikkala panel bir-birini "quvib" tebranib qolardi. Endi lock'ni
-        // keyingi freymda qaytaramiz — aks-sado hodisasi ham to'siladi.
-        var lock = false;
+        // Vaqtga (timeout/rAF) asoslangan himoya ishonchsiz ekan — tez sudraganda
+        // bitta freym ichida bir nechta scroll hodisasi kelib, ular tashlab
+        // yuborilardi (natijada sakrab-sakrab, battar tebranardi). Endi har bir
+        // "sabab"ni aniq "aks-sado" bilan juftlab, faqat o'sha aniq hodisa kelganda
+        // bloklaymiz — qachon kelishidan (sinxron/asinxron) qat'i nazar ishlaydi.
+        var expectTop = false, expectWrap = false;
         top.addEventListener('scroll', function(){
-            if(lock) return;
-            lock = true;
-            wrap.scrollLeft = top.scrollLeft;
-            requestAnimationFrame(function(){ lock = false; });
+            if(expectTop){ expectTop = false; return; }
+            // Qiymat o'zgarmasa brauzer aks-sado hodisasini yubormaydi — shu holda
+            // bayroqni ko'tarib qo'ymaymiz, aks holda u "osilib" qolib, keyingi
+            // haqiqiy sudrashni noto'g'ri bloklab qo'yishi mumkin edi.
+            if(wrap.scrollLeft !== top.scrollLeft){
+                expectWrap = true;
+                wrap.scrollLeft = top.scrollLeft;
+            }
         });
         wrap.addEventListener('scroll', function(){
-            if(lock) return;
-            lock = true;
-            top.scrollLeft = wrap.scrollLeft;
-            requestAnimationFrame(function(){ lock = false; });
+            if(expectWrap){ expectWrap = false; return; }
+            if(top.scrollLeft !== wrap.scrollLeft){
+                expectTop = true;
+                top.scrollLeft = wrap.scrollLeft;
+            }
         });
     }
     function init(){ setTimeout(sync, 80); }
