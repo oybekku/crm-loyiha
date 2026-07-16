@@ -665,7 +665,7 @@ class KanbanBoard extends Page
         $this->paymentAmount    = '';
         $this->paymentDate      = now()->format('Y-m-d');
         $this->paymentMethod    = 'naqd';
-        $this->paymentAccountId = null;
+        $this->paymentAccountId = $this->defaultAccountIdFor('naqd');
         $this->paymentNote      = '';
         $this->paymentFromQueue = $fromQueue;
 
@@ -691,7 +691,15 @@ class KanbanBoard extends Page
     // qolmasligi uchun tozalaymiz (masalan "Karta"dan "Naqd"ga o'tilsa).
     public function updatedPaymentMethod(): void
     {
-        $this->paymentAccountId = null;
+        $this->paymentAccountId = $this->defaultAccountIdFor($this->paymentMethod);
+    }
+
+    // To'lov usuliga mos yagona hisob bo'lsa — avtomatik shuni tanlaydi
+    // (bir nechta hisob bo'lsa, admin o'zi tanlaydi — null qaytaradi).
+    private function defaultAccountIdFor(string $type): ?int
+    {
+        $accounts = \App\Models\FinancialAccount::where('type', $type)->pluck('id');
+        return $accounts->count() === 1 ? $accounts->first() : null;
     }
 
     public function savePayment(): void
