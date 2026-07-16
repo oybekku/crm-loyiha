@@ -382,6 +382,7 @@ class MonthlyReport extends Page
                     'late_days'      => $lateDays,
                     'deadline_days'  => $s->deadline_days,
                     'work_started'   => $s->work_started_at,
+                    'opened_at'      => $s->created_at,
                 ];
             })->toArray();
         }

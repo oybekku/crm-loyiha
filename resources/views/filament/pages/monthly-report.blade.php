@@ -930,6 +930,7 @@
                 <tr style="background:#fff7ed">
                     <th style="padding:7px 10px;text-align:left;color:#9a3412;font-weight:600">Loyiha / Egasi</th>
                     <th style="padding:7px 10px;text-align:left;color:#9a3412;font-weight:600">Xizmat</th>
+                    <th style="padding:7px 10px;text-align:center;color:#9a3412;font-weight:600">Ochilgan</th>
                     <th style="padding:7px 10px;text-align:right;color:#9a3412;font-weight:600">Loyiha narxi</th>
                     <th style="padding:7px 10px;text-align:right;color:#9a3412;font-weight:600">Mening ulushim</th>
                     <th style="padding:7px 10px;text-align:center;color:#9a3412;font-weight:600">Holat</th>
@@ -947,6 +948,7 @@
                         <div style="font-size:11px;color:#6b7280">{{ $pi['owner_name'] }}</div>
                     </td>
                     <td style="padding:6px 10px;color:#374151">{{ $pi['service_label'] }}</td>
+                    <td style="padding:6px 10px;text-align:center;color:#6b7280;font-size:11px;white-space:nowrap">{{ $pi['opened_at'] ? \Carbon\Carbon::parse($pi['opened_at'])->format('d.m.Y') : '—' }}</td>
                     <td style="padding:6px 10px;text-align:right;color:#9ca3af;font-size:11px">{{ number_format($pi['price'],0,'.',' ') }}</td>
                     <td style="padding:6px 10px;text-align:right;font-weight:700;color:#d97706">{{ number_format($pi['my_share'] ?? 0,0,'.',' ') }}</td>
                     <td style="padding:6px 10px;text-align:center">
