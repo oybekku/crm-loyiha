@@ -218,6 +218,38 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 .tier-item.selected .tier-radio{border-color:#16a34a;background:#16a34a}
 .tier-label{font-size:11px;color:#374151;flex:1;line-height:1.3}
 .tier-price{font-size:11px;font-weight:700;color:#111827;white-space:nowrap;margin-left:6px}
+.dark .tier-tabs{border-bottom-color:#3f3f46}
+.dark .tier-tab{color:#a1a1aa}
+.dark .tier-tab.active{color:#60a5fa;border-bottom-color:#60a5fa}
+.dark .tier-tab:hover:not(.active){color:#e4e4e7;background:#27272a}
+.dark .tier-item{border-color:#3f3f46}
+.dark .tier-item:hover{border-color:#3b82f6;background:#1e3a5f}
+.dark .tier-item.selected{border-color:#16a34a;background:#052e1b}
+.dark .tier-radio{border-color:#52525b}
+.dark .tier-item.selected .tier-radio{border-color:#16a34a;background:#16a34a}
+.dark .tier-label{color:#d4d4d8}
+.dark .tier-price{color:#f4f4f5}
+/* "Yangi loyiha" — Xizmatlar (Toposyomka/Eskiz loyiha/Ariza) kartalari.
+   Avval hammasi qattiq oq fon (#fff) va kulrang matn bilan yozilgan
+   edi — tungi rejimda past kontrast/xira ko'rinardi. */
+.svc-card{border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;background:#fff;transition:all .15s}
+.dark .svc-card{background:#18181b;border-color:#3f3f46}
+.svc-card.sel{border-color:#86efac;background:#f0fdf4}
+.dark .svc-card.sel{border-color:#166534;background:#052e1b}
+.svc-body{padding:12px 16px;border-top:1px solid #bbf7d0;background:#fff}
+.dark .svc-body{background:#18181b;border-top-color:#166534}
+.svc-subhr{margin-top:10px;padding-top:10px;border-top:1px solid #f0fdf4}
+.dark .svc-subhr{border-top-color:#166534}
+.svc-name{font-size:14px;font-weight:600;color:#111827}
+.dark .svc-name{color:#f4f4f5}
+.svc-badge{font-size:10px;color:#9ca3af;background:#f3f4f6;border-radius:4px;padding:2px 6px}
+.dark .svc-badge{color:#a1a1aa;background:#27272a}
+.svc-field-lbl{font-size:12px;color:#6b7280;font-weight:500}
+.dark .svc-field-lbl{color:#a1a1aa}
+.svc-hint{font-size:12px;color:#6b7280;white-space:nowrap}
+.dark .svc-hint{color:#a1a1aa}
+.svc-radio-empty{width:22px;height:22px;border-radius:50%;border:2px solid #d1d5db;flex-shrink:0}
+.dark .svc-radio-empty{border-color:#52525b}
 /* Footer */
 .kb-footer{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-top:1px solid #e5e7eb;flex-shrink:0}
 .dark .kb-footer{border-color:#27272a}
@@ -1457,8 +1489,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             @if($hasTiers)
             {{-- Tier service: accordion open/close via Alpine (no Livewire round trip) --}}
             <div x-data="{ open: {{ $sel || $hasSelectedTiers ? 'true' : 'false' }} }"
-                 :style="({{ $sel || $hasSelectedTiers ? 'true' : 'false' }}) ? 'border:1px solid #86efac;background:#f0fdf4' : ''"
-                 style="border:1px solid {{ $hasSelectedTiers ? '#86efac' : '#e5e7eb' }};border-radius:10px;overflow:hidden;background:{{ $hasSelectedTiers ? '#f0fdf4' : '#fff' }};transition:all .15s">
+                 class="svc-card {{ $hasSelectedTiers ? 'sel' : '' }}">
                 <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;cursor:pointer" @click="open = !open">
                     <div style="display:flex;align-items:center;gap:12px">
                         @if($hasSelectedTiers)
@@ -1466,10 +1497,10 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
                         </div>
                         @else
-                        <div style="width:22px;height:22px;border-radius:50%;border:2px solid #d1d5db;flex-shrink:0"></div>
+                        <div class="svc-radio-empty"></div>
                         @endif
-                        <span style="font-size:14px;font-weight:600;color:#111827">{{ $srv['label'] }}</span>
-                        <span style="font-size:10px;color:#9ca3af;background:#f3f4f6;border-radius:4px;padding:2px 6px">Narxlar</span>
+                        <span class="svc-name" style="font-size:14px;font-weight:600">{{ $srv['label'] }}</span>
+                        <span class="svc-badge">Narxlar</span>
                     </div>
                     <div style="display:flex;align-items:center;gap:8px">
                         @if($hasSelectedTiers && !empty($srv['price']))
@@ -1482,9 +1513,9 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                         <svg width="16" height="16" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24" :style="open ? 'transform:rotate(180deg)' : ''" style="transition:transform .2s"><path d="M6 9l6 6 6-6"/></svg>
                     </div>
                 </div>
-                <div x-show="open" style="padding:12px 16px;border-top:1px solid #bbf7d0;background:#fff" wire:click.stop x-cloak>
+                <div x-show="open" class="svc-body" wire:click.stop x-cloak>
                     <div style="margin-bottom:10px">
-                        <label style="font-size:12px;color:#6b7280;font-weight:500;margin-bottom:5px;display:block">Mas'ul hodim</label>
+                        <label class="svc-field-lbl" style="margin-bottom:5px;display:block">Mas'ul hodim</label>
                         <select wire:model="services.{{ $key }}.assigned_user_id" class="kb-input" style="max-width:260px">
                             <option value="">— Tanlang —</option>
                             @foreach($users as $u)
@@ -1535,17 +1566,16 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                     @endif
 
                     {{-- Ixtiyoriy narx (tier xizmatlar uchun) --}}
-                    <div style="margin-top:10px;padding-top:10px;border-top:1px solid #f0fdf4" wire:click.stop>
-                        <label style="font-size:12px;color:#6b7280;font-weight:500;margin-bottom:6px;display:flex;align-items:center;gap:5px">
-                            <svg width="12" height="12" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    <div class="svc-subhr" wire:click.stop>
+                        <label class="svc-field-lbl" style="margin-bottom:6px;display:flex;align-items:center;gap:5px">
+                            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                             Ixtiyoriy narx (tanlansa ustun turadi)
                         </label>
                         <div style="display:flex;align-items:center;gap:8px">
                             <input wire:model.live="services.{{ $key }}.custom_price"
                                    type="number" min="0" placeholder="Masalan: 500000"
-                                   style="flex:1;border:1.5px solid #e5e7eb;border-radius:8px;padding:7px 10px;font-size:13px;outline:none"
-                                   onfocus="this.style.borderColor='#2563eb'" onblur="this.style.borderColor='#e5e7eb'">
-                            <span style="font-size:12px;color:#6b7280;white-space:nowrap">so'm</span>
+                                   class="kb-input" style="flex:1">
+                            <span class="svc-hint">so'm</span>
                             @if(!empty($srv['custom_price']))
                             <button wire:click.stop="$set('services.{{ $key }}.custom_price', '')"
                                     style="background:none;border:none;cursor:pointer;color:#9ca3af;font-size:16px;padding:2px">×</button>
@@ -1563,7 +1593,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 
             @else
             {{-- Non-tier service: simple toggle --}}
-            <div style="border:1px solid {{ $sel ? '#86efac' : '#e5e7eb' }};border-radius:10px;overflow:hidden;background:{{ $sel ? '#f0fdf4' : '#fff' }};transition:all .15s">
+            <div class="svc-card {{ $sel ? 'sel' : '' }}">
                 <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;cursor:pointer"
                      wire:click="$set('services.{{ $key }}.selected', {{ $sel ? 'false' : 'true' }})">
                     <div style="display:flex;align-items:center;gap:12px">
@@ -1572,9 +1602,9 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
                         </div>
                         @else
-                        <div style="width:22px;height:22px;border-radius:50%;border:2px solid #d1d5db;flex-shrink:0"></div>
+                        <div class="svc-radio-empty"></div>
                         @endif
-                        <span style="font-size:14px;font-weight:600;color:#111827">{{ $srv['label'] }}</span>
+                        <span class="svc-name" style="font-size:14px;font-weight:600">{{ $srv['label'] }}</span>
                     </div>
                     <div style="display:flex;align-items:center;gap:10px">
                         @if($sel && !empty($srv['price']))
@@ -1586,16 +1616,16 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                     </div>
                 </div>
                 @if($sel)
-                <div style="padding:12px 16px;border-top:1px solid #bbf7d0;background:#fff" wire:click.stop>
+                <div class="svc-body" wire:click.stop>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:end">
                         <div>
-                            <label style="font-size:12px;color:#6b7280;font-weight:500;margin-bottom:6px;display:block">Narxini kiriting (so'm)</label>
+                            <label class="svc-field-lbl" style="margin-bottom:6px;display:block">Narxini kiriting (so'm)</label>
                             <input wire:model.live="services.{{ $key }}.price"
                                    class="kb-input"
                                    placeholder="0" type="number" min="0">
                         </div>
                         <div>
-                            <label style="font-size:12px;color:#6b7280;font-weight:500;margin-bottom:6px;display:block">Mas'ul hodim</label>
+                            <label class="svc-field-lbl" style="margin-bottom:6px;display:block">Mas'ul hodim</label>
                             <select wire:model="services.{{ $key }}.assigned_user_id" class="kb-input">
                                 <option value="">— Tanlang —</option>
                                 @foreach($users as $u)
