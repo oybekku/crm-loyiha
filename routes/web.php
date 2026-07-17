@@ -280,6 +280,12 @@ Route::middleware(['auth'])->group(function () {
         if ($bytes === false || strlen($bytes) < 100) {
             return response()->json(['ok' => false, 'message' => "Noto'g'ri PDF"]);
         }
+
+        // Ghostscript orqali maksimal siqish — faqat ichidagi rasmlarni
+        // pasaytiradi, chiziqlar/matn sifatiga tegmaydi. Ishlamasa (server
+        // Ghostscript'siz bo'lsa) original hajmda saqlanaveradi.
+        $bytes = \App\Support\PdfCompressor::compress($bytes, '/screen') ?? $bytes;
+
         $disk    = \Illuminate\Support\Facades\Storage::disk('public');
         $newName = 'GENPLAN_' . preg_replace('/[^A-Za-z0-9]+/', '_', $project->owner_name ?: 'loyiha') . '.pdf';
         $newPath = 'project-files/' . $project->id . '/' . \Illuminate\Support\Str::random(6) . '_' . $newName;
