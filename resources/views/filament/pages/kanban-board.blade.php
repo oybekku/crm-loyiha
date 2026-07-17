@@ -250,6 +250,15 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 .dark .svc-hint{color:#a1a1aa}
 .svc-radio-empty{width:22px;height:22px;border-radius:50%;border:2px solid #d1d5db;flex-shrink:0}
 .dark .svc-radio-empty{border-color:#52525b}
+/* "Loyihani tahrirlash" → Yangi xizmat qo'shish → "kv narx" (tarif) oynasi */
+.svc-tier-modal{background:#fff;border-radius:16px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto;padding:22px;box-shadow:0 25px 80px rgba(0,0,0,.3)}
+.dark .svc-tier-modal{background:#18181b}
+.svc-tier-title{font-size:15px;font-weight:700;color:#111827}
+.dark .svc-tier-title{color:#f4f4f5}
+.svc-tier-rate{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px}
+.dark .svc-tier-rate{background:#1e3a5f;border-color:#3b82f6}
+.svc-tier-rate-txt{color:#1d4ed8}
+.dark .svc-tier-rate-txt{color:#93c5fd}
 /* Footer */
 .kb-footer{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-top:1px solid #e5e7eb;flex-shrink:0}
 .dark .kb-footer{border-color:#27272a}

@@ -6,7 +6,9 @@ use App\Models\Project;
 use App\Models\ProjectService;
 use App\Models\ProjectFile;
 use App\Models\ProjectStatus;
+use App\Models\ServicePriceTier;
 use App\Models\User;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -51,6 +53,15 @@ class ProjectEditModal extends Component
     public string $ei_newSvcType     = '';
     public string $ei_newSvcPrice    = '';
     public $ei_newSvcUser            = null;
+
+    // ── "kv narx" (tarif bo'yicha hisoblash) oynasi ──
+    private const SUB_SERVICE_ORDER = [
+        'toposyomka' => ['toposyomka', 'qoziq', 'qr_kod', 'akt'],
+    ];
+    public bool    $showSvcTierModal   = false;
+    public string  $svcTierActiveSub   = '';
+    public ?int    $svcTierSelectedId  = null;
+    public string  $svcTierArea        = '';
 
     #[On('open-edit-modal')]
     public function openEditInfoModal(int $id): void
@@ -372,6 +383,85 @@ class ProjectEditModal extends Component
         $this->dispatch('notify', type: 'success', message: "Loyiha ma'lumotlari yangilandi!");
     }
 
+    #[Computed]
+    public function priceTiers(): array
+    {
+        return \Illuminate\Support\Facades\Cache::remember('price_tiers_grouped', 600, function () {
+            $rows   = ServicePriceTier::orderBy('sort_order')->get();
+            $result = [];
+            foreach ($rows as $row) {
+                $result[$row->service_key][$row->sub_service][] = [
+                    'id'                => $row->id,
+                    'label'             => $row->label,
+                    'price'             => (float) $row->price,
+                    'sub_service_label' => $row->sub_service_label,
+                ];
+            }
+            foreach (self::SUB_SERVICE_ORDER as $serviceKey => $order) {
+                if (!isset($result[$serviceKey])) continue;
+                $sorted = [];
+                foreach ($order as $sub) {
+                    if (isset($result[$serviceKey][$sub])) {
+                        $sorted[$sub] = $result[$serviceKey][$sub];
+                    }
+                }
+                foreach ($result[$serviceKey] as $sub => $tiers) {
+                    if (!isset($sorted[$sub])) $sorted[$sub] = $tiers;
+                }
+                $result[$serviceKey] = $sorted;
+            }
+            return $result;
+        });
+    }
+
+    // "Yangi xizmat qo'shish" formasidagi tanlangan xizmat turiga mos tarif
+    // jadvali bo'lsa (Toposyomka/Eskiz loyiha), "kv narx" tugmasi shu oynani ochadi.
+    public function openSvcTierModal(): void
+    {
+        $tiers = $this->priceTiers;
+        if (!isset($tiers[$this->ei_newSvcType])) return;
+
+        $this->svcTierActiveSub  = array_key_first($tiers[$this->ei_newSvcType]);
+        $this->svcTierSelectedId = null;
+        $this->svcTierArea       = '';
+        $this->showSvcTierModal  = true;
+    }
+
+    public function closeSvcTierModal(): void
+    {
+        $this->showSvcTierModal = false;
+    }
+
+    public function svcSetSubTab(string $sub): void
+    {
+        $this->svcTierActiveSub  = $sub;
+        $this->svcTierSelectedId = null;
+    }
+
+    public function svcSelectTier(int $tierId): void
+    {
+        $this->svcTierSelectedId = $tierId;
+    }
+
+    // Tanlangan tarif narxini (kv.m kiritilgan bo'lsa ko'paytirib) narx
+    // maydoniga qo'yadi va oynani yopadi.
+    public function svcApplyTier(): void
+    {
+        if (!$this->svcTierSelectedId) return;
+
+        $tiers = $this->priceTiers[$this->ei_newSvcType][$this->svcTierActiveSub] ?? [];
+        $rate  = 0.0;
+        foreach ($tiers as $tier) {
+            if ($tier['id'] === $this->svcTierSelectedId) { $rate = $tier['price']; break; }
+        }
+
+        $area  = (float) $this->svcTierArea;
+        $total = $area > 0 ? (int) round($rate * $area) : (int) $rate;
+
+        $this->ei_newSvcPrice   = (string) $total;
+        $this->showSvcTierModal = false;
+    }
+
     public function eiAddService(): void
     {
         $this->validate([
@@ -409,6 +499,12 @@ class ProjectEditModal extends Component
         $this->ei_services    = $this->buildEiServices($p->fresh());
         $this->dispatch('kb-refresh');
         $this->dispatch('notify', type: 'success', message: 'Xizmat qo\'shildi!');
+    }
+
+    public function updatedEiNewSvcType(): void
+    {
+        $this->svcTierSelectedId = null;
+        $this->svcTierArea       = '';
     }
 
     public function updatedEiNewFiles(): void
@@ -583,6 +679,8 @@ class ProjectEditModal extends Component
             }
         }
 
-        return view('livewire.project-edit-modal', compact('statuses', 'users', 'canMygov', 'urgentAccepted', 'canAcceptUrgent', 'mygovFishList'));
+        $priceTiers = $this->priceTiers;
+
+        return view('livewire.project-edit-modal', compact('statuses', 'users', 'canMygov', 'urgentAccepted', 'canAcceptUrgent', 'mygovFishList', 'priceTiers'));
     }
 }

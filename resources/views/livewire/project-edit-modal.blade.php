@@ -416,14 +416,22 @@
             @else
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
                 <div>
-                    <select wire:model="ei_newSvcType" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;background:#fff">
+                    <select wire:model.live="ei_newSvcType" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;background:#fff">
                         <option value="">— Xizmat turi —</option>
                         @foreach($availSvc as $k => $lbl)<option value="{{ $k }}">{{ $lbl }}</option>@endforeach
                     </select>
                     @error('ei_newSvcType')<span style="font-size:11px;color:#dc2626">{{ $message }}</span>@enderror
                 </div>
                 <div>
-                    <input wire:model="ei_newSvcPrice" type="number" min="1" placeholder="Narx (so'm)" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box">
+                    <div style="display:flex;gap:6px">
+                        <input wire:model="ei_newSvcPrice" type="number" min="1" placeholder="Narx (so'm)" style="flex:1;min-width:0;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box">
+                        @if($ei_newSvcType && isset($priceTiers[$ei_newSvcType]))
+                        <button type="button" wire:click="openSvcTierModal" title="Tarif bo'yicha hisoblash"
+                                style="flex-shrink:0;padding:0 12px;border-radius:8px;border:1.5px solid #4338ca;background:#eef2ff;color:#4338ca;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">
+                            📐 kv narx
+                        </button>
+                        @endif
+                    </div>
                     @error('ei_newSvcPrice')<span style="font-size:11px;color:#dc2626">{{ $message }}</span>@enderror
                 </div>
             </div>
@@ -436,6 +444,75 @@
             </div>
             <div style="font-size:10px;color:#6366f1;margin-top:7px">⚠️ Yangi ish qo'shilsa loyiha umumiy summasi oshadi.</div>
             @endif
+        </div>
+        @endif
+
+        {{-- 📐 "kv narx" — tarif bo'yicha hisoblash oynasi --}}
+        @if($showSvcTierModal && isset($priceTiers[$ei_newSvcType]))
+        @php
+            $svcTiers    = $priceTiers[$ei_newSvcType];
+            $svcSubTiers = $svcTiers[$svcTierActiveSub] ?? [];
+            $svcRate     = 0;
+            foreach ($svcSubTiers as $t) { if ($t['id'] === $svcTierSelectedId) { $svcRate = $t['price']; break; } }
+            $svcArea    = (float) $svcTierArea;
+            $svcPreview = $svcArea > 0 ? (int) round($svcRate * $svcArea) : (int) $svcRate;
+        @endphp
+        <div style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1500;display:flex;align-items:center;justify-content:center;padding:16px"
+             wire:click.self="closeSvcTierModal">
+        <div class="svc-tier-modal" wire:click.stop>
+
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+                <span class="svc-tier-title">📐 Tarif bo'yicha hisoblash</span>
+                <button type="button" wire:click="closeSvcTierModal" style="background:none;border:none;cursor:pointer;color:#6b7280;font-size:20px;padding:0;line-height:1">✕</button>
+            </div>
+
+            @if(count($svcTiers) > 1)
+            <div class="tier-tabs">
+                @foreach($svcTiers as $subKey => $subTiersList)
+                @php $subLabel = $subTiersList[0]['sub_service_label'] ?? $subKey; @endphp
+                <button type="button" class="tier-tab {{ $svcTierActiveSub === $subKey ? 'active' : '' }}"
+                        wire:click="svcSetSubTab('{{ $subKey }}')">
+                    {{ $subLabel }}
+                </button>
+                @endforeach
+            </div>
+            @endif
+
+            <div class="tier-grid" style="margin-bottom:14px">
+                @foreach($svcSubTiers as $tier)
+                @php $tSel = $svcTierSelectedId === $tier['id']; @endphp
+                <div class="tier-item {{ $tSel ? 'selected' : '' }}"
+                     wire:click="svcSelectTier({{ $tier['id'] }})">
+                    <div class="tier-radio">
+                        @if($tSel)<svg width="8" height="8" viewBox="0 0 8 8" fill="#fff"><circle cx="4" cy="4" r="3"/></svg>@endif
+                    </div>
+                    <span class="tier-label">{{ $tier['label'] }}</span>
+                    <span class="tier-price">{{ number_format($tier['price'], 0, '.', ' ') }}</span>
+                </div>
+                @endforeach
+            </div>
+
+            <div style="margin-bottom:14px">
+                <label class="svc-field-lbl" style="margin-bottom:6px;display:block">Kvadrat metr (ixtiyoriy)</label>
+                <input wire:model.live="svcTierArea" type="number" min="0" step="0.01" placeholder="Masalan: 250" class="kb-input">
+            </div>
+
+            @if($svcTierSelectedId)
+            <div class="svc-tier-rate" style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
+                <span class="svc-tier-rate-txt" style="font-size:13px;font-weight:500">{{ $svcArea > 0 ? 'Jami narx:' : 'Narx (1 m² uchun):' }}</span>
+                <span class="svc-tier-rate-txt" style="font-size:14px;font-weight:800">{{ number_format($svcPreview, 0, '.', ' ') }} so'm</span>
+            </div>
+            @endif
+
+            <div style="display:flex;gap:10px">
+                <button type="button" wire:click="closeSvcTierModal" class="btn-back" style="flex:1;text-align:center">Bekor</button>
+                <button type="button" wire:click="svcApplyTier" @disabled(!$svcTierSelectedId)
+                        style="flex:1;padding:9px 22px;border-radius:8px;border:none;background:{{ $svcTierSelectedId ? '#4338ca' : '#c7d2fe' }};color:#fff;cursor:{{ $svcTierSelectedId ? 'pointer' : 'not-allowed' }};font-size:13px;font-weight:700">
+                    Qo'llash
+                </button>
+            </div>
+
+        </div>
         </div>
         @endif
 
