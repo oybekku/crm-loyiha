@@ -26,6 +26,14 @@
     button{border:none;border-radius:9px;padding:11px 20px;font-size:14px;font-weight:700;cursor:pointer;width:100%}
     .btn-close{background:#334155;color:#fff;margin-top:8px}
     .btn-retry{background:#2563eb;color:#fff}
+    .lvl-title{font-size:12px;font-weight:700;color:#94a3b8;margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em}
+    .lvl-opt{display:flex;align-items:center;gap:10px;background:#0f172a;border:1.5px solid #334155;border-radius:9px;padding:10px 12px;margin-bottom:8px;cursor:pointer;transition:border-color .15s}
+    .lvl-opt:hover{border-color:#475569}
+    .lvl-opt.active{border-color:#22c55e;background:#0f2a1a}
+    .lvl-opt input{flex-shrink:0;width:16px;height:16px;accent-color:#22c55e}
+    .lvl-txt b{display:block;font-size:13px}
+    .lvl-txt span{display:block;font-size:11px;color:#94a3b8;margin-top:1px}
+    .btn-start{background:#16a34a;color:#fff;margin-bottom:8px}
 </style>
 </head>
 <body>
@@ -46,7 +54,28 @@
         @endif
     </div>
 
-    <div class="status" id="status"><span class="spin"></span> <span id="stxt">Tayyorlanmoqda...</span></div>
+    <div id="lvlBox">
+        <div class="lvl-title">Rasmlarni siqish darajasi</div>
+        <label class="lvl-opt" data-lvl="none">
+            <input type="radio" name="lvl" value="none">
+            <span class="lvl-txt"><b>Siqmasin</b><span>Original sifat, fayl hajmi eng katta</span></span>
+        </label>
+        <label class="lvl-opt" data-lvl="medium">
+            <input type="radio" name="lvl" value="medium">
+            <span class="lvl-txt"><b>O'rtacha</b><span>Sifat deyarli saqlanadi, biroz kichrayadi</span></span>
+        </label>
+        <label class="lvl-opt active" data-lvl="strong">
+            <input type="radio" name="lvl" value="strong" checked>
+            <span class="lvl-txt"><b>Kuchli</b><span>Tavsiya etiladi — sezilarli kichrayadi</span></span>
+        </label>
+        <label class="lvl-opt" data-lvl="veryStrong">
+            <input type="radio" name="lvl" value="veryStrong">
+            <span class="lvl-txt"><b>Juda kuchli</b><span>Eng kichik hajm, rasmlar xiralashishi mumkin</span></span>
+        </label>
+        <button class="btn-start" onclick="startMerge()">🔗 Yig'ishni boshlash</button>
+    </div>
+
+    <div class="status" id="status" style="display:none"><span class="spin"></span> <span id="stxt">Tayyorlanmoqda...</span></div>
 
     <button class="btn-close" onclick="window.close()">Yopish</button>
 </div>
@@ -69,6 +98,21 @@ const mm = v => v * 2.834645669;   // mm -> pt
 function setStatus(txt, cls){ document.getElementById('stxt').textContent = txt; document.getElementById('stxt').className = cls||''; }
 function done(ok){ document.querySelector('.spin').style.display = ok ? 'none' : 'none'; }
 
+document.querySelectorAll('.lvl-opt').forEach(el => {
+    el.addEventListener('click', () => {
+        document.querySelectorAll('.lvl-opt').forEach(o => o.classList.remove('active'));
+        el.classList.add('active');
+        el.querySelector('input').checked = true;
+    });
+});
+
+function startMerge(){
+    const level = document.querySelector('input[name=lvl]:checked').value;
+    document.getElementById('lvlBox').style.display = 'none';
+    document.getElementById('status').style.display = 'flex';
+    run(level);
+}
+
 function clean(s){ return (s||'').replace(/[‘’ʻʼ′]/g, "'").replace(/[“”]/g,'"'); }
 
 // Matnni belgilangan enga sig'dirib qatorlarga bo'lish
@@ -84,7 +128,7 @@ function wrapLines(text, font, size, maxW){
     return lines;
 }
 
-async function run(){
+async function run(level){
     try{
         if(!SEL_URLS.length){ setStatus("Avval GENPLAN'da PDF belgilang", 'err'); done(false); return; }
         const {PDFDocument, StandardFonts, rgb} = PDFLib;
@@ -138,7 +182,7 @@ async function run(){
         const resp = await fetch(SAVE_URL, {
             method:'POST',
             headers:{'Content-Type':'application/json','X-CSRF-TOKEN':CSRF},
-            body: JSON.stringify({pdf: btoa(bin)})
+            body: JSON.stringify({pdf: btoa(bin), compress: level})
         });
         const txt = await resp.text();
         let data; try{ data = JSON.parse(txt); }catch(e){ throw new Error('Server ('+resp.status+'): '+txt.slice(0,150)); }
@@ -152,7 +196,6 @@ async function run(){
         setStatus('❌ Xato: '+err.message, 'err');
     }
 }
-run();
 </script>
 </body>
 </html>
