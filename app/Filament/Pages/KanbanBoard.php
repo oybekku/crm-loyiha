@@ -68,6 +68,11 @@ class KanbanBoard extends Page
     public array $services     = [];
     public array $activeSubTab = [];
 
+    // ── "Hisoblash" (mustaqil kalkulyator, loyiha yaratmasdan narx hisoblash) ──
+    public bool  $showCalcModal   = false;
+    public array $calcServices    = [];
+    public array $calcActiveSubTab = [];
+
     // Payment modal state
     public bool   $showPaymentModal     = false;
     public int    $paymentProjectId     = 0;
@@ -107,9 +112,10 @@ class KanbanBoard extends Page
     // qaytadan yuborilmaydi (tezlik). Amal tugmalari kb-* eventlari orqali keladi.
 
     // Area (kv.m) modal state
-    public bool   $showAreaModal  = false;
-    public string $areaServiceKey = '';
-    public string $areaValue      = '';
+    public bool   $showAreaModal   = false;
+    public string $areaServiceKey  = '';
+    public string $areaValue       = '';
+    public string $areaModalSource = 'services'; // 'services' | 'calcServices'
 
     // Discount modal state
     public bool   $showDiscountModal  = false;
@@ -543,6 +549,82 @@ class KanbanBoard extends Page
         }
     }
 
+    // ── "Hisoblash" kalkulyatori — loyiha yaratmasdan tez narx hisoblash.
+    //    Xuddi "Yangi loyiha" > "Xizmatlar" bosqichidagi tarif tanlash mantiqi,
+    //    lekin alohida $calcServices massivida — asosiy loyiha yaratish oqimiga
+    //    tegmaydi va hech narsa saqlanmaydi. ──
+    public function openCalcModal(): void
+    {
+        $tiers = $this->priceTiers;
+        $this->calcServices     = [];
+        $this->calcActiveSubTab = [];
+        foreach (Project::serviceOptions() as $key => $label) {
+            $hasTiers = isset($tiers[$key]);
+            $firstSub = $hasTiers ? array_key_first($tiers[$key]) : null;
+            $this->calcServices[$key] = [
+                'label'          => $label,
+                'selected'       => false,
+                'price'          => '',
+                'custom_price'   => '',
+                'has_tiers'      => $hasTiers,
+                'selected_tiers' => [],
+                'area_m2'        => '',
+            ];
+            if ($hasTiers && $firstSub) {
+                $this->calcActiveSubTab[$key] = $firstSub;
+            }
+        }
+        $this->showCalcModal = true;
+    }
+
+    public function closeCalcModal(): void
+    {
+        $this->showCalcModal = false;
+    }
+
+    public function calcSetSubTab(string $serviceKey, string $subService): void
+    {
+        $this->calcActiveSubTab[$serviceKey] = $subService;
+    }
+
+    public function calcToggleService(string $key): void
+    {
+        $this->calcServices[$key]['selected'] = !$this->calcServices[$key]['selected'];
+    }
+
+    private function calcRecalcPrice(string $serviceKey): void
+    {
+        $tiers = $this->priceTiers;
+        $rateTotal = 0;
+        foreach ($this->calcServices[$serviceKey]['selected_tiers'] as $sub => $id) {
+            foreach ($tiers[$serviceKey][$sub] ?? [] as $tier) {
+                if ($tier['id'] === $id) { $rateTotal += $tier['price']; break; }
+            }
+        }
+        $area  = (float) ($this->calcServices[$serviceKey]['area_m2'] ?? 0);
+        $total = ($area > 0) ? (int) round($rateTotal * $area) : (int) $rateTotal;
+        $this->calcServices[$serviceKey]['price'] = (string) $total;
+    }
+
+    public function calcSelectTier(string $serviceKey, string $subService, int $tierId): void
+    {
+        $this->calcServices[$serviceKey]['selected']                      = true;
+        $this->calcServices[$serviceKey]['selected_tiers'][$subService]  = $tierId;
+        $this->calcRecalcPrice($serviceKey);
+    }
+
+    public function calcDeselectTier(string $serviceKey, string $subService): void
+    {
+        unset($this->calcServices[$serviceKey]['selected_tiers'][$subService]);
+        if (empty($this->calcServices[$serviceKey]['selected_tiers'])) {
+            $this->calcServices[$serviceKey]['selected'] = false;
+            $this->calcServices[$serviceKey]['price']    = '';
+            $this->calcServices[$serviceKey]['area_m2']  = '';
+        } else {
+            $this->calcRecalcPrice($serviceKey);
+        }
+    }
+
     // ── Discount ─────────────────────────────────────────────────────────
     public function openDiscountModal(string $key): void
     {
@@ -561,29 +643,39 @@ class KanbanBoard extends Page
     }
 
     // ── Area (kv.m) modal ─────────────────────────────────────────────────
-    public function openAreaModal(string $key): void
+    public function openAreaModal(string $key, string $source = 'services'): void
     {
-        if (!isset($this->services[$key])) return;
-        $this->areaServiceKey = $key;
-        $this->areaValue      = $this->services[$key]['area_m2'] ?? '';
-        $this->showAreaModal  = true;
+        $arr = $source === 'calcServices' ? $this->calcServices : $this->services;
+        if (!isset($arr[$key])) return;
+        $this->areaModalSource = $source;
+        $this->areaServiceKey  = $key;
+        $this->areaValue       = $arr[$key]['area_m2'] ?? '';
+        $this->showAreaModal   = true;
     }
 
     public function saveArea(): void
     {
-        $key = $this->areaServiceKey;
-        if (!isset($this->services[$key])) { $this->showAreaModal = false; return; }
+        $key    = $this->areaServiceKey;
+        $isCalc = $this->areaModalSource === 'calcServices';
+        $arr    = $isCalc ? $this->calcServices : $this->services;
+        if (!isset($arr[$key])) { $this->showAreaModal = false; return; }
         $area = max(0, (float) str_replace(',', '.', $this->areaValue));
-        $this->services[$key]['area_m2'] = $area > 0 ? (string)$area : '';
-        $this->recalcPrice($key);
+        if ($isCalc) {
+            $this->calcServices[$key]['area_m2'] = $area > 0 ? (string)$area : '';
+            $this->calcRecalcPrice($key);
+        } else {
+            $this->services[$key]['area_m2'] = $area > 0 ? (string)$area : '';
+            $this->recalcPrice($key);
+        }
         $this->showAreaModal = false;
     }
 
     public function closeAreaModal(): void
     {
-        $this->showAreaModal  = false;
-        $this->areaServiceKey = '';
-        $this->areaValue      = '';
+        $this->showAreaModal   = false;
+        $this->areaServiceKey  = '';
+        $this->areaValue       = '';
+        $this->areaModalSource = 'services';
     }
 
     public function applyDiscount(): void

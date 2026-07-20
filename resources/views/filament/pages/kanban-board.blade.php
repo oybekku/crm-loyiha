@@ -128,6 +128,10 @@
 .kb-stat-lbl{font-size:10px;color:#6b7280}
 .dark .kb-stat-lbl{color:#94a3b8}
 .btn-new{background:#2563eb;color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s}
+.btn-calc{background:#eef2ff;color:#4338ca;border:1.5px solid #c7d2fe;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s}
+.btn-calc:hover{background:#e0e7ff;border-color:#a5b4fc}
+.dark .btn-calc{background:#1e1b4b;color:#a5b4fc;border-color:#3730a3}
+.dark .btn-calc:hover{background:#2e2a6b;border-color:#4c46b8}
 .btn-new:hover{background:#1d4ed8}
 
 /* ===== MODAL ===== */
@@ -300,14 +304,14 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
   .kb-stat{padding:5px 8px}
   .kb-stat-num{font-size:14px}
   .kb-stat-lbl{font-size:9px}
-  .btn-new{width:100%;justify-content:center;padding:10px;font-size:13px}
+  .btn-new,.btn-calc{width:100%;justify-content:center;padding:10px;font-size:13px}
 
   /* Kanban: to'liq ekran kengligi, bitta ustun ko'rinadi */
   .kanban-wrap{gap:12px;padding:4px 16px 80px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;margin:0 -16px;width:calc(100% + 32px)}
   .kanban-col{min-width:calc(100vw - 56px);max-width:calc(100vw - 56px);scroll-snap-align:start}
   /* Floating button */
   .kb-fab{display:flex}
-  .btn-new{display:none}
+  .btn-new,.btn-calc{display:none}
   /* Katta tugmalar */
   .p-move-btn{padding:7px 12px;font-size:12px}
 
@@ -493,8 +497,12 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
     </div>
     @endif
 
-    <div style="{{ $search ? 'margin-left:auto' : '' }}">
+    <div style="{{ $search ? 'margin-left:auto' : '' }};display:flex;gap:8px">
         @if(!auth()->user()?->isHisobchi())
+        <button class="btn-calc" wire:click="openCalcModal">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="8" y2="10"/><line x1="12" y1="10" x2="12" y2="10"/><line x1="16" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="8" y2="14"/><line x1="12" y1="14" x2="12" y2="14"/><line x1="16" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="16" y2="18"/></svg>
+            Hisoblash
+        </button>
         <button class="btn-new" wire:click="openModal">
             <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
             Yangi loyiha
@@ -1837,6 +1845,144 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 </div>
 </div>
 
+{{-- 🧮 HISOBLASH — loyiha yaratmasdan xizmatlar narxini tez hisoblash --}}
+@if($showCalcModal)
+@php
+    $calcSelectedCount = count(array_filter($calcServices, fn($s) => !empty($s['selected'])));
+    $calcTotal = array_sum(array_map(fn($s) => !empty($s['selected']) ? (float)str_replace([' ',','],'',$s['price']??'0') : 0, $calcServices));
+@endphp
+<div class="kb-overlay" wire:click.self="closeCalcModal">
+<div class="kb-modal" style="max-width:520px;max-height:88vh" wire:click.stop>
+    <div class="kb-head">
+        <h3 style="font-size:16px;font-weight:700">🧮 Xizmatlar narxini hisoblash</h3>
+        <button wire:click="closeCalcModal" style="background:none;border:none;cursor:pointer;color:#6b7280;font-size:22px;line-height:1;padding:0">✕</button>
+    </div>
+
+    <div style="padding:18px 20px;overflow-y:auto;flex:1">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <span class="svc-field-lbl">{{ $calcSelectedCount }} ta xizmat tanlandi</span>
+            @if($calcSelectedCount > 0)
+            <div style="background:#2563eb;color:#fff;border-radius:8px;padding:6px 14px;font-size:14px;font-weight:800">
+                {{ number_format($calcTotal, 0, '.', ' ') }} so'm
+            </div>
+            @endif
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:8px">
+            @foreach($calcServices as $key => $srv)
+            @php
+                $csel         = !empty($srv['selected']);
+                $chasTiers    = !empty($srv['has_tiers']) && isset($priceTiers[$key]);
+                $cactiveSub   = $calcActiveSubTab[$key] ?? (isset($priceTiers[$key]) ? array_key_first($priceTiers[$key]) : null);
+                $chasSelTiers = !empty($srv['selected_tiers']);
+            @endphp
+
+            @if($chasTiers)
+            <div x-data="{ open: {{ $csel || $chasSelTiers ? 'true' : 'false' }} }"
+                 class="svc-card {{ $chasSelTiers ? 'sel' : '' }}">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;cursor:pointer" @click="open = !open">
+                    <div style="display:flex;align-items:center;gap:12px">
+                        @if($chasSelTiers)
+                        <div style="width:22px;height:22px;border-radius:50%;background:#16a34a;flex-shrink:0;display:flex;align-items:center;justify-content:center">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                        @else
+                        <div class="svc-radio-empty"></div>
+                        @endif
+                        <span class="svc-name" style="font-size:14px;font-weight:600">{{ $srv['label'] }}</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px">
+                        @if($chasSelTiers && !empty($srv['price']))
+                        @php $chasArea = !empty($srv['area_m2']); @endphp
+                        <span style="font-size:12px;font-weight:700;background:#111827;color:#fff;border-radius:6px;padding:3px 10px">
+                            {{ number_format((float)$srv['price'], 0, '.', ' ') }} so'm
+                            @if($chasArea)<span style="font-weight:400;opacity:.7;font-size:11px"> ({{ (float)$srv['area_m2'] }}m²)</span>@endif
+                        </span>
+                        @endif
+                        <svg width="16" height="16" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24" :style="open ? 'transform:rotate(180deg)' : ''" style="transition:transform .2s"><path d="M6 9l6 6 6-6"/></svg>
+                    </div>
+                </div>
+                <div x-show="open" class="svc-body" wire:click.stop x-cloak>
+                    @if($cactiveSub)
+                    <div class="tier-tabs">
+                        @foreach($priceTiers[$key] as $subKey => $subTiers)
+                        @php $subLabel = $subTiers[0]['sub_service_label'] ?? $subKey; @endphp
+                        <button class="tier-tab {{ $cactiveSub === $subKey ? 'active' : '' }}"
+                                wire:click.stop="calcSetSubTab('{{ $key }}', '{{ $subKey }}')">
+                            {{ $subLabel }}
+                            @if(isset($srv['selected_tiers'][$subKey]))
+                            <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#16a34a;margin-left:5px;vertical-align:middle"></span>
+                            @endif
+                        </button>
+                        @endforeach
+                    </div>
+                    <div class="tier-grid">
+                        @foreach($priceTiers[$key][$cactiveSub] as $tier)
+                        @php $ctierSel = isset($srv['selected_tiers'][$cactiveSub]) && $srv['selected_tiers'][$cactiveSub] === $tier['id']; @endphp
+                        <div style="display:flex;align-items:center;gap:4px">
+                        <div class="tier-item {{ $ctierSel ? 'selected' : '' }}"
+                             style="flex:1"
+                             wire:click.stop="{{ $ctierSel ? 'calcDeselectTier(\''.$key.'\', \''.$cactiveSub.'\')' : 'calcSelectTier(\''.$key.'\', \''.$cactiveSub.'\', '.$tier['id'].')' }}">
+                            <div class="tier-radio">
+                                @if($ctierSel)<svg width="8" height="8" viewBox="0 0 8 8" fill="#fff"><circle cx="4" cy="4" r="3"/></svg>@endif
+                            </div>
+                            <span class="tier-label">{{ $tier['label'] }}</span>
+                            <span class="tier-price">{{ number_format($tier['price'], 0, '.', ' ') }}</span>
+                        </div>
+                        @if($ctierSel)
+                        @php $chasArea = !empty($srv['area_m2']); @endphp
+                        <button wire:click.stop="openAreaModal('{{ $key }}', 'calcServices')"
+                                title="kv.m kiritish"
+                                style="width:28px;height:28px;border-radius:6px;border:1.5px solid {{ $chasArea ? '#2563eb' : '#e5e7eb' }};background:{{ $chasArea ? '#eff6ff' : '#f9fafb' }};cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:{{ $chasArea ? '#2563eb' : '#9ca3af' }};transition:all .15s">
+                            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2a2 2 0 0 1 1.93 1.47l.3 1.11a7 7 0 0 1 .87.51l1.09-.4a2 2 0 0 1 2.29.9l1 1.72a2 2 0 0 1-.34 2.39l-.81.72a7 7 0 0 1 0 1l.81.72a2 2 0 0 1 .34 2.39l-1 1.72a2 2 0 0 1-2.29.9l-1.09-.4a7 7 0 0 1-.87.51l-.3 1.11A2 2 0 0 1 12 22a2 2 0 0 1-1.93-1.47l-.3-1.11a7 7 0 0 1-.87-.51l-1.09.4a2 2 0 0 1-2.29-.9l-1-1.72a2 2 0 0 1 .34-2.39l.81-.72a7 7 0 0 1 0-1l-.81-.72a2 2 0 0 1-.34-2.39l1-1.72a2 2 0 0 1 2.29-.9l1.09.4a7 7 0 0 1 .87-.51l.3-1.11A2 2 0 0 1 12 2z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                        @endif
+                        </div>
+                        @endforeach
+                    </div>
+                    @endif
+                </div>
+            </div>
+
+            @else
+            <div class="svc-card {{ $csel ? 'sel' : '' }}">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;cursor:pointer"
+                     wire:click="calcToggleService('{{ $key }}')">
+                    <div style="display:flex;align-items:center;gap:12px">
+                        @if($csel)
+                        <div style="width:22px;height:22px;border-radius:50%;background:#16a34a;flex-shrink:0;display:flex;align-items:center;justify-content:center">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                        @else
+                        <div class="svc-radio-empty"></div>
+                        @endif
+                        <span class="svc-name" style="font-size:14px;font-weight:600">{{ $srv['label'] }}</span>
+                    </div>
+                    @if($csel && !empty($srv['price']))
+                    <span style="font-size:12px;font-weight:700;background:#111827;color:#fff;border-radius:6px;padding:3px 10px">
+                        {{ number_format((float)str_replace([' ',','],'',$srv['price']), 0, '.', ' ') }} so'm
+                    </span>
+                    @endif
+                </div>
+                @if($csel)
+                <div class="svc-body" wire:click.stop>
+                    <label class="svc-field-lbl" style="margin-bottom:6px;display:block">Narxini kiriting (so'm)</label>
+                    <input wire:model.live="calcServices.{{ $key }}.price" class="kb-input" placeholder="0" type="number" min="0">
+                </div>
+                @endif
+            </div>
+            @endif
+            @endforeach
+        </div>
+    </div>
+
+    <div class="kb-footer">
+        <button class="btn-back" wire:click="closeCalcModal" style="width:100%;text-align:center">Yopish</button>
+    </div>
+</div>
+</div>
+@endif
+
 {{-- YUBORISH (ROUTE) MODAL --}}
 @if($showRouteModal)
 @php $routeProj = \App\Models\Project::find($routeProjectId); @endphp
@@ -2307,7 +2453,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 @if($showAreaModal)
 @php
     $ak       = $areaServiceKey;
-    $aSrv     = $services[$ak] ?? [];
+    $aSrv     = ($areaModalSource === 'calcServices' ? $calcServices : $services)[$ak] ?? [];
     $aRate    = 0;
     $aTierLbl = '';
     if (!empty($aSrv['selected_tiers']) && isset($priceTiers[$ak])) {
