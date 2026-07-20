@@ -2466,49 +2466,49 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 @endphp
 <div style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1200;display:flex;align-items:center;justify-content:center;padding:16px"
      wire:click.self="closeAreaModal">
-<div style="background:#fff;border-radius:16px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;padding:24px;box-shadow:0 25px 80px rgba(0,0,0,.3)" wire:click.stop>
+<div style="background:#fff !important;border-radius:16px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;padding:24px;box-shadow:0 25px 80px rgba(0,0,0,.3)" wire:click.stop>
 
     {{-- Header --}}
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px">
         <div style="display:flex;align-items:center;gap:8px">
             <svg width="20" height="20" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2a2 2 0 0 1 1.93 1.47l.3 1.11a7 7 0 0 1 .87.51l1.09-.4a2 2 0 0 1 2.29.9l1 1.72a2 2 0 0 1-.34 2.39l-.81.72a7 7 0 0 1 0 1l.81.72a2 2 0 0 1 .34 2.39l-1 1.72a2 2 0 0 1-2.29.9l-1.09-.4a7 7 0 0 1-.87.51l-.3 1.11A2 2 0 0 1 12 22a2 2 0 0 1-1.93-1.47l-.3-1.11a7 7 0 0 1-.87-.51l-1.09.4a2 2 0 0 1-2.29-.9l-1-1.72a2 2 0 0 1 .34-2.39l.81-.72a7 7 0 0 1 0-1l-.81-.72a2 2 0 0 1-.34-2.39l1-1.72a2 2 0 0 1 2.29-.9l1.09.4a7 7 0 0 1 .87-.51l.3-1.11A2 2 0 0 1 12 2z"/><circle cx="12" cy="12" r="3"/></svg>
-            <span style="font-size:15px;font-weight:700;color:#111827">Maydon kiritish</span>
+            <span style="font-size:15px;font-weight:700;color:#111827 !important">Maydon kiritish</span>
         </div>
         <button wire:click="closeAreaModal" style="background:none;border:none;cursor:pointer;color:#6b7280;font-size:20px;padding:0;line-height:1">✕</button>
     </div>
-    <p style="font-size:12px;color:#6b7280;margin-bottom:16px">
+    <p style="font-size:12px;color:#6b7280 !important;margin-bottom:16px">
         {{ $aSrv['label'] ?? '' }}{{ $aTierLbl ? ' — ' . $aTierLbl : '' }}
     </p>
 
     {{-- Rate info --}}
     <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:13px;font-weight:500;color:#1d4ed8">Narx (1 m² uchun):</span>
-        <span style="font-size:13px;font-weight:700;color:#1d4ed8">{{ number_format($aRate, 0, '.', ' ') }} so'm</span>
+        <span style="font-size:13px;font-weight:500;color:#1d4ed8 !important">Narx (1 m² uchun):</span>
+        <span style="font-size:13px;font-weight:700;color:#1d4ed8 !important">{{ number_format($aRate, 0, '.', ' ') }} so'm</span>
     </div>
 
     {{-- Area input --}}
     <div style="margin-bottom:14px">
-        <label style="font-size:12px;font-weight:500;color:#374151;margin-bottom:6px;display:block">Kvadrat metr (m²)</label>
+        <label style="font-size:12px;font-weight:500;color:#374151 !important;margin-bottom:6px;display:block">Kvadrat metr (m²)</label>
         <div style="position:relative">
             <input wire:model.live="areaValue"
                    class="kb-input"
-                   style="padding-right:50px;font-size:16px"
+                   style="padding-right:50px;font-size:16px;background:#fff !important;color:#111827 !important"
                    type="number"
                    min="0.1"
                    step="0.1"
                    placeholder="Masalan: 120"
                    autofocus>
-            <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:13px;font-weight:600;color:#2563eb">m²</span>
+            <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:13px;font-weight:600;color:#2563eb !important">m²</span>
         </div>
-        <p style="font-size:11px;color:#9ca3af;margin-top:4px">Umumiy narx = narx × m²</p>
+        <p style="font-size:11px;color:#9ca3af !important;margin-top:4px">Umumiy narx = narx × m²</p>
     </div>
 
     {{-- Live preview --}}
     @if((float)$areaValue > 0 && $aRate > 0)
     <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px 14px;margin-bottom:16px">
         <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px">
-            <span style="color:#166534;font-weight:500">Umumiy narx:</span>
-            <span style="color:#16a34a;font-weight:700;font-size:15px">{{ number_format($aPreview, 0, '.', ' ') }} so'm</span>
+            <span style="color:#166534 !important;font-weight:500">Umumiy narx:</span>
+            <span style="color:#16a34a !important;font-weight:700;font-size:15px">{{ number_format($aPreview, 0, '.', ' ') }} so'm</span>
         </div>
         <div style="font-size:11px;color:#6b7280;margin-top:4px;text-align:right">
             {{ number_format($aRate, 0, '.', ' ') }} × {{ (float)$areaValue }} m²
