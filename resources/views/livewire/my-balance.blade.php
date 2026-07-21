@@ -38,6 +38,13 @@
             </div>
         </div>
 
+        {{-- Oy/yil tanlash — har oy alohida hisoblanadi --}}
+        <div style="flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:4px;padding:8px 22px;background:#fff;border-bottom:1px solid #eef2f7">
+            <button wire:click="balChangeMonth(-1)" title="Oldingi oy" style="background:#f3f4f6;border:none;border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:15px;color:#374151 !important;line-height:1">‹</button>
+            <span style="font-size:13px;font-weight:700;color:#2563eb !important;min-width:110px;text-align:center;white-space:nowrap">📅 {{ $balMonthLabel }}</span>
+            <button wire:click="balChangeMonth(1)" title="Keyingi oy" style="background:#f3f4f6;border:none;border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:15px;color:#374151 !important;line-height:1">›</button>
+        </div>
+
         {{-- BODY (scroll) --}}
         <div style="flex:1;overflow-y:auto;padding:18px 22px">
 

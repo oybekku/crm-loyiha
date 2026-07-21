@@ -21,7 +21,14 @@ use App\Models\EmployeeAdvance;
  */
 class BalanceService
 {
-    public static function forUser(int $userId): array
+    /**
+     * $year/$month berilsa — faqat o'sha oyda OCHILGAN loyihalar (va o'sha
+     * oyga tegishli oylik/avans yozuvlari) hisoblanadi. Bu Oylik hisobot
+     * (FirmReportService) bilan bir xil "loyiha ochilgan oyi" mantig'i —
+     * shu bilan ikkala joydagi summalar mos keladi, chalkashlik bo'lmaydi.
+     * Berilmasa (null) — butun davr (eski xatti-harakat).
+     */
+    public static function forUser(int $userId, ?int $year = null, ?int $month = null): array
     {
         $user = User::find($userId);
         if (!$user) {
@@ -33,6 +40,8 @@ class BalanceService
             $rate = 0;
         }
 
+        $monthStr = ($year && $month) ? sprintf('%04d-%02d', $year, $month) : null;
+
         $earned  = 0.0;   // tasdiqlangan kirim (tugatilgan + to'langan)
         $pending = 0.0;   // jarayonda
         $txns    = [];
@@ -40,7 +49,12 @@ class BalanceService
         if ($rate > 0) {
             $services = ProjectService::with(['project.services', 'project.payments'])
                 ->where('assigned_user_id', $userId)
-                ->whereHas('project', fn ($q) => $q->where('status', '!=', 'bekor_qilingan'))
+                ->whereHas('project', function ($q) use ($year, $month) {
+                    $q->where('status', '!=', 'bekor_qilingan');
+                    if ($year && $month) {
+                        $q->whereYear('created_at', $year)->whereMonth('created_at', $month);
+                    }
+                })
                 ->get();
 
             foreach ($services as $s) {
@@ -74,9 +88,15 @@ class BalanceService
             }
         }
 
-        // ── Chiqim: oylik to'lovlar va avanslar ──
-        $salaries = EmployeeSalaryPayment::where('user_id', $userId)->get();
-        $advances = EmployeeAdvance::where('user_id', $userId)->get();
+        // ── Chiqim: oylik to'lovlar va avanslar (o'zining "month" maydoni bo'yicha) ──
+        $salariesQ = EmployeeSalaryPayment::where('user_id', $userId);
+        $advancesQ = EmployeeAdvance::where('user_id', $userId);
+        if ($monthStr) {
+            $salariesQ->where('month', $monthStr);
+            $advancesQ->where('month', $monthStr);
+        }
+        $salaries = $salariesQ->get();
+        $advances = $advancesQ->get();
 
         $withdrawn = 0.0;
         foreach ($salaries as $p) {
