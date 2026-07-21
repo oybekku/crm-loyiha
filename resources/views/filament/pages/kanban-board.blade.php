@@ -2110,7 +2110,8 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 @if($showPaymentModal)
 @php $payProj = \App\Models\Project::with('payments')->find($paymentProjectId); @endphp
 <div style="position:fixed;inset:0;z-index:1300;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)">
-    <div style="background:#fff;border-radius:16px;width:100%;max-width:920px;max-height:92vh;overflow-y:auto;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.2)" wire:click.stop>
+    <div style="background:#fff;border-radius:16px;width:100%;max-width:920px;max-height:92vh;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2);display:flex;flex-direction:column" wire:click.stop>
+    <div style="overflow-y:auto;padding:28px;flex:1;min-height:0">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
             <h3 style="font-size:16px;font-weight:700;color:#111827;margin:0">To'lov qo'shish</h3>
             <button wire:click="closePaymentModal" style="border:none;background:none;cursor:pointer;color:#6b7280;font-size:20px;line-height:1">×</button>
@@ -2123,17 +2124,17 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             <div style="font-size:15px;font-weight:700;color:#111827;margin-bottom:14px">{{ $payProj->owner_name }}</div>
 
             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
-                <div style="background:#fff;border:1px solid #eef2f7;border-radius:10px;padding:12px 14px">
+                <div style="background:#fff;border:1px solid #eef2f7;border-radius:10px;padding:14px 16px">
                     <div style="font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.03em;margin-bottom:5px">Umumiy summa</div>
-                    <div style="font-size:22px;font-weight:800;color:#111827;line-height:1.2">{{ number_format($payProj->total_price, 0, '.', ' ') }}<span style="font-size:13px;font-weight:600;color:#9ca3af"> so'm</span></div>
+                    <div style="font-size:35px;font-weight:800;color:#111827;line-height:1.2">{{ number_format($payProj->total_price, 0, '.', ' ') }}<span style="font-size:14px;font-weight:600;color:#9ca3af"> so'm</span></div>
                 </div>
-                <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px">
+                <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px 16px">
                     <div style="font-size:11px;font-weight:600;color:#15803d;text-transform:uppercase;letter-spacing:.03em;margin-bottom:5px">To'langan</div>
-                    <div style="font-size:22px;font-weight:800;color:#16a34a;line-height:1.2">{{ number_format($payProj->paid_amount, 0, '.', ' ') }}<span style="font-size:13px;font-weight:600;color:#4ade80"> so'm ({{ $payProj->payment_percent }}%)</span></div>
+                    <div style="font-size:35px;font-weight:800;color:#16a34a;line-height:1.2">{{ number_format($payProj->paid_amount, 0, '.', ' ') }}<span style="font-size:14px;font-weight:600;color:#4ade80"> so'm ({{ $payProj->payment_percent }}%)</span></div>
                 </div>
-                <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px 14px">
+                <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px 16px">
                     <div style="font-size:11px;font-weight:600;color:#b91c1c;text-transform:uppercase;letter-spacing:.03em;margin-bottom:5px">Qoldiq</div>
-                    <div style="font-size:22px;font-weight:800;color:#dc2626;line-height:1.2">{{ number_format($payProj->remaining_amount, 0, '.', ' ') }}<span style="font-size:13px;font-weight:600;color:#f87171"> so'm</span></div>
+                    <div style="font-size:35px;font-weight:800;color:#dc2626;line-height:1.2">{{ number_format($payProj->remaining_amount, 0, '.', ' ') }}<span style="font-size:14px;font-weight:600;color:#f87171"> so'm</span></div>
                 </div>
             </div>
 
@@ -2179,7 +2180,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 
             {{-- Chegirma (tanlangan xizmat(lar)ga, admin uchun) --}}
             @if(auth()->user()?->isAdmin())
-            <div style="background:#fefce8;border:1px solid #fde68a;border-radius:10px;padding:12px 14px">
+            <div style="background:#fefce8;border:1px solid #fde68a;border-radius:10px;padding:14px 16px">
                 <label style="font-size:12px;font-weight:600;color:#92400e;display:block;margin-bottom:8px">🏷️ Chegirma (tanlangan xizmat(lar)ga)</label>
                 <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px">
                     <label style="display:flex;align-items:center;gap:5px;background:#fff;border:1.5px solid {{ $payDiscountCategory==='nogiron' ? '#f59e0b' : '#e5e7eb' }};border-radius:7px;padding:6px 8px;cursor:pointer;font-size:11px">
@@ -2387,6 +2388,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             </button>
             @endif
         </div>
+    </div>
     </div>
 </div>
 @endif
