@@ -2118,22 +2118,22 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 
         @if($payProj)
         @php $payAccOpts = $paymentAccounts->where('type', $paymentMethod); @endphp
-        {{-- Project summary (vertikal bloklar) --}}
-        <div style="background:#f9fafb;border-radius:10px;padding:16px;margin-bottom:20px">
-            <div style="font-size:14px;font-weight:700;color:#111827;margin-bottom:14px">{{ $payProj->owner_name }}</div>
+        {{-- Project summary (vertikal bloklar, urg'u berilgan) --}}
+        <div style="background:#f9fafb;border-radius:10px;padding:18px;margin-bottom:20px">
+            <div style="font-size:15px;font-weight:700;color:#111827;margin-bottom:14px">{{ $payProj->owner_name }}</div>
 
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px">
-                <div>
-                    <div style="font-size:11px;color:#6b7280;margin-bottom:3px">Umumiy summa</div>
-                    <div style="font-size:15px;font-weight:700;color:#111827">{{ number_format($payProj->total_price, 0, '.', ' ') }} so'm</div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
+                <div style="background:#fff;border:1px solid #eef2f7;border-radius:10px;padding:12px 14px">
+                    <div style="font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.03em;margin-bottom:5px">Umumiy summa</div>
+                    <div style="font-size:22px;font-weight:800;color:#111827;line-height:1.2">{{ number_format($payProj->total_price, 0, '.', ' ') }}<span style="font-size:13px;font-weight:600;color:#9ca3af"> so'm</span></div>
                 </div>
-                <div>
-                    <div style="font-size:11px;color:#6b7280;margin-bottom:3px">To'langan</div>
-                    <div style="font-size:15px;font-weight:700;color:#16a34a">{{ number_format($payProj->paid_amount, 0, '.', ' ') }} <span style="font-size:11px;font-weight:500">so'm ({{ $payProj->payment_percent }}%)</span></div>
+                <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px">
+                    <div style="font-size:11px;font-weight:600;color:#15803d;text-transform:uppercase;letter-spacing:.03em;margin-bottom:5px">To'langan</div>
+                    <div style="font-size:22px;font-weight:800;color:#16a34a;line-height:1.2">{{ number_format($payProj->paid_amount, 0, '.', ' ') }}<span style="font-size:13px;font-weight:600;color:#4ade80"> so'm ({{ $payProj->payment_percent }}%)</span></div>
                 </div>
-                <div>
-                    <div style="font-size:11px;color:#6b7280;margin-bottom:3px">Qoldiq</div>
-                    <div style="font-size:15px;font-weight:700;color:#dc2626">{{ number_format($payProj->remaining_amount, 0, '.', ' ') }} so'm</div>
+                <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px 14px">
+                    <div style="font-size:11px;font-weight:600;color:#b91c1c;text-transform:uppercase;letter-spacing:.03em;margin-bottom:5px">Qoldiq</div>
+                    <div style="font-size:22px;font-weight:800;color:#dc2626;line-height:1.2">{{ number_format($payProj->remaining_amount, 0, '.', ' ') }}<span style="font-size:13px;font-weight:600;color:#f87171"> so'm</span></div>
                 </div>
             </div>
 
@@ -2375,7 +2375,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
         </div>
         @endif
 
-        <div style="display:flex;gap:10px;margin-top:20px;position:sticky;bottom:-28px;background:#fff;padding:14px 0 4px;border-top:1px solid #eef2f7;z-index:2">
+        <div style="display:flex;gap:10px;margin:20px -28px -28px;position:sticky;bottom:-28px;background:#fff;padding:14px 28px 20px;border-top:1px solid #eef2f7;border-radius:0 0 16px 16px;z-index:2">
             <button wire:click="closePaymentModal"
                     style="flex:1;padding:11px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;color:#374151;cursor:pointer;font-size:13px;font-weight:500">
                 Bekor qilish
