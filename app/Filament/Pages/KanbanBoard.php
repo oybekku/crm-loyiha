@@ -89,6 +89,10 @@ class KanbanBoard extends Page
     public array  $paymentAdjustments       = []; // service_id => +/- summa (faqat admin)
     public bool   $paymentAmountConfirm    = false;
 
+    // To'lov oynasidagi chegirma bo'limi (tanlangan xizmat(lar) narxiga qo'llanadi)
+    public string $payDiscountCategory  = ''; // '', nogiron, pensioner, ijtimoiy, boshqa
+    public string $payDiscountCustomPct = '';
+
     // Edit payment modal state
     public bool   $showEditPaymentModal = false;
     public int    $editPaymentId        = 0;
@@ -766,6 +770,8 @@ class KanbanBoard extends Page
         $this->paymentEskizUserId      = $project?->services->where('service_name', 'eskiz_loyiha')->first()?->assigned_user_id;
         $this->paymentSelectedServices = []; // reset
         $this->paymentAdjustments      = []; // reset
+        $this->payDiscountCategory     = '';
+        $this->payDiscountCustomPct    = '';
 
         $this->showPaymentModal = true;
     }
@@ -777,6 +783,43 @@ class KanbanBoard extends Page
         $this->paymentToposyomkaUserId = null;
         $this->paymentEskizUserId      = null;
         $this->paymentAmountConfirm    = false;
+        $this->payDiscountCategory     = '';
+        $this->payDiscountCustomPct    = '';
+    }
+
+    // To'lov oynasidagi chegirma — tanlangan xizmat(lar)ga (yoki hech narsa
+    // belgilanmagan bo'lsa barcha xizmatlarga) foiz chegirma qo'llaydi.
+    // ProjectService modelining "saving" hook'i final_price'ni avtomatik
+    // qayta hisoblaydi, shu sababli shu yerda faqat discount_type/value
+    // yozib saqlash kifoya. Oyna yopilmaydi — foydalanuvchi davom etadi.
+    public function applyPaymentDiscount(): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+
+        $rates = ['nogiron' => 15, 'pensioner' => 10, 'ijtimoiy' => 10];
+        $pct = match ($this->payDiscountCategory) {
+            'nogiron', 'pensioner', 'ijtimoiy' => $rates[$this->payDiscountCategory],
+            'boshqa' => (float) $this->payDiscountCustomPct,
+            default  => null,
+        };
+        if ($pct === null || $pct <= 0) return;
+
+        $project = Project::with('services')->find($this->paymentProjectId);
+        if (!$project) return;
+
+        $targets = empty($this->paymentSelectedServices)
+            ? $project->services
+            : $project->services->whereIn('service_name', $this->paymentSelectedServices);
+
+        foreach ($targets as $svc) {
+            $svc->discount_type  = 'percent';
+            $svc->discount_value = $pct;
+            $svc->save();
+        }
+
+        $this->payDiscountCategory  = '';
+        $this->payDiscountCustomPct = '';
+        $this->dispatch('notify', type: 'success', message: "Chegirma qo'llandi");
     }
 
     // To'lov usuli o'zgarsa — avval tanlangan hisob boshqa turga tegishli bo'lib

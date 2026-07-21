@@ -2110,30 +2110,70 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 @if($showPaymentModal)
 @php $payProj = \App\Models\Project::with('payments')->find($paymentProjectId); @endphp
 <div style="position:fixed;inset:0;z-index:1300;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)">
-    <div style="background:#fff;border-radius:16px;width:100%;max-width:460px;max-height:92vh;overflow-y:auto;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.2)" wire:click.stop>
+    <div style="background:#fff;border-radius:16px;width:100%;max-width:920px;max-height:92vh;overflow-y:auto;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.2)" wire:click.stop>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
             <h3 style="font-size:16px;font-weight:700;color:#111827;margin:0">To'lov qo'shish</h3>
             <button wire:click="closePaymentModal" style="border:none;background:none;cursor:pointer;color:#6b7280;font-size:20px;line-height:1">×</button>
         </div>
 
         @if($payProj)
-        {{-- Project summary --}}
-        <div style="background:#f9fafb;border-radius:10px;padding:12px 16px;margin-bottom:20px">
-            <div style="font-size:13px;font-weight:600;color:#111827;margin-bottom:4px">{{ $payProj->owner_name }}</div>
-            <div style="display:flex;justify-content:space-between;font-size:12px;color:#6b7280;margin-bottom:6px">
-                <span>Umumiy summa:</span>
-                <span style="font-weight:600;color:#111827">{{ number_format($payProj->total_price, 0, '.', ' ') }} so'm</span>
+        {{-- Project summary + tezkor to'lov maydonlari (vertikal bloklar) --}}
+        @php $payAccOpts = $paymentAccounts->where('type', $paymentMethod); @endphp
+        <div style="background:#f9fafb;border-radius:10px;padding:16px;margin-bottom:20px">
+            <div style="font-size:14px;font-weight:700;color:#111827;margin-bottom:14px">{{ $payProj->owner_name }}</div>
+
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px">
+                <div>
+                    <div style="font-size:11px;color:#6b7280;margin-bottom:3px">Umumiy summa</div>
+                    <div style="font-size:15px;font-weight:700;color:#111827">{{ number_format($payProj->total_price, 0, '.', ' ') }} so'm</div>
+                </div>
+                <div>
+                    <div style="font-size:11px;color:#6b7280;margin-bottom:3px">To'langan</div>
+                    <div style="font-size:15px;font-weight:700;color:#16a34a">{{ number_format($payProj->paid_amount, 0, '.', ' ') }} <span style="font-size:11px;font-weight:500">so'm ({{ $payProj->payment_percent }}%)</span></div>
+                </div>
+                <div>
+                    <div style="font-size:11px;color:#6b7280;margin-bottom:3px">Qoldiq</div>
+                    <div style="font-size:15px;font-weight:700;color:#dc2626">{{ number_format($payProj->remaining_amount, 0, '.', ' ') }} so'm</div>
+                </div>
             </div>
-            <div style="display:flex;justify-content:space-between;font-size:12px;color:#6b7280;margin-bottom:6px">
-                <span>To'langan:</span>
-                <span style="font-weight:600;color:#16a34a">{{ number_format($payProj->paid_amount, 0, '.', ' ') }} so'm ({{ $payProj->payment_percent }}%)</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;font-size:12px;color:#6b7280">
-                <span>Qoldiq:</span>
-                <span style="font-weight:600;color:#dc2626">{{ number_format($payProj->remaining_amount, 0, '.', ' ') }} so'm</span>
-            </div>
-            <div style="background:#e5e7eb;border-radius:4px;height:6px;margin-top:8px;overflow:hidden">
+
+            <div style="background:#e5e7eb;border-radius:4px;height:6px;margin-bottom:16px;overflow:hidden">
                 <div style="background:#16a34a;height:100%;width:{{ $payProj->payment_percent }}%;border-radius:4px"></div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+                <div>
+                    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Summa (so'm) *</label>
+                    <input wire:model.live="paymentAmount" type="number" min="1"
+                           style="width:100%;padding:10px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box;background:#fff"
+                           placeholder="Masalan: 350000"
+                           onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#e5e7eb'">
+                    @error('paymentAmount')<span style="font-size:11px;color:#dc2626">{{ $message }}</span>@enderror
+                    @if($paymentAmount && $payProj->total_price > 0)
+                    @php $pct = min(100, round((float)$paymentAmount / (float)$payProj->total_price * 100)); @endphp
+                    <div style="font-size:11px;color:#6b7280;margin-top:4px">
+                        ≈ {{ $pct }}% (jami: {{ number_format($payProj->paid_amount + (float)$paymentAmount, 0, '.', ' ') }} so'm)
+                    </div>
+                    @endif
+                </div>
+                <div>
+                    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Qaysi hisobga tushdi?</label>
+                    @if($payAccOpts->count() > 0)
+                    <select wire:model="paymentAccountId"
+                            style="width:100%;padding:10px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;background:#fff">
+                        <option value="">— tanlanmagan —</option>
+                        @foreach($payAccOpts as $acc)
+                        <option value="{{ $acc->id }}">
+                            {{ $acc->name ?: ucfirst($acc->type) }}
+                            @if($acc->type === 'karta' && $acc->card_number) — {{ $acc->card_number }}@endif
+                            @if($acc->type === 'bank' && $acc->account_number) — {{ $acc->account_number }}@endif
+                        </option>
+                        @endforeach
+                    </select>
+                    @else
+                    <div style="font-size:12px;color:#9ca3af;padding:10px 12px;background:#fff;border:2px solid #e5e7eb;border-radius:8px">Bu usul uchun hisob yo'q</div>
+                    @endif
+                </div>
             </div>
         </div>
 
@@ -2172,20 +2212,44 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             </div>
             @endif
 
-            <div>
-                <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Summa (so'm) *</label>
-                <input wire:model.live="paymentAmount" type="number" min="1"
-                       style="width:100%;padding:10px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box"
-                       placeholder="Masalan: 350000"
-                       onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#e5e7eb'">
-                @error('paymentAmount')<span style="font-size:11px;color:#dc2626">{{ $message }}</span>@enderror
-                @if($paymentAmount && $payProj->total_price > 0)
-                @php $pct = min(100, round((float)$paymentAmount / (float)$payProj->total_price * 100)); @endphp
-                <div style="font-size:11px;color:#6b7280;margin-top:4px">
-                    ≈ {{ $pct }}% (jami: {{ number_format($payProj->paid_amount + (float)$paymentAmount, 0, '.', ' ') }} so'm)
+            {{-- Chegirma (tanlangan xizmat(lar)ga, admin uchun) --}}
+            @if(auth()->user()?->isAdmin())
+            <div style="background:#fefce8;border:1px solid #fde68a;border-radius:10px;padding:12px 14px">
+                <label style="font-size:12px;font-weight:600;color:#92400e;display:block;margin-bottom:8px">🏷️ Chegirma (tanlangan xizmat(lar)ga)</label>
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px">
+                    <label style="display:flex;align-items:center;gap:5px;background:#fff;border:1.5px solid {{ $payDiscountCategory==='nogiron' ? '#f59e0b' : '#e5e7eb' }};border-radius:7px;padding:6px 8px;cursor:pointer;font-size:11px">
+                        <input type="radio" wire:model.live="payDiscountCategory" value="nogiron" style="accent-color:#f59e0b">
+                        Guruh nogironlar 15%
+                    </label>
+                    <label style="display:flex;align-items:center;gap:5px;background:#fff;border:1.5px solid {{ $payDiscountCategory==='pensioner' ? '#f59e0b' : '#e5e7eb' }};border-radius:7px;padding:6px 8px;cursor:pointer;font-size:11px">
+                        <input type="radio" wire:model.live="payDiscountCategory" value="pensioner" style="accent-color:#f59e0b">
+                        Pensionerlar 10%
+                    </label>
+                    <label style="display:flex;align-items:center;gap:5px;background:#fff;border:1.5px solid {{ $payDiscountCategory==='ijtimoiy' ? '#f59e0b' : '#e5e7eb' }};border-radius:7px;padding:6px 8px;cursor:pointer;font-size:11px">
+                        <input type="radio" wire:model.live="payDiscountCategory" value="ijtimoiy" style="accent-color:#f59e0b">
+                        Ijtimoiy ximoya 10%
+                    </label>
+                    <label style="display:flex;align-items:center;gap:5px;background:#fff;border:1.5px solid {{ $payDiscountCategory==='boshqa' ? '#f59e0b' : '#e5e7eb' }};border-radius:7px;padding:6px 8px;cursor:pointer;font-size:11px">
+                        <input type="radio" wire:model.live="payDiscountCategory" value="boshqa" style="accent-color:#f59e0b">
+                        Boshqalar
+                    </label>
                 </div>
-                @endif
+                <div style="display:flex;gap:8px;align-items:center">
+                    @if($payDiscountCategory === 'boshqa')
+                    <input wire:model="payDiscountCustomPct" type="number" min="0" max="100" step="0.1"
+                           placeholder="Foiz, masalan: 5"
+                           style="flex:1;padding:8px 10px;border:1.5px solid #e5e7eb;border-radius:7px;font-size:12px;outline:none;box-sizing:border-box;background:#fff">
+                    <span style="font-size:12px;color:#92400e">%</span>
+                    @endif
+                    <button type="button" wire:click="applyPaymentDiscount" @disabled(!$payDiscountCategory)
+                            style="margin-left:auto;padding:8px 18px;border-radius:7px;border:none;background:{{ $payDiscountCategory ? '#f59e0b' : '#fde68a' }};color:#fff;font-size:12px;font-weight:700;cursor:{{ $payDiscountCategory ? 'pointer' : 'not-allowed' }};white-space:nowrap">
+                        ✓ Bajarish
+                    </button>
+                </div>
+                <div style="font-size:10px;color:#92400e;margin-top:6px;opacity:.8">Hech qaysi xizmat belgilanmagan bo'lsa — barcha xizmatlarga qo'llanadi</div>
             </div>
+            @endif
+
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
                 <div>
                     <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Sana *</label>
@@ -2203,23 +2267,6 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                     </select>
                 </div>
             </div>
-            @php $payAccOpts = $paymentAccounts->where('type', $paymentMethod); @endphp
-            @if($payAccOpts->count() > 0)
-            <div>
-                <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Qaysi hisobga tushdi?</label>
-                <select wire:model="paymentAccountId"
-                        style="width:100%;padding:10px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;background:#fff">
-                    <option value="">— tanlanmagan —</option>
-                    @foreach($payAccOpts as $acc)
-                    <option value="{{ $acc->id }}">
-                        {{ $acc->name ?: ucfirst($acc->type) }}
-                        @if($acc->type === 'karta' && $acc->card_number) — {{ $acc->card_number }}@endif
-                        @if($acc->type === 'bank' && $acc->account_number) — {{ $acc->account_number }}@endif
-                    </option>
-                    @endforeach
-                </select>
-            </div>
-            @endif
             <div>
                 <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Izoh</label>
                 <textarea wire:model="paymentNote" rows="2"
