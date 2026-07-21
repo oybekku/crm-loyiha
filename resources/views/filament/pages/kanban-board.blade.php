@@ -549,7 +549,9 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
         </div>
         <div style="text-align:right;flex-shrink:0">
             <span style="display:inline-block;font-size:11px;font-weight:700;color:#fff;background:{{ $stm['color'] }};border-radius:6px;padding:3px 10px;white-space:nowrap">{{ $stm['label'] }}</span>
+            @if(!auth()->user()?->isBajaruvchi())
             <div style="font-size:12px;color:#374151;font-weight:600;margin-top:4px">{{ number_format($p->total_price, 0, '.', ' ') }} so'm</div>
+            @endif
         </div>
     </div>
     @empty
@@ -693,7 +695,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                         <div style="margin-bottom:6px">
                             <span class="kbn-badge" style="background:{{ $wsC['color'] }};display:inline-block;padding:3px 12px;border-radius:20px;font-size:10px;font-weight:800;letter-spacing:.03em;white-space:nowrap">{{ $wsC['label'] }}</span>
                         </div>
-                        @if($project->total_price > 0)
+                        @if($project->total_price > 0 && !auth()->user()?->isBajaruvchi())
                         <div style="font-size:11px;white-space:nowrap"><span class="kbn-muted">Umumiy</span> <b class="kbn-total">{{ number_format($project->total_price,0,'.',' ') }}</b></div>
                         <div style="font-size:11px;white-space:nowrap"><span class="kbn-muted">To'langan</span> <b class="kbn-paid">{{ number_format($project->paid_amount,0,'.',' ') }}</b></div>
                         @if($qcC>0)<div style="font-size:11px;white-space:nowrap"><span class="kbn-muted">Qoldiq</span> <b class="kbn-debt">{{ number_format($qcC,0,'.',' ') }}</b></div>
@@ -865,8 +867,8 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             {{-- DIVIDER --}}
             <div class="p-card-divider"></div>
 
-            {{-- MONEY --}}
-            @if($project->total_price > 0)
+            {{-- MONEY (hodim/bajaruvchiga ko'rinmaydi) --}}
+            @if($project->total_price > 0 && !auth()->user()?->isBajaruvchi())
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
                 <span style="font-size:11px;color:#9ca3af">Umumiy</span>
                 <span style="font-size:12px;font-weight:600;color:#374151">{{ number_format($project->total_price, 0, '.', ' ') }} so'm</span>

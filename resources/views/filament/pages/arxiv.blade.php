@@ -296,10 +296,12 @@ $getBadgeStyle = function(string $status) use ($archiveBadgeColors): string {
                             class="sortable {{ $sortField==='status'?'sort-active':'' }}">
                             Bosqich {!! $sortIcon('status') !!}
                         </th>
+                        @if(!auth()->user()?->isBajaruvchi())
                         <th wire:click="sortBy('total_price')"
                             class="sortable {{ $sortField==='total_price'?'sort-active':'' }}">
                             Narx {!! $sortIcon('total_price') !!}
                         </th>
+                        @endif
                         <th>Admin</th>
                         <th wire:click="sortBy('updated_at')"
                             class="sortable {{ $sortField==='updated_at'?'sort-active':'' }}">
@@ -349,13 +351,15 @@ $getBadgeStyle = function(string $status) use ($archiveBadgeColors): string {
                             </span>
                         </td>
 
-                        {{-- Narx --}}
+                        {{-- Narx (hodimga ko'rinmaydi) --}}
+                        @if(!auth()->user()?->isBajaruvchi())
                         <td>
                             <div class="arx-price">{{ number_format($finalPrice, 0, '.', ' ') }} so'm</div>
                             @if($discountPct > 0)
                             <div class="arx-discount">{{ $discountPct }}% chegirma</div>
                             @endif
                         </td>
+                        @endif
 
                         {{-- Hodimlar --}}
                         <td>
@@ -474,7 +478,8 @@ $getBadgeStyle = function(string $status) use ($archiveBadgeColors): string {
                 </div>
             </div>
 
-            {{-- Payment progress --}}
+            {{-- Payment progress (hodimga ko'rinmaydi) --}}
+            @if(!auth()->user()?->isBajaruvchi())
             <div>
                 <div class="sb-section">To'lov</div>
                 <div class="sb-row" style="border:none;padding-bottom:0">
@@ -501,6 +506,7 @@ $getBadgeStyle = function(string $status) use ($archiveBadgeColors): string {
                     @endif
                 </div>
             </div>
+            @endif
 
             {{-- Services --}}
             @if($sp->services->count())
