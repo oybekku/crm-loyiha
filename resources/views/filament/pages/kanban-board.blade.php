@@ -2117,8 +2117,8 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
         </div>
 
         @if($payProj)
-        {{-- Project summary + tezkor to'lov maydonlari (vertikal bloklar) --}}
         @php $payAccOpts = $paymentAccounts->where('type', $paymentMethod); @endphp
+        {{-- Project summary (vertikal bloklar) --}}
         <div style="background:#f9fafb;border-radius:10px;padding:16px;margin-bottom:20px">
             <div style="font-size:14px;font-weight:700;color:#111827;margin-bottom:14px">{{ $payProj->owner_name }}</div>
 
@@ -2137,43 +2137,8 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                 </div>
             </div>
 
-            <div style="background:#e5e7eb;border-radius:4px;height:6px;margin-bottom:16px;overflow:hidden">
+            <div style="background:#e5e7eb;border-radius:4px;height:6px;overflow:hidden">
                 <div style="background:#16a34a;height:100%;width:{{ $payProj->payment_percent }}%;border-radius:4px"></div>
-            </div>
-
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-                <div>
-                    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Summa (so'm) *</label>
-                    <input wire:model.live="paymentAmount" type="number" min="1"
-                           style="width:100%;padding:10px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box;background:#fff"
-                           placeholder="Masalan: 350000"
-                           onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#e5e7eb'">
-                    @error('paymentAmount')<span style="font-size:11px;color:#dc2626">{{ $message }}</span>@enderror
-                    @if($paymentAmount && $payProj->total_price > 0)
-                    @php $pct = min(100, round((float)$paymentAmount / (float)$payProj->total_price * 100)); @endphp
-                    <div style="font-size:11px;color:#6b7280;margin-top:4px">
-                        ≈ {{ $pct }}% (jami: {{ number_format($payProj->paid_amount + (float)$paymentAmount, 0, '.', ' ') }} so'm)
-                    </div>
-                    @endif
-                </div>
-                <div>
-                    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Qaysi hisobga tushdi?</label>
-                    @if($payAccOpts->count() > 0)
-                    <select wire:model="paymentAccountId"
-                            style="width:100%;padding:10px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;background:#fff">
-                        <option value="">— tanlanmagan —</option>
-                        @foreach($payAccOpts as $acc)
-                        <option value="{{ $acc->id }}">
-                            {{ $acc->name ?: ucfirst($acc->type) }}
-                            @if($acc->type === 'karta' && $acc->card_number) — {{ $acc->card_number }}@endif
-                            @if($acc->type === 'bank' && $acc->account_number) — {{ $acc->account_number }}@endif
-                        </option>
-                        @endforeach
-                    </select>
-                    @else
-                    <div style="font-size:12px;color:#9ca3af;padding:10px 12px;background:#fff;border:2px solid #e5e7eb;border-radius:8px">Bu usul uchun hisob yo'q</div>
-                    @endif
-                </div>
             </div>
         </div>
 
@@ -2252,10 +2217,18 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
                 <div>
-                    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Sana *</label>
-                    <input wire:model="paymentDate" type="date"
-                           style="width:100%;padding:10px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box">
-                    @error('paymentDate')<span style="font-size:11px;color:#dc2626">{{ $message }}</span>@enderror
+                    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Summa (so'm) *</label>
+                    <input wire:model.live="paymentAmount" type="number" min="1"
+                           style="width:100%;padding:10px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box"
+                           placeholder="Masalan: 350000"
+                           onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#e5e7eb'">
+                    @error('paymentAmount')<span style="font-size:11px;color:#dc2626">{{ $message }}</span>@enderror
+                    @if($paymentAmount && $payProj->total_price > 0)
+                    @php $pct = min(100, round((float)$paymentAmount / (float)$payProj->total_price * 100)); @endphp
+                    <div style="font-size:11px;color:#6b7280;margin-top:4px">
+                        ≈ {{ $pct }}% (jami: {{ number_format($payProj->paid_amount + (float)$paymentAmount, 0, '.', ' ') }} so'm)
+                    </div>
+                    @endif
                 </div>
                 <div>
                     <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:6px">To'lov usuli</label>
@@ -2265,6 +2238,39 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                         <option value="bank">Bank o'tkazma</option>
                         <option value="karta">Karta</option>
                     </select>
+                </div>
+            </div>
+
+            <button type="button" wire:click="savePayment(true)"
+                    style="width:100%;padding:12px;border-radius:8px;border:none;background:#2563eb;color:#fff;font-size:14px;font-weight:700;cursor:pointer">
+                💾 To'lash
+            </button>
+            <div style="font-size:10px;color:#9ca3af;margin-top:-8px">Bu tugma barcha kiritilgan o'zgarishlarni saqlaydi, oyna yopilmaydi</div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <div>
+                    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Sana *</label>
+                    <input wire:model="paymentDate" type="date"
+                           style="width:100%;padding:10px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box">
+                    @error('paymentDate')<span style="font-size:11px;color:#dc2626">{{ $message }}</span>@enderror
+                </div>
+                <div>
+                    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Qaysi hisobga tushdi?</label>
+                    @if($payAccOpts->count() > 0)
+                    <select wire:model="paymentAccountId"
+                            style="width:100%;padding:10px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;background:#fff">
+                        <option value="">— tanlanmagan —</option>
+                        @foreach($payAccOpts as $acc)
+                        <option value="{{ $acc->id }}">
+                            {{ $acc->name ?: ucfirst($acc->type) }}
+                            @if($acc->type === 'karta' && $acc->card_number) — {{ $acc->card_number }}@endif
+                            @if($acc->type === 'bank' && $acc->account_number) — {{ $acc->account_number }}@endif
+                        </option>
+                        @endforeach
+                    </select>
+                    @else
+                    <div style="font-size:12px;color:#9ca3af;padding:10px 12px;background:#f9fafb;border:2px solid #e5e7eb;border-radius:8px">Bu usul uchun hisob yo'q</div>
+                    @endif
                 </div>
             </div>
             <div>

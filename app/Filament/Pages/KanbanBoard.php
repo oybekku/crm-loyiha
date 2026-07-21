@@ -837,7 +837,10 @@ class KanbanBoard extends Page
         return $accounts->count() === 1 ? $accounts->first() : null;
     }
 
-    public function savePayment(): void
+    // $keepOpen=true bo'lsa — oyna yopilmaydi, faqat summa/izoh tozalanadi
+    // (admin ketma-ket bir nechta to'lov kiritishi yoki boshqa o'zgarish
+    // qilishi uchun). Oddiy "Saqlash" tugmasi $keepOpen=false bilan chaqiradi.
+    public function savePayment(bool $keepOpen = false): void
     {
         $project = Project::find($this->paymentProjectId);
         if (!$project) return;
@@ -919,6 +922,14 @@ class KanbanBoard extends Page
                 $this->logStatusChange($project, 'toposyomka');
                 $project->update(['status' => 'toposyomka']);
             }
+        }
+
+        if ($keepOpen) {
+            $this->paymentAmount       = '';
+            $this->paymentNote         = '';
+            $this->paymentAmountConfirm = false;
+            $this->dispatch('notify', type: 'success', message: $hasAmount ? "To'lov saqlandi!" : 'Hodimlar biriktirildi!');
+            return;
         }
 
         $this->closePaymentModal();
