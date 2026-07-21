@@ -1991,7 +1991,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 <div style="position:fixed;inset:0;z-index:1300;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)">
     <div style="background:#fff;border-radius:16px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.2)" wire:click.stop>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-            <h3 style="font-size:16px;font-weight:700;color:#111827;margin:0">Loyihani yo'naltirish</h3>
+            <h3 style="font-size:16px;font-weight:700;color:#111827 !important;margin:0">Loyihani yo'naltirish</h3>
             <button wire:click="closeRouteModal" style="border:none;background:none;cursor:pointer;color:#6b7280;font-size:20px;line-height:1">×</button>
         </div>
         @if($routeProj)
@@ -2001,7 +2001,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
         @endif
         <div style="display:flex;flex-direction:column;gap:14px">
             <div>
-                <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Yuborilayotgan bosqich *</label>
+                <label style="font-size:12px;font-weight:600;color:#374151 !important;display:block;margin-bottom:6px">Yuborilayotgan bosqich *</label>
                 <select wire:model="routeNewStatus" style="width:100%;padding:10px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;background:#fff;box-sizing:border-box">
                     <option value="">— Tanlang —</option>
                     @foreach($routeStatuses as $sk => $st)
@@ -2010,17 +2010,17 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                     @endif
                     @endforeach
                 </select>
-                @error('routeNewStatus')<span style="font-size:11px;color:#dc2626">{{ $message }}</span>@enderror
+                @error('routeNewStatus')<span style="font-size:11px;color:#dc2626 !important">{{ $message }}</span>@enderror
             </div>
             <div>
-                <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Bu bosqich uchun muddat (kun)</label>
+                <label style="font-size:12px;font-weight:600;color:#374151 !important;display:block;margin-bottom:6px">Bu bosqich uchun muddat (kun)</label>
                 <input wire:model="routeAllocDays" type="number" min="0" max="365"
                        style="width:100%;padding:10px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:14px;box-sizing:border-box"
                        placeholder="0 = cheklanmagan">
                 <span style="font-size:10px;color:#9ca3af">0 kiritsangiz muddat belgilanmaydi</span>
             </div>
             <div>
-                <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Mas'ul xodim</label>
+                <label style="font-size:12px;font-weight:600;color:#374151 !important;display:block;margin-bottom:6px">Mas'ul xodim</label>
                 <select wire:model="routeAssignedUserId" style="width:100%;padding:10px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;background:#fff;box-sizing:border-box">
                     <option value="">— O'zgartirmaslik —</option>
                     @foreach($users as $u)
@@ -2115,7 +2115,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
     <div style="background:#fff;border-radius:16px;width:100%;max-width:920px;max-height:92vh;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2);display:flex;flex-direction:column" wire:click.stop>
     <div style="overflow-y:auto;padding:28px;flex:1;min-height:0">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-            <h3 style="font-size:16px;font-weight:700;color:#111827;margin:0">To'lov qo'shish</h3>
+            <h3 style="font-size:16px;font-weight:700;color:#111827 !important;margin:0">To'lov qo'shish</h3>
             <button wire:click="closePaymentModal" style="border:none;background:none;cursor:pointer;color:#6b7280;font-size:20px;line-height:1">×</button>
         </div>
 
@@ -2128,15 +2128,15 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
                 <div style="background:#fff;border:1px solid #eef2f7;border-radius:10px;padding:14px 16px">
                     <div style="font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.03em;margin-bottom:5px">Umumiy summa</div>
-                    <div style="font-size:35px;font-weight:800;color:#111827;line-height:1.2">{{ number_format($payProj->total_price, 0, '.', ' ') }}<span style="font-size:14px;font-weight:600;color:#9ca3af"> so'm</span></div>
+                    <div style="font-size:35px;font-weight:800;color:#111827;line-height:1.2">{{ number_format($payProj->total_price, 0, '.', ' ') }}<span style="font-size:14px;font-weight:600;color:#9ca3af !important"> so'm</span></div>
                 </div>
                 <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px 16px">
                     <div style="font-size:11px;font-weight:600;color:#15803d;text-transform:uppercase;letter-spacing:.03em;margin-bottom:5px">To'langan</div>
-                    <div style="font-size:35px;font-weight:800;color:#16a34a;line-height:1.2">{{ number_format($payProj->paid_amount, 0, '.', ' ') }}<span style="font-size:14px;font-weight:600;color:#4ade80"> so'm ({{ $payProj->payment_percent }}%)</span></div>
+                    <div style="font-size:35px;font-weight:800;color:#16a34a;line-height:1.2">{{ number_format($payProj->paid_amount, 0, '.', ' ') }}<span style="font-size:14px;font-weight:600;color:#4ade80 !important"> so'm ({{ $payProj->payment_percent }}%)</span></div>
                 </div>
                 <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px 16px">
                     <div style="font-size:11px;font-weight:600;color:#b91c1c;text-transform:uppercase;letter-spacing:.03em;margin-bottom:5px">Qoldiq</div>
-                    <div style="font-size:35px;font-weight:800;color:#dc2626;line-height:1.2">{{ number_format($payProj->remaining_amount, 0, '.', ' ') }}<span style="font-size:14px;font-weight:600;color:#f87171"> so'm</span></div>
+                    <div style="font-size:35px;font-weight:800;color:#dc2626;line-height:1.2">{{ number_format($payProj->remaining_amount, 0, '.', ' ') }}<span style="font-size:14px;font-weight:600;color:#f87171 !important"> so'm</span></div>
                 </div>
             </div>
 
@@ -2151,18 +2151,18 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             {{-- Xizmat tanlash --}}
             @if($payProj->services->count())
             <div>
-                <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:8px">Qaysi xizmat uchun to'lov?</label>
+                <label style="font-size:12px;font-weight:600;color:#374151 !important;display:block;margin-bottom:8px">Qaysi xizmat uchun to'lov?</label>
                 <div style="display:flex;flex-direction:column;gap:6px">
                     @foreach($payProj->services as $svc)
                     <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:8px 12px;transition:border-color .15s"
                          :style="$wire.paymentSelectedServices.includes('{{ $svc->service_name }}') ? 'border-color:#2563eb;background:#eff6ff' : ''">
-                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:#111827 !important">
                             <input type="checkbox"
                                    wire:model.live="paymentSelectedServices"
                                    value="{{ $svc->service_name }}"
                                    style="width:15px;height:15px;cursor:pointer;accent-color:#2563eb">
-                            <span style="font-weight:600">{{ \App\Models\Project::serviceOptions()[$svc->service_name] ?? $svc->service_name }}</span>
-                            <span style="margin-left:auto;font-size:12px;color:#6b7280">{{ number_format($svc->final_price, 0, '.', ' ') }} so'm</span>
+                            <span style="font-weight:600;color:#111827 !important">{{ \App\Models\Project::serviceOptions()[$svc->service_name] ?? $svc->service_name }}</span>
+                            <span style="margin-left:auto;font-size:12px;color:#6b7280 !important">{{ number_format($svc->final_price, 0, '.', ' ') }} so'm</span>
                         </label>
                         @if(auth()->user()?->isAdmin())
                         <div style="margin-top:6px">
@@ -2183,21 +2183,21 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             {{-- Chegirma (tanlangan xizmat(lar)ga, admin uchun) --}}
             @if(auth()->user()?->isAdmin())
             <div style="background:#fefce8;border:1px solid #fde68a;border-radius:10px;padding:14px 16px">
-                <label style="font-size:12px;font-weight:600;color:#92400e;display:block;margin-bottom:8px">🏷️ Chegirma (tanlangan xizmat(lar)ga)</label>
+                <label style="font-size:12px;font-weight:600;color:#92400e !important;display:block;margin-bottom:8px">🏷️ Chegirma (tanlangan xizmat(lar)ga)</label>
                 <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px">
-                    <label style="display:flex;align-items:center;gap:5px;background:#fff;border:1.5px solid {{ $payDiscountCategory==='nogiron' ? '#f59e0b' : '#e5e7eb' }};border-radius:7px;padding:6px 8px;cursor:pointer;font-size:11px">
+                    <label style="display:flex;align-items:center;gap:5px;background:#fff;border:1.5px solid {{ $payDiscountCategory==='nogiron' ? '#f59e0b' : '#e5e7eb' }};border-radius:7px;padding:6px 8px;cursor:pointer;font-size:11px;color:#111827 !important">
                         <input type="radio" wire:model.live="payDiscountCategory" value="nogiron" style="accent-color:#f59e0b">
                         Guruh nogironlar 15%
                     </label>
-                    <label style="display:flex;align-items:center;gap:5px;background:#fff;border:1.5px solid {{ $payDiscountCategory==='pensioner' ? '#f59e0b' : '#e5e7eb' }};border-radius:7px;padding:6px 8px;cursor:pointer;font-size:11px">
+                    <label style="display:flex;align-items:center;gap:5px;background:#fff;border:1.5px solid {{ $payDiscountCategory==='pensioner' ? '#f59e0b' : '#e5e7eb' }};border-radius:7px;padding:6px 8px;cursor:pointer;font-size:11px;color:#111827 !important">
                         <input type="radio" wire:model.live="payDiscountCategory" value="pensioner" style="accent-color:#f59e0b">
                         Pensionerlar 10%
                     </label>
-                    <label style="display:flex;align-items:center;gap:5px;background:#fff;border:1.5px solid {{ $payDiscountCategory==='ijtimoiy' ? '#f59e0b' : '#e5e7eb' }};border-radius:7px;padding:6px 8px;cursor:pointer;font-size:11px">
+                    <label style="display:flex;align-items:center;gap:5px;background:#fff;border:1.5px solid {{ $payDiscountCategory==='ijtimoiy' ? '#f59e0b' : '#e5e7eb' }};border-radius:7px;padding:6px 8px;cursor:pointer;font-size:11px;color:#111827 !important">
                         <input type="radio" wire:model.live="payDiscountCategory" value="ijtimoiy" style="accent-color:#f59e0b">
                         Ijtimoiy ximoya 10%
                     </label>
-                    <label style="display:flex;align-items:center;gap:5px;background:#fff;border:1.5px solid {{ $payDiscountCategory==='boshqa' ? '#f59e0b' : '#e5e7eb' }};border-radius:7px;padding:6px 8px;cursor:pointer;font-size:11px">
+                    <label style="display:flex;align-items:center;gap:5px;background:#fff;border:1.5px solid {{ $payDiscountCategory==='boshqa' ? '#f59e0b' : '#e5e7eb' }};border-radius:7px;padding:6px 8px;cursor:pointer;font-size:11px;color:#111827 !important">
                         <input type="radio" wire:model.live="payDiscountCategory" value="boshqa" style="accent-color:#f59e0b">
                         Boshqalar
                     </label>
@@ -2207,7 +2207,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                     <input wire:model="payDiscountCustomPct" type="number" min="0" max="100" step="0.1"
                            placeholder="Foiz, masalan: 5"
                            style="flex:1;padding:8px 10px;border:1.5px solid #e5e7eb;border-radius:7px;font-size:12px;outline:none;box-sizing:border-box;background:#fff">
-                    <span style="font-size:12px;color:#92400e">%</span>
+                    <span style="font-size:12px;color:#92400e !important">%</span>
                     @endif
                     <button type="button" wire:click="applyPaymentDiscount" @disabled(!$payDiscountCategory)
                             style="margin-left:auto;padding:8px 18px;border-radius:7px;border:none;background:{{ $payDiscountCategory ? '#f59e0b' : '#fde68a' }};color:#fff;font-size:12px;font-weight:700;cursor:{{ $payDiscountCategory ? 'pointer' : 'not-allowed' }};white-space:nowrap">
@@ -2220,12 +2220,12 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
                 <div>
-                    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Summa (so'm) *</label>
+                    <label style="font-size:12px;font-weight:600;color:#374151 !important;display:block;margin-bottom:6px">Summa (so'm) *</label>
                     <input wire:model.live="paymentAmount" type="number" min="1"
                            style="width:100%;padding:10px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box"
                            placeholder="Masalan: 350000"
                            onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#e5e7eb'">
-                    @error('paymentAmount')<span style="font-size:11px;color:#dc2626">{{ $message }}</span>@enderror
+                    @error('paymentAmount')<span style="font-size:11px;color:#dc2626 !important">{{ $message }}</span>@enderror
                     @if($paymentAmount && $payProj->total_price > 0)
                     @php $pct = min(100, round((float)$paymentAmount / (float)$payProj->total_price * 100)); @endphp
                     <div style="font-size:11px;color:#6b7280;margin-top:4px">
@@ -2234,7 +2234,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                     @endif
                 </div>
                 <div>
-                    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:6px">To'lov usuli</label>
+                    <label style="font-size:12px;font-weight:600;color:#374151 !important;display:block;margin-bottom:6px">To'lov usuli</label>
                     <select wire:model.live="paymentMethod"
                             style="width:100%;padding:10px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;background:#fff">
                         <option value="naqd">Naqd pul</option>
@@ -2252,13 +2252,13 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
                 <div>
-                    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Sana *</label>
+                    <label style="font-size:12px;font-weight:600;color:#374151 !important;display:block;margin-bottom:6px">Sana *</label>
                     <input wire:model="paymentDate" type="date"
                            style="width:100%;padding:10px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box">
-                    @error('paymentDate')<span style="font-size:11px;color:#dc2626">{{ $message }}</span>@enderror
+                    @error('paymentDate')<span style="font-size:11px;color:#dc2626 !important">{{ $message }}</span>@enderror
                 </div>
                 <div>
-                    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Qaysi hisobga tushdi?</label>
+                    <label style="font-size:12px;font-weight:600;color:#374151 !important;display:block;margin-bottom:6px">Qaysi hisobga tushdi?</label>
                     @if($payAccOpts->count() > 0)
                     <select wire:model="paymentAccountId"
                             style="width:100%;padding:10px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;background:#fff">
@@ -2277,7 +2277,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                 </div>
             </div>
             <div>
-                <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Izoh</label>
+                <label style="font-size:12px;font-weight:600;color:#374151 !important;display:block;margin-bottom:6px">Izoh</label>
                 <textarea wire:model="paymentNote" rows="2"
                           style="width:100%;padding:10px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;resize:none;box-sizing:border-box"
                           placeholder="Ixtiyoriy..."></textarea>
@@ -2290,7 +2290,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                 </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
                     <div>
-                        <label style="font-size:11px;color:#6b7280;display:block;margin-bottom:4px;font-weight:500">Toposyomka</label>
+                        <label style="font-size:11px;color:#6b7280 !important;display:block;margin-bottom:4px;font-weight:500">Toposyomka</label>
                         <select wire:model="paymentToposyomkaUserId"
                                 style="width:100%;padding:7px 10px;border:1.5px solid #e5e7eb;border-radius:7px;font-size:12px;background:#fff;box-sizing:border-box;color:#111827">
                             <option value="">— Tanlang —</option>
@@ -2300,7 +2300,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                         </select>
                     </div>
                     <div>
-                        <label style="font-size:11px;color:#6b7280;display:block;margin-bottom:4px;font-weight:500">Eskiz loyiha</label>
+                        <label style="font-size:11px;color:#6b7280 !important;display:block;margin-bottom:4px;font-weight:500">Eskiz loyiha</label>
                         <select wire:model="paymentEskizUserId"
                                 style="width:100%;padding:7px 10px;border:1.5px solid #e5e7eb;border-radius:7px;font-size:12px;background:#fff;box-sizing:border-box;color:#111827">
                             <option value="">— Tanlang —</option>
@@ -2314,12 +2314,12 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             @if($paymentFromQueue)
             <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px">
                 <svg width="16" height="16" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>
-                <span style="font-size:13px;font-weight:500;color:#166534">To'lov saqlanadi va loyiha <strong>To'langan</strong> bo'limiga o'tkaziladi</span>
+                <span style="font-size:13px;font-weight:500;color:#166534 !important">To'lov saqlanadi va loyiha <strong>To'langan</strong> bo'limiga o'tkaziladi</span>
             </div>
             @elseif($payProj && $payProj->status === 'tolov_jarayonida')
             <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f5f3ff;border-radius:8px;cursor:pointer;border:1px solid #ddd6fe">
                 <input type="checkbox" wire:model="paymentMoveToEskiz" style="width:16px;height:16px;accent-color:#7c3aed">
-                <span style="font-size:13px;font-weight:500;color:#5b21b6">To'lovdan keyin → <strong>Toposyomka</strong> bo'limiga o'tkazish</span>
+                <span style="font-size:13px;font-weight:500;color:#5b21b6 !important">To'lovdan keyin → <strong>Toposyomka</strong> bo'limiga o'tkazish</span>
             </label>
             @endif
         </div>
@@ -2334,10 +2334,10 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             @foreach($payProj->payments->sortByDesc('payment_date') as $pmt)
             <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;{{ !$loop->last ? 'border-bottom:1px solid #f1f5f9' : '' }}">
                 <div style="font-size:12px;color:#374151">
-                    <span style="font-weight:600;color:#111827">{{ number_format((float)$pmt->amount, 0, '.', ' ') }} so'm</span>
-                    <span style="color:#9ca3af;margin-left:6px">{{ $pmt->payment_date?->format('d/m/Y') }}</span>
+                    <span style="font-weight:600;color:#111827 !important">{{ number_format((float)$pmt->amount, 0, '.', ' ') }} so'm</span>
+                    <span style="color:#9ca3af !important;margin-left:6px">{{ $pmt->payment_date?->format('d/m/Y') }}</span>
                     @if($pmt->createdBy)
-                    <span style="color:#9ca3af;margin-left:4px">· {{ $pmt->createdBy->name }}</span>
+                    <span style="color:#9ca3af !important;margin-left:4px">· {{ $pmt->createdBy->name }}</span>
                     @endif
                 </div>
                 <div style="display:flex;gap:6px;flex-shrink:0">
@@ -2362,9 +2362,9 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
         <div style="background:#fffbeb;border:1.5px solid #fcd34d;border-radius:8px;padding:14px 16px">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
                 <span style="font-size:18px">⚠️</span>
-                <span style="font-size:13px;font-weight:600;color:#92400e">Summa kiritilmadi!</span>
+                <span style="font-size:13px;font-weight:600;color:#92400e !important">Summa kiritilmadi!</span>
             </div>
-            <p style="font-size:13px;color:#78350f;margin:0 0 12px">Summasisiz faqat hodim biriktirma ma'lumotlari saqlanadi. Davom etasizmi?</p>
+            <p style="font-size:13px;color:#78350f !important;margin:0 0 12px">Summasisiz faqat hodim biriktirma ma'lumotlari saqlanadi. Davom etasizmi?</p>
             <div style="display:flex;gap:8px">
                 <button wire:click="savePayment"
                         style="flex:1;padding:9px;border-radius:7px;border:none;background:#16a34a;color:#fff;font-size:13px;font-weight:600;cursor:pointer">
@@ -2423,7 +2423,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                    style="width:100%;padding:10px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box"
                    placeholder="Yangi summa kiriting"
                    onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#e5e7eb'">
-            @error('editPaymentAmount')<span style="font-size:11px;color:#dc2626">{{ $message }}</span>@enderror
+            @error('editPaymentAmount')<span style="font-size:11px;color:#dc2626 !important">{{ $message }}</span>@enderror
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <button wire:click="closeEditPayment"
