@@ -230,7 +230,9 @@ class MonthlyReport extends Page
                 if (in_array($service->assignedUser->role, ['admin', 'menejer'])) {
                     $rate = 0;
                 }
-                $price = (float) $service->final_price;
+                $price          = (float) $service->final_price;
+                $origPrice      = (float) $service->price;
+                $discountAmount = max(0, $origPrice - $price);
 
                 $isLate = $deadlineDate && $paidAt
                     && $paidAt->copy()->startOfDay()->gt($deadlineDate->copy()->startOfDay());
@@ -253,8 +255,9 @@ class MonthlyReport extends Page
                     ];
                 }
 
-                // Proportional to'langan ulush
-                $commission    = round($price * $rate / 100, 2);
+                // Komissiya asl (chegirmasiz) narxdan hisoblanadi, chegirma
+                // to'liq komissiyadan ayiriladi (firma ulushi o'zgarmaydi).
+                $commission    = round($origPrice * $rate / 100, 2) - $discountAmount;
                 $projTotal     = (float) $project->total_price;
                 $projPaid      = (float) $project->paid_amount;
                 $paidRatio     = $projTotal > 0 ? min(1, $projPaid / $projTotal) : 0;
@@ -284,7 +287,7 @@ class MonthlyReport extends Page
                 ];
 
                 $userStats[$uid]['services_total'] += $price;
-                $userStats[$uid]['commission']     += round($price * $rate / 100, 2);
+                $userStats[$uid]['commission']     += $commission;
 
                 if ($deadlineDate) {
                     $isLate
@@ -364,7 +367,9 @@ class MonthlyReport extends Page
                 }
                 $rate = (float) ($s->assignedUser->commission_rate ?? 20);
                 if (in_array($s->assignedUser?->role, ['admin', 'menejer'])) $rate = 0;
-                $myShare = round((float)$s->final_price * $rate / 100, 0);
+                $sOrigPrice  = (float) $s->price;
+                $sDiscount   = max(0, $sOrigPrice - (float) $s->final_price);
+                $myShare = round($sOrigPrice * $rate / 100, 0) - $sDiscount;
                 $isPaid = collect($paidServiceNotes)->contains(fn($n) => str_starts_with($n, 'svc:' . $s->id . '|'));
                 return [
                     'service_id'     => $s->id,
@@ -503,6 +508,8 @@ class MonthlyReport extends Page
                 $rate = (float) ($s->assignedUser->commission_rate ?? 20);
                 if (in_array($s->assignedUser?->role, ['admin', 'menejer'])) $rate = 0;
                 $st = $s->project?->status;
+                $sOrigPrice = (float) $s->price;
+                $sDiscount  = max(0, $sOrigPrice - (float) $s->final_price);
                 return [
                     'project_id'   => $s->project_id,
                     'number'       => $s->project?->number,
@@ -510,7 +517,7 @@ class MonthlyReport extends Page
                     'service'      => \App\Models\Project::serviceOptions()[$s->service_name] ?? $s->service_name,
                     'employee'     => $s->assignedUser?->name ?? '—',
                     'price'        => (float) $s->final_price,
-                    'commission'   => round((float) $s->final_price * $rate / 100),
+                    'commission'   => round($sOrigPrice * $rate / 100) - $sDiscount,
                     'date'         => $s->completed_at,
                     'is_arxiv'     => in_array($st, ['tugallangan', 'taqdim_etilgan']),
                     'status_label' => $statusLabels[$st] ?? $st,
@@ -547,7 +554,9 @@ class MonthlyReport extends Page
             if (!$ps->assignedUser) continue;
             $r = (float)($ps->assignedUser->commission_rate ?? 20);
             if (in_array($ps->assignedUser->role, ['admin', 'menejer'])) $r = 0;
-            $share = round((float)$ps->final_price * $r / 100);
+            $psOrigPrice = (float) $ps->price;
+            $psDiscount  = max(0, $psOrigPrice - (float) $ps->final_price);
+            $share = round($psOrigPrice * $r / 100) - $psDiscount;
             $pendingWorkersShare += $share;
             $uid = $ps->assigned_user_id;
             if (!isset($pendingWorkerStats[$uid])) {
