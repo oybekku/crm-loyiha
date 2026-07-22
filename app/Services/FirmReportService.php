@@ -36,19 +36,12 @@ class FirmReportService
         foreach ($completed as $s) {
             if (!$s->assignedUser) continue;
 
-            $origPrice  = (float) $s->price;
-            $finalPrice = (float) $s->final_price;
+            $price = (float) $s->final_price;
             $rate  = (float) ($s->assignedUser->commission_rate ?? 20);
             if (in_array($s->assignedUser->role, ['admin', 'menejer'])) $rate = 0;
+            $comm = round($price * $rate / 100, 0);
 
-            // Chegirma to'liq xodim komissiyasidan ayiriladi — firma ulushi
-            // (jamiTushum - hodimlarUlushi) shu bilan asl narxdan hisoblangan
-            // ulushicha qoladi, chegirmadan ta'sirlanmaydi (BalanceService bilan
-            // bir xil mantiq — Mening balansim'dagi summalarga mos keladi).
-            $discountAmount = max(0, $origPrice - $finalPrice);
-            $comm = round($origPrice * $rate / 100, 0) - $discountAmount;
-
-            $jamiTushum     += $finalPrice;
+            $jamiTushum     += $price;
             $hodimlarUlushi += $comm;
             $projIds[$s->project_id] = true;
 

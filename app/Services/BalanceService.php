@@ -12,14 +12,11 @@ use App\Models\EmployeeAdvance;
  * Xodim "Mening balansim" oynasi uchun hisob-kitob.
  *
  * Qoidalar (kelishilgan):
- *  - Bir ish komissiyasi = ish ASL narxi (price, chegirmasiz) × xodim foizi (commission_rate,
- *    default 20%) — MINUS shu ishga qo'yilgan chegirma summasi (price − final_price).
- *    Ya'ni chegirma TO'LIQ xodim komissiyasidan ayiriladi — firma ulushi chegirmadan
- *    ta'sirlanmaydi (har doim asl narxdan hisoblangan ulushini oladi). Agar chegirma
- *    komissiyadan katta bo'lsa, komissiya manfiy chiqishi mumkin (xodim shu ishda "qarzga kiradi").
+ *  - Bir ish komissiyasi = ish narxi (final_price, chegirmadan keyingi) × xodim foizi
+ *    (commission_rate, default 20%). Chegirma xodimga qo'shimcha yuk solmaydi — xodim
+ *    har doim final_price'dan o'z ulushini oladi (proporsional, firma bilan birga).
  *    Admin/menejer komissiya olmaydi (0%).
- *  - "Tasdiqlangan kirim" = ish TUGATILGAN (completed_at) VA shu ishga (chegirmadan keyingi
- *    narxga, ya'ni final_price'ga) to'liq TO'LANGAN bo'lsa.
+ *  - "Tasdiqlangan kirim" = ish TUGATILGAN (completed_at) VA shu ishga to'liq TO'LANGAN bo'lsa.
  *  - "Jarayonda" = qolgan (tugatilmagan yoki to'lanmagan) ishlar komissiyasi.
  *  - "Chiqim" = xodim olgan oylik (EmployeeSalaryPayment) + avanslar (EmployeeAdvance).
  *  - "Balans / firma qarzi" = tasdiqlangan kirim − chiqim.
@@ -63,18 +60,15 @@ class BalanceService
                 ->get();
 
             foreach ($services as $s) {
-                $origPrice  = (float) $s->price;
-                $finalPrice = (float) $s->final_price;
-                if ($origPrice <= 0) continue;
+                $price = (float) $s->final_price;
+                if ($price <= 0) continue;
 
-                // Chegirma bo'lsa — to'liq shu yerda xodim komissiyasidan ayiriladi.
-                $discountAmount = max(0, $origPrice - $finalPrice);
-                $commission     = round($origPrice * $rate / 100, 0) - $discountAmount;
-                if ($commission == 0) continue;
+                $commission = round($price * $rate / 100, 0);
+                if ($commission <= 0) continue;
 
                 $paidForService = self::paidForService($s);
                 $isCompleted    = (bool) $s->completed_at;
-                $isPaid         = $paidForService >= $finalPrice - 0.01;
+                $isPaid         = $paidForService >= $price - 0.01;
                 $confirmed      = $isCompleted && $isPaid;
 
                 if ($confirmed) {
@@ -85,12 +79,12 @@ class BalanceService
 
                 $txns[] = [
                     'type'    => 'ish',
-                    'dir'     => $commission >= 0 ? 'in' : 'out',
+                    'dir'     => 'in',
                     'date'    => ($s->completed_at ?? $s->created_at),
                     'owner'   => $s->project?->owner_name ?? '—',
                     'number'  => $s->project?->number ?? '',
                     'service' => Project::serviceOptions()[$s->service_name] ?? $s->service_name,
-                    'amount'  => abs($commission),
+                    'amount'  => $commission,
                     'status'  => $confirmed ? 'tasdiqlangan' : 'jarayonda',
                 ];
             }
