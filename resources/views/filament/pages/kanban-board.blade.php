@@ -2128,15 +2128,15 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
                 <div style="background:#fff;border:1px solid #eef2f7;border-radius:10px;padding:14px 16px">
                     <div style="font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.03em;margin-bottom:5px">Umumiy summa</div>
-                    <div style="font-size:35px;font-weight:800;color:#111827;line-height:1.2">{{ number_format($payProj->total_price, 0, '.', ' ') }}<span style="font-size:14px;font-weight:600;color:#9ca3af !important"> so'm</span></div>
+                    <div style="font-size:18px;font-weight:600;color:#111827;line-height:1.2">{{ number_format($payProj->total_price, 0, '.', ' ') }}<span style="font-size:11px;font-weight:500;color:#9ca3af !important"> so'm</span></div>
                 </div>
                 <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px 16px">
                     <div style="font-size:11px;font-weight:600;color:#15803d;text-transform:uppercase;letter-spacing:.03em;margin-bottom:5px">To'langan</div>
-                    <div style="font-size:35px;font-weight:800;color:#16a34a;line-height:1.2">{{ number_format($payProj->paid_amount, 0, '.', ' ') }}<span style="font-size:14px;font-weight:600;color:#4ade80 !important"> so'm ({{ $payProj->payment_percent }}%)</span></div>
+                    <div style="font-size:18px;font-weight:600;color:#16a34a;line-height:1.2">{{ number_format($payProj->paid_amount, 0, '.', ' ') }}<span style="font-size:11px;font-weight:500;color:#4ade80 !important"> so'm ({{ $payProj->payment_percent }}%)</span></div>
                 </div>
                 <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px 16px">
                     <div style="font-size:11px;font-weight:600;color:#b91c1c;text-transform:uppercase;letter-spacing:.03em;margin-bottom:5px">Qoldiq</div>
-                    <div style="font-size:35px;font-weight:800;color:#dc2626;line-height:1.2">{{ number_format($payProj->remaining_amount, 0, '.', ' ') }}<span style="font-size:14px;font-weight:600;color:#f87171 !important"> so'm</span></div>
+                    <div style="font-size:18px;font-weight:600;color:#dc2626;line-height:1.2">{{ number_format($payProj->remaining_amount, 0, '.', ' ') }}<span style="font-size:11px;font-weight:500;color:#f87171 !important"> so'm</span></div>
                 </div>
             </div>
 
