@@ -2180,10 +2180,16 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             </div>
             @endif
 
-            {{-- Chegirma (tanlangan xizmat(lar)ga, admin uchun) --}}
+            {{-- Chegirma (tanlangan xizmat(lar)ga, admin uchun) — tugma bosilsa ochiladi --}}
             @if(auth()->user()?->isAdmin())
-            <div style="background:#fefce8;border:1px solid #fde68a;border-radius:10px;padding:14px 16px">
-                <label style="font-size:12px;font-weight:600;color:#92400e !important;display:block;margin-bottom:8px">🏷️ Chegirma (tanlangan xizmat(lar)ga)</label>
+            <div x-data="{ open: false }">
+                <button type="button" @click="open = !open"
+                        style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:1.5px solid #fde68a;background:#fefce8;color:#92400e;font-size:12px;font-weight:700;cursor:pointer">
+                    🏷️ Chegirma
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" :style="open ? 'transform:rotate(180deg)' : ''" style="transition:transform .2s"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
+            <div x-show="open" x-collapse x-cloak style="background:#fefce8;border:1px solid #fde68a;border-radius:10px;padding:14px 16px;margin-top:8px">
+                <label style="font-size:12px;font-weight:600;color:#92400e !important;display:block;margin-bottom:8px">Tanlangan xizmat(lar)ga qo'llanadi</label>
                 <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px">
                     <label style="display:flex;align-items:center;gap:5px;background:#fff;border:1.5px solid {{ $payDiscountCategory==='nogiron' ? '#f59e0b' : '#e5e7eb' }};border-radius:7px;padding:6px 8px;cursor:pointer;font-size:11px;color:#111827 !important">
                         <input type="radio" wire:model.live="payDiscountCategory" value="nogiron" style="accent-color:#f59e0b">
@@ -2215,6 +2221,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                     </button>
                 </div>
                 <div style="font-size:10px;color:#92400e;margin-top:6px;opacity:.8">Hech qaysi xizmat belgilanmagan bo'lsa — barcha xizmatlarga qo'llanadi</div>
+            </div>
             </div>
             @endif
 
