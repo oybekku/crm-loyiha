@@ -28,6 +28,8 @@ class User extends Authenticatable implements FilamentUser
         'permissions',
         'commission_rate',
         'monthly_norm',
+        'telegram_chat_id',
+        'telegram_link_token',
     ];
 
     public static function defaultPermissions(): array

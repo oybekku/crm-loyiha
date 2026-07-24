@@ -128,20 +128,23 @@ class ProjectStatusResource extends Resource
                 Tables\Actions\EditAction::make()
                     ->label('')
                     ->requiresConfirmation()
-                    ->modalHeading('PIN kod kiriting')
-                    ->modalDescription('Tahrirlash uchun PIN kod talab etiladi')
+                    ->modalHeading('Telegram tasdiqlash kodi')
+                    ->modalDescription('Tahrirlash uchun Telegramingizga yuborilgan kodni kiriting')
+                    ->mountUsing(function () {
+                        \App\Services\TelegramOtpService::sendOtp(auth()->user(), 'status_edit');
+                    })
                     ->form(fn (Forms\Form $form) => $form->schema([
                         Forms\Components\TextInput::make('_pin')
-                            ->label('PIN kod')
+                            ->label('Telegram kodi')
                             ->password()
                             ->required()
-                            ->placeholder('****'),
+                            ->placeholder('······'),
                     ]))
                     ->before(function (array $data, $record, Tables\Actions\EditAction $action) {
-                        if (($data['_pin'] ?? '') !== '2728') {
+                        if (!\App\Services\TelegramOtpService::verifyOtp(auth()->user(), $data['_pin'] ?? '', 'status_edit')) {
                             $action->halt();
                             \Filament\Notifications\Notification::make()
-                                ->title("Noto'g'ri PIN kod")
+                                ->title("Noto'g'ri yoki eskirgan kod")
                                 ->danger()->send();
                         }
                     }),

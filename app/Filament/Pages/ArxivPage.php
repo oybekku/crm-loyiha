@@ -210,11 +210,12 @@ class ArxivPage extends Page
         $this->pinInput        = '';
         $this->pinError        = false;
         $this->showPinModal    = true;
+        \App\Services\TelegramOtpService::sendOtp(auth()->user(), 'arxiv_delete');
     }
 
     public function confirmDelete(): void
     {
-        if ($this->pinInput !== '2728') {
+        if (!\App\Services\TelegramOtpService::verifyOtp(auth()->user(), $this->pinInput, 'arxiv_delete')) {
             $this->pinError = true;
             return;
         }

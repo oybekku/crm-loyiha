@@ -1021,13 +1021,14 @@ class KanbanBoard extends Page
         $this->dispatch('notify', type: 'success', message: "To'lov summasi yangilandi!");
     }
 
-    // ── Delete payment (PIN kod bilan) ────────────────────────────────────
+    // ── Delete payment (Telegram tasdiqlash kodi bilan) ─────────────────────
     public function openDeletePayment(int $paymentId): void
     {
         $this->deletePaymentId       = $paymentId;
         $this->deletePaymentPin      = '';
         $this->deletePaymentPinError = false;
         $this->showDeletePaymentModal = true;
+        \App\Services\TelegramOtpService::sendOtp(auth()->user(), 'delete_payment');
     }
 
     public function closeDeletePayment(): void
@@ -1040,7 +1041,7 @@ class KanbanBoard extends Page
 
     public function confirmDeletePayment(): void
     {
-        if ($this->deletePaymentPin !== '2728') {
+        if (!\App\Services\TelegramOtpService::verifyOtp(auth()->user(), $this->deletePaymentPin, 'delete_payment')) {
             $this->deletePaymentPinError = true;
             return;
         }
@@ -1073,7 +1074,7 @@ class KanbanBoard extends Page
         $this->dispatch('notify', type: 'success', message: "To'lov o'chirildi!");
     }
 
-    // ── Xizmat narxini tahrirlash (Joriy narx — PIN kod bilan) ────────────
+    // ── Xizmat narxini tahrirlash (Joriy narx — Telegram tasdiqlash kodi bilan) ──
     public function openServicePrice(int $serviceId): void
     {
         $svc = \App\Models\ProjectService::find($serviceId);
@@ -1083,6 +1084,7 @@ class KanbanBoard extends Page
         $this->servicePricePin      = '';
         $this->servicePricePinError = false;
         $this->showServicePriceModal = true;
+        \App\Services\TelegramOtpService::sendOtp(auth()->user(), 'service_price');
     }
 
     public function closeServicePrice(): void
@@ -1096,7 +1098,7 @@ class KanbanBoard extends Page
 
     public function saveServicePrice(): void
     {
-        if ($this->servicePricePin !== '2728') {
+        if (!\App\Services\TelegramOtpService::verifyOtp(auth()->user(), $this->servicePricePin, 'service_price')) {
             $this->servicePricePinError = true;
             return;
         }

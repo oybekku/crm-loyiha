@@ -99,6 +99,34 @@ Route::get('/pechat-asset/{name}', function (string $name) {
     ]);
 })->name('pechat.asset');
 
+// ── Telegram bot webhook — foydalanuvchi botga /start bosganda chaqiriladi ──
+Route::post('/telegram/webhook', function (\Illuminate\Http\Request $request) {
+    $secret = config('services.telegram.webhook_secret');
+    if ($secret && $request->header('X-Telegram-Bot-Api-Secret-Token') !== $secret) {
+        abort(403);
+    }
+
+    $message = $request->input('message');
+    $text    = trim((string) ($message['text'] ?? ''));
+    $chatId  = $message['chat']['id'] ?? null;
+
+    if ($chatId && str_starts_with($text, '/start ')) {
+        $token = trim(substr($text, 7));
+        $user  = \App\Services\TelegramOtpService::linkByToken($token, (string) $chatId);
+
+        $reply = $user
+            ? "✅ Bog'landi! Endi tasdiqlash kodlari shu yerga keladi, {$user->name}."
+            : "❌ Havola noto'g'ri yoki eskirgan. Saytdan qaytadan urinib ko'ring.";
+
+        \Illuminate\Support\Facades\Http::post(
+            "https://api.telegram.org/bot" . config('services.telegram.bot_token') . "/sendMessage",
+            ['chat_id' => $chatId, 'text' => $reply]
+        );
+    }
+
+    return response()->json(['ok' => true]);
+})->name('telegram.webhook');
+
 Route::middleware(['auth'])->group(function () {
     Route::get('/print/project/{project}/ariza', function (\App\Models\Project $project) {
         return view('print.ariza', compact('project'));

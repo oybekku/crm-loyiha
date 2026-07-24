@@ -2450,14 +2450,20 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 @if($showDeletePaymentModal)
 <div style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1500;display:flex;align-items:center;justify-content:center;padding:16px" wire:click.self="closeDeletePayment">
     <div style="background:#fff;border-radius:16px;padding:28px 32px;width:320px;box-shadow:0 25px 60px rgba(0,0,0,.2)" wire:click.stop>
-        <div style="font-size:16px;font-weight:700;color:#111827;margin-bottom:6px">🔐 PIN kod kiriting</div>
-        <div style="font-size:13px;color:#6b7280;margin-bottom:16px">To'lovni butunlay o'chirish uchun PIN kod talab etiladi</div>
+        <div style="font-size:16px;font-weight:700;color:#111827;margin-bottom:6px">🔐 Telegram kodi</div>
+        @if(!\App\Services\TelegramOtpService::isLinked(auth()->user()))
+        <div style="font-size:13px;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;margin-bottom:12px">
+            Avval <a href="{{ route('filament.admin.pages.telegram-settings') }}" style="color:#4338ca;font-weight:600">Telegramingizni bog'lang</a> — shundan keyin tasdiqlash kodi shu yerga keladi.
+        </div>
+        @else
+        <div style="font-size:13px;color:#6b7280;margin-bottom:16px">To'lovni butunlay o'chirish uchun Telegramingizga yuborilgan kodni kiriting</div>
+        @endif
         <input type="password" wire:model="deletePaymentPin"
                wire:keydown.enter="confirmDeletePayment"
                style="width:100%;border:1.5px solid {{ $deletePaymentPinError ? '#ef4444' : '#e2e8f0' }};border-radius:8px;padding:10px 14px;font-size:18px;letter-spacing:6px;text-align:center;outline:none;margin-bottom:8px"
-               placeholder="····" autofocus maxlength="4">
+               placeholder="······" autofocus maxlength="6">
         @if($deletePaymentPinError)
-        <div style="font-size:12px;color:#ef4444;margin-bottom:10px">❌ Noto'g'ri PIN kod</div>
+        <div style="font-size:12px;color:#ef4444;margin-bottom:10px">❌ Noto'g'ri yoki eskirgan kod</div>
         @endif
         <div style="display:flex;gap:8px;margin-top:12px">
             <button wire:click="closeDeletePayment"
@@ -2489,13 +2495,18 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
         <input wire:model="servicePriceValue" type="number" min="0"
                style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px 14px;font-size:15px;outline:none;margin-bottom:12px;box-sizing:border-box"
                placeholder="Masalan: 4078800">
-        <label style="font-size:12px;font-weight:500;color:#374151;display:block;margin-bottom:6px">PIN kod</label>
+        <label style="font-size:12px;font-weight:500;color:#374151;display:block;margin-bottom:6px">Telegram kodi</label>
+        @if(!\App\Services\TelegramOtpService::isLinked(auth()->user()))
+        <div style="font-size:13px;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;margin-bottom:8px">
+            Avval <a href="{{ route('filament.admin.pages.telegram-settings') }}" style="color:#4338ca;font-weight:600">Telegramingizni bog'lang</a>.
+        </div>
+        @endif
         <input type="password" wire:model="servicePricePin"
                wire:keydown.enter="saveServicePrice"
                style="width:100%;border:1.5px solid {{ $servicePricePinError ? '#ef4444' : '#e2e8f0' }};border-radius:8px;padding:10px 14px;font-size:18px;letter-spacing:6px;text-align:center;outline:none;margin-bottom:8px;box-sizing:border-box"
-               placeholder="····" maxlength="4">
+               placeholder="······" maxlength="6">
         @if($servicePricePinError)
-        <div style="font-size:12px;color:#ef4444;margin-bottom:10px">❌ Noto'g'ri PIN kod</div>
+        <div style="font-size:12px;color:#ef4444;margin-bottom:10px">❌ Noto'g'ri yoki eskirgan kod</div>
         @endif
         <div style="display:flex;gap:8px;margin-top:12px">
             <button wire:click="closeServicePrice"

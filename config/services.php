@@ -46,4 +46,11 @@ return [
             "Eskiz loyihangiz tayyor. Bog‘lanish: +998 77 091-91-01 MY PERFECT HOME"),
     ],
 
+    // Telegram bot — muhim amallarni (o'chirish, narx o'zgartirish) tasdiqlash kodi uchun
+    'telegram' => [
+        'bot_token'    => env('TELEGRAM_BOT_TOKEN'),
+        'bot_username' => env('TELEGRAM_BOT_USERNAME'), // @ belgisisiz, masalan: BestHomeCrmBot
+        'webhook_secret' => env('TELEGRAM_WEBHOOK_SECRET'),
+    ],
+
 ];

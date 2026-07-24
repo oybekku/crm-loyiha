@@ -86,16 +86,24 @@ class UserResource extends Resource
                     ->dehydrateStateUsing(fn($state) => bcrypt($state))
                     ->placeholder('Yangi parol kiriting'),
 
-                // Admin akkauntini tahrirlash uchun PIN — kimdir kirib o'zgartirib qo'ymasin
+                // Admin akkauntini tahrirlash uchun Telegram kodi — kimdir kirib o'zgartirib qo'ymasin
                 Forms\Components\TextInput::make('pin_confirm')
-                    ->label('🔐 PIN kod (admin login/parolini o\'zgartirish uchun)')
+                    ->label('🔐 Telegram tasdiqlash kodi (admin login/parolini o\'zgartirish uchun)')
                     ->password()
                     ->dehydrated(false)
                     ->visible(fn($operation, $record) => $operation === 'edit' && $record?->isAdmin())
                     ->required(fn($operation, $record) => $operation === 'edit' && $record?->isAdmin())
-                    ->rule('in:2728')
-                    ->validationMessages(['in' => 'Noto\'g\'ri PIN kod'])
-                    ->placeholder('····'),
+                    ->afterStateHydrated(function ($operation, $record) {
+                        if ($operation === 'edit' && $record?->isAdmin()) {
+                            \App\Services\TelegramOtpService::sendOtp(auth()->user(), 'user_edit');
+                        }
+                    })
+                    ->rule(fn () => function (string $attribute, $value, \Closure $fail) {
+                        if (!\App\Services\TelegramOtpService::verifyOtp(auth()->user(), (string) $value, 'user_edit')) {
+                            $fail("Noto'g'ri yoki eskirgan kod");
+                        }
+                    })
+                    ->placeholder('······'),
 
                 Forms\Components\TextInput::make('commission_rate')
                     ->label('Komissiya foizi (%)')
