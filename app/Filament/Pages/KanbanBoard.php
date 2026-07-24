@@ -1028,7 +1028,11 @@ class KanbanBoard extends Page
         $this->deletePaymentPin      = '';
         $this->deletePaymentPinError = false;
         $this->showDeletePaymentModal = true;
-        \App\Services\TelegramOtpService::sendOtp(auth()->user(), 'delete_payment');
+        $pmt = Payment::find($paymentId);
+        \App\Services\TelegramOtpService::sendOtp(
+            auth()->user(), 'delete_payment',
+            "To'lovni o'chirish: " . ($pmt ? number_format((float)$pmt->amount, 0, '.', ' ') . " so'm (" . ($pmt->project?->owner_name ?? '—') . ")" : "#{$paymentId}")
+        );
     }
 
     public function closeDeletePayment(): void
@@ -1084,7 +1088,11 @@ class KanbanBoard extends Page
         $this->servicePricePin      = '';
         $this->servicePricePinError = false;
         $this->showServicePriceModal = true;
-        \App\Services\TelegramOtpService::sendOtp(auth()->user(), 'service_price');
+        $svcLabel = Project::serviceOptions()[$svc->service_name] ?? $svc->service_name;
+        \App\Services\TelegramOtpService::sendOtp(
+            auth()->user(), 'service_price',
+            "Narx o'zgartirish: {$svcLabel} ({$svc->project?->owner_name})"
+        );
     }
 
     public function closeServicePrice(): void

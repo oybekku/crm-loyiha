@@ -210,7 +210,11 @@ class ArxivPage extends Page
         $this->pinInput        = '';
         $this->pinError        = false;
         $this->showPinModal    = true;
-        \App\Services\TelegramOtpService::sendOtp(auth()->user(), 'arxiv_delete');
+        $proj = Project::withTrashed()->find($id);
+        \App\Services\TelegramOtpService::sendOtp(
+            auth()->user(), 'arxiv_delete',
+            "Loyihani BUTUNLAY o'chirish: " . ($proj?->owner_name ?? '#' . $id)
+        );
     }
 
     public function confirmDelete(): void

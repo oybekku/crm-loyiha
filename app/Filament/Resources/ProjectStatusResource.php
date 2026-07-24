@@ -130,8 +130,11 @@ class ProjectStatusResource extends Resource
                     ->requiresConfirmation()
                     ->modalHeading('Telegram tasdiqlash kodi')
                     ->modalDescription('Tahrirlash uchun Telegramingizga yuborilgan kodni kiriting')
-                    ->mountUsing(function () {
-                        \App\Services\TelegramOtpService::sendOtp(auth()->user(), 'status_edit');
+                    ->mountUsing(function ($record) {
+                        \App\Services\TelegramOtpService::sendOtp(
+                            auth()->user(), 'status_edit',
+                            "Bosqichni tahrirlash: " . ($record->label ?? $record->key)
+                        );
                     })
                     ->form(fn (Forms\Form $form) => $form->schema([
                         Forms\Components\TextInput::make('_pin')

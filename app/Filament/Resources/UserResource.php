@@ -95,7 +95,10 @@ class UserResource extends Resource
                     ->required(fn($operation, $record) => $operation === 'edit' && $record?->isAdmin())
                     ->afterStateHydrated(function ($operation, $record) {
                         if ($operation === 'edit' && $record?->isAdmin()) {
-                            \App\Services\TelegramOtpService::sendOtp(auth()->user(), 'user_edit');
+                            \App\Services\TelegramOtpService::sendOtp(
+                                auth()->user(), 'user_edit',
+                                "Admin ma'lumotini tahrirlash: {$record->name}"
+                            );
                         }
                     })
                     ->rule(fn () => function (string $attribute, $value, \Closure $fail) {

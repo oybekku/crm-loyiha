@@ -68,11 +68,17 @@ class TelegramOtpService
     }
 
     /**
-     * Kod generatsiya qilib, Telegram orqali yuboradi. Muvaffaqiyat/xatoni qaytaradi.
+     * Kod generatsiya qilib, Telegramga ulangan BARCHA foydalanuvchilarga birdaniga
+     * yuboradi (faqat so'rovchiga emas) — xabarda kim va nima uchun so'raganini ham
+     * yozadi, shu bilan boshqalar nazorat qila oladi (kim tasdiqlasa ham, hammaga
+     * "kim, nima qildi" ma'lum bo'ladi). Kodning o'zi esa faqat SO'RAGAN odamning
+     * (bu funksiyaga berilgan $user) nomiga bog'lab saqlanadi — tasdiqlash o'sha
+     * so'rov oynasida amalga oshiriladi.
+     *
      * 60 soniya ichida takroriy chaqirilsa qayta yubormaydi (masalan forma bir necha
      * marta qayta chizilganda ortiqcha xabar ketmasligi uchun) — avvalgi kod amal qiladi.
      */
-    public static function sendOtp(User $user, string $purpose = 'tasdiqlash'): bool
+    public static function sendOtp(User $user, string $purpose = 'tasdiqlash', ?string $actionLabel = null): bool
     {
         if (!self::isConfigured() || !self::isLinked($user)) {
             return false;
@@ -87,9 +93,16 @@ class TelegramOtpService
         $code = (string) random_int(100000, 999999);
         Cache::put(self::cacheKey($user->id, $purpose), $code, now()->addMinutes(5));
 
-        $text = "🔐 Tasdiqlash kodi: <b>{$code}</b>\n\nBu kod 5 daqiqa amal qiladi. Agar bu so'rovni siz yubormagan bo'lsangiz, e'tiborsiz qoldiring.";
+        $what = $actionLabel ? " — <i>{$actionLabel}</i>" : '';
+        $text = "🔐 <b>{$user->name}</b>{$what} uchun tasdiqlash kodi so'radi:\n\n<b>{$code}</b>\n\nBu kod 5 daqiqa amal qiladi. Agar bu so'rovni siz yubormagan bo'lsangiz, e'tiborsiz qoldiring.";
 
-        return self::send($user->telegram_chat_id, $text);
+        $recipients = User::whereNotNull('telegram_chat_id')->pluck('telegram_chat_id');
+
+        $ok = false;
+        foreach ($recipients as $chatId) {
+            $ok = self::send($chatId, $text) || $ok;
+        }
+        return $ok;
     }
 
     public static function verifyOtp(User $user, string $code, string $purpose = 'tasdiqlash'): bool
