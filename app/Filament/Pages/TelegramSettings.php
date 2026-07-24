@@ -25,6 +25,13 @@ class TelegramSettings extends Page
         return (bool) auth()->user();
     }
 
+    // Xavfsizlik uchun chap menyuda ko'rinmaydi — faqat to'g'ridan-to'g'ri
+    // havola orqali ochiladi (admin kimgadir ulash uchun beradi).
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
+
     public function unlink(): void
     {
         TelegramOtpService::unlink(auth()->user());
