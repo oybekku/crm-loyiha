@@ -132,7 +132,7 @@ class MonthlyReport extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->user()?->isAdmin() || auth()->user()?->isMenejer();
+        return (bool) auth()->user()?->isAdmin();
     }
 
     public function mount(): void
