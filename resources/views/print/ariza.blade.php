@@ -112,7 +112,7 @@
         position: absolute;
         top: -45px;
         left: 19px;
-        width: 280px;
+        width: 392px;
         opacity: 0.92;
         pointer-events: none;
         z-index: 1;
