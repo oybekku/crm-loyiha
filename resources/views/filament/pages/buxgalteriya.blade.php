@@ -103,6 +103,28 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
 .exp-row-actions{display:flex;gap:4px;flex-shrink:0;opacity:0;transition:opacity .15s}
 .exp-row:hover .exp-row-actions{opacity:1}
 .exp-empty{padding:26px;text-align:center;color:#64748b;font-size:12.5px}
+
+/* Pul o'tkazmalari bo'limi (Xarajatlar bilan bir xil naqsh, ko'k rangda) */
+.trf-panel{margin-top:14px;background:#161b22;border:1.5px solid #2a2a2e;border-radius:14px;overflow:hidden}
+.trf-head{display:flex;align-items:center;gap:10px;padding:16px 18px;cursor:pointer;user-select:none}
+.trf-head-title{font-size:14px;font-weight:800;color:#f1f5f9;display:flex;align-items:center;gap:8px}
+.trf-head-total{font-size:15px;font-weight:800;color:#60a5fa;margin-left:auto}
+.trf-head-chev{color:#64748b;transition:transform .2s;flex-shrink:0}
+.trf-head-add{background:#1e3a5f;color:#93c5fd;border:none;border-radius:8px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;flex-shrink:0}
+.trf-head-add:hover{background:#254a75;color:#bfdbfe}
+.trf-list{border-top:1px solid #2a2a2e}
+.trf-row{display:flex;align-items:center;gap:12px;padding:11px 18px;border-bottom:1px solid #1f242c}
+.trf-row:last-child{border-bottom:none}
+.trf-row:hover{background:#1a1f28}
+.trf-date{font-size:11px;color:#64748b;font-family:monospace;flex-shrink:0;width:66px}
+.trf-path{font-size:12px;color:#93c5fd;flex-shrink:0;white-space:nowrap;font-weight:600}
+.trf-comment{font-size:12.5px;color:#cbd5e1;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.trf-amount{font-size:13.5px;font-weight:800;color:#60a5fa;flex-shrink:0;white-space:nowrap}
+.trf-row-actions{display:flex;gap:4px;flex-shrink:0;opacity:0;transition:opacity .15s}
+.trf-row:hover .trf-row-actions{opacity:1}
+.trf-empty{padding:26px;text-align:center;color:#64748b;font-size:12.5px}
+
+.acc-personal-badge{font-size:8px;font-weight:800;color:#c4b5fd !important;background:#312e81;border-radius:5px;padding:3px 7px;white-space:nowrap;align-self:flex-start;margin-left:6px}
 </style>
 
 <div class="bx-wrap">
@@ -116,6 +138,10 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
                 <span class="bx-month-lbl">📅 {{ $bxMonthLabel }}</span>
                 <button class="bx-month-btn" wire:click="bxChangeMonth(1)" title="Keyingi oy">›</button>
             </div>
+            <button class="bx-add" style="background:#1e3a5f" wire:click="openTransferModal">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                Pul o'tkazish
+            </button>
             <button class="bx-add" wire:click="openAccountModal">
                 <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
                 Yangi hisob qo'shish
@@ -157,7 +183,7 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
             </div>
 
             <div>
-                <div class="acc-name">{{ $acc->name ?: $typeOptions[$acc->type] }}</div>
+                <div class="acc-name">{{ $acc->name ?: $typeOptions[$acc->type] }} @if($acc->is_personal)<span class="acc-personal-badge">SHAXSIY</span>@endif</div>
                 @if($acc->type === 'karta' && $acc->card_number)
                 <div class="acc-num">{{ $acc->card_number }}</div>
                 @elseif($acc->type === 'bank' && $acc->account_number)
@@ -209,6 +235,35 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
         </div>
     </div>
 
+    {{-- ── Pul o'tkazmalari — svernut qilinadigan ro'yxat ── --}}
+    <div class="trf-panel" x-data="{ open: false }">
+        <div class="trf-head" @click="open = !open">
+            <span class="trf-head-title">🔄 Pul o'tkazmalari <span style="font-size:11px;color:#64748b;font-weight:600">({{ $bxMonthLabel }})</span></span>
+            <span class="trf-head-total">{{ number_format($totalTransferred, 0, '.', ' ') }} so'm</span>
+            <button class="trf-head-add" @click.stop="open = true" wire:click.stop="openTransferModal">
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                O'tkazish
+            </button>
+            <svg class="trf-head-chev" :style="open ? 'transform:rotate(180deg)' : ''" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="trf-list" x-show="open" x-collapse>
+            @forelse($transfers as $t)
+            <div class="trf-row">
+                <span class="trf-date">{{ $t->transfer_date->format('d.m.Y') }}</span>
+                <span class="trf-path">{{ $t->fromAccount?->name ?: ($t->fromAccount ? $typeOptions[$t->fromAccount->type] : '—') }} → {{ $t->toAccount?->name ?: ($t->toAccount ? $typeOptions[$t->toAccount->type] : '—') }}</span>
+                <span class="trf-comment">{{ $t->comment ?: '—' }}</span>
+                <span class="trf-amount">{{ number_format($t->amount, 0, '.', ' ') }} so'm</span>
+                <div class="trf-row-actions">
+                    <button class="acc-act-btn" wire:click="openTransferModal({{ $t->id }})" title="Tahrirlash">✎</button>
+                    <button class="acc-act-btn" wire:click="deleteTransfer({{ $t->id }})" wire:confirm="Ushbu o'tkazmani o'chirasizmi?" title="O'chirish">✕</button>
+                </div>
+            </div>
+            @empty
+            <div class="trf-empty">Bu oyda hali o'tkazma qilinmagan</div>
+            @endforelse
+        </div>
+    </div>
+
     {{-- ── Hisob qo'shish/tahrirlash oynasi ── --}}
     @if($showAccountModal)
     <div class="bx-modal-ov" wire:click.self="closeAccountModal">
@@ -255,9 +310,13 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
             </div>
             @endif
 
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
                 <input type="checkbox" id="bx-fav" wire:model="formIsFavorite" style="width:16px;height:16px">
                 <label for="bx-fav" style="font-size:12px;color:#94a3b8;cursor:pointer;margin-bottom:0">Belgilangan (ko'k ramka) sifatida boshlash</label>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px">
+                <input type="checkbox" id="bx-personal" wire:model="formIsPersonal" style="width:16px;height:16px">
+                <label for="bx-personal" style="font-size:12px;color:#94a3b8;cursor:pointer;margin-bottom:0">Shaxsiy/xarajat hisobi (masalan xodimga) — "Jami balans"ga qo'shilmaydi</label>
             </div>
 
             <div style="display:flex;gap:10px">
@@ -309,6 +368,63 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
             <div style="display:flex;gap:10px;margin-top:4px">
                 <button wire:click="closeExpenseModal" style="flex:1;padding:11px;border-radius:9px;border:1px solid #2a2a2e;background:#0d1117;color:#94a3b8;font-weight:700;font-size:13px;cursor:pointer">Bekor</button>
                 <button wire:click="saveExpense" style="flex:1;padding:11px;border-radius:9px;border:none;background:#dc2626;color:#fff;font-weight:700;font-size:13px;cursor:pointer">Saqlash</button>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    {{-- ── Pul o'tkazish oynasi ── --}}
+    @if($showTransferModal)
+    <div class="bx-modal-ov" wire:click.self="closeTransferModal">
+        <div class="bx-modal">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+                <div style="font-size:16px;font-weight:800">{{ $editTransferId ? "O'tkazmani tahrirlash" : "Pul o'tkazish" }}</div>
+                <button wire:click="closeTransferModal" style="background:none;border:none;font-size:20px;cursor:pointer;color:#64748b;line-height:1">×</button>
+            </div>
+
+            <div class="bx-field">
+                <label>Qaysi hisobdan?</label>
+                <select wire:model="transferFromId">
+                    <option value="">— tanlang —</option>
+                    @foreach($allAccounts as $a)
+                    <option value="{{ $a->id }}">{{ $a->name ?: $typeOptions[$a->type] }}{{ $a->is_personal ? ' (shaxsiy)' : '' }}</option>
+                    @endforeach
+                </select>
+                @error('transferFromId')<span style="font-size:11px;color:#f87171">{{ $message }}</span>@enderror
+            </div>
+
+            <div class="bx-field">
+                <label>Qaysi hisobga?</label>
+                <select wire:model="transferToId">
+                    <option value="">— tanlang —</option>
+                    @foreach($allAccounts as $a)
+                    <option value="{{ $a->id }}">{{ $a->name ?: $typeOptions[$a->type] }}{{ $a->is_personal ? ' (shaxsiy)' : '' }}</option>
+                    @endforeach
+                </select>
+                @error('transferToId')<span style="font-size:11px;color:#f87171">{{ $message }}</span>@enderror
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <div class="bx-field">
+                    <label>Summa (so'm)</label>
+                    <input type="number" wire:model="transferAmount" placeholder="500000">
+                    @error('transferAmount')<span style="font-size:11px;color:#f87171">{{ $message }}</span>@enderror
+                </div>
+                <div class="bx-field">
+                    <label>Sana</label>
+                    <input type="date" wire:model="transferDate">
+                    @error('transferDate')<span style="font-size:11px;color:#f87171">{{ $message }}</span>@enderror
+                </div>
+            </div>
+
+            <div class="bx-field">
+                <label>Izoh</label>
+                <input type="text" wire:model="transferComment" placeholder="Masalan: Iyul oyi uchun avans">
+            </div>
+
+            <div style="display:flex;gap:10px;margin-top:4px">
+                <button wire:click="closeTransferModal" style="flex:1;padding:11px;border-radius:9px;border:1px solid #2a2a2e;background:#0d1117;color:#94a3b8;font-weight:700;font-size:13px;cursor:pointer">Bekor</button>
+                <button wire:click="saveTransfer" style="flex:1;padding:11px;border-radius:9px;border:none;background:#2563eb;color:#fff;font-weight:700;font-size:13px;cursor:pointer">O'tkazish</button>
             </div>
         </div>
     </div>

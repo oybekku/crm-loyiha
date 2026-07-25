@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\AccountTransfer;
 use App\Models\Expense;
 use App\Models\FinancialAccount;
 use Filament\Notifications\Notification;
@@ -30,6 +31,7 @@ class Buxgalteriya extends Page
     public string $formExpiryDate   = '';
     public string $formAccountNumber = '';
     public bool   $formIsFavorite   = false;
+    public bool   $formIsPersonal   = false;
 
     // ── Oy/yil filtri (har bir hisobning shu oydagi to'lovlar yig'indisi) ──
     public ?int $bxYear  = null;
@@ -42,6 +44,15 @@ class Buxgalteriya extends Page
     public string $expAmount        = '';
     public string $expComment       = '';
     public string $expDate          = '';
+
+    // ── Pul o'tkazish oynasi (hisoblar orasida) ──
+    public bool   $showTransferModal = false;
+    public ?int   $editTransferId    = null;
+    public ?int   $transferFromId    = null;
+    public ?int   $transferToId      = null;
+    public string $transferAmount    = '';
+    public string $transferComment   = '';
+    public string $transferDate      = '';
 
     public static function canAccess(): bool
     {
@@ -77,6 +88,7 @@ class Buxgalteriya extends Page
             $this->formExpiryDate    = (string) $acc->expiry_date;
             $this->formAccountNumber = (string) $acc->account_number;
             $this->formIsFavorite    = (bool) $acc->is_favorite;
+            $this->formIsPersonal    = (bool) $acc->is_personal;
         } else {
             $this->formType          = 'karta';
             $this->formName          = '';
@@ -85,6 +97,7 @@ class Buxgalteriya extends Page
             $this->formExpiryDate    = '';
             $this->formAccountNumber = '';
             $this->formIsFavorite    = false;
+            $this->formIsPersonal    = false;
         }
 
         $this->showAccountModal = true;
@@ -112,6 +125,7 @@ class Buxgalteriya extends Page
             'expiry_date'    => trim($this->formExpiryDate) ?: null,
             'account_number' => trim($this->formAccountNumber) ?: null,
             'is_favorite'    => $this->formIsFavorite,
+            'is_personal'    => $this->formIsPersonal,
         ];
 
         if ($this->editAccountId) {
@@ -211,6 +225,82 @@ class Buxgalteriya extends Page
         Notification::make()->title('Xarajat o\'chirildi')->warning()->send();
     }
 
+    // ── Pul o'tkazish (hisoblar orasida) ────────────────────────────────────
+    public function openTransferModal(?int $id = null): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+
+        $this->editTransferId = $id;
+
+        if ($id) {
+            $t = AccountTransfer::find($id);
+            if (!$t) return;
+            $this->transferFromId  = $t->from_account_id;
+            $this->transferToId    = $t->to_account_id;
+            $this->transferAmount  = (string) $t->amount;
+            $this->transferComment = (string) $t->comment;
+            $this->transferDate    = $t->transfer_date->format('Y-m-d');
+        } else {
+            $this->transferFromId  = null;
+            $this->transferToId    = null;
+            $this->transferAmount  = '';
+            $this->transferComment = '';
+            $isCurrentMonth        = $this->bxYear === (int) now()->year && $this->bxMonth === (int) now()->month;
+            $this->transferDate    = $isCurrentMonth
+                ? now()->format('Y-m-d')
+                : \Carbon\Carbon::create($this->bxYear, $this->bxMonth, 1)->format('Y-m-d');
+        }
+
+        $this->showTransferModal = true;
+    }
+
+    public function closeTransferModal(): void
+    {
+        $this->showTransferModal = false;
+        $this->editTransferId    = null;
+    }
+
+    public function saveTransfer(): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+
+        $this->validate([
+            'transferFromId' => 'required|exists:financial_accounts,id|different:transferToId',
+            'transferToId'   => 'required|exists:financial_accounts,id',
+            'transferAmount' => 'required|numeric|min:0.01',
+            'transferDate'   => 'required|date',
+        ], [
+            'transferFromId.different' => "Qaysidan va qaysiga bir xil hisob bo'lishi mumkin emas",
+        ]);
+
+        $data = [
+            'from_account_id' => $this->transferFromId,
+            'to_account_id'   => $this->transferToId,
+            'amount'          => (float) $this->transferAmount,
+            'comment'         => trim($this->transferComment) ?: null,
+            'transfer_date'   => $this->transferDate,
+        ];
+
+        if ($this->editTransferId) {
+            AccountTransfer::whereKey($this->editTransferId)->update($data);
+            Notification::make()->title("O'tkazma yangilandi")->success()->send();
+        } else {
+            $data['created_by'] = auth()->id();
+            AccountTransfer::create($data);
+            Notification::make()->title("O'tkazma bajarildi")->success()->send();
+        }
+
+        $this->closeTransferModal();
+    }
+
+    public function deleteTransfer(int $id): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+
+        AccountTransfer::whereKey($id)->delete();
+        Notification::make()->title("O'tkazma o'chirildi")->warning()->send();
+    }
+
     public function getViewData(): array
     {
         $year  = $this->bxYear;
@@ -228,6 +318,12 @@ class Buxgalteriya extends Page
             ->withSum(['expenses as expenses_sum_amount' => function ($q) use ($year, $month) {
                 $q->whereYear('expense_date', $year)->whereMonth('expense_date', $month);
             }], 'amount')
+            ->withSum(['transfersIn as transfers_in_sum_amount' => function ($q) use ($year, $month) {
+                $q->whereYear('transfer_date', $year)->whereMonth('transfer_date', $month);
+            }], 'amount')
+            ->withSum(['transfersOut as transfers_out_sum_amount' => function ($q) use ($year, $month) {
+                $q->whereYear('transfer_date', $year)->whereMonth('transfer_date', $month);
+            }], 'amount')
             ->orderByDesc('is_favorite')
             ->orderBy('sort_order')
             ->orderBy('name')
@@ -239,10 +335,22 @@ class Buxgalteriya extends Page
             'bank'  => $accounts->where('type', 'bank')->values(),
         ];
 
-        $totalIncome  = (float) $accounts->sum('payments_sum_amount');
-        $totalSpent   = (float) $accounts->sum('expenses_sum_amount');
-        $totalBalance = $totalIncome - $totalSpent;
+        $totalSpent = (float) $accounts->sum('expenses_sum_amount');
+
+        // "Jami balans" — faqat haqiqiy (shaxsiy/xarajat deb belgilanmagan) hisoblar
+        // yig'indisi. Shaxsiy hisoblarga o'tkazilgan pul xarajat sifatida hisoblanib,
+        // manba hisobning (demak — Jami balansning ham) kamayishiga sabab bo'ladi,
+        // lekin shaxsiy hisobning o'zi umumiy summaga qo'shilmaydi.
+        $totalBalance = (float) $accounts->where('is_personal', false)->sum(fn ($a) => $a->balance);
         $bxMonthLabel = \Carbon\Carbon::create($year, $month, 1)->translatedFormat('F Y');
+
+        $transfers = AccountTransfer::with(['fromAccount', 'toAccount'])
+            ->whereYear('transfer_date', $year)
+            ->whereMonth('transfer_date', $month)
+            ->orderByDesc('transfer_date')
+            ->orderByDesc('id')
+            ->get();
+        $totalTransferred = (float) $transfers->sum('amount');
 
         $expenses = Expense::with('account')
             ->whereYear('expense_date', $year)
@@ -252,13 +360,15 @@ class Buxgalteriya extends Page
             ->get();
 
         return [
-            'byType'       => $byType,
-            'totalBalance' => $totalBalance,
-            'totalSpent'   => $totalSpent,
-            'typeOptions'  => FinancialAccount::typeOptions(),
-            'bxMonthLabel' => $bxMonthLabel,
-            'expenses'     => $expenses,
-            'allAccounts'  => FinancialAccount::orderBy('name')->get(),
+            'byType'           => $byType,
+            'totalBalance'     => $totalBalance,
+            'totalSpent'       => $totalSpent,
+            'totalTransferred' => $totalTransferred,
+            'typeOptions'      => FinancialAccount::typeOptions(),
+            'bxMonthLabel'     => $bxMonthLabel,
+            'expenses'         => $expenses,
+            'transfers'        => $transfers,
+            'allAccounts'      => FinancialAccount::orderBy('name')->get(),
         ];
     }
 }
