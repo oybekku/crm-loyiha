@@ -237,8 +237,8 @@
         🖨 Chop etish
     </button>
     @if(auth()->user()?->isAdmin())
-    <button onclick="document.getElementById('stampPanel').style.display='flex'" style="background:#fff;color:#374151;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;">
-        ⚙️ Pechat
+    <button id="stampEditBtn" onclick="toggleStampEdit()" style="background:#fff;color:#374151;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;">
+        ✏️ Pechatni joylashtirish
     </button>
     @endif
     <div style="width:1px;height:28px;background:rgba(255,255,255,0.3);"></div>
@@ -260,71 +260,126 @@
 </div>
 
 @if(auth()->user()?->isAdmin())
-{{-- Pechat/imzo o'lchami va joylashuvini sozlash paneli (faqat admin, chop etilmaydi) --}}
-<div id="stampPanel" class="no-print" style="display:none;position:fixed;bottom:20px;right:20px;z-index:50;background:#1e293b;color:#e2e8f0;border-radius:14px;padding:18px 20px;box-shadow:0 20px 50px rgba(0,0,0,.4);width:260px;font-family:Arial,sans-serif;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-        <span style="font-size:13px;font-weight:800">⚙️ Pechat/imzo sozlash</span>
-        <button onclick="document.getElementById('stampPanel').style.display='none'" style="background:none;border:none;color:#94a3b8;font-size:18px;cursor:pointer;line-height:1">×</button>
-    </div>
-    <div style="margin-bottom:14px">
-        <label style="font-size:11px;color:#94a3b8;display:flex;justify-content:space-between;margin-bottom:5px">
-            <span>Kattaligi</span><span id="stampWidthVal">{{ (int) $stamp['stamp_width'] }}px</span>
-        </label>
-        <input type="range" id="stampWidthInput" min="100" max="600" step="5" value="{{ (int) $stamp['stamp_width'] }}"
-               oninput="stampPreview()" style="width:100%">
-    </div>
-    <div style="margin-bottom:16px">
-        <label style="font-size:11px;color:#94a3b8;display:flex;justify-content:space-between;margin-bottom:5px">
-            <span>Tepaga/pastga</span><span id="stampTopVal">{{ (int) $stamp['stamp_top'] }}px</span>
-        </label>
-        <input type="range" id="stampTopInput" min="-200" max="100" step="5" value="{{ (int) $stamp['stamp_top'] }}"
-               oninput="stampPreview()" style="width:100%">
-    </div>
-    <div style="display:flex;gap:8px">
-        <button onclick="stampReset()" style="flex:1;padding:9px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#94a3b8;font-size:12px;font-weight:700;cursor:pointer">Bekor</button>
-        <button onclick="stampSave()" style="flex:1;padding:9px;border-radius:8px;border:none;background:#2563eb;color:#fff;font-size:12px;font-weight:700;cursor:pointer">Saqlash</button>
-    </div>
-    <div id="stampSaveMsg" style="font-size:11px;color:#4ade80;margin-top:8px;text-align:center;display:none">✅ Saqlandi</div>
+{{-- Pechat/imzo rasmini to'g'ridan-to'g'ri sudrab (tepaga/pastga) joylashtirish
+     va burchagidan tortib o'lchamini o'zgartirish — mijoz imzosidagi kabi. --}}
+<div id="stampToast" class="no-print" style="display:none;position:fixed;bottom:20px;right:20px;z-index:60;background:#16a34a;color:#fff;padding:10px 18px;border-radius:9px;font-size:13px;font-weight:700;box-shadow:0 10px 30px rgba(0,0,0,.3);font-family:Arial,sans-serif;">
+    ✅ Saqlandi
 </div>
+<style>
+    .stamp-rsz {
+        position: absolute; width: 18px; height: 18px; right: -9px; bottom: -9px;
+        background: #2563eb; border: 2px solid #fff; border-radius: 50%;
+        cursor: ns-resize; z-index: 10; box-shadow: 0 1px 4px rgba(0,0,0,.4);
+        display: none;
+    }
+    .stamp-editing-active { outline: 2px dashed #2563eb; outline-offset: 6px; cursor: ns-resize; }
+    .stamp-editing-active .stamp-rsz { display: block; }
+    @media print {
+        .stamp-editing-active { outline: none !important; }
+        .stamp-rsz { display: none !important; }
+    }
+</style>
 <script>
-    const STAMP_ORIG = { width: {{ (int) $stamp['stamp_width'] }}, top: {{ (int) $stamp['stamp_top'] }} };
+    const STAMP_SAVE_URL = '{{ route('print.stamp-settings.save') }}';
+    let stampEditOn = false;
 
-    function stampPreview() {
-        const w = document.getElementById('stampWidthInput').value;
-        const t = document.getElementById('stampTopInput').value;
-        document.getElementById('stampWidthVal').textContent = w + 'px';
-        document.getElementById('stampTopVal').textContent = t + 'px';
-        document.querySelectorAll('.stamp-img').forEach(function (img) {
-            img.style.width = w + 'px';
-            img.style.top = t + 'px';
+    function toggleStampEdit() {
+        stampEditOn = !stampEditOn;
+        const btn = document.getElementById('stampEditBtn');
+        document.querySelectorAll('.stamp-wrap').forEach(function (wrap) {
+            wrap.classList.toggle('stamp-editing-active', stampEditOn);
         });
+        if (btn) {
+            btn.style.background = stampEditOn ? '#2563eb' : '#fff';
+            btn.style.color = stampEditOn ? '#fff' : '#374151';
+            btn.textContent = stampEditOn ? '✓ Joylashtirish tugadi' : "✏️ Pechatni joylashtirish";
+        }
     }
 
-    function stampReset() {
-        document.getElementById('stampWidthInput').value = STAMP_ORIG.width;
-        document.getElementById('stampTopInput').value = STAMP_ORIG.top;
-        stampPreview();
-        document.getElementById('stampPanel').style.display = 'none';
+    function stampToast() {
+        const t = document.getElementById('stampToast');
+        t.style.display = 'block';
+        setTimeout(function () { t.style.display = 'none'; }, 1600);
     }
 
-    function stampSave() {
-        const w = document.getElementById('stampWidthInput').value;
-        const t = document.getElementById('stampTopInput').value;
+    function stampSave(width, top) {
         const csrf = document.querySelector('meta[name=csrf-token]').content;
-        fetch('{{ route('print.stamp-settings.save') }}', {
+        fetch(STAMP_SAVE_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
-            body: JSON.stringify({ width: w, top: t })
+            body: JSON.stringify({ width: Math.round(width), top: Math.round(top) })
         }).then(function (r) { return r.json(); }).then(function (data) {
-            if (data.ok) {
-                STAMP_ORIG.width = parseInt(w);
-                STAMP_ORIG.top = parseInt(t);
-                const msg = document.getElementById('stampSaveMsg');
-                msg.style.display = 'block';
-                setTimeout(function () { msg.style.display = 'none'; }, 1800);
-            }
+            if (data.ok) stampToast();
         });
     }
+
+    // Har bir pechat rasmini "wrapper" ichiga o'raymiz — shu wrapperga top/width
+    // qo'yiladi, rasm ichida 100% kenglikda turadi (mijoz imzosidagi #clientSigWrap
+    // bilan bir xil naqsh). Faqat vertikal harakat + o'lcham — chapga-o'ngga surilmaydi.
+    function setupStampDrag() {
+        let mode = null, sy = 0, ot = 0, ow = 0;
+
+        document.querySelectorAll('.stamp-img').forEach(function (img) {
+            // .stamp-img'ning top/left/width'i CSS klassdan keladi (inline emas) —
+            // shuning uchun hisoblangan (computed) qiymatni o'qib olamiz.
+            const cs = getComputedStyle(img);
+            const wrap = document.createElement('div');
+            wrap.className = 'stamp-wrap';
+            wrap.style.position = 'absolute';
+            wrap.style.top    = cs.top;
+            wrap.style.left   = cs.left;
+            wrap.style.width  = cs.width;
+            wrap.style.zIndex = cs.zIndex !== 'auto' ? cs.zIndex : '1';
+
+            img.parentNode.insertBefore(wrap, img);
+            wrap.appendChild(img);
+            img.style.position = 'static';
+            img.style.top   = '';
+            img.style.left  = '';
+            img.style.width = '100%';
+            img.style.display = 'block';
+
+            const rsz = document.createElement('div');
+            rsz.className = 'stamp-rsz no-print';
+            rsz.title = "O'lcham";
+            wrap.appendChild(rsz);
+
+            const start = (y, isResize) => {
+                if (!stampEditOn) return;
+                mode = isResize ? 'resize' : 'move';
+                sy = y;
+                ot = parseFloat(wrap.style.top) || 0;
+                ow = parseFloat(wrap.style.width) || wrap.offsetWidth;
+            };
+            wrap.addEventListener('mousedown', e => { if (e.target === rsz) return; start(e.clientY, false); e.preventDefault(); });
+            rsz.addEventListener('mousedown', e => { start(e.clientY, true); e.stopPropagation(); e.preventDefault(); });
+            wrap.addEventListener('touchstart', e => { if (e.target === rsz) return; const t = e.touches[0]; start(t.clientY, false); }, {passive:true});
+            rsz.addEventListener('touchstart', e => { const t = e.touches[0]; start(t.clientY, true); e.stopPropagation(); }, {passive:true});
+        });
+
+        const applyMove = (y) => {
+            if (!mode) return;
+            if (mode === 'move') {
+                const newTop = ot + (y - sy);
+                document.querySelectorAll('.stamp-wrap').forEach(w => w.style.top = newTop + 'px');
+            } else {
+                const newWidth = Math.max(80, ow + (y - sy) * 1.4);
+                document.querySelectorAll('.stamp-wrap').forEach(w => w.style.width = newWidth + 'px');
+            }
+        };
+        const endMove = () => {
+            if (!mode) return;
+            const wrap = document.querySelector('.stamp-wrap');
+            if (wrap) stampSave(parseFloat(wrap.style.width) || ow, parseFloat(wrap.style.top) || ot);
+            mode = null;
+        };
+
+        window.addEventListener('mousemove', e => applyMove(e.clientY));
+        window.addEventListener('mouseup', endMove);
+        window.addEventListener('touchmove', e => { if (!mode) return; const t = e.touches[0]; applyMove(t.clientY); }, {passive:true});
+        window.addEventListener('touchend', endMove);
+    }
+    setupStampDrag();
 </script>
 @endif
 
