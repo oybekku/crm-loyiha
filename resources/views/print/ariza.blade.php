@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="csrf-token" content="{{ csrf_token() }}">
+@php $stamp = \App\Services\DesignSettingsService::get(); @endphp
 <title>Qabul arizasi — {{ $project->number }}</title>
 <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -110,9 +111,9 @@
     .sig-block { flex: 1; position: relative; min-height: 110px; }
     .stamp-img {
         position: absolute;
-        top: -60px;
+        top: {{ (int) $stamp['stamp_top'] }}px;
         left: 19px;
-        width: 294px;
+        width: {{ (int) $stamp['stamp_width'] }}px;
         opacity: 0.92;
         pointer-events: none;
         z-index: 1;
@@ -235,6 +236,11 @@
     <button onclick="window.print()" style="background:#fbbf24;color:#78350f;border:none;padding:8px 22px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;">
         🖨 Chop etish
     </button>
+    @if(auth()->user()?->isAdmin())
+    <button onclick="document.getElementById('stampPanel').style.display='flex'" style="background:#fff;color:#374151;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;">
+        ⚙️ Pechat
+    </button>
+    @endif
     <div style="width:1px;height:28px;background:rgba(255,255,255,0.3);"></div>
     <button onclick="window.open('{{ route('print.project.obloshka', $project) }}?qavat=1','_blank')" style="background:#fff;color:#1d4ed8;border:none;padding:8px 18px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;">
         ▦ Bir qavat
@@ -252,6 +258,75 @@
         ✕ Yopish
     </button>
 </div>
+
+@if(auth()->user()?->isAdmin())
+{{-- Pechat/imzo o'lchami va joylashuvini sozlash paneli (faqat admin, chop etilmaydi) --}}
+<div id="stampPanel" class="no-print" style="display:none;position:fixed;bottom:20px;right:20px;z-index:50;background:#1e293b;color:#e2e8f0;border-radius:14px;padding:18px 20px;box-shadow:0 20px 50px rgba(0,0,0,.4);width:260px;font-family:Arial,sans-serif;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <span style="font-size:13px;font-weight:800">⚙️ Pechat/imzo sozlash</span>
+        <button onclick="document.getElementById('stampPanel').style.display='none'" style="background:none;border:none;color:#94a3b8;font-size:18px;cursor:pointer;line-height:1">×</button>
+    </div>
+    <div style="margin-bottom:14px">
+        <label style="font-size:11px;color:#94a3b8;display:flex;justify-content:space-between;margin-bottom:5px">
+            <span>Kattaligi</span><span id="stampWidthVal">{{ (int) $stamp['stamp_width'] }}px</span>
+        </label>
+        <input type="range" id="stampWidthInput" min="100" max="600" step="5" value="{{ (int) $stamp['stamp_width'] }}"
+               oninput="stampPreview()" style="width:100%">
+    </div>
+    <div style="margin-bottom:16px">
+        <label style="font-size:11px;color:#94a3b8;display:flex;justify-content:space-between;margin-bottom:5px">
+            <span>Tepaga/pastga</span><span id="stampTopVal">{{ (int) $stamp['stamp_top'] }}px</span>
+        </label>
+        <input type="range" id="stampTopInput" min="-200" max="100" step="5" value="{{ (int) $stamp['stamp_top'] }}"
+               oninput="stampPreview()" style="width:100%">
+    </div>
+    <div style="display:flex;gap:8px">
+        <button onclick="stampReset()" style="flex:1;padding:9px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#94a3b8;font-size:12px;font-weight:700;cursor:pointer">Bekor</button>
+        <button onclick="stampSave()" style="flex:1;padding:9px;border-radius:8px;border:none;background:#2563eb;color:#fff;font-size:12px;font-weight:700;cursor:pointer">Saqlash</button>
+    </div>
+    <div id="stampSaveMsg" style="font-size:11px;color:#4ade80;margin-top:8px;text-align:center;display:none">✅ Saqlandi</div>
+</div>
+<script>
+    const STAMP_ORIG = { width: {{ (int) $stamp['stamp_width'] }}, top: {{ (int) $stamp['stamp_top'] }} };
+
+    function stampPreview() {
+        const w = document.getElementById('stampWidthInput').value;
+        const t = document.getElementById('stampTopInput').value;
+        document.getElementById('stampWidthVal').textContent = w + 'px';
+        document.getElementById('stampTopVal').textContent = t + 'px';
+        document.querySelectorAll('.stamp-img').forEach(function (img) {
+            img.style.width = w + 'px';
+            img.style.top = t + 'px';
+        });
+    }
+
+    function stampReset() {
+        document.getElementById('stampWidthInput').value = STAMP_ORIG.width;
+        document.getElementById('stampTopInput').value = STAMP_ORIG.top;
+        stampPreview();
+        document.getElementById('stampPanel').style.display = 'none';
+    }
+
+    function stampSave() {
+        const w = document.getElementById('stampWidthInput').value;
+        const t = document.getElementById('stampTopInput').value;
+        const csrf = document.querySelector('meta[name=csrf-token]').content;
+        fetch('{{ route('print.stamp-settings.save') }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+            body: JSON.stringify({ width: w, top: t })
+        }).then(function (r) { return r.json(); }).then(function (data) {
+            if (data.ok) {
+                STAMP_ORIG.width = parseInt(w);
+                STAMP_ORIG.top = parseInt(t);
+                const msg = document.getElementById('stampSaveMsg');
+                msg.style.display = 'block';
+                setTimeout(function () { msg.style.display = 'none'; }, 1800);
+            }
+        });
+    }
+</script>
+@endif
 
 <div class="page">
 

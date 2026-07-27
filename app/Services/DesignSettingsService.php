@@ -97,6 +97,10 @@ class DesignSettingsService
             'sidebar_anim_scale'    => 100,
             'sidebar_anim_speed'    => 1,
             'sidebar_anim_loop'     => 0,
+
+            // Ariza chop etish — pechat/imzo o'lchami va joylashuvi
+            'stamp_width' => 294,
+            'stamp_top'   => -60,
         ];
     }
 }

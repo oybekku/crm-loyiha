@@ -132,6 +132,19 @@ Route::middleware(['auth'])->group(function () {
         return view('print.ariza', compact('project'));
     })->name('print.project.ariza');
 
+    // Pechat/imzo o'lchami va joylashuvi (admin, barcha arizalarga umumiy) —
+    // Ariza sahifasidagi slayder orqali sozlanadi.
+    Route::post('/print/stamp-settings', function (\Illuminate\Http\Request $request) {
+        abort_unless(auth()->user()?->isAdmin(), 403);
+        $width = max(100, min(600, (int) $request->input('width')));
+        $top   = max(-200, min(100, (int) $request->input('top')));
+        \App\Services\DesignSettingsService::save(array_merge(
+            \App\Services\DesignSettingsService::get(),
+            ['stamp_width' => $width, 'stamp_top' => $top]
+        ));
+        return response()->json(['ok' => true]);
+    })->name('print.stamp-settings.save');
+
     // Chegirma flayeri (A4 da 3 ta)
     Route::get('/print/project/{project}/chegirma', function (\App\Models\Project $project) {
         return view('print.chegirma', compact('project'));
