@@ -379,7 +379,14 @@
         window.addEventListener('touchmove', e => { if (!mode) return; const t = e.touches[0]; applyMove(t.clientY); }, {passive:true});
         window.addEventListener('touchend', endMove);
     }
-    setupStampDrag();
+    // Bu skript <head> ichida, .stamp-img rasmlari esa sahifaning pastida —
+    // shuning uchun DOM to'liq tayyor bo'lguncha kutamiz (aks holda rasmlar
+    // hali mavjud bo'lmaydi va hech narsa o'ralmaydi).
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupStampDrag);
+    } else {
+        setupStampDrag();
+    }
 </script>
 @endif
 
