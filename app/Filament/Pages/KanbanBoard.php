@@ -1512,9 +1512,11 @@ class KanbanBoard extends Page
 
         // Tanlangan oy/yil — loyiha OCHILGAN (created_at) oyiga qarab.
         // Qidiruv ishlatilganda — davr filtri olib tashlanadi (hammasidan qidiriladi).
+        // TEZLIK: whereYear/whereMonth o'rniga whereBetween — created_at indeksidan
+        // foydalanadi (whereYear/whereMonth ustunni funksiyaga o'raydi, indeks ishlamay qoladi).
         if (empty($this->search)) {
-            $projectQuery->whereYear('created_at', $this->kbYear)
-                         ->whereMonth('created_at', $this->kbMonth);
+            $periodStart = \Carbon\Carbon::create($this->kbYear, $this->kbMonth, 1)->startOfMonth();
+            $projectQuery->whereBetween('created_at', [$periodStart, $periodStart->copy()->endOfMonth()]);
         }
 
         // Qidiruv filtri
@@ -1576,10 +1578,10 @@ class KanbanBoard extends Page
         if ($authUser?->isHisobchi() || $authUser?->canSeeAllProjects()) {
             // To'lov navbati ham tanlangan oyga bog'lanadi (ustunlar bilan bir xil —
             // loyiha OCHILGAN oyiga qarab), shunda eski oy so'rovlari yangi oyga o'tmaydi.
+            $periodStart  = \Carbon\Carbon::create($this->kbYear, $this->kbMonth, 1)->startOfMonth();
             $paymentQueue = Project::with(['assignedUsers', 'paymentRequester'])
                 ->whereNotNull('payment_requested_at')
-                ->whereYear('created_at', $this->kbYear)
-                ->whereMonth('created_at', $this->kbMonth)
+                ->whereBetween('created_at', [$periodStart, $periodStart->copy()->endOfMonth()])
                 ->orderBy('payment_requested_at', 'asc')
                 ->get();
         }

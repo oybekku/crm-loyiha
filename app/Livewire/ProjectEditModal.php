@@ -107,7 +107,8 @@ class ProjectEditModal extends Component
     }
 
     // ── Amal tugmalari — modalni yopib, parent KanbanBoard'ga event yuboramiz ──
-    public function eiGoPayment(): void      { $id = $this->editInfoId; $this->closeEditInfoModal(); $this->dispatch('kb-open-payment', id: $id); }
+    // To'lov oynasi tahrirlash oynasi ustida ochiladi — tahrirlash oynasi o'zi yopilmaguncha ochiq qoladi.
+    public function eiGoPayment(): void      { $this->dispatch('kb-open-payment', id: $this->editInfoId); }
     public function eiGoRoute(): void        { $id = $this->editInfoId; $s = $this->ei_status; $this->closeEditInfoModal(); $this->dispatch('kb-open-route', id: $id, status: $s); }
     public function eiGoAssign(): void       { $id = $this->editInfoId; $this->closeEditInfoModal(); $this->dispatch('kb-open-assign', id: $id); }
     public function eiRequestPayment(): void { $id = $this->editInfoId; $this->closeEditInfoModal(); $this->dispatch('kb-request-payment', id: $id); }

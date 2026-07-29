@@ -2111,7 +2111,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 {{-- TO'LOV MODAL --}}
 @if($showPaymentModal)
 @php $payProj = \App\Models\Project::with('payments')->find($paymentProjectId); @endphp
-<div style="position:fixed;inset:0;z-index:1300;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)">
+<div style="position:fixed;inset:0;z-index:1450;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)">
     <div style="background:#fff;border-radius:16px;width:100%;max-width:920px;max-height:92vh;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2);display:flex;flex-direction:column" wire:click.stop>
     <div style="overflow-y:auto;padding:28px;flex:1;min-height:0">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
