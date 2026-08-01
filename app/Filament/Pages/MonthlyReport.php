@@ -423,8 +423,10 @@ class MonthlyReport extends Page
                 'is_paid'        => $p['is_paid'],
                 'project_opened_at' => $p['project_opened_at'],
             ]);
+            // Tugatilgan sanasi bo'yicha o'sish tartibida (eskisidan yangisiga);
+            // hali tugatilmagan (kutayotgan) ishlar oxirida turadi.
             $stat['all_items'] = $done->concat($pending)
-                ->sortByDesc(fn($it) => $it['opened_at'])
+                ->sortBy(fn($it) => $it['completed_at'] ? $it['completed_at']->timestamp : PHP_INT_MAX)
                 ->values()
                 ->toArray();
         }
@@ -435,7 +437,9 @@ class MonthlyReport extends Page
         // mantig'iga mos) — ish qachon biriktirilgan/tugatilganidan qat'i nazar.
         $assignedByEmployee = collect($userStats)
             ->map(function ($stat) {
-                $items = collect($stat['all_items'])->sortByDesc('opened_at')->values();
+                $items = collect($stat['all_items'])
+                    ->sortBy(fn($it) => $it['completed_at'] ? $it['completed_at']->timestamp : PHP_INT_MAX)
+                    ->values();
                 // Chinakam dublikat — bir xil loyihada bir xil XIZMAT TURI bir necha
                 // marta yozilgan bo'lsa (masalan "toposyomka" ikki marta). Bitta
                 // loyihada ikki XIL xizmat (masalan toposyomka + eskiz_loyiha) borligi
