@@ -62,6 +62,11 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
 .acc-card:hover::after{transform:translate(220%,0) rotate(8deg)}
 .acc-card:hover{transform:translateY(-6px) scale(1.06);box-shadow:0 0 0 1px rgba(56,189,248,.4),0 22px 46px rgba(0,0,0,.5);z-index:5}
 .acc-card.is-fav{border-color:#3b82f6;box-shadow:0 0 0 1.5px #3b82f6,0 0 20px rgba(59,130,246,.45)}
+/* Sudrab ko'chirish — Kanban'dagi kabi: tortilayotgan karta shaffoflashadi,
+   tashlanadigan bo'lim ko'k chiziq bilan ajralib turadi. */
+.acc-card.dragging{opacity:.35;cursor:grabbing}
+.bx-grid.drag-over-zone{outline:2px dashed #3b82f6;outline-offset:6px;border-radius:16px}
+.trf-panel.drag-over-zone{outline:2px dashed #3b82f6;outline-offset:-4px}
 /* Foydalanuvchi o'z rasmini fon qilib qo'ygan kartalar — matn o'qilishi
    uchun rasm ustiga qorong'i gradient qo'yiladi. */
 .acc-card.has-bg{
@@ -192,7 +197,9 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
         $secondaryAccs = $allAccs->where('is_secondary', true)->values();
     @endphp
 
-    <div class="bx-grid" x-data="{}" @dragover.prevent @drop.prevent="$wire.call('moveAccountSection', $event.dataTransfer.getData('text/plain'), false)">
+    <div class="bx-grid" x-data="{ over:false }" :class="over ? 'drag-over-zone' : ''"
+         @dragover.prevent="over=true" @dragleave="over=false"
+         @drop.prevent="over=false; $wire.call('moveAccountSection', $event.dataTransfer.getData('text/plain'), false)">
         {{-- Jami balans — boshqa kartalar bilan bir xil o'lchamda --}}
         <div class="acc-card is-total">
             <div style="display:flex;justify-content:space-between;align-items:flex-start">
@@ -273,7 +280,9 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
     </div>
 
     {{-- ── Ikkinchi bo'lim — kerak bo'lmagan kartalarni shu yerga sudrab tashlang ── --}}
-    <div class="trf-panel" x-data="{}" style="margin-top:14px" @dragover.prevent @drop.prevent="$wire.call('moveAccountSection', $event.dataTransfer.getData('text/plain'), true)">
+    <div class="trf-panel" x-data="{ over:false }" :class="over ? 'drag-over-zone' : ''" style="margin-top:14px"
+         @dragover.prevent="over=true" @dragleave="over=false"
+         @drop.prevent="over=false; $wire.call('moveAccountSection', $event.dataTransfer.getData('text/plain'), true)">
         <div class="trf-head" style="cursor:default">
             <span class="trf-head-title">📥 Ikkinchi bo'lim <span style="font-size:11px;color:#64748b;font-weight:600">— kerak bo'lmagan kartalarni shu yerga sudrab tashlang</span></span>
         </div>

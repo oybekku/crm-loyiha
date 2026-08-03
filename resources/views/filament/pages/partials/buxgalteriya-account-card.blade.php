@@ -1,7 +1,8 @@
 <div class="acc-card {{ $acc->is_favorite ? 'is-fav' : '' }} {{ $acc->background_image ? 'has-bg' : '' }}"
      @if($acc->background_image) style="--acc-bg:url('{{ \Illuminate\Support\Facades\Storage::url($acc->background_image) }}')" @endif
      draggable="true"
-     @dragstart="$event.dataTransfer.setData('text/plain', '{{ $acc->id }}')"
+     @dragstart="$event.target.classList.add('dragging'); $event.dataTransfer.setData('text/plain', '{{ $acc->id }}')"
+     @dragend="$event.target.classList.remove('dragging')"
      wire:click="toggleFavorite({{ $acc->id }})">
     <span class="acc-star {{ $acc->is_favorite ? 'on' : '' }}" title="Belgilash">★</span>
     <div class="acc-actions">
