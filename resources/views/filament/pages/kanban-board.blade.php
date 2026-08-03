@@ -2265,10 +2265,10 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                     @error('paymentDate')<span style="font-size:11px;color:#dc2626 !important">{{ $message }}</span>@enderror
                 </div>
                 <div>
-                    <label style="font-size:12px;font-weight:600;color:#374151 !important;display:block;margin-bottom:6px">Qaysi hisobga tushdi?</label>
+                    <label style="font-size:12px;font-weight:600;color:#374151 !important;display:block;margin-bottom:6px">Qaysi hisobga tushdi? *</label>
                     @if($payAccOpts->count() > 0)
                     <select wire:model="paymentAccountId"
-                            style="width:100%;padding:10px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;background:#fff">
+                            style="width:100%;padding:10px 12px;border:2px solid {{ $errors->has('paymentAccountId') ? '#dc2626' : '#e5e7eb' }};border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;background:#fff">
                         <option value="">— tanlanmagan —</option>
                         @foreach($payAccOpts as $acc)
                         <option value="{{ $acc->id }}">
@@ -2278,8 +2278,9 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                         </option>
                         @endforeach
                     </select>
+                    @error('paymentAccountId')<span style="font-size:11px;color:#dc2626 !important">{{ $message }}</span>@enderror
                     @else
-                    <div style="font-size:12px;color:#9ca3af;padding:10px 12px;background:#f9fafb;border:2px solid #e5e7eb;border-radius:8px">Bu usul uchun hisob yo'q</div>
+                    <div style="font-size:12px;color:#9ca3af;padding:10px 12px;background:#f9fafb;border:2px solid #e5e7eb;border-radius:8px">Bu usul uchun hisob yo'q — avval Buxgalteriyada qo'shing</div>
                     @endif
                 </div>
             </div>
@@ -2402,10 +2403,12 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 </div>
 @endif
 
-{{-- TAHRIRLASH MODAL (to'lov summasi) --}}
+{{-- TAHRIRLASH MODAL (to'lov summasi) — To'lov oynasi (z-index:1450) ustidan
+     ochilishi mumkin bo'lgani uchun undan balandroq bo'lishi shart, aks holda
+     orqada qolib, tugmalari bosilmay qoladi. --}}
 @if($showEditPaymentModal)
 @php $editPmt = \App\Models\Payment::with('project')->find($editPaymentId); @endphp
-<div style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1400;display:flex;align-items:center;justify-content:center;padding:16px">
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1500;display:flex;align-items:center;justify-content:center;padding:16px">
     <div style="background:#fff;border-radius:14px;width:100%;max-width:380px;max-height:90vh;overflow-y:auto;padding:24px;box-shadow:0 25px 80px rgba(0,0,0,.3)" wire:click.stop>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
             <div style="display:flex;align-items:center;gap:8px">
@@ -2432,6 +2435,43 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                    onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#e5e7eb'">
             @error('editPaymentAmount')<span style="font-size:11px;color:#dc2626 !important">{{ $message }}</span>@enderror
         </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+            <div>
+                <label style="font-size:12px;font-weight:500;color:#374151;display:block;margin-bottom:6px">To'lov usuli</label>
+                <select wire:model.live="editPaymentMethod"
+                        style="width:100%;padding:10px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;background:#fff">
+                    <option value="naqd">Naqd pul</option>
+                    <option value="bank">Bank o'tkazma</option>
+                    <option value="karta">Karta</option>
+                </select>
+            </div>
+            <div>
+                @php $editAccOpts = $paymentAccounts->where('type', $editPaymentMethod); @endphp
+                <label style="font-size:12px;font-weight:500;color:#374151;display:block;margin-bottom:6px">Qaysi hisobga tushdi? *</label>
+                @if($editAccOpts->count() > 0)
+                <select wire:model="editPaymentAccountId"
+                        style="width:100%;padding:10px 12px;border:2px solid {{ $errors->has('editPaymentAccountId') ? '#dc2626' : '#e5e7eb' }};border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;background:#fff">
+                    <option value="">— tanlanmagan —</option>
+                    @foreach($editAccOpts as $acc)
+                    <option value="{{ $acc->id }}">
+                        {{ $acc->name ?: ucfirst($acc->type) }}
+                        @if($acc->type === 'karta' && $acc->card_number) — {{ $acc->card_number }}@endif
+                        @if($acc->type === 'bank' && $acc->account_number) — {{ $acc->account_number }}@endif
+                    </option>
+                    @endforeach
+                </select>
+                @error('editPaymentAccountId')<span style="font-size:11px;color:#dc2626 !important">{{ $message }}</span>@enderror
+                @else
+                <div style="font-size:11px;color:#9ca3af;padding:10px 12px;background:#f9fafb;border:2px solid #e5e7eb;border-radius:8px">Bu usul uchun hisob yo'q</div>
+                @endif
+            </div>
+        </div>
+        @if($editPmt && is_null($editPmt->account_id))
+        <div style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;margin-bottom:14px">
+            <span style="font-size:14px">⚠️</span>
+            <span style="font-size:11.5px;color:#92400e !important">Bu to'lov hozircha hech qaysi hisobga bog'lanmagan — Buxgalteriyada ko'rinmayapti. Yuqoridan hisob tanlab, saqlang.</span>
+        </div>
+        @endif
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <button wire:click="closeEditPayment"
                     style="padding:11px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;color:#374151;cursor:pointer;font-size:13px;font-weight:500">

@@ -97,6 +97,8 @@ class KanbanBoard extends Page
     public bool   $showEditPaymentModal = false;
     public int    $editPaymentId        = 0;
     public string $editPaymentAmount    = '';
+    public string $editPaymentMethod    = 'naqd';
+    public ?int   $editPaymentAccountId = null;
 
     // To'lovni o'chirish (PIN kod bilan)
     public bool   $showDeletePaymentModal = false;
@@ -855,13 +857,21 @@ class KanbanBoard extends Page
 
         // Summali yo'l
         if ($hasAmount) {
+            // Tanlangan to'lov usuliga mos hisob(lar) mavjud bo'lsa — qaysi
+            // hisobga tushgani albatta tanlanishi shart, aks holda to'lov
+            // "muallaq" (account_id=null) saqlanib, Buxgalteriyada butunlay
+            // ko'rinmay qoladi (pul yo'qolib qolganday tuyuladi).
+            $accountRequired = \App\Models\FinancialAccount::where('type', $this->paymentMethod)->exists();
+
             $this->validate([
-                'paymentAmount' => 'required|numeric|min:1',
-                'paymentDate'   => 'required|date',
-                'paymentMethod' => 'required|in:naqd,bank,karta',
+                'paymentAmount'    => 'required|numeric|min:1',
+                'paymentDate'      => 'required|date',
+                'paymentMethod'    => 'required|in:naqd,bank,karta',
+                'paymentAccountId' => $accountRequired ? 'required|exists:financial_accounts,id' : 'nullable',
             ], [
-                'paymentAmount.min'    => 'Summa 0 dan katta bo\'lishi kerak',
-                'paymentDate.required' => 'Sana kiritilishi shart',
+                'paymentAmount.min'       => 'Summa 0 dan katta bo\'lishi kerak',
+                'paymentDate.required'    => 'Sana kiritilishi shart',
+                'paymentAccountId.required' => "Qaysi hisobga tushganini tanlang — aks holda pul Buxgalteriyada ko'rinmaydi",
             ]);
 
             // Ortiqcha to'lovni bloklash — to'lov ish summasidan oshmasligi kerak
@@ -974,8 +984,10 @@ class KanbanBoard extends Page
     {
         $payment = Payment::find($paymentId);
         if (!$payment) return;
-        $this->editPaymentId     = $paymentId;
-        $this->editPaymentAmount = (string)(float)$payment->amount;
+        $this->editPaymentId        = $paymentId;
+        $this->editPaymentAmount    = (string)(float)$payment->amount;
+        $this->editPaymentMethod    = $payment->method ?: 'naqd';
+        $this->editPaymentAccountId = $payment->account_id;
         $this->showEditPaymentModal = true;
     }
 
@@ -984,14 +996,30 @@ class KanbanBoard extends Page
         $this->showEditPaymentModal = false;
         $this->editPaymentId        = 0;
         $this->editPaymentAmount    = '';
+        $this->editPaymentMethod    = 'naqd';
+        $this->editPaymentAccountId = null;
+    }
+
+    // To'lov usuli o'zgarsa — eski hisob boshqa turga tegishli bo'lib
+    // qolmasligi uchun tozalaymiz (create oynasidagi bilan bir xil mantiq).
+    public function updatedEditPaymentMethod(): void
+    {
+        $this->editPaymentAccountId = $this->defaultAccountIdFor($this->editPaymentMethod);
     }
 
     public function saveEditPayment(): void
     {
+        $accountRequired = \App\Models\FinancialAccount::where('type', $this->editPaymentMethod)->exists();
+
         $this->validate(
-            ['editPaymentAmount' => 'required|numeric|min:1'],
-            ['editPaymentAmount.required' => 'Summa kiritilishi shart',
-             'editPaymentAmount.min'      => 'Summa 0 dan katta bo\'lishi kerak']
+            [
+                'editPaymentAmount'    => 'required|numeric|min:1',
+                'editPaymentMethod'    => 'required|in:naqd,bank,karta',
+                'editPaymentAccountId' => $accountRequired ? 'required|exists:financial_accounts,id' : 'nullable',
+            ],
+            ['editPaymentAmount.required'    => 'Summa kiritilishi shart',
+             'editPaymentAmount.min'         => 'Summa 0 dan katta bo\'lishi kerak',
+             'editPaymentAccountId.required' => "Qaysi hisobga tushganini tanlang — aks holda pul Buxgalteriyada ko'rinmaydi"]
         );
 
         $payment = Payment::find($this->editPaymentId);
@@ -1000,12 +1028,19 @@ class KanbanBoard extends Page
         $oldAmount = (float) $payment->amount;
         $newAmount = (float) $this->editPaymentAmount;
 
-        if ($oldAmount === $newAmount) {
+        $accountChanged = $payment->method !== $this->editPaymentMethod
+            || $payment->account_id !== $this->editPaymentAccountId;
+
+        if ($oldAmount === $newAmount && !$accountChanged) {
             $this->closeEditPayment();
             return;
         }
 
-        $payment->update(['amount' => $newAmount]);
+        $payment->update([
+            'amount'     => $newAmount,
+            'method'     => $this->editPaymentMethod,
+            'account_id' => $this->editPaymentAccountId,
+        ]);
 
         PaymentLog::create([
             'project_id'  => $payment->project_id,
@@ -1018,7 +1053,7 @@ class KanbanBoard extends Page
         ]);
 
         $this->closeEditPayment();
-        $this->dispatch('notify', type: 'success', message: "To'lov summasi yangilandi!");
+        $this->dispatch('notify', type: 'success', message: "To'lov yangilandi!");
     }
 
     // ── Delete payment (Telegram tasdiqlash kodi bilan) ─────────────────────
@@ -1604,8 +1639,9 @@ class KanbanBoard extends Page
         // Qidiruv tekis ro'yxati uchun — barcha statuslar belgisi
         $statusMap = $dbStatuses->keyBy('key')->map(fn($s) => ['label' => $s->label, 'color' => $s->color])->toArray();
 
-        // To'lov oynasida "qaysi hisobga tushdi" tanlash uchun — faqat oyna ochiq bo'lsa
-        $paymentAccounts = $this->showPaymentModal
+        // To'lov oynasida "qaysi hisobga tushdi" tanlash uchun — faqat oyna
+        // (qo'shish yoki tahrirlash) ochiq bo'lsa
+        $paymentAccounts = ($this->showPaymentModal || $this->showEditPaymentModal)
             ? \App\Models\FinancialAccount::orderBy('sort_order')->orderBy('name')->get()
             : collect();
 
