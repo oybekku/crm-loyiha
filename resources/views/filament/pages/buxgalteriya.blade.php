@@ -268,7 +268,18 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
         </div>
     </div>
 
-    {{-- ── Ikkinchi bo'lim — kerak bo'lmagan kartalarni shu yerga sudrab tashlang ── --}}
+    {{-- ── Ikkinchi bo'lim — kerak bo'lmagan kartalarni shu yerga sudrab tashlang ──
+         Bo'sh bo'lsa — kichik "+" tugma, karta tushirilishi bilan to'liq ko'rinishga o'tadi. --}}
+    @if($secondaryAccs->isEmpty())
+    <div class="trf-panel" x-data="{ over:false }" :class="over ? 'drag-over-zone' : ''"
+         style="margin-top:14px;display:flex;align-items:center;justify-content:center;padding:10px;cursor:default"
+         title="Kerak bo'lmagan kartalarni shu yerga sudrab tashlang"
+         @dragover.prevent="over=true" @dragleave="over=false"
+         @drop.prevent="over=false; $wire.call('moveAccountSection', $event.dataTransfer.getData('text/plain'), true)">
+        <span style="width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,.08);color:#64748b;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700">+</span>
+        <input type="file" x-ref="bgFileInput" wire:model="bgUpload" accept="image/*" style="display:none">
+    </div>
+    @else
     <div class="trf-panel" x-data="{ over:false }" :class="over ? 'drag-over-zone' : ''" style="margin-top:14px"
          @dragover.prevent="over=true" @dragleave="over=false"
          @drop.prevent="over=false; $wire.call('moveAccountSection', $event.dataTransfer.getData('text/plain'), true)">
@@ -276,18 +287,15 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
             <span class="trf-head-title">📥 Ikkinchi bo'lim <span style="font-size:11px;color:#64748b;font-weight:600">— kerak bo'lmagan kartalarni shu yerga sudrab tashlang</span></span>
         </div>
         <div style="padding:18px;border-top:1px solid #2a2a2e">
-            @if($secondaryAccs->isEmpty())
-            <div style="text-align:center;color:#64748b;font-size:12.5px;padding:24px;border:1.5px dashed #2a2a2e;border-radius:10px">Bu yerda hozircha karta yo'q — yuqoridagi kartalardan birini shu bo'limga sudrab tashlang</div>
-            @else
             <div class="bx-grid">
                 @foreach($secondaryAccs as $acc)
                     @include('filament.pages.partials.buxgalteriya-account-card', ['acc' => $acc])
                 @endforeach
             </div>
-            @endif
         </div>
         <input type="file" x-ref="bgFileInput" wire:model="bgUpload" accept="image/*" style="display:none">
     </div>
+    @endif
 
     {{-- ── Hisob qo'shish/tahrirlash oynasi ── --}}
     @if($showAccountModal)
