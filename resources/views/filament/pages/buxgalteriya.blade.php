@@ -21,16 +21,16 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
 @media (max-width:600px){.bx-grid{grid-template-columns:1fr}}
 
 .acc-card{
-    background:linear-gradient(135deg,#0d0d0f,#1a1a1d 55%,#232326) !important;
-    border:2px solid #2a2a2e;
-    border-radius:16px;
-    padding:20px;
+    background:linear-gradient(135deg,#111214,#1b1c1f 45%,#26272b 100%) !important;
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:18px;
+    padding:22px 22px 20px;
     position:relative;
     overflow:hidden;
-    min-height:170px;
-    box-shadow:0 10px 26px rgba(0,0,0,.35);
+    min-height:190px;
+    box-shadow:0 12px 28px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.04);
     cursor:pointer;
-    transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+    transition:transform .25s ease, box-shadow .25s ease, border-color .25s ease;
     display:flex;
     flex-direction:column;
     justify-content:space-between;
@@ -41,31 +41,57 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
    chiqib, deyarli ko'rinmas bo'lib qolgan edi) — shu sababli har bir
    matn elementiga aniq rang !important bilan mahkamlanadi. */
 .acc-card *{color:inherit}
+/* Yumshoq nurlanish (yuqori-o'ng burchak) */
 .acc-card::before{
     content:'';
-    position:absolute; right:-30px; top:-30px; width:140px; height:140px;
-    background:rgba(255,255,255,.05); border-radius:50%;
+    position:absolute; right:-40px; top:-40px; width:160px; height:160px;
+    background:radial-gradient(circle, rgba(255,255,255,.08), transparent 70%);
+    border-radius:50%;
+    pointer-events:none;
 }
-.acc-card:hover{transform:translateY(-3px);box-shadow:0 0 16px rgba(56,189,248,.35),0 14px 30px rgba(0,0,0,.4)}
-.acc-card.is-fav{border-color:#3b82f6;box-shadow:0 0 0 1px #3b82f6,0 0 18px rgba(59,130,246,.45)}
-.acc-card.is-total{background:linear-gradient(135deg,#052e1a,#0a3d24 55%,#0f4a2c) !important;border-color:#166534;cursor:default}
+/* Diagonal yaltiroqlik — haqiqiy plastik karta effekti */
+.acc-card::after{
+    content:'';
+    position:absolute; inset:0;
+    background:linear-gradient(115deg, transparent 40%, rgba(255,255,255,.05) 48%, rgba(255,255,255,.1) 50%, rgba(255,255,255,.05) 52%, transparent 60%);
+    pointer-events:none;
+}
+.acc-card:hover{transform:translateY(-4px) scale(1.012);box-shadow:0 0 0 1px rgba(56,189,248,.4),0 18px 40px rgba(0,0,0,.5)}
+.acc-card.is-fav{border-color:#3b82f6;box-shadow:0 0 0 1.5px #3b82f6,0 0 20px rgba(59,130,246,.45)}
+.acc-card.is-total{background:linear-gradient(135deg,#04351f,#0a4a2c 50%,#0f5c36) !important;border-color:#166534;cursor:default}
 .acc-card.is-total .acc-name{color:#bbf7d0 !important}
 
-.acc-star{position:absolute;top:14px;right:14px;font-size:15px;color:#475569 !important;transition:color .2s,transform .2s;z-index:2}
+.acc-star{position:absolute;top:16px;right:16px;font-size:15px;color:rgba(255,255,255,.35) !important;transition:color .2s,transform .2s;z-index:2}
 .acc-star.on{color:#3b82f6 !important;transform:scale(1.15)}
-.acc-actions{position:absolute;top:14px;right:38px;display:flex;gap:4px;opacity:0;transition:opacity .2s;z-index:2}
+.acc-actions{position:absolute;top:16px;right:40px;display:flex;gap:4px;opacity:0;transition:opacity .2s;z-index:2}
 .acc-card:hover .acc-actions{opacity:1}
-.acc-act-btn{width:24px;height:24px;border-radius:6px;border:none;background:rgba(255,255,255,.1);color:#e2e8f0 !important;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px}
-.acc-act-btn:hover{background:rgba(255,255,255,.22)}
+.acc-act-btn{width:24px;height:24px;border-radius:6px;border:none;background:rgba(255,255,255,.12);color:#e2e8f0 !important;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px}
+.acc-act-btn:hover{background:rgba(255,255,255,.25)}
 
 .acc-icon{font-size:20px;opacity:.9}
-.acc-badge{font-size:9px;font-weight:800;color:#0f172a !important;background:#38bdf8;border-radius:5px;padding:3px 8px;white-space:nowrap;align-self:flex-start}
-.acc-name{font-size:13px;font-weight:700;color:#f1f5f9 !important;margin-top:10px}
-.acc-num{font-size:15px;letter-spacing:.15em;font-weight:700;color:#e2e8f0 !important;font-family:'Courier New',monospace;margin:12px 0 0;word-break:break-all}
-.acc-bottom{display:flex;justify-content:space-between;align-items:flex-end;margin-top:14px}
-.acc-balance-lbl{font-size:9px;color:#94a3b8 !important;text-transform:uppercase;letter-spacing:.5px}
-.acc-balance{font-size:19px;font-weight:900;color:#4ade80 !important}
-.acc-sub-right{font-size:9px;color:#94a3af !important;text-align:right}
+.acc-icon-wrap{width:34px;height:25px;border-radius:6px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:14px}
+
+/* Oltin chip — plastik karta turidagi hisoblarda */
+.acc-chip{
+    width:34px;height:25px;border-radius:5px;
+    background:linear-gradient(135deg,#fde68a,#eab308 45%,#a16207);
+    position:relative;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.25), 0 1px 2px rgba(0,0,0,.3);
+}
+.acc-chip::before{content:'';position:absolute; inset:4px; border:1px solid rgba(0,0,0,.3); border-radius:3px}
+.acc-chip::after{content:'';position:absolute; left:50%; top:0; bottom:0; width:1px; background:rgba(0,0,0,.25)}
+
+.acc-badge{font-size:9.5px;font-weight:800;color:#0f172a !important;background:#38bdf8;border-radius:5px;padding:3px 9px;white-space:nowrap;align-self:flex-start;letter-spacing:.03em}
+.acc-badge.net-uzcard{background:#4ade80}
+.acc-badge.net-visa{background:#facc15}
+.acc-badge.net-mastercard{background:#fca5a5}
+
+.acc-name{font-size:12.5px;font-weight:700;color:#f1f5f9 !important;margin-top:4px;text-transform:uppercase;letter-spacing:.03em;opacity:.9}
+.acc-num{font-size:16px;letter-spacing:.09em;font-weight:600;color:#f1f5f9 !important;font-family:'Courier New',monospace;margin:14px 0 0;word-break:break-all}
+.acc-bottom{display:flex;justify-content:space-between;align-items:flex-end;margin-top:16px}
+.acc-balance-lbl{font-size:9px;color:rgba(255,255,255,.45) !important;text-transform:uppercase;letter-spacing:.06em}
+.acc-balance{font-size:20px;font-weight:900;color:#4ade80 !important;margin-top:2px}
+.acc-sub-right{font-size:9px;color:rgba(255,255,255,.45) !important;text-align:right;line-height:1.4}
 
 .bx-empty{grid-column:1/-1;text-align:center;color:#64748b !important;padding:30px;font-size:13px;background:#1a1a1d;border-radius:14px;border:1px dashed #2a2a2e}
 
@@ -171,14 +197,19 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
             </div>
 
             <div style="display:flex;justify-content:space-between;align-items:flex-start">
-                <span class="acc-icon">
-                    @if($acc->type === 'karta') 💳
-                    @elseif($acc->type === 'naqd') 💵
-                    @else 🏦
-                    @endif
-                </span>
+                @if($acc->type === 'karta')
+                <div class="acc-chip"></div>
+                @else
+                <span class="acc-icon-wrap">{{ $acc->type === 'naqd' ? '💵' : '🏦' }}</span>
+                @endif
                 @if($acc->bank_name)
-                <span class="acc-badge">{{ $acc->bank_name }}</span>
+                @php
+                    $netKey  = strtolower(trim($acc->bank_name));
+                    $netCls  = str_contains($netKey, 'uzcard') ? 'net-uzcard'
+                             : (str_contains($netKey, 'visa') ? 'net-visa'
+                             : (str_contains($netKey, 'master') ? 'net-mastercard' : ''));
+                @endphp
+                <span class="acc-badge {{ $netCls }}">{{ $acc->bank_name }}</span>
                 @endif
             </div>
 
