@@ -65,6 +65,8 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
 }
 .acc-card.is-total{background:linear-gradient(135deg,#04351f,#0a4a2c 50%,#0f5c36) !important;border-color:#166534;cursor:default}
 .acc-card.is-total .acc-name{color:#bbf7d0 !important}
+.acc-card.is-contract{background:linear-gradient(135deg,#1e1b4b,#312e81 50%,#3730a3) !important;border-color:#4338ca;cursor:default}
+.acc-card.is-contract .acc-name{color:#c7d2fe !important;text-transform:none;font-size:12.5px}
 
 .acc-star{position:absolute;top:16px;right:16px;font-size:15px;color:rgba(255,255,255,.35) !important;transition:color .2s,transform .2s;z-index:2}
 .acc-star.on{color:#3b82f6 !important;transform:scale(1.15)}
@@ -197,6 +199,29 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
             <div>
                 <div class="acc-name">Jami balans ({{ $bxMonthLabel }})</div>
                 <div class="acc-balance" style="font-size:24px;margin-top:10px">{{ number_format($totalBalance, 0, '.', ' ') }} <span style="font-size:13px;opacity:.7">so'm</span></div>
+            </div>
+        </div>
+
+        {{-- Shartnoma bo'yicha statistika — naqd pul emas, loyihalarning shartnoma
+             qiymati (mijoz hali to'lamagan qismi bilan birga) --}}
+        <div class="acc-card is-contract" style="cursor:default" draggable="false">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                <span class="acc-icon">📋</span>
+            </div>
+            <div class="acc-name">Shartnoma bo'yicha ({{ $bxMonthLabel }})</div>
+            <div style="margin-top:10px;display:flex;flex-direction:column;gap:6px">
+                <div style="display:flex;justify-content:space-between;font-size:12px">
+                    <span style="opacity:.7">Jami shartnoma</span>
+                    <span style="font-weight:800">{{ number_format($contractTotal, 0, '.', ' ') }}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:12px">
+                    <span style="opacity:.7">Jami to'langan</span>
+                    <span style="font-weight:800;color:#4ade80">{{ number_format($contractPaid, 0, '.', ' ') }}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:12px">
+                    <span style="opacity:.7">Jami qarz</span>
+                    <span style="font-weight:800;color:#f87171">{{ number_format($contractDebt, 0, '.', ' ') }}</span>
+                </div>
             </div>
         </div>
 

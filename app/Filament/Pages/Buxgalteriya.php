@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Models\AccountTransfer;
 use App\Models\Expense;
 use App\Models\FinancialAccount;
+use App\Models\Project;
 use App\Services\EmployeePayableService;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -392,6 +393,15 @@ class Buxgalteriya extends Page
             EmployeePayableService::syncExpenses(sprintf('%04d-%02d', $year, $month), $expenseAccountId);
         }
 
+        // Shartnoma bo'yicha statistika (Bosh sahifadagi "Moliyaviy statistika"
+        // bilan bir xil hisob-kitob) — loyiha shu oyda OCHILGAN bo'lsa hisobga
+        // olinadi. Bu — "Jami balans"dan farqli o'laroq, mijoz hali to'lamagan
+        // qismini ham ko'rsatadi (naqd pul emas, shartnoma qiymati).
+        $contractQuery = Project::whereYear('created_at', $year)->whereMonth('created_at', $month);
+        $contractTotal = (float) (clone $contractQuery)->sum('total_price');
+        $contractPaid  = (float) (clone $contractQuery)->sum('paid_amount');
+        $contractDebt  = $contractTotal - $contractPaid;
+
         // Dashboarddagi "loyiha ochilgan oyi" mantig'i bilan bir xil bo'lishi uchun —
         // to'lov sanasi emas, balki shu to'lov tegishli LOYIHANING ochilgan (created_at)
         // oyi bo'yicha filtrlanadi. Shu bilan ikkala sahifadagi summalar mos keladi.
@@ -456,6 +466,9 @@ class Buxgalteriya extends Page
             'expenseAccountId' => $expenseAccountId,
             'transfers'        => $transfers,
             'allAccounts'      => FinancialAccount::orderBy('name')->get(),
+            'contractTotal'    => $contractTotal,
+            'contractPaid'     => $contractPaid,
+            'contractDebt'     => $contractDebt,
         ];
     }
 }
