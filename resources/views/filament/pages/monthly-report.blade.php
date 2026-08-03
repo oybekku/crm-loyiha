@@ -892,15 +892,17 @@
 @php
     $ds   = $userStats[$detailUserId];
     $dUsr      = $ds['user'];
-    $dCom      = $ds['commission'];
     $dSvc      = $ds['services'];
     $dSalPays  = $ds['salary_pays']  ?? collect();
     $dPaidTotal= $ds['paid_total']   ?? 0;
     $dByProject = collect($dSvc)->groupBy('project_id');
-    // To'lanishi kerak — endi ish haqi to'lovlaridan emas, "Barcha ishlar" jadvalidagi
-    // To'landi ustuni (mijoz to'lovi asosida proportional hisoblangan ulush) jamidan olinadi.
+    // Umumiy summa — "Barcha ishlar" jadvalidagi Ulush ustuni jami (tugallangan VA
+    // kutayotgan ishlar birga — jadval pastidagi "Jami" qatori bilan bir xil bo'lishi uchun).
+    // To'lanishi kerak — ish haqi to'lovlaridan emas, shu Umumiy summadan "Barcha ishlar"
+    // jadvalidagi To'landi ustuni (mijoz to'lovi asosida proportional hisoblangan ulush) jami ayiriladi.
+    $dUmumiySumma    = collect($ds['all_items'] ?? [])->sum('share');
     $dToLandiJami    = collect($ds['all_items'] ?? [])->sum('share_paid');
-    $dToLanishiKerak = max(0, $dCom - $dToLandiJami);
+    $dToLanishiKerak = max(0, $dUmumiySumma - $dToLandiJami);
 @endphp
 <div style="position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
 <div style="background:#fff;border-radius:16px;width:100%;max-width:860px;margin:auto;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
@@ -936,7 +938,7 @@
             <div style="font-size:11px;color:#6b7280;margin-top:2px">Kechikkan</div>
         </div>
         <div style="background:#fff;padding:16px;text-align:center">
-            <div style="font-size:20px;font-weight:800;color:#d97706">{{ number_format($dCom,0,'.',' ') }}</div>
+            <div style="font-size:20px;font-weight:800;color:#d97706">{{ number_format($dUmumiySumma,0,'.',' ') }}</div>
             <div style="font-size:11px;color:#6b7280;margin-top:2px">Komissiya (so'm)</div>
         </div>
     </div>
@@ -1042,16 +1044,16 @@
     <div style="padding:16px 24px;border-top:1px solid #e5e7eb;background:#f9fafb;display:flex;justify-content:flex-end;gap:24px;flex-wrap:wrap">
         <div style="text-align:right">
             <div style="font-size:11px;color:#6b7280">Qilingan ishlari (komissiya)</div>
-            <div style="font-size:16px;font-weight:800;color:#d97706">{{ number_format($dCom,0,'.',' ') }} so'm</div>
+            <div style="font-size:16px;font-weight:800;color:#d97706">{{ number_format($dUmumiySumma,0,'.',' ') }} so'm</div>
         </div>
         <div style="text-align:right">
             <div style="font-size:11px;color:#6b7280">To'lab berildi</div>
             <div style="font-size:16px;font-weight:800;color:#2563eb">{{ number_format($dPaidTotal,0,'.',' ') }} so'm</div>
         </div>
-        @if($dPaidTotal > $dCom)
+        @if($dPaidTotal > $dUmumiySumma)
         <div style="text-align:right">
             <div style="font-size:11px;color:#dc2626">Ortiqcha to'langan</div>
-            <div style="font-size:16px;font-weight:800;color:#dc2626">{{ number_format($dPaidTotal - $dCom,0,'.',' ') }} so'm</div>
+            <div style="font-size:16px;font-weight:800;color:#dc2626">{{ number_format($dPaidTotal - $dUmumiySumma,0,'.',' ') }} so'm</div>
         </div>
         @endif
         <div style="text-align:right;padding:8px 16px;background:#dcfce7;border-radius:8px;border:1px solid #86efac">
