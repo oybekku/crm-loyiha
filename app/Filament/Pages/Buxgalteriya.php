@@ -7,6 +7,8 @@ use App\Models\Expense;
 use App\Models\FinancialAccount;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Illuminate\Support\Facades\Storage;
+use Livewire\WithFileUploads;
 
 // Eslatma: SimplePage (login sahifalari andozasi) sinab ko'rildi — u avtomatik
 // route ro'yxatiga qo'shilmas ekan (Filamentning HasRoutes xususiyati faqat
@@ -14,6 +16,8 @@ use Filament\Pages\Page;
 // menyusi esa view faylida CSS orqali shu sahifada yashiriladi.
 class Buxgalteriya extends Page
 {
+    use WithFileUploads;
+
     protected static string  $view            = 'filament.pages.buxgalteriya';
     protected static ?string $navigationIcon  = 'heroicon-o-credit-card';
     protected static ?string $navigationLabel = 'Buxgalteriya';
@@ -32,6 +36,10 @@ class Buxgalteriya extends Page
     public string $formAccountNumber = '';
     public bool   $formIsFavorite   = false;
     public bool   $formIsPersonal   = false;
+
+    // ── Karta foni (rasm yuklash) ──
+    public $bgUpload = null;
+    public ?int $bgUploadAccountId = null;
 
     // ── Oy/yil filtri (har bir hisobning shu oydagi to'lovlar yig'indisi) ──
     public ?int $bxYear  = null;
@@ -143,6 +151,10 @@ class Buxgalteriya extends Page
     {
         if (!auth()->user()?->isAdmin()) return;
 
+        $acc = FinancialAccount::find($id);
+        if ($acc?->background_image) {
+            Storage::disk('public')->delete($acc->background_image);
+        }
         FinancialAccount::whereKey($id)->delete();
         Notification::make()->title('Hisob o\'chirildi')->warning()->send();
     }
@@ -153,6 +165,49 @@ class Buxgalteriya extends Page
 
         $acc = FinancialAccount::find($id);
         if ($acc) $acc->update(['is_favorite' => !$acc->is_favorite]);
+    }
+
+    // ── Karta foni (rasm) ────────────────────────────────────────────────────
+    public function setBgTarget(int $id): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+        $this->bgUploadAccountId = $id;
+    }
+
+    public function updatedBgUpload(): void
+    {
+        if (!auth()->user()?->isAdmin() || !$this->bgUploadAccountId) return;
+
+        $this->validate([
+            'bgUpload' => 'image|mimes:jpg,jpeg,png,webp|max:4096',
+        ]);
+
+        $acc = FinancialAccount::find($this->bgUploadAccountId);
+        if (!$acc) return;
+
+        if ($acc->background_image) {
+            Storage::disk('public')->delete($acc->background_image);
+        }
+
+        $path = $this->bgUpload->store('account-bg', 'public');
+        $acc->update(['background_image' => $path]);
+
+        $this->bgUpload           = null;
+        $this->bgUploadAccountId  = null;
+        Notification::make()->title('Fon rasm yangilandi')->success()->send();
+    }
+
+    public function removeAccountBackground(int $id): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+
+        $acc = FinancialAccount::find($id);
+        if (!$acc) return;
+
+        if ($acc->background_image) {
+            Storage::disk('public')->delete($acc->background_image);
+            $acc->update(['background_image' => null]);
+        }
     }
 
     // ── Xarajatlar (rasxodlar) ──────────────────────────────────────────────

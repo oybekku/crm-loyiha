@@ -9,6 +9,7 @@ class FinancialAccount extends Model
     protected $fillable = [
         'type', 'name', 'card_number', 'bank_name', 'expiry_date',
         'account_number', 'is_favorite', 'sort_order', 'is_personal',
+        'background_image',
     ];
 
     protected $casts = [

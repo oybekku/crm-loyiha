@@ -62,6 +62,13 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
 .acc-card:hover::after{transform:translate(220%,0) rotate(8deg)}
 .acc-card:hover{transform:translateY(-6px) scale(1.06);box-shadow:0 0 0 1px rgba(56,189,248,.4),0 22px 46px rgba(0,0,0,.5);z-index:5}
 .acc-card.is-fav{border-color:#3b82f6;box-shadow:0 0 0 1.5px #3b82f6,0 0 20px rgba(59,130,246,.45)}
+/* Foydalanuvchi o'z rasmini fon qilib qo'ygan kartalar — matn o'qilishi
+   uchun rasm ustiga qorong'i gradient qo'yiladi. */
+.acc-card.has-bg{
+    background-image:linear-gradient(180deg, rgba(8,8,10,.2), rgba(8,8,10,.55) 55%, rgba(8,8,10,.85)), var(--acc-bg) !important;
+    background-size:cover;
+    background-position:center;
+}
 .acc-card.is-total{background:linear-gradient(135deg,#04351f,#0a4a2c 50%,#0f5c36) !important;border-color:#166534;cursor:default}
 .acc-card.is-total .acc-name{color:#bbf7d0 !important}
 
@@ -179,7 +186,7 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
         </div>
     </div>
 
-    <div class="bx-grid">
+    <div class="bx-grid" x-data="{}">
         {{-- Jami balans — boshqa kartalar bilan bir xil o'lchamda --}}
         <div class="acc-card is-total">
             <div style="display:flex;justify-content:space-between;align-items:flex-start">
@@ -193,9 +200,15 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
 
         @php $allAccs = collect($byType)->flatten(1); @endphp
         @forelse($allAccs as $acc)
-        <div class="acc-card {{ $acc->is_favorite ? 'is-fav' : '' }}" wire:click="toggleFavorite({{ $acc->id }})">
+        <div class="acc-card {{ $acc->is_favorite ? 'is-fav' : '' }} {{ $acc->background_image ? 'has-bg' : '' }}"
+             @if($acc->background_image) style="--acc-bg:url('{{ \Illuminate\Support\Facades\Storage::url($acc->background_image) }}')" @endif
+             wire:click="toggleFavorite({{ $acc->id }})">
             <span class="acc-star {{ $acc->is_favorite ? 'on' : '' }}" title="Belgilash">★</span>
             <div class="acc-actions">
+                <button class="acc-act-btn" @click.stop="$wire.call('setBgTarget', {{ $acc->id }}).then(() => $refs.bgFileInput.click())" title="Fon rasm qo'yish">🖼️</button>
+                @if($acc->background_image)
+                <button class="acc-act-btn" wire:click.stop="removeAccountBackground({{ $acc->id }})" wire:confirm="Fon rasmni olib tashlaysizmi?" title="Fonni olib tashlash">🚫</button>
+                @endif
                 <button class="acc-act-btn" wire:click.stop="openAccountModal({{ $acc->id }})" title="Tahrirlash">✎</button>
                 <button class="acc-act-btn" wire:click.stop="deleteAccount({{ $acc->id }})" wire:confirm="Ushbu hisobni o'chirasizmi?" title="O'chirish">✕</button>
             </div>
@@ -239,6 +252,9 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
         @empty
         <div class="bx-empty">Hali hech qanday hisob qo'shilmagan — "Yangi hisob qo'shish" tugmasini bosing</div>
         @endforelse
+
+        {{-- Kartaga fon rasm yuklash uchun yashirin fayl input (barcha kartalar uchun umumiy) --}}
+        <input type="file" x-ref="bgFileInput" wire:model="bgUpload" accept="image/*" style="display:none">
     </div>
 
     {{-- ── Xarajatlar (rasxodlar) — svernut qilinadigan ro'yxat ── --}}
