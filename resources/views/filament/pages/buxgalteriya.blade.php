@@ -221,29 +221,31 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
             </button>
             <svg class="exp-head-chev" :style="open ? 'transform:rotate(180deg)' : ''" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
+        @if(!$expenseAccountId)
+        <div style="padding:10px 18px;font-size:11.5px;color:#fbbf24;background:#3a2e0d;border-top:1px solid #2a2a2e">
+            ⚠ Xodimlar komissiyasi avtomatik yozilishi uchun bitta hisobni "Xarajatlar hisobi" deb belgilang (hisobni tahrirlashda).
+        </div>
+        @endif
         <div class="exp-list" x-show="open" x-collapse>
-            @foreach($employeePayables as $ep)
-            <div class="exp-row" title="Oylik hisobotdagi 'To'lanishi kerak' summasidan avtomatik hisoblanadi">
-                <span class="exp-acc-badge" style="background:#1e3a3a;color:#5eead4">👤 avtomatik</span>
-                <span class="exp-comment">{{ $ep['user']->name }} — {{ $bxMonthLabel }} komissiyasi</span>
-                <span class="exp-amount">− {{ number_format($ep['amount'], 0, '.', ' ') }} so'm</span>
-            </div>
-            @endforeach
             @forelse($expenses as $exp)
-            <div class="exp-row">
+            <div class="exp-row" @if($exp->is_auto) title="Oylik hisobotdagi 'To'lanishi kerak' summasidan avtomatik hisoblanadi" @endif>
                 <span class="exp-date">{{ $exp->expense_date->format('d.m.Y') }}</span>
+                @if($exp->is_auto)
+                <span class="exp-acc-badge" style="background:#1e3a3a;color:#5eead4">👤 avtomatik</span>
+                @else
                 <span class="exp-acc-badge">{{ $exp->account ? ($exp->account->name ?: $typeOptions[$exp->account->type]) : '—' }}</span>
+                @endif
                 <span class="exp-comment">{{ $exp->comment ?: '—' }}</span>
                 <span class="exp-amount">− {{ number_format($exp->amount, 0, '.', ' ') }} so'm</span>
+                @unless($exp->is_auto)
                 <div class="exp-row-actions">
                     <button class="acc-act-btn" wire:click="openExpenseModal({{ $exp->id }})" title="Tahrirlash">✎</button>
                     <button class="acc-act-btn" wire:click="deleteExpense({{ $exp->id }})" wire:confirm="Ushbu xarajatni o'chirasizmi?" title="O'chirish">✕</button>
                 </div>
+                @endunless
             </div>
             @empty
-            @if($employeePayables->isEmpty())
             <div class="exp-empty">Bu oyda hali xarajat kiritilmagan</div>
-            @endif
             @endforelse
         </div>
     </div>
@@ -356,9 +358,13 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
                 <input type="checkbox" id="bx-fav" wire:model="formIsFavorite" style="width:16px;height:16px">
                 <label for="bx-fav" style="font-size:12px;color:#94a3b8;cursor:pointer;margin-bottom:0">Belgilangan (ko'k ramka) sifatida boshlash</label>
             </div>
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
                 <input type="checkbox" id="bx-personal" wire:model="formIsPersonal" style="width:16px;height:16px">
                 <label for="bx-personal" style="font-size:12px;color:#94a3b8;cursor:pointer;margin-bottom:0">Shaxsiy/xarajat hisobi (masalan xodimga) — "Jami balans"ga qo'shilmaydi</label>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px">
+                <input type="checkbox" id="bx-expense-acc" wire:model="formIsExpenseAccount" style="width:16px;height:16px">
+                <label for="bx-expense-acc" style="font-size:12px;color:#94a3b8;cursor:pointer;margin-bottom:0">Xarajatlar hisobi — xodimlar komissiyasi (Oylik hisobotdagi "To'lanishi kerak") shu hisobga avtomatik yoziladi</label>
             </div>
 
             <div style="display:flex;gap:10px">

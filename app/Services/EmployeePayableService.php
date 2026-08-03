@@ -2,16 +2,19 @@
 
 namespace App\Services;
 
+use App\Models\Expense;
 use App\Models\Project;
 use App\Models\ProjectService;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 /**
  * Xodimning komissiyasi (hodim ulushi) hisob-kitobi — Oylik hisobot va
  * Buxgalteriya sahifalarida bir xil natija chiqishi uchun yagona manba.
- * Buxgalteriyadagi "Xodim ulushi" xarajat qatori shu servisdan olinadi,
- * shuning uchun Oylik hisobotdagi "To'lanishi kerak" o'zgarsa, u yerda ham
- * avtomatik yangilanadi (sinxronlash kerak emas — ikkalasi ham jonli hisoblanadi).
+ * Buxgalteriyadagi "Xarajatlar hisobi" (is_expense_account) belgilangan
+ * hisobga har bir hodim uchun avtomatik Expense qatori shu servisdan
+ * yoziladi/yangilanadi, shuning uchun Oylik hisobotdagi "To'lanishi kerak"
+ * o'zgarsa, xarajat ham darhol sinxron yangilanadi.
  */
 class EmployeePayableService
 {
@@ -81,5 +84,39 @@ class EmployeePayableService
             ->filter(fn ($p) => $p['amount'] > 0)
             ->sortBy(fn ($p) => $p['user']->name)
             ->values();
+    }
+
+    /**
+     * Berilgan oy uchun hisoblangan "To'lanishi kerak" summalarini $accountId
+     * hisobiga real Expense qatorlari sifatida yozib/yangilab qo'yadi (bitta
+     * hodim + bitta oy = bitta qator, account_id+user_id+month bo'yicha
+     * upsert). Endi kerak bo'lmagan (masalan summasi 0 ga tushgan) qatorlar
+     * o'chiriladi. Buxgalteriya sahifasi har ochilganda chaqiriladi — shu
+     * bilan hisob balansi doim Oylik hisobotdagi summa bilan mos keladi.
+     */
+    public static function syncExpenses(string $month, int $accountId): void
+    {
+        $payables      = self::forMonth($month);
+        $activeUserIds = $payables->pluck('user.id')->all();
+
+        Expense::where('account_id', $accountId)
+            ->where('month', $month)
+            ->whereNotNull('user_id')
+            ->whereNotIn('user_id', $activeUserIds)
+            ->delete();
+
+        [$year, $mon] = explode('-', $month);
+        $expenseDate  = Carbon::create((int) $year, (int) $mon, 1)->endOfMonth()->toDateString();
+
+        foreach ($payables as $p) {
+            Expense::updateOrCreate(
+                ['account_id' => $accountId, 'user_id' => $p['user']->id, 'month' => $month],
+                [
+                    'amount'       => $p['amount'],
+                    'comment'      => $p['user']->name . " — {$month} oyi komissiyasi (avtomatik)",
+                    'expense_date' => $expenseDate,
+                ]
+            );
+        }
     }
 }

@@ -37,6 +37,7 @@ class Buxgalteriya extends Page
     public string $formAccountNumber = '';
     public bool   $formIsFavorite   = false;
     public bool   $formIsPersonal   = false;
+    public bool   $formIsExpenseAccount = false;
 
     // ── Karta foni (rasm yuklash) ──
     public $bgUpload = null;
@@ -98,6 +99,7 @@ class Buxgalteriya extends Page
             $this->formAccountNumber = (string) $acc->account_number;
             $this->formIsFavorite    = (bool) $acc->is_favorite;
             $this->formIsPersonal    = (bool) $acc->is_personal;
+            $this->formIsExpenseAccount = (bool) $acc->is_expense_account;
         } else {
             $this->formType          = 'karta';
             $this->formName          = '';
@@ -107,6 +109,7 @@ class Buxgalteriya extends Page
             $this->formAccountNumber = '';
             $this->formIsFavorite    = false;
             $this->formIsPersonal    = false;
+            $this->formIsExpenseAccount = false;
         }
 
         $this->showAccountModal = true;
@@ -127,22 +130,30 @@ class Buxgalteriya extends Page
         ]);
 
         $data = [
-            'type'           => $this->formType,
-            'name'           => trim($this->formName) ?: null,
-            'card_number'    => trim($this->formCardNumber) ?: null,
-            'bank_name'      => trim($this->formBankName) ?: null,
-            'expiry_date'    => trim($this->formExpiryDate) ?: null,
-            'account_number' => trim($this->formAccountNumber) ?: null,
-            'is_favorite'    => $this->formIsFavorite,
-            'is_personal'    => $this->formIsPersonal,
+            'type'               => $this->formType,
+            'name'               => trim($this->formName) ?: null,
+            'card_number'        => trim($this->formCardNumber) ?: null,
+            'bank_name'          => trim($this->formBankName) ?: null,
+            'expiry_date'        => trim($this->formExpiryDate) ?: null,
+            'account_number'     => trim($this->formAccountNumber) ?: null,
+            'is_favorite'        => $this->formIsFavorite,
+            'is_personal'        => $this->formIsPersonal,
+            'is_expense_account' => $this->formIsExpenseAccount,
         ];
 
         if ($this->editAccountId) {
             FinancialAccount::whereKey($this->editAccountId)->update($data);
             Notification::make()->title('Hisob yangilandi')->success()->send();
         } else {
-            FinancialAccount::create($data);
+            $acc = FinancialAccount::create($data);
             Notification::make()->title('Hisob qo\'shildi')->success()->send();
+        }
+
+        // Faqat bitta hisob "Xarajatlar hisobi" bo'la oladi — xodimlar
+        // komissiyasi qayerga yozilishi aniq bo'lishi uchun.
+        if ($this->formIsExpenseAccount) {
+            FinancialAccount::whereKeyNot($this->editAccountId ?: ($acc->id ?? 0))
+                ->update(['is_expense_account' => false]);
         }
 
         $this->closeAccountModal();
@@ -370,6 +381,17 @@ class Buxgalteriya extends Page
         $year  = $this->bxYear;
         $month = $this->bxMonth;
 
+        // Xodimlar komissiyasi ("To'lanishi kerak" — Oylik hisobotdagi bilan bir
+        // xil formula, EmployeePayableService) "Xarajatlar hisobi" deb belgilangan
+        // hisobga real Xarajat qatori sifatida yozib/yangilab qo'yiladi — shu bilan
+        // o'sha hisobning balansi va umumiy xarajat/balans summalari doim Oylik
+        // hisobot bilan sinxron bo'ladi (aksincha, saqlab qo'yish shart emas —
+        // sahifa har ochilganda qayta hisoblanadi).
+        $expenseAccountId = FinancialAccount::where('is_expense_account', true)->value('id');
+        if ($expenseAccountId) {
+            EmployeePayableService::syncExpenses(sprintf('%04d-%02d', $year, $month), $expenseAccountId);
+        }
+
         // Dashboarddagi "loyiha ochilgan oyi" mantig'i bilan bir xil bo'lishi uchun —
         // to'lov sanasi emas, balki shu to'lov tegishli LOYIHANING ochilgan (created_at)
         // oyi bo'yicha filtrlanadi. Shu bilan ikkala sahifadagi summalar mos keladi.
@@ -399,23 +421,13 @@ class Buxgalteriya extends Page
             'bank'  => $accounts->where('type', 'bank')->values(),
         ];
 
-        // Xodimlar ulushi (komissiya) — Oylik hisobotdagi "To'lanishi kerak" bilan
-        // aynan bir xil formuladan (EmployeePayableService) jonli hisoblanadi, shu
-        // sababli u yerdagi summa o'zgarsa, bu yerda ham avtomatik yangilanadi.
-        // Bu — firma bo'lgan tushumdan hodimga tegishli qism, shuning uchun
-        // xarajat sifatida hisobga olinadi va umumiy balansdan ayiriladi.
-        $employeePayables      = EmployeePayableService::forMonth(sprintf('%04d-%02d', $year, $month));
-        $employeePayablesTotal = (float) $employeePayables->sum('amount');
-
-        $totalSpent = (float) $accounts->sum('expenses_sum_amount') + $employeePayablesTotal;
+        $totalSpent = (float) $accounts->sum('expenses_sum_amount');
 
         // "Jami balans" — faqat haqiqiy (shaxsiy/xarajat deb belgilanmagan) hisoblar
-        // yig'indisi, hodimlarga tegishli (hali chiqarilmagan) ulush ayirilgan holda.
-        // Shaxsiy hisoblarga o'tkazilgan pul xarajat sifatida hisoblanib, manba
-        // hisobning (demak — Jami balansning ham) kamayishiga sabab bo'ladi, lekin
-        // shaxsiy hisobning o'zi umumiy summaga qo'shilmaydi.
-        $totalBalance = (float) $accounts->where('is_personal', false)->sum(fn ($a) => $a->balance)
-            - $employeePayablesTotal;
+        // yig'indisi. Shaxsiy hisoblarga o'tkazilgan pul xarajat sifatida hisoblanib,
+        // manba hisobning (demak — Jami balansning ham) kamayishiga sabab bo'ladi,
+        // lekin shaxsiy hisobning o'zi umumiy summaga qo'shilmaydi.
+        $totalBalance = (float) $accounts->where('is_personal', false)->sum(fn ($a) => $a->balance);
         $bxMonthLabel = \Carbon\Carbon::create($year, $month, 1)->translatedFormat('F Y');
 
         $transfers = AccountTransfer::with(['fromAccount', 'toAccount'])
@@ -426,7 +438,7 @@ class Buxgalteriya extends Page
             ->get();
         $totalTransferred = (float) $transfers->sum('amount');
 
-        $expenses = Expense::with('account')
+        $expenses = Expense::with(['account', 'user'])
             ->whereYear('expense_date', $year)
             ->whereMonth('expense_date', $month)
             ->orderByDesc('expense_date')
@@ -434,17 +446,16 @@ class Buxgalteriya extends Page
             ->get();
 
         return [
-            'byType'                => $byType,
-            'totalBalance'          => $totalBalance,
-            'totalSpent'            => $totalSpent,
-            'totalTransferred'      => $totalTransferred,
-            'typeOptions'           => FinancialAccount::typeOptions(),
-            'bxMonthLabel'          => $bxMonthLabel,
-            'expenses'              => $expenses,
-            'employeePayables'      => $employeePayables,
-            'employeePayablesTotal' => $employeePayablesTotal,
-            'transfers'             => $transfers,
-            'allAccounts'           => FinancialAccount::orderBy('name')->get(),
+            'byType'           => $byType,
+            'totalBalance'     => $totalBalance,
+            'totalSpent'       => $totalSpent,
+            'totalTransferred' => $totalTransferred,
+            'typeOptions'      => FinancialAccount::typeOptions(),
+            'bxMonthLabel'     => $bxMonthLabel,
+            'expenses'         => $expenses,
+            'expenseAccountId' => $expenseAccountId,
+            'transfers'        => $transfers,
+            'allAccounts'      => FinancialAccount::orderBy('name')->get(),
         ];
     }
 }

@@ -32,7 +32,7 @@
     </div>
 
     <div>
-        <div class="acc-name">{{ $acc->name ?: $typeOptions[$acc->type] }} @if($acc->is_personal)<span class="acc-personal-badge">SHAXSIY</span>@endif</div>
+        <div class="acc-name">{{ $acc->name ?: $typeOptions[$acc->type] }} @if($acc->is_personal)<span class="acc-personal-badge">SHAXSIY</span>@endif @if($acc->is_expense_account)<span class="acc-personal-badge" style="background:#7c2d12;color:#fdba74">XARAJATLAR</span>@endif</div>
         @if($acc->type === 'karta' && $acc->card_number)
         <div class="acc-num">{{ $acc->card_number }}</div>
         @elseif($acc->type === 'bank' && $acc->account_number)

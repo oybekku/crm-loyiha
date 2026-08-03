@@ -9,13 +9,14 @@ class FinancialAccount extends Model
     protected $fillable = [
         'type', 'name', 'card_number', 'bank_name', 'expiry_date',
         'account_number', 'is_favorite', 'sort_order', 'is_personal',
-        'background_image', 'is_secondary',
+        'background_image', 'is_secondary', 'is_expense_account',
     ];
 
     protected $casts = [
-        'is_favorite'  => 'boolean',
-        'is_personal'  => 'boolean',
-        'is_secondary' => 'boolean',
+        'is_favorite'         => 'boolean',
+        'is_personal'         => 'boolean',
+        'is_secondary'        => 'boolean',
+        'is_expense_account'  => 'boolean',
     ];
 
     public function payments()
