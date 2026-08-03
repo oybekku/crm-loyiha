@@ -1027,7 +1027,8 @@
                     <td colspan="2" style="padding:10px;font-weight:700;color:#374151;white-space:nowrap">Jami</td>
                     <td style="padding:10px;text-align:right;font-weight:700;white-space:nowrap">{{ number_format(collect($dAllItems)->sum('price'),0,'.',' ') }}</td>
                     <td style="padding:10px;text-align:right;font-weight:700;color:#d97706;white-space:nowrap">{{ number_format(collect($dAllItems)->sum('share'),0,'.',' ') }}</td>
-                    <td colspan="{{ auth()->user()?->isAdmin() ? 4 : 3 }}"></td>
+                    <td style="padding:10px;text-align:right;font-weight:700;color:#16a34a;white-space:nowrap">{{ number_format(collect($dAllItems)->sum('share_paid'),0,'.',' ') }}</td>
+                    <td colspan="{{ auth()->user()?->isAdmin() ? 3 : 2 }}"></td>
                 </tr>
             </tfoot>
         </table>
