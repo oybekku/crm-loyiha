@@ -186,7 +186,13 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
         </div>
     </div>
 
-    <div class="bx-grid" x-data="{}">
+    @php
+        $allAccs       = collect($byType)->flatten(1);
+        $primaryAccs   = $allAccs->where('is_secondary', false)->values();
+        $secondaryAccs = $allAccs->where('is_secondary', true)->values();
+    @endphp
+
+    <div class="bx-grid" x-data="{}" @dragover.prevent @drop.prevent="$wire.call('moveAccountSection', $event.dataTransfer.getData('text/plain'), false)">
         {{-- Jami balans — boshqa kartalar bilan bir xil o'lchamda --}}
         <div class="acc-card is-total">
             <div style="display:flex;justify-content:space-between;align-items:flex-start">
@@ -198,57 +204,8 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
             </div>
         </div>
 
-        @php $allAccs = collect($byType)->flatten(1); @endphp
-        @forelse($allAccs as $acc)
-        <div class="acc-card {{ $acc->is_favorite ? 'is-fav' : '' }} {{ $acc->background_image ? 'has-bg' : '' }}"
-             @if($acc->background_image) style="--acc-bg:url('{{ \Illuminate\Support\Facades\Storage::url($acc->background_image) }}')" @endif
-             wire:click="toggleFavorite({{ $acc->id }})">
-            <span class="acc-star {{ $acc->is_favorite ? 'on' : '' }}" title="Belgilash">★</span>
-            <div class="acc-actions">
-                <button class="acc-act-btn" @click.stop="$wire.call('setBgTarget', {{ $acc->id }}).then(() => $refs.bgFileInput.click())" title="Fon rasm qo'yish">🖼️</button>
-                @if($acc->background_image)
-                <button class="acc-act-btn" wire:click.stop="removeAccountBackground({{ $acc->id }})" wire:confirm="Fon rasmni olib tashlaysizmi?" title="Fonni olib tashlash">🚫</button>
-                @endif
-                <button class="acc-act-btn" wire:click.stop="openAccountModal({{ $acc->id }})" title="Tahrirlash">✎</button>
-                <button class="acc-act-btn" wire:click.stop="deleteAccount({{ $acc->id }})" wire:confirm="Ushbu hisobni o'chirasizmi?" title="O'chirish">✕</button>
-            </div>
-
-            <div style="display:flex;justify-content:space-between;align-items:flex-start">
-                @if($acc->type === 'karta')
-                <div class="acc-chip"></div>
-                @else
-                <span class="acc-icon-wrap">{{ $acc->type === 'naqd' ? '💵' : '🏦' }}</span>
-                @endif
-                @if($acc->bank_name)
-                @php
-                    $netKey  = strtolower(trim($acc->bank_name));
-                    $netCls  = str_contains($netKey, 'uzcard') ? 'net-uzcard'
-                             : (str_contains($netKey, 'visa') ? 'net-visa'
-                             : (str_contains($netKey, 'master') ? 'net-mastercard' : ''));
-                @endphp
-                <span class="acc-badge {{ $netCls }}">{{ $acc->bank_name }}</span>
-                @endif
-            </div>
-
-            <div>
-                <div class="acc-name">{{ $acc->name ?: $typeOptions[$acc->type] }} @if($acc->is_personal)<span class="acc-personal-badge">SHAXSIY</span>@endif</div>
-                @if($acc->type === 'karta' && $acc->card_number)
-                <div class="acc-num">{{ $acc->card_number }}</div>
-                @elseif($acc->type === 'bank' && $acc->account_number)
-                <div class="acc-num" style="font-size:12px">{{ $acc->account_number }}</div>
-                @endif
-            </div>
-
-            <div class="acc-bottom">
-                <div>
-                    <div class="acc-balance-lbl">Balans</div>
-                    <div class="acc-balance">{{ number_format($acc->balance, 0, '.', ' ') }} <span style="font-size:11px;opacity:.7">so'm</span></div>
-                </div>
-                @if($acc->type === 'karta' && $acc->expiry_date)
-                <div class="acc-sub-right">Amal qilish<br>{{ $acc->expiry_date }}</div>
-                @endif
-            </div>
-        </div>
+        @forelse($primaryAccs as $acc)
+            @include('filament.pages.partials.buxgalteriya-account-card', ['acc' => $acc])
         @empty
         <div class="bx-empty">Hali hech qanday hisob qo'shilmagan — "Yangi hisob qo'shish" tugmasini bosing</div>
         @endforelse
@@ -313,6 +270,25 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
             <div class="trf-empty">Bu oyda hali o'tkazma qilinmagan</div>
             @endforelse
         </div>
+    </div>
+
+    {{-- ── Ikkinchi bo'lim — kerak bo'lmagan kartalarni shu yerga sudrab tashlang ── --}}
+    <div class="trf-panel" x-data="{}" style="margin-top:14px" @dragover.prevent @drop.prevent="$wire.call('moveAccountSection', $event.dataTransfer.getData('text/plain'), true)">
+        <div class="trf-head" style="cursor:default">
+            <span class="trf-head-title">📥 Ikkinchi bo'lim <span style="font-size:11px;color:#64748b;font-weight:600">— kerak bo'lmagan kartalarni shu yerga sudrab tashlang</span></span>
+        </div>
+        <div style="padding:18px;border-top:1px solid #2a2a2e">
+            @if($secondaryAccs->isEmpty())
+            <div style="text-align:center;color:#64748b;font-size:12.5px;padding:24px;border:1.5px dashed #2a2a2e;border-radius:10px">Bu yerda hozircha karta yo'q — yuqoridagi kartalardan birini shu bo'limga sudrab tashlang</div>
+            @else
+            <div class="bx-grid">
+                @foreach($secondaryAccs as $acc)
+                    @include('filament.pages.partials.buxgalteriya-account-card', ['acc' => $acc])
+                @endforeach
+            </div>
+            @endif
+        </div>
+        <input type="file" x-ref="bgFileInput" wire:model="bgUpload" accept="image/*" style="display:none">
     </div>
 
     {{-- ── Hisob qo'shish/tahrirlash oynasi ── --}}

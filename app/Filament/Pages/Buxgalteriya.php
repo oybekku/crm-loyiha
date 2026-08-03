@@ -167,6 +167,14 @@ class Buxgalteriya extends Page
         if ($acc) $acc->update(['is_favorite' => !$acc->is_favorite]);
     }
 
+    // ── Kartani asosiy/ikkinchi bo'limga sudrab o'tkazish ──
+    public function moveAccountSection(int $id, bool $secondary): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+
+        FinancialAccount::whereKey($id)->update(['is_secondary' => $secondary]);
+    }
+
     // ── Karta foni (rasm) ────────────────────────────────────────────────────
     public function setBgTarget(int $id): void
     {
