@@ -944,14 +944,15 @@
         <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:12px">
             Barcha ishlar <span style="font-weight:400;color:#9ca3af">({{ count($dAllItems) }} ta — tugallangan va kutayotgan birga)</span>
         </div>
+        <div style="overflow-x:auto">
         <table style="width:100%;border-collapse:collapse;font-size:12px">
             <thead>
                 <tr style="background:#f8fafc">
-                    <th style="padding:8px 10px;text-align:left;font-weight:600;color:#475569;border-bottom:2px solid #e2e8f0">Loyiha</th>
+                    <th style="padding:8px 10px;text-align:left;font-weight:600;color:#475569;border-bottom:2px solid #e2e8f0;white-space:nowrap">Loyiha</th>
                     <th style="padding:8px 10px;text-align:left;font-weight:600;color:#475569;border-bottom:2px solid #e2e8f0">Xizmat</th>
-                    <th style="padding:8px 10px;text-align:right;font-weight:600;color:#475569;border-bottom:2px solid #e2e8f0">Narxi</th>
-                    <th style="padding:8px 10px;text-align:right;font-weight:600;color:#d97706;border-bottom:2px solid #e2e8f0">Ulush</th>
-                    <th style="padding:8px 10px;text-align:right;font-weight:600;color:#16a34a;border-bottom:2px solid #e2e8f0">To'landi</th>
+                    <th style="padding:8px 10px;text-align:right;font-weight:600;color:#475569;border-bottom:2px solid #e2e8f0;white-space:nowrap">Narxi</th>
+                    <th style="padding:8px 10px;text-align:right;font-weight:600;color:#d97706;border-bottom:2px solid #e2e8f0;white-space:nowrap">Ulush</th>
+                    <th style="padding:8px 10px;text-align:right;font-weight:600;color:#16a34a;border-bottom:2px solid #e2e8f0;white-space:nowrap">To'landi</th>
                     <th style="padding:8px 10px;text-align:center;font-weight:600;color:#475569;border-bottom:2px solid #e2e8f0">Ochilgan</th>
                     <th style="padding:8px 10px;text-align:center;font-weight:600;color:#475569;border-bottom:2px solid #e2e8f0">Tugatilgan</th>
                     <th style="padding:8px 10px;text-align:center;font-weight:600;color:#475569;border-bottom:2px solid #e2e8f0">Holat</th>
@@ -968,9 +969,9 @@
                         <div style="font-size:10px;color:#9ca3af">{{ $it['project_number'] }}</div>
                     </td>
                     <td style="padding:8px 10px;color:#374151">{{ $it['service_label'] ?? '—' }}</td>
-                    <td style="padding:8px 10px;text-align:right;font-weight:600;color:#111827">{{ number_format($it['price'],0,'.',' ') }}</td>
-                    <td style="padding:8px 10px;text-align:right;font-weight:700;color:#d97706">{{ number_format($it['share'],0,'.',' ') }}</td>
-                    <td style="padding:8px 10px;text-align:right;font-weight:700;color:#16a34a">
+                    <td style="padding:8px 10px;text-align:right;font-weight:600;color:#111827;white-space:nowrap">{{ number_format($it['price'],0,'.',' ') }}</td>
+                    <td style="padding:8px 10px;text-align:right;font-weight:700;color:#d97706;white-space:nowrap">{{ number_format($it['share'],0,'.',' ') }}</td>
+                    <td style="padding:8px 10px;text-align:right;font-weight:700;color:#16a34a;white-space:nowrap">
                         @if($it['share_paid'] !== null)
                         {{ number_format($it['share_paid'], 0, '.', ' ') }}
                         @else
@@ -1023,13 +1024,14 @@
             </tbody>
             <tfoot>
                 <tr style="background:#f0fdf4;border-top:2px solid #86efac">
-                    <td colspan="2" style="padding:10px;font-weight:700;color:#374151">Jami</td>
-                    <td style="padding:10px;text-align:right;font-weight:700">{{ number_format(collect($dAllItems)->sum('price'),0,'.',' ') }}</td>
-                    <td style="padding:10px;text-align:right;font-weight:700;color:#d97706">{{ number_format(collect($dAllItems)->sum('share'),0,'.',' ') }}</td>
+                    <td colspan="2" style="padding:10px;font-weight:700;color:#374151;white-space:nowrap">Jami</td>
+                    <td style="padding:10px;text-align:right;font-weight:700;white-space:nowrap">{{ number_format(collect($dAllItems)->sum('price'),0,'.',' ') }}</td>
+                    <td style="padding:10px;text-align:right;font-weight:700;color:#d97706;white-space:nowrap">{{ number_format(collect($dAllItems)->sum('share'),0,'.',' ') }}</td>
                     <td colspan="{{ auth()->user()?->isAdmin() ? 4 : 3 }}"></td>
                 </tr>
             </tfoot>
         </table>
+        </div>
     </div>
 
     {{-- Hisob-kitob --}}
