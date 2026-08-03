@@ -893,11 +893,14 @@
     $ds   = $userStats[$detailUserId];
     $dUsr      = $ds['user'];
     $dCom      = $ds['commission'];
-    $dNet      = $ds['net_payable'];
     $dSvc      = $ds['services'];
     $dSalPays  = $ds['salary_pays']  ?? collect();
     $dPaidTotal= $ds['paid_total']   ?? 0;
     $dByProject = collect($dSvc)->groupBy('project_id');
+    // To'lanishi kerak — endi ish haqi to'lovlaridan emas, "Barcha ishlar" jadvalidagi
+    // To'landi ustuni (mijoz to'lovi asosida proportional hisoblangan ulush) jamidan olinadi.
+    $dToLandiJami    = collect($ds['all_items'] ?? [])->sum('share_paid');
+    $dToLanishiKerak = max(0, $dCom - $dToLandiJami);
 @endphp
 <div style="position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
 <div style="background:#fff;border-radius:16px;width:100%;max-width:860px;margin:auto;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
@@ -1053,7 +1056,7 @@
         @endif
         <div style="text-align:right;padding:8px 16px;background:#dcfce7;border-radius:8px;border:1px solid #86efac">
             <div style="font-size:11px;color:#16a34a;font-weight:600">To'lanishi kerak</div>
-            <div style="font-size:20px;font-weight:900;color:#16a34a">{{ number_format($dNet,0,'.',' ') }} so'm</div>
+            <div style="font-size:20px;font-weight:900;color:#16a34a">{{ number_format($dToLanishiKerak,0,'.',' ') }} so'm</div>
         </div>
     </div>
 
