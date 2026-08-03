@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Models\AccountTransfer;
 use App\Models\Expense;
 use App\Models\FinancialAccount;
+use App\Services\EmployeePayableService;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Storage;
@@ -398,13 +399,23 @@ class Buxgalteriya extends Page
             'bank'  => $accounts->where('type', 'bank')->values(),
         ];
 
-        $totalSpent = (float) $accounts->sum('expenses_sum_amount');
+        // Xodimlar ulushi (komissiya) — Oylik hisobotdagi "To'lanishi kerak" bilan
+        // aynan bir xil formuladan (EmployeePayableService) jonli hisoblanadi, shu
+        // sababli u yerdagi summa o'zgarsa, bu yerda ham avtomatik yangilanadi.
+        // Bu — firma bo'lgan tushumdan hodimga tegishli qism, shuning uchun
+        // xarajat sifatida hisobga olinadi va umumiy balansdan ayiriladi.
+        $employeePayables      = EmployeePayableService::forMonth(sprintf('%04d-%02d', $year, $month));
+        $employeePayablesTotal = (float) $employeePayables->sum('amount');
+
+        $totalSpent = (float) $accounts->sum('expenses_sum_amount') + $employeePayablesTotal;
 
         // "Jami balans" — faqat haqiqiy (shaxsiy/xarajat deb belgilanmagan) hisoblar
-        // yig'indisi. Shaxsiy hisoblarga o'tkazilgan pul xarajat sifatida hisoblanib,
-        // manba hisobning (demak — Jami balansning ham) kamayishiga sabab bo'ladi,
-        // lekin shaxsiy hisobning o'zi umumiy summaga qo'shilmaydi.
-        $totalBalance = (float) $accounts->where('is_personal', false)->sum(fn ($a) => $a->balance);
+        // yig'indisi, hodimlarga tegishli (hali chiqarilmagan) ulush ayirilgan holda.
+        // Shaxsiy hisoblarga o'tkazilgan pul xarajat sifatida hisoblanib, manba
+        // hisobning (demak — Jami balansning ham) kamayishiga sabab bo'ladi, lekin
+        // shaxsiy hisobning o'zi umumiy summaga qo'shilmaydi.
+        $totalBalance = (float) $accounts->where('is_personal', false)->sum(fn ($a) => $a->balance)
+            - $employeePayablesTotal;
         $bxMonthLabel = \Carbon\Carbon::create($year, $month, 1)->translatedFormat('F Y');
 
         $transfers = AccountTransfer::with(['fromAccount', 'toAccount'])
@@ -423,15 +434,17 @@ class Buxgalteriya extends Page
             ->get();
 
         return [
-            'byType'           => $byType,
-            'totalBalance'     => $totalBalance,
-            'totalSpent'       => $totalSpent,
-            'totalTransferred' => $totalTransferred,
-            'typeOptions'      => FinancialAccount::typeOptions(),
-            'bxMonthLabel'     => $bxMonthLabel,
-            'expenses'         => $expenses,
-            'transfers'        => $transfers,
-            'allAccounts'      => FinancialAccount::orderBy('name')->get(),
+            'byType'                => $byType,
+            'totalBalance'          => $totalBalance,
+            'totalSpent'            => $totalSpent,
+            'totalTransferred'      => $totalTransferred,
+            'typeOptions'           => FinancialAccount::typeOptions(),
+            'bxMonthLabel'          => $bxMonthLabel,
+            'expenses'              => $expenses,
+            'employeePayables'      => $employeePayables,
+            'employeePayablesTotal' => $employeePayablesTotal,
+            'transfers'             => $transfers,
+            'allAccounts'           => FinancialAccount::orderBy('name')->get(),
         ];
     }
 }

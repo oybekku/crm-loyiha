@@ -222,6 +222,13 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
             <svg class="exp-head-chev" :style="open ? 'transform:rotate(180deg)' : ''" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
         <div class="exp-list" x-show="open" x-collapse>
+            @foreach($employeePayables as $ep)
+            <div class="exp-row" title="Oylik hisobotdagi 'To'lanishi kerak' summasidan avtomatik hisoblanadi">
+                <span class="exp-acc-badge" style="background:#1e3a3a;color:#5eead4">👤 avtomatik</span>
+                <span class="exp-comment">{{ $ep['user']->name }} — {{ $bxMonthLabel }} komissiyasi</span>
+                <span class="exp-amount">− {{ number_format($ep['amount'], 0, '.', ' ') }} so'm</span>
+            </div>
+            @endforeach
             @forelse($expenses as $exp)
             <div class="exp-row">
                 <span class="exp-date">{{ $exp->expense_date->format('d.m.Y') }}</span>
@@ -234,7 +241,9 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
                 </div>
             </div>
             @empty
+            @if($employeePayables->isEmpty())
             <div class="exp-empty">Bu oyda hali xarajat kiritilmagan</div>
+            @endif
             @endforelse
         </div>
     </div>

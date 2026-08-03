@@ -7,6 +7,7 @@ use App\Models\EmployeeAdvance;
 use App\Models\Project;
 use App\Models\ProjectStatusLog;
 use App\Models\User;
+use App\Services\EmployeePayableService;
 use Carbon\Carbon;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -226,11 +227,6 @@ class MonthlyReport extends Page
                 : null;
 
                 $uid  = $service->assigned_user_id;
-                $rate = (float) ($service->assignedUser->commission_rate ?? 20);
-                if (in_array($service->assignedUser->role, ['admin', 'menejer'])) {
-                    $rate = 0;
-                }
-                $price = (float) $service->final_price;
 
                 $isLate = $deadlineDate && $paidAt
                     && $paidAt->copy()->startOfDay()->gt($deadlineDate->copy()->startOfDay());
@@ -253,13 +249,15 @@ class MonthlyReport extends Page
                     ];
                 }
 
-                // Proportional to'langan ulush
-                $commission    = round($price * $rate / 100, 2);
-                $projTotal     = (float) $project->total_price;
-                $projPaid      = (float) $project->paid_amount;
-                $paidRatio     = $projTotal > 0 ? min(1, $projPaid / $projTotal) : 0;
-                $commPaid      = round($commission * $paidRatio, 0);
-                $commRemaining = max(0, $commission - $commPaid);
+                // Proportional to'langan ulush — Buxgalteriya sahifasi bilan bir xil
+                // formula (EmployeePayableService), ikkalasi sinxron bo'lishi uchun.
+                $calc          = EmployeePayableService::commissionForService($service, $project);
+                $rate          = $calc['rate'];
+                $price         = $calc['price'];
+                $commission    = $calc['commission'];
+                $paidRatio     = $calc['paid_ratio'];
+                $commPaid      = $calc['comm_paid'];
+                $commRemaining = $calc['comm_remaining'];
 
                 $userStats[$uid]['project_ids'][] = $project->id;
                 $userStats[$uid]['services'][]    = [
