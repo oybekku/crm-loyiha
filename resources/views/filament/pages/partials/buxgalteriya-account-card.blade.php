@@ -43,7 +43,7 @@
     <div class="acc-bottom">
         <div>
             <div class="acc-balance-lbl">Balans</div>
-            <div class="acc-balance">{{ number_format($acc->balance, 0, '.', ' ') }} <span style="font-size:11px;opacity:.7">so'm</span></div>
+            <div class="acc-balance">{{ number_format($acc->balance, 0, '.', ' ') }} <span style="font-size:11px;opacity:.7;color:#4ade80">so'm</span></div>
         </div>
         @if($acc->type === 'karta' && $acc->expiry_date)
         <div class="acc-sub-right">Amal qilish<br>{{ $acc->expiry_date }}</div>

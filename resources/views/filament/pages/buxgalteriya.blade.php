@@ -6,11 +6,16 @@
    to'liq ekranli ko'rinish uchun). :has() bilan faqat shu sahifa DOM'ida
    bo'lganda ishlaydi — boshqa sahifalarga ta'sir qilmaydi. */
 body:has(.bx-page-root) .fi-main-sidebar{display:none !important}
-body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;background:#191a1b;min-height:100vh}
+body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;background:#191a1b !important;min-height:100vh}
+/* Filament "kunduzgi" (light) temada .fi-body/html oq fonli qoladi va bu
+   sahifa doim qora fonli bo'lishi kerak (tema qanday bo'lishidan qat'iy
+   nazar) — shu sababli tashqi qatlamlar ham majburiy qora qilinadi. */
+body:has(.bx-page-root){background:#191a1b !important}
+body:has(.bx-page-root) .fi-body{background:#191a1b !important}
 
 .bx-wrap{max-width:1200px;margin:0 auto;color:#e2e8f0;padding:28px 20px}
-.bx-back{display:inline-flex;align-items:center;gap:6px;color:#94a3b8;font-size:13px;text-decoration:none;margin-bottom:18px}
-.bx-back:hover{color:#e2e8f0}
+.bx-back{display:inline-flex;align-items:center;gap:6px;color:#94a3b8 !important;font-size:13px;text-decoration:none;margin-bottom:18px}
+.bx-back:hover{color:#e2e8f0 !important}
 .bx-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:22px}
 .bx-title{font-size:20px;font-weight:800;color:#f1f5f9 !important}
 .bx-add{background:#2563eb;color:#fff;border:none;border-radius:10px;padding:11px 20px;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
@@ -120,56 +125,56 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
 .bx-modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px}
 .bx-modal{background:#161b22;color:#e2e8f0;border-radius:16px;width:100%;max-width:440px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
 .bx-field{margin-bottom:14px}
-.bx-field label{font-size:12px;font-weight:600;color:#94a3b8;display:block;margin-bottom:5px}
-.bx-field input,.bx-field select{width:100%;padding:9px 12px;border:1.5px solid #2a2a2e;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;background:#0d1117;color:#eee}
+.bx-field label{font-size:12px;font-weight:600;color:#94a3b8 !important;display:block;margin-bottom:5px}
+.bx-field input,.bx-field select{width:100%;padding:9px 12px;border:1.5px solid #2a2a2e;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;background:#0d1117;color:#eee !important}
 .bx-type-tabs{display:flex;gap:6px;margin-bottom:16px}
-.bx-type-tab{flex:1;padding:9px;border-radius:9px;border:1.5px solid #2a2a2e;background:#0d1117;color:#94a3b8;font-size:12px;font-weight:700;cursor:pointer;text-align:center}
-.bx-type-tab.active{border-color:#2563eb;background:#12224a;color:#93c5fd}
+.bx-type-tab{flex:1;padding:9px;border-radius:9px;border:1.5px solid #2a2a2e;background:#0d1117;color:#94a3b8 !important;font-size:12px;font-weight:700;cursor:pointer;text-align:center}
+.bx-type-tab.active{border-color:#2563eb;background:#12224a;color:#93c5fd !important}
 
 .bx-month{display:flex;align-items:center;gap:4px;background:#161b22;border:1.5px solid #2a2a2e;border-radius:9px;padding:3px 5px}
-.bx-month-btn{background:#1a1a1d;border:none;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:15px;color:#94a3b8;line-height:1}
-.bx-month-btn:hover{background:#232326;color:#e2e8f0}
-.bx-month-lbl{font-size:13px;font-weight:700;color:#60a5fa;min-width:112px;text-align:center;white-space:nowrap}
+.bx-month-btn{background:#1a1a1d;border:none;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:15px;color:#94a3b8 !important;line-height:1}
+.bx-month-btn:hover{background:#232326;color:#e2e8f0 !important}
+.bx-month-lbl{font-size:13px;font-weight:700;color:#60a5fa !important;min-width:112px;text-align:center;white-space:nowrap}
 
 /* Xarajatlar (rasxodlar) bo'limi */
 .exp-panel{margin-top:22px;background:#161b22;border:1.5px solid #2a2a2e;border-radius:14px;overflow:hidden}
 .exp-head{display:flex;align-items:center;gap:10px;padding:16px 18px;cursor:pointer;user-select:none}
-.exp-head-title{font-size:14px;font-weight:800;color:#f1f5f9;display:flex;align-items:center;gap:8px}
-.exp-head-total{font-size:15px;font-weight:800;color:#f87171;margin-left:auto}
-.exp-head-chev{color:#64748b;transition:transform .2s;flex-shrink:0}
-.exp-head-add{background:#7f1d1d;color:#fca5a5;border:none;border-radius:8px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;flex-shrink:0}
-.exp-head-add:hover{background:#991b1b;color:#fecaca}
+.exp-head-title{font-size:14px;font-weight:800;color:#f1f5f9 !important;display:flex;align-items:center;gap:8px}
+.exp-head-total{font-size:15px;font-weight:800;color:#f87171 !important;margin-left:auto}
+.exp-head-chev{color:#64748b !important;transition:transform .2s;flex-shrink:0}
+.exp-head-add{background:#7f1d1d;color:#fca5a5 !important;border:none;border-radius:8px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;flex-shrink:0}
+.exp-head-add:hover{background:#991b1b;color:#fecaca !important}
 .exp-list{border-top:1px solid #2a2a2e}
 .exp-row{display:flex;align-items:center;gap:12px;padding:11px 18px;border-bottom:1px solid #1f242c}
 .exp-row:last-child{border-bottom:none}
 .exp-row:hover{background:#1a1f28}
-.exp-date{font-size:11px;color:#64748b;font-family:monospace;flex-shrink:0;width:66px}
-.exp-acc-badge{font-size:10px;font-weight:700;color:#93c5fd;background:#12224a;border-radius:5px;padding:3px 8px;white-space:nowrap;flex-shrink:0}
-.exp-comment{font-size:12.5px;color:#cbd5e1;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.exp-amount{font-size:13.5px;font-weight:800;color:#f87171;flex-shrink:0;white-space:nowrap}
+.exp-date{font-size:11px;color:#64748b !important;font-family:monospace;flex-shrink:0;width:66px}
+.exp-acc-badge{font-size:10px;font-weight:700;color:#93c5fd !important;background:#12224a;border-radius:5px;padding:3px 8px;white-space:nowrap;flex-shrink:0}
+.exp-comment{font-size:12.5px;color:#cbd5e1 !important;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.exp-amount{font-size:13.5px;font-weight:800;color:#f87171 !important;flex-shrink:0;white-space:nowrap}
 .exp-row-actions{display:flex;gap:4px;flex-shrink:0;opacity:0;transition:opacity .15s}
 .exp-row:hover .exp-row-actions{opacity:1}
-.exp-empty{padding:26px;text-align:center;color:#64748b;font-size:12.5px}
+.exp-empty{padding:26px;text-align:center;color:#64748b !important;font-size:12.5px}
 
 /* Pul o'tkazmalari bo'limi (Xarajatlar bilan bir xil naqsh, ko'k rangda) */
 .trf-panel{margin-top:14px;background:#161b22;border:1.5px solid #2a2a2e;border-radius:14px;overflow:hidden}
 .trf-head{display:flex;align-items:center;gap:10px;padding:16px 18px;cursor:pointer;user-select:none}
-.trf-head-title{font-size:14px;font-weight:800;color:#f1f5f9;display:flex;align-items:center;gap:8px}
-.trf-head-total{font-size:15px;font-weight:800;color:#60a5fa;margin-left:auto}
-.trf-head-chev{color:#64748b;transition:transform .2s;flex-shrink:0}
-.trf-head-add{background:#1e3a5f;color:#93c5fd;border:none;border-radius:8px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;flex-shrink:0}
-.trf-head-add:hover{background:#254a75;color:#bfdbfe}
+.trf-head-title{font-size:14px;font-weight:800;color:#f1f5f9 !important;display:flex;align-items:center;gap:8px}
+.trf-head-total{font-size:15px;font-weight:800;color:#60a5fa !important;margin-left:auto}
+.trf-head-chev{color:#64748b !important;transition:transform .2s;flex-shrink:0}
+.trf-head-add{background:#1e3a5f;color:#93c5fd !important;border:none;border-radius:8px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;flex-shrink:0}
+.trf-head-add:hover{background:#254a75;color:#bfdbfe !important}
 .trf-list{border-top:1px solid #2a2a2e}
 .trf-row{display:flex;align-items:center;gap:12px;padding:11px 18px;border-bottom:1px solid #1f242c}
 .trf-row:last-child{border-bottom:none}
 .trf-row:hover{background:#1a1f28}
-.trf-date{font-size:11px;color:#64748b;font-family:monospace;flex-shrink:0;width:66px}
-.trf-path{font-size:12px;color:#93c5fd;flex-shrink:0;white-space:nowrap;font-weight:600}
-.trf-comment{font-size:12.5px;color:#cbd5e1;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.trf-amount{font-size:13.5px;font-weight:800;color:#60a5fa;flex-shrink:0;white-space:nowrap}
+.trf-date{font-size:11px;color:#64748b !important;font-family:monospace;flex-shrink:0;width:66px}
+.trf-path{font-size:12px;color:#93c5fd !important;flex-shrink:0;white-space:nowrap;font-weight:600}
+.trf-comment{font-size:12.5px;color:#cbd5e1 !important;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.trf-amount{font-size:13.5px;font-weight:800;color:#60a5fa !important;flex-shrink:0;white-space:nowrap}
 .trf-row-actions{display:flex;gap:4px;flex-shrink:0;opacity:0;transition:opacity .15s}
 .trf-row:hover .trf-row-actions{opacity:1}
-.trf-empty{padding:26px;text-align:center;color:#64748b;font-size:12.5px}
+.trf-empty{padding:26px;text-align:center;color:#64748b !important;font-size:12.5px}
 
 .acc-personal-badge{font-size:8px;font-weight:800;color:#c4b5fd !important;background:#312e81;border-radius:5px;padding:3px 7px;white-space:nowrap;align-self:flex-start;margin-left:6px}
 </style>
@@ -212,7 +217,7 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
             </div>
             <div>
                 <div class="acc-name">Jami balans ({{ $bxMonthLabel }})</div>
-                <div class="acc-balance" style="font-size:24px;margin-top:10px">{{ number_format($totalBalance, 0, '.', ' ') }} <span style="font-size:13px;opacity:.7">so'm</span></div>
+                <div class="acc-balance" style="font-size:24px;margin-top:10px">{{ number_format($totalBalance, 0, '.', ' ') }} <span style="font-size:13px;opacity:.7;color:#4ade80">so'm</span></div>
             </div>
         </div>
 
@@ -225,15 +230,15 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
             <div class="acc-name">Shartnoma bo'yicha ({{ $bxMonthLabel }})</div>
             <div style="margin-top:10px;display:flex;flex-direction:column;gap:6px">
                 <div style="display:flex;justify-content:space-between;font-size:12px">
-                    <span style="opacity:.7">Jami shartnoma</span>
-                    <span style="font-weight:800">{{ number_format($contractTotal, 0, '.', ' ') }}</span>
+                    <span style="color:#c7d2fe;opacity:.7">Jami shartnoma</span>
+                    <span style="font-weight:800;color:#e2e8f0">{{ number_format($contractTotal, 0, '.', ' ') }}</span>
                 </div>
                 <div style="display:flex;justify-content:space-between;font-size:12px">
-                    <span style="opacity:.7">Jami to'langan</span>
+                    <span style="color:#c7d2fe;opacity:.7">Jami to'langan</span>
                     <span style="font-weight:800;color:#4ade80">{{ number_format($contractPaid, 0, '.', ' ') }}</span>
                 </div>
                 <div style="display:flex;justify-content:space-between;font-size:12px">
-                    <span style="opacity:.7">Jami qarz</span>
+                    <span style="color:#c7d2fe;opacity:.7">Jami qarz</span>
                     <span style="font-weight:800;color:#f87171">{{ number_format($contractDebt, 0, '.', ' ') }}</span>
                 </div>
             </div>
