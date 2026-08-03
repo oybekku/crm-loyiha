@@ -49,14 +49,18 @@ body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;
     border-radius:50%;
     pointer-events:none;
 }
-/* Diagonal yaltiroqlik — haqiqiy plastik karta effekti */
+/* Harakatlanuvchi nur — sichqoncha ustiga kelganda bir burchakdan
+   ikkinchisiga o'tadi (hover chiqqanda joyiga qaytadi). */
 .acc-card::after{
     content:'';
-    position:absolute; inset:0;
-    background:linear-gradient(115deg, transparent 40%, rgba(255,255,255,.05) 48%, rgba(255,255,255,.1) 50%, rgba(255,255,255,.05) 52%, transparent 60%);
+    position:absolute; top:-60%; left:-70%; width:70%; height:220%;
+    background:linear-gradient(115deg, transparent 25%, rgba(255,255,255,.4) 48%, rgba(255,255,255,.55) 50%, rgba(255,255,255,.4) 52%, transparent 75%);
+    transform:translate(0,0) rotate(8deg);
+    transition:transform .85s cubic-bezier(.22,.7,.3,1);
     pointer-events:none;
 }
-.acc-card:hover{transform:translateY(-4px) scale(1.012);box-shadow:0 0 0 1px rgba(56,189,248,.4),0 18px 40px rgba(0,0,0,.5)}
+.acc-card:hover::after{transform:translate(220%,0) rotate(8deg)}
+.acc-card:hover{transform:translateY(-6px) scale(1.06);box-shadow:0 0 0 1px rgba(56,189,248,.4),0 22px 46px rgba(0,0,0,.5);z-index:5}
 .acc-card.is-fav{border-color:#3b82f6;box-shadow:0 0 0 1.5px #3b82f6,0 0 20px rgba(59,130,246,.45)}
 .acc-card.is-total{background:linear-gradient(135deg,#04351f,#0a4a2c 50%,#0f5c36) !important;border-color:#166534;cursor:default}
 .acc-card.is-total .acc-name{color:#bbf7d0 !important}
