@@ -585,8 +585,8 @@
             <div class="sig-title" id="sig-company">Kompaniya vakili:</div>
             <div class="sig-line"></div>
             <div class="sig-label" id="sig-label-sign">Imzo / muhr</div>
-            <div class="sig-name">{{ $project->assignedUsers->first()?->name ?: '________________' }}</div>
-            <img src="/images/imzo.png" class="stamp-img" alt="">
+            <div class="sig-name">Sarimsaqov J.</div>
+            <img src="/images/imzo.png?v=2" class="stamp-img" alt="">
         </div>
         <div class="sig-block sig-right">
             <div class="sig-title" id="sig-client">Buyurtmachi:</div>
@@ -659,8 +659,8 @@
             <div class="sig-title">Direktor:</div>
             <div class="sig-line"></div>
             <div class="sig-label">Imzo / muhr</div>
-            <div class="sig-name">Akimdjanov N.U</div>
-            <img src="/images/imzo.png" class="stamp-img" alt="">
+            <div class="sig-name">Sarimsaqov J.</div>
+            <img src="/images/imzo.png?v=2" class="stamp-img" alt="">
         </div>
         <div class="sig-block sig-right">
             <div class="sig-title">Mulkdor:</div>
