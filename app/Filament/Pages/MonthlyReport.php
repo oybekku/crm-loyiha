@@ -337,6 +337,14 @@ class MonthlyReport extends Page
             $stat['paid_total']   = $paidTotal;
             $stat['net_payable']  = max(0, $stat['commission'] - $stat['advance_total'] - $penalty);
 
+            // Mijoz to'lagan ulushga mutanosib "ochilgan" komissiya — bu haqiqatda
+            // hodimga TO'LASH mumkin bo'lgan summa (mijoz hali to'lamagan qismini
+            // "to'lash kerak" deb ko'rsatish xato edi — shu sabab avval hodimlarga
+            // ortiqcha pul berilib yuborilgan). Detail modal ("To'lanishi kerak")
+            // bilan bir xil formula — comm_paid har bir tugallangan xizmat uchun
+            // allaqachon shu tarzda hisoblangan (yuqorida, umumiy sikl ichida).
+            $stat['client_payable'] = collect($stat['services'])->sum('comm_paid');
+
             // Kutayotgan ishlar — LOYIHA shu oyda ochilgan bo'lsa, hali TUGATILMAGAN
             // xizmatlar (loyiha arxivga o'tgan bo'lsa ham ko'rsatilmaydi — u holda ish
             // allaqachon yopilgan hisoblanadi).
@@ -384,6 +392,12 @@ class MonthlyReport extends Page
                     'project_opened_at' => $s->project?->created_at,
                 ];
             })->toArray();
+
+            // Jami ishlar summasi — tugallangan + hali kutayotgan ishlarning
+            // to'liq komissiyasi (mijoz to'lovidan qat'iy nazar) — "necha pulga
+            // ish qilingan/qilinyapti" degan umumiy hajm, "client_payable"dan farqli.
+            $stat['pending_commission'] = collect($stat['pending_items'])->sum('my_share');
+            $stat['total_commission']   = $stat['commission'] + $stat['pending_commission'];
 
             // Bitta ro'yxat — tugallangan VA kutayotgan ishlar birga, ochilgan sanasi
             // bo'yicha tartiblangan. Ikkita alohida jadval (Tugallangan/Qilinmagan)
@@ -470,6 +484,10 @@ class MonthlyReport extends Page
         $totalAdvances     = array_sum(array_column($userStats, 'advance_total'));
         $firmIncome        = $totalServicesSum - $totalCommissions;
         $projectsTotal     = $projects->count();
+        // Mijoz to'lagan ulushga mutanosib jami "to'lanishi kerak" summa —
+        // Hisoblangan (to'liq komissiya) bilan aralashtirilmasin.
+        $totalClientPayable = array_sum(array_column($userStats, 'client_payable'));
+        $totalPaidOut       = array_sum(array_column($userStats, 'paid_total'));
 
         // Tugatilgan ishni 2 ga ajratish (ikkalasi ham komissiyaga kiradi — faqat ko'rsatish uchun):
         //  - To'liq: arxivga o'tgan (tugallangan/taqdim etilgan) loyihalardagilar
@@ -641,6 +659,7 @@ class MonthlyReport extends Page
         return compact(
             'userStats', 'warnings', 'projects',
             'totalServicesSum', 'totalCommissions', 'totalAdvances',
+            'totalClientPayable', 'totalPaidOut',
             'firmIncome', 'projectsTotal', 'allUsers',
             'pendingProjectsSum', 'pendingProjectsCount',
             'pendingProjectsPaid', 'pendingProjectsDebt', 'pendingProjectsPct',

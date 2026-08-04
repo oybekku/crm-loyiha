@@ -291,9 +291,9 @@
                 <th style="text-align:center">O'z vaqtida</th>
                 <th style="text-align:center">Kechikkan</th>
                 <th style="text-align:right">Xizmatlar jami</th>
-                <th style="text-align:right">Hisoblangan</th>
+                <th style="text-align:right" title="Tugallangan ishlar komissiyasi (kutayotgan bilan birga — jami ish hajmi pastda)">Hisoblangan</th>
                 <th style="text-align:right;color:#ef4444">Jarima</th>
-                <th style="text-align:right;color:#16a34a">To'lash kerak</th>
+                <th style="text-align:right;color:#16a34a" title="Mijoz to'lagan ulushga mutanosib ochilgan summa — hodimga real to'lash mumkin bo'lgan pul. Mijoz hali to'lamagan qismi bu yerga kirmaydi.">To'lanishi kerak</th>
                 <th style="text-align:right;color:#2563eb">To'landi</th>
                 <th style="text-align:center;color:#f97316">Kutayotgan</th>
             </tr>
@@ -301,16 +301,16 @@
         @php $i = 1; @endphp
         @foreach($userStats as $uid => $stat)
             @php
-                $sTotal      = $stat['services_total'];
-                $comm        = $stat['commission'];
-                $penalty     = $stat['penalty']       ?? 0;
-                $netPayable  = $stat['net_payable']   ?? max(0, $comm - $penalty);
-                $paidManual  = $stat['paid_manual']   ?? 0;
-                $ontime      = $stat['ontime_count']  ?? 0;
-                $late        = $stat['late_count']    ?? 0;
-                $nodate      = count($stat['services']) - $ontime - $late;
-                $pendingCnt  = $stat['pending_count'] ?? 0;
-                $pendingSum  = $stat['pending_sum']   ?? 0;
+                $sTotal         = $stat['services_total'];
+                $comm           = $stat['commission'];
+                $totalComm      = $stat['total_commission'] ?? $comm;
+                $clientPayable  = $stat['client_payable']   ?? 0;
+                $paidManual     = $stat['paid_manual']   ?? 0;
+                $ontime         = $stat['ontime_count']  ?? 0;
+                $late           = $stat['late_count']    ?? 0;
+                $nodate         = count($stat['services']) - $ontime - $late;
+                $pendingCnt     = $stat['pending_count'] ?? 0;
+                $pendingSum     = $stat['pending_sum']   ?? 0;
             @endphp
 
             <tbody x-data="{open:false}">
@@ -370,6 +370,9 @@
                 <td style="text-align:right;font-weight:600">{{ number_format($sTotal, 0, '.', ' ') }} so'm</td>
                 <td style="text-align:right">
                     <span style="font-weight:700;color:#d97706">{{ number_format($comm, 0, '.', ' ') }} so'm</span>
+                    @if($pendingCnt > 0)
+                    <div style="font-size:9px;color:#9ca3af;margin-top:1px" title="Tugallangan ({{ number_format($comm,0,'.',' ') }}) + kutayotgan ({{ number_format($stat['pending_commission'] ?? 0,0,'.',' ') }}) — jami ish hajmi">jami: {{ number_format($totalComm, 0, '.', ' ') }}</div>
+                    @endif
                 </td>
                 {{-- Jarima input --}}
                 <td style="text-align:right" onclick="event.stopPropagation()">
@@ -378,14 +381,21 @@
                            placeholder="0"
                            style="width:90px;border:1px solid #fecaca;border-radius:6px;padding:3px 7px;font-size:12px;text-align:right;color:#dc2626;outline:none">
                 </td>
+                {{-- Mijoz to'lagan ulushga mutanosib "to'lanishi kerak" summa — real
+                     to'lash mumkin bo'lgan pul. Ortiqcha to'langan bo'lsa (masalan
+                     avansdan), qizil ogohlantirish sifatida shu yerda ko'rsatiladi,
+                     shunda admin oylik chiqarishdan oldin ko'radi. --}}
                 <td style="text-align:right">
-                    <span style="font-weight:700;color:#16a34a">{{ number_format($netPayable, 0, '.', ' ') }} so'm</span>
+                    @php $paidTotalRow = $stat['paid_total'] ?? 0; @endphp
+                    <span style="font-weight:700;color:#16a34a">{{ number_format($clientPayable, 0, '.', ' ') }} so'm</span>
+                    @if($paidTotalRow > $clientPayable)
+                    <div style="font-size:9px;color:#dc2626;font-weight:700;margin-top:1px" title="Hodimga mijoz to'lagan ulushidan ko'proq pul berilgan">ortiqcha: {{ number_format($paidTotalRow - $clientPayable, 0, '.', ' ') }}</div>
+                    @endif
                 </td>
                 {{-- To'landi (haqiqatda to'langan summa) --}}
                 <td style="text-align:right">
-                    @php $paidTotal = $stat['paid_total'] ?? 0; @endphp
-                    @if($paidTotal > 0)
-                    <span style="font-weight:700;color:#2563eb">{{ number_format($paidTotal, 0, '.', ' ') }} so'm</span>
+                    @if($paidTotalRow > 0)
+                    <span style="font-weight:700;color:#2563eb">{{ number_format($paidTotalRow, 0, '.', ' ') }} so'm</span>
                     @else
                     <span style="color:#d1d5db;font-size:12px">—</span>
                     @endif
@@ -524,8 +534,8 @@
             <td style="text-align:right">{{ number_format($totalServicesSum, 0, '.', ' ') }} so'm</td>
             <td style="text-align:right;color:#d97706">{{ number_format($totalCommissions, 0, '.', ' ') }} so'm</td>
             <td></td>
-            <td style="text-align:right;color:#16a34a">{{ number_format($totalCommissions, 0, '.', ' ') }} so'm</td>
-            <td></td>{{-- To'landi --}}
+            <td style="text-align:right;color:#16a34a">{{ number_format($totalClientPayable, 0, '.', ' ') }} so'm</td>
+            <td style="text-align:right;color:#2563eb">{{ number_format($totalPaidOut, 0, '.', ' ') }} so'm</td>
             <td></td>{{-- Kutayotgan --}}
         </tr>
         </tbody>
