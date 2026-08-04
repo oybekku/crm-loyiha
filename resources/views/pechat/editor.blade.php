@@ -90,8 +90,8 @@
 <script>
 const PDF_URL    = @json($pdfUrl);
 const SAVE_URL   = @json($saveUrl);
-const STAMP_SRC   = @json(route('pechat.asset', 'stamp.png').'?v=4');
-const STAMP_RATIO = 0.706;   // pechat.png nisbati (553/783)
+const STAMP_SRC   = @json(route('pechat.asset', 'stamp.png').'?v=5');
+const STAMP_RATIO = 0.588;   // pechat.png nisbati (610/1037) — 2026-08-04 yangi imzo/pechat rasmi
 const PDFLIB_URL = @json(route('pechat.asset', 'pdf-lib.js'));
 const SIG_SAVE_URL = @json($sigSaveUrl);
 const SIG_URL      = @json($sigUrl);
