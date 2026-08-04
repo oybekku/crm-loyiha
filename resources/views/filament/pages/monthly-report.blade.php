@@ -955,6 +955,7 @@
         <table style="width:100%;border-collapse:collapse;font-size:12px">
             <thead>
                 <tr style="background:#f8fafc">
+                    <th style="padding:8px 10px;text-align:center;font-weight:600;color:#9ca3af;border-bottom:2px solid #e2e8f0;width:1%">#</th>
                     <th style="padding:8px 10px;text-align:left;font-weight:600;color:#475569;border-bottom:2px solid #e2e8f0;white-space:nowrap">Loyiha</th>
                     <th style="padding:8px 10px;text-align:left;font-weight:600;color:#475569;border-bottom:2px solid #e2e8f0">Xizmat</th>
                     <th style="padding:8px 10px;text-align:right;font-weight:600;color:#475569;border-bottom:2px solid #e2e8f0;white-space:nowrap">Narxi</th>
@@ -971,6 +972,7 @@
             <tbody>
                 @foreach($dAllItems as $it)
                 <tr style="border-bottom:1px solid #f1f5f9">
+                    <td style="padding:8px 10px;text-align:center;color:#9ca3af;font-size:11px;font-weight:600">{{ $loop->iteration }}</td>
                     <td style="padding:8px 10px">
                         <div style="font-weight:600;color:#111827;font-size:12px">{{ $it['owner_name'] }}</div>
                         <div style="font-size:10px;color:#9ca3af">{{ $it['project_number'] }}</div>
@@ -1031,7 +1033,7 @@
             </tbody>
             <tfoot>
                 <tr style="background:#f0fdf4;border-top:2px solid #86efac">
-                    <td colspan="2" style="padding:10px;font-weight:700;color:#374151;white-space:nowrap">Jami</td>
+                    <td colspan="3" style="padding:10px;font-weight:700;color:#374151;white-space:nowrap">Jami</td>
                     <td style="padding:10px;text-align:right;font-weight:700;white-space:nowrap">{{ number_format(collect($dAllItems)->sum('price'),0,'.',' ') }}</td>
                     <td style="padding:10px;text-align:right;font-weight:700;color:#d97706;white-space:nowrap">{{ number_format(collect($dAllItems)->sum('share'),0,'.',' ') }}</td>
                     <td style="padding:10px;text-align:right;font-weight:700;color:#16a34a;white-space:nowrap">{{ number_format(collect($dAllItems)->sum('share_paid'),0,'.',' ') }}</td>
