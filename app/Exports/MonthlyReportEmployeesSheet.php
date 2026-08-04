@@ -60,7 +60,10 @@ class MonthlyReportEmployeesSheet implements FromArray, WithTitle, WithStyles, W
 
         foreach ($this->userStats as $stat) {
             $user = $stat['user'];
-            $rate = (float)($user->commission_rate ?? 20);
+            // Har bir xizmat o'ziga tegishli oy uchun to'g'ri foizni allaqachon
+            // saqlagan (EmployeePayableService::commissionForService orqali) —
+            // shu bilan Excel ham sahifadagi bilan bir xil raqamni chiqaradi.
+            $rate = $stat['services'][0]['rate'] ?? (float)($user->commission_rate ?? 20);
             $role = $user->role_name ?? ucfirst($user->role ?? '');
 
             $advTotal   = (float)($stat['advance_total'] ?? 0);
@@ -118,7 +121,7 @@ class MonthlyReportEmployeesSheet implements FromArray, WithTitle, WithStyles, W
                     $srv['address'] ?? '—',
                     $srv['service_label'] ?? $srv['service_name'] ?? '—',
                     (float)$srv['price'],
-                    $rate > 0 ? "{$rate}%" : '—',
+                    ($srv['rate'] ?? $rate) > 0 ? "{$srv['rate']}%" : '—',
                     (float)$srv['commission'],
                     $deadline,
                     $paidAt,

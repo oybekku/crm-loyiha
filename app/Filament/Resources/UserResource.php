@@ -116,7 +116,7 @@ class UserResource extends Resource
                     ->maxValue(100)
                     ->suffix('%')
                     ->step(0.5)
-                    ->helperText('Har bir xizmat narxidan necha % hodimga tegishli'),
+                    ->helperText('Har bir xizmat narxidan necha % hodimga tegishli. Bu — standart foiz (tarix bo\'lmagan barcha oylar uchun). Ma\'lum bir oydan boshlab foizni o\'zgartirish uchun Oylik hisobot sahifasida hodim ismi yonidagi foizga bosing.'),
             ]),
         ]);
     }

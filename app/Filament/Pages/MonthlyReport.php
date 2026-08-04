@@ -44,6 +44,54 @@ class MonthlyReport extends Page
     public bool   $showDetailModal  = false;
     public int    $detailUserId     = 0;
 
+    // Ulush foizini tahrirlash (tanlangan oydan boshlab qo'llanadi)
+    public bool   $showRateEditor  = false;
+    public int    $rateEditUserId  = 0;
+    public string $rateEditValue   = '';
+
+    public function openRateEditor(int $uid): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+
+        $this->rateEditUserId = $uid;
+        $this->rateEditValue  = (string) EmployeePayableService::rateFor(User::find($uid), $this->selectedMonth);
+        $this->showRateEditor = true;
+    }
+
+    public function closeRateEditor(): void
+    {
+        $this->showRateEditor = false;
+        $this->rateEditUserId = 0;
+        $this->rateEditValue  = '';
+    }
+
+    public function saveRate(): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+
+        // O'tgan oy uchun foizni o'zgartirib bo'lmaydi — faqat joriy va
+        // kelajak oylar uchun (o'tgan hisobotlarga tasodifan ta'sir qilib
+        // qo'ymaslik uchun).
+        if ($this->selectedMonth < now()->format('Y-m')) {
+            Notification::make()->title("O'tgan oy uchun ulush foizini o'zgartirib bo'lmaydi")->danger()->send();
+            return;
+        }
+
+        $this->validate([
+            'rateEditValue' => 'required|numeric|min:0|max:100',
+        ], [
+            'rateEditValue.required' => 'Foizni kiriting',
+        ]);
+
+        \App\Models\UserCommissionRate::updateOrCreate(
+            ['user_id' => $this->rateEditUserId, 'effective_month' => $this->selectedMonth],
+            ['rate' => (float) $this->rateEditValue, 'created_by' => auth()->id()]
+        );
+
+        $this->closeRateEditor();
+        Notification::make()->title("Ulush foizi {$this->selectedMonth} oyidan boshlab yangilandi")->success()->send();
+    }
+
     public function payServiceShare(int $serviceId, int $userId, float $amount): void
     {
         if (!auth()->user()?->isAdmin()) return;
@@ -369,8 +417,8 @@ class MonthlyReport extends Page
                     $daysLeft = $diff;
                     $lateDays = $isLate ? abs($diff) : 0;
                 }
-                $rate = (float) ($s->assignedUser->commission_rate ?? 20);
-                if (in_array($s->assignedUser?->role, ['admin', 'menejer'])) $rate = 0;
+                $svcMonth = $s->project?->created_at?->format('Y-m') ?? now()->format('Y-m');
+                $rate = EmployeePayableService::rateFor($s->assignedUser, $svcMonth);
                 $myShare = round((float)$s->final_price * $rate / 100, 0);
                 $isPaid = collect($paidServiceNotes)->contains(fn($n) => str_starts_with($n, 'svc:' . $s->id . '|'));
                 return [
@@ -520,7 +568,7 @@ class MonthlyReport extends Page
         // xizmatlari, bekor qilingandan tashqari. Arxiv = daromadga kirgan,
         // Jarayonda = faol loyiha.
         $statusLabels = \App\Models\ProjectStatus::pluck('label', 'key')->toArray();
-        $tugatilganIshlar = \App\Models\ProjectService::with(['assignedUser', 'project:id,number,owner_name,status'])
+        $tugatilganIshlar = \App\Models\ProjectService::with(['assignedUser', 'project:id,number,owner_name,status,created_at'])
             ->whereNotNull('completed_at')
             ->whereNotNull('assigned_user_id')
             ->whereHas('project', fn($q) =>
@@ -529,8 +577,8 @@ class MonthlyReport extends Page
             ->orderByDesc('completed_at')
             ->get()
             ->map(function ($s) use ($statusLabels) {
-                $rate = (float) ($s->assignedUser->commission_rate ?? 20);
-                if (in_array($s->assignedUser?->role, ['admin', 'menejer'])) $rate = 0;
+                $svcMonth = $s->project?->created_at?->format('Y-m') ?? now()->format('Y-m');
+                $rate = EmployeePayableService::rateFor($s->assignedUser, $svcMonth);
                 $st = $s->project?->status;
                 return [
                     'project_id'   => $s->project_id,
@@ -572,10 +620,10 @@ class MonthlyReport extends Page
 
         $pendingWorkersShare = 0.0;
         $pendingWorkerStats  = [];
+        $pendingMonth = sprintf('%04d-%02d', $year, $month);
         foreach ($pendingServices as $ps) {
             if (!$ps->assignedUser) continue;
-            $r = (float)($ps->assignedUser->commission_rate ?? 20);
-            if (in_array($ps->assignedUser->role, ['admin', 'menejer'])) $r = 0;
+            $r = EmployeePayableService::rateFor($ps->assignedUser, $pendingMonth);
             $share = round((float)$ps->final_price * $r / 100);
             $pendingWorkersShare += $share;
             $uid = $ps->assigned_user_id;

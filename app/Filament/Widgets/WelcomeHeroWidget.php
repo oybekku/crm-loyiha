@@ -4,6 +4,7 @@ namespace App\Filament\Widgets;
 
 use App\Models\Payment;
 use App\Models\Project;
+use App\Services\EmployeePayableService;
 use Filament\Widgets\Widget;
 use Filament\Widgets\StatsOverviewWidget;
 
@@ -176,7 +177,7 @@ class WelcomeHeroWidget extends Widget
             $month = now()->month;
             $yr    = now()->year;
 
-            $rate = (float) ($user->commission_rate ?? 20);
+            $rate = EmployeePayableService::rateFor($user, sprintf('%04d-%02d', $yr, $month));
 
             // Bu oyda admin tomonidan tugallangan deb belgilangan xizmatlar
             $myDoneServices = \App\Models\ProjectService::where('assigned_user_id', $user->id)

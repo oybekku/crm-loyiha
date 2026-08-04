@@ -37,8 +37,7 @@ class FirmReportService
             if (!$s->assignedUser) continue;
 
             $price = (float) $s->final_price;
-            $rate  = (float) ($s->assignedUser->commission_rate ?? 20);
-            if (in_array($s->assignedUser->role, ['admin', 'menejer'])) $rate = 0;
+            $rate  = EmployeePayableService::rateFor($s->assignedUser, $month);
             $comm = round($price * $rate / 100, 0);
 
             $jamiTushum     += $price;

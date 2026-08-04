@@ -311,6 +311,7 @@
                 $nodate         = count($stat['services']) - $ontime - $late;
                 $pendingCnt     = $stat['pending_count'] ?? 0;
                 $pendingSum     = $stat['pending_sum']   ?? 0;
+                $effRate        = \App\Services\EmployeePayableService::rateFor($stat['user'], $this->selectedMonth);
             @endphp
 
             <tbody x-data="{open:false}">
@@ -329,8 +330,13 @@
                             <div style="font-weight:600;color:#111827">{{ $stat['user']->name }}</div>
                             <div style="font-size:11px;color:#9ca3af">
                                 {{ $stat['user']->role_name ?? ucfirst($stat['user']->role) }}
-                                @if($stat['user']->commission_rate)
-                                · <span style="color:#2563eb">{{ $stat['user']->commission_rate }}% ulush</span>
+                                @if(!in_array($stat['user']->role, ['admin', 'menejer']))
+                                ·
+                                <span wire:click.stop="openRateEditor({{ $uid }})"
+                                      style="color:#2563eb;cursor:pointer;border-bottom:1px dashed #93c5fd"
+                                      title="O'zgartirish uchun bosing">
+                                    {{ rtrim(rtrim(number_format($effRate, 2, '.', ''), '0'), '.') }}% ulush ✎
+                                </span>
                                 @endif
                             </div>
                         </div>
@@ -411,10 +417,9 @@
                 {{-- Kutayotgan ishlar --}}
                 <td style="text-align:center">
                     @if($pendingCnt > 0)
-                    @php $pendingRate = (float)($stat['user']->commission_rate ?? 20); @endphp
                     <div style="font-size:12px;font-weight:700;color:#f97316">{{ $pendingCnt }} ta</div>
-                    <div style="font-size:10px;color:#f97316;font-weight:600">{{ number_format(round($pendingSum * $pendingRate / 100), 0, '.', ' ') }} so'm</div>
-                    <div style="font-size:9px;color:#d1d5db">({{ $pendingRate }}% ulush)</div>
+                    <div style="font-size:10px;color:#f97316;font-weight:600">{{ number_format($stat['pending_commission'] ?? 0, 0, '.', ' ') }} so'm</div>
+                    <div style="font-size:9px;color:#d1d5db">({{ rtrim(rtrim(number_format($effRate, 2, '.', ''), '0'), '.') }}% ulush)</div>
                     @else
                     <span style="color:#d1d5db;font-size:12px">—</span>
                     @endif
@@ -1172,6 +1177,52 @@
             Saqlash
         </button>
         <button wire:click="closeSalaryPayModal"
+                style="flex:1;background:#f3f4f6;color:#374151;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:600;cursor:pointer">
+            Bekor qilish
+        </button>
+    </div>
+</div>
+</div>
+@endif
+
+{{-- ULUSH FOIZINI TAHRIRLASH MODAL — tanlangan oydan boshlab qo'llanadi,
+     o'tgan oylarga ta'sir qilmaydi (server tomonida ham tekshiriladi). --}}
+@if($showRateEditor)
+@php $rateEditUser = \App\Models\User::find($rateEditUserId); @endphp
+<div style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px" wire:click.self="closeRateEditor">
+<div style="background:#fff;border-radius:14px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.4)">
+    <div style="padding:18px 20px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center">
+        <h3 style="font-size:15px;font-weight:800;color:#111827;margin:0">Ulush foizini o'zgartirish</h3>
+        <button wire:click="closeRateEditor" style="background:none;border:none;cursor:pointer;font-size:20px;color:#9ca3af">×</button>
+    </div>
+    <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+        <div style="font-size:13px;color:#374151">
+            <strong>{{ $rateEditUser?->name }}</strong> uchun yangi foiz
+        </div>
+        <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px">Foiz (%) *</label>
+            <input wire:model="rateEditValue" type="number" min="0" max="100" step="0.01"
+                   placeholder="Masalan: 20"
+                   style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;font-size:14px;font-weight:600;outline:none;box-sizing:border-box"
+                   onfocus="this.style.borderColor='#2563eb'" onblur="this.style.borderColor='#e2e8f0'">
+            @error('rateEditValue')<span style="font-size:11px;color:#dc2626">{{ $message }}</span>@enderror
+        </div>
+        @if($selectedMonth < now()->format('Y-m'))
+        <div style="font-size:11.5px;color:#dc2626;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:9px 12px">
+            ⚠ Bu — o'tgan oy. O'tgan oy uchun foizni o'zgartirib bo'lmaydi (o'tgan hisobotlarga ta'sir qilmasligi uchun).
+        </div>
+        @else
+        <div style="font-size:11.5px;color:#166534;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:9px 12px">
+            ✓ {{ \Carbon\Carbon::createFromFormat('Y-m', $selectedMonth)->translatedFormat('F Y') }} dan boshlab qo'llanadi. Bundan oldingi oylar o'zgarmaydi.
+        </div>
+        @endif
+    </div>
+    <div style="padding:14px 20px;border-top:1px solid #e5e7eb;display:flex;gap:10px">
+        <button wire:click="saveRate" @disabled($selectedMonth < now()->format('Y-m'))
+                style="flex:1;background:#2563eb;color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;opacity:{{ $selectedMonth < now()->format('Y-m') ? '.5' : '1' }}">
+            Saqlash
+        </button>
+        <button wire:click="closeRateEditor"
                 style="flex:1;background:#f3f4f6;color:#374151;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:600;cursor:pointer">
             Bekor qilish
         </button>

@@ -5,12 +5,18 @@ namespace App\Services;
 use App\Models\Expense;
 use App\Models\Project;
 use App\Models\ProjectService;
+use App\Models\User;
+use App\Models\UserCommissionRate;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 /**
- * Xodimning komissiyasi (hodim ulushi) hisob-kitobi — Oylik hisobot va
- * Buxgalteriya sahifalarida bir xil natija chiqishi uchun yagona manba.
+ * Xodimning komissiyasi (hodim ulushi) hisob-kitobi — Oylik hisobot,
+ * Buxgalteriya, Dashboard va "Mening balansim" sahifalarida bir xil
+ * natija chiqishi uchun yagona manba. Komissiya foizi ham shu yerdan
+ * (rateFor) olinadi — shu bilan foiz o'zgartirilganda faqat tegishli
+ * oydan boshlab qo'llanadi, o'tgan oylar o'zgarmaydi (user_commission_rates
+ * jadvali orqali, oy bo'yicha "muzlatilgan" tarix).
  * Buxgalteriyadagi "Xarajatlar hisobi" (is_expense_account) belgilangan
  * hisobga har bir hodim uchun avtomatik Expense qatori shu servisdan
  * yoziladi/yangilanadi, shuning uchun Oylik hisobotdagi "To'lanishi kerak"
@@ -18,13 +24,30 @@ use Illuminate\Support\Collection;
  */
 class EmployeePayableService
 {
+    /**
+     * Berilgan oy ('Y-m') uchun hodimning komissiya foizi. Admin/menejer
+     * har doim 0%. Shu oy (yoki undan oldingi eng yaqin) uchun alohida
+     * belgilangan foiz bo'lsa — o'shani, bo'lmasa foydalanuvchining
+     * standart (users.commission_rate) foizini qaytaradi.
+     */
+    public static function rateFor(?User $user, string $month): float
+    {
+        if (!$user) return 0.0;
+        if (in_array($user->role, ['admin', 'menejer'])) return 0.0;
+
+        $override = UserCommissionRate::where('user_id', $user->id)
+            ->where('effective_month', '<=', $month)
+            ->orderByDesc('effective_month')
+            ->value('rate');
+
+        return (float) ($override ?? $user->commission_rate ?? 20);
+    }
+
     public static function commissionForService(ProjectService $service, ?Project $project): array
     {
-        $user = $service->assignedUser;
-        $rate = (float) ($user?->commission_rate ?? 20);
-        if ($user && in_array($user->role, ['admin', 'menejer'])) {
-            $rate = 0;
-        }
+        $user  = $service->assignedUser;
+        $month = $project?->created_at?->format('Y-m') ?? now()->format('Y-m');
+        $rate  = self::rateFor($user, $month);
 
         $price      = (float) $service->final_price;
         $commission = round($price * $rate / 100, 2);

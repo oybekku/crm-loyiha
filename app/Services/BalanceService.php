@@ -37,18 +37,21 @@ class BalanceService
             return self::empty();
         }
 
-        $rate = (float) ($user->commission_rate ?? 20);
-        if (in_array($user->role, ['admin', 'menejer'])) {
-            $rate = 0;
-        }
+        // Admin/menejer har doim 0% — butun blokni tashlab yuboramiz. Boshqa
+        // hodimlar uchun foiz endi HAR BIR xizmat o'ziga tegishli loyiha
+        // ochilgan oyiga qarab alohida aniqlanadi (EmployeePayableService::
+        // rateFor) — chunki bitta hodimning turli oylardagi ishlari turli
+        // foizga tegishli bo'lishi mumkin (foiz o'zgargan bo'lsa).
+        $isRated = !in_array($user->role, ['admin', 'menejer']);
 
         $monthStr = ($year && $month) ? sprintf('%04d-%02d', $year, $month) : null;
 
         $earned  = 0.0;   // tasdiqlangan kirim (tugatilgan + to'langan)
         $pending = 0.0;   // jarayonda
         $txns    = [];
+        $rate    = 0.0;   // qaytariladigan "umumiy" foiz — ko'rsatish uchun (pastda)
 
-        if ($rate > 0) {
+        if ($isRated) {
             $services = ProjectService::with(['project.services', 'project.payments'])
                 ->where('assigned_user_id', $userId)
                 ->whereHas('project', function ($q) use ($year, $month) {
@@ -63,7 +66,11 @@ class BalanceService
                 $price = (float) $s->final_price;
                 if ($price <= 0) continue;
 
-                $commission = round($price * $rate / 100, 0);
+                $svcMonth  = $s->project?->created_at?->format('Y-m') ?? now()->format('Y-m');
+                $svcRate   = EmployeePayableService::rateFor($user, $svcMonth);
+                $rate      = $svcRate; // ko'rsatish uchun — oxirgi ko'rilgan xizmat foizi
+
+                $commission = round($price * $svcRate / 100, 0);
                 if ($commission <= 0) continue;
 
                 $paidForService = self::paidForService($s);
