@@ -441,12 +441,15 @@
     <div style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.30);border-radius:12px;padding:20px 24px">
         <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;display:flex;align-items:center;gap:6px">
             <svg width="14" height="14" fill="none" stroke="#16a34a" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-            Bu oy tugallangan ishlar
+            Tugallangan ishlar — {{ $monthLabel }}
         </div>
         <div style="font-size:28px;font-weight:900;color:#16a34a;line-height:1">{{ $myStats['done_count'] }}</div>
         <div style="font-size:12px;color:#6b7280;margin-top:4px">xizmat</div>
-        <div style="font-size:16px;font-weight:700;color:#111827;margin-top:8px">
+        <div style="font-size:16px;font-weight:700;color:#111827;margin-top:8px" title="Jami ishlaringizdan olishingiz mumkin bo'lgan ulush">
             {{ number_format($myStats['done_sum'], 0, '.', ' ') }} so'm
+        </div>
+        <div style="font-size:12px;color:#16a34a;margin-top:4px;font-weight:600" title="Mijozlar to'lagan ulushga mutanosib — hozircha real olishingiz mumkin bo'lgan qism">
+            Mijoz to'lagan: {{ number_format($myStats['client_paid'], 0, '.', ' ') }} so'm
         </div>
     </div>
 

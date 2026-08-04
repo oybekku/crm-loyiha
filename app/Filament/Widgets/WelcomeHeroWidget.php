@@ -171,16 +171,19 @@ class WelcomeHeroWidget extends Widget
         $overdueCount      = count($overdueItems);
         $soonCount         = count($soonItems);
 
-        // ── Bajaruvchi uchun shaxsiy statistika ──
+        // ── Bajaruvchi uchun shaxsiy statistika — TANLANGAN oy bo'yicha
+        // (avval doim joriy oy edi, "Oyni tanlang" tugmalari bu blokka
+        // ta'sir qilmasdi — endi tuzatildi).
         $myStats = null;
         if ($isEmployee) {
-            $month = now()->month;
-            $yr    = now()->year;
+            $month = $this->selMonth;
+            $yr    = $this->selYear;
 
             $rate = EmployeePayableService::rateFor($user, sprintf('%04d-%02d', $yr, $month));
 
             // Bu oyda admin tomonidan tugallangan deb belgilangan xizmatlar
-            $myDoneServices = \App\Models\ProjectService::where('assigned_user_id', $user->id)
+            $myDoneServices = \App\Models\ProjectService::with('project')
+                ->where('assigned_user_id', $user->id)
                 ->whereNotNull('completed_at')
                 ->whereYear('completed_at', $yr)
                 ->whereMonth('completed_at', $month)
@@ -195,9 +198,16 @@ class WelcomeHeroWidget extends Widget
             $doneSum    = (float) $myDoneServices->sum('final_price');
             $pendingSum = (float) $myPendingServices->sum('final_price');
 
+            // Mijoz to'lagan ulushga mutanosib "ochilgan" qism — Oylik hisobot/
+            // Buxgalteriya bilan bir xil formula (EmployeePayableService).
+            $clientPaid = (float) $myDoneServices->sum(
+                fn ($svc) => EmployeePayableService::commissionForService($svc, $svc->project)['comm_paid']
+            );
+
             $myStats = [
                 'done_count'    => $myDoneServices->count(),
                 'done_sum'      => round($doneSum * $rate / 100),
+                'client_paid'   => $clientPaid,
                 'pending_count' => $myPendingServices->count(),
                 'pending_sum'   => round($pendingSum * $rate / 100),
                 'rate'          => $rate,
