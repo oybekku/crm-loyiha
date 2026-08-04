@@ -171,45 +171,25 @@ class WelcomeHeroWidget extends Widget
         $overdueCount      = count($overdueItems);
         $soonCount         = count($soonItems);
 
-        // ── Bajaruvchi uchun shaxsiy statistika — TANLANGAN oy bo'yicha
-        // (avval doim joriy oy edi, "Oyni tanlang" tugmalari bu blokka
-        // ta'sir qilmasdi — endi tuzatildi).
+        // ── Bajaruvchi uchun shaxsiy statistika — TANLANGAN oy bo'yicha,
+        // Oylik hisobot bilan AYNAN BIR XIL manbadan (EmployeePayableService::
+        // statsForUser) — avval bu yerda alohida so'rov bor edi (xizmat
+        // TUGATILGAN oyi bo'yicha, loyihalar emas xizmatlar soni bo'yicha),
+        // shu sabab Oylik hisobotdagi raqamdan farq qilib qolardi.
         $myStats = null;
         if ($isEmployee) {
             $month = $this->selMonth;
             $yr    = $this->selYear;
 
-            $rate = EmployeePayableService::rateFor($user, sprintf('%04d-%02d', $yr, $month));
-
-            // Bu oyda admin tomonidan tugallangan deb belgilangan xizmatlar
-            $myDoneServices = \App\Models\ProjectService::with('project')
-                ->where('assigned_user_id', $user->id)
-                ->whereNotNull('completed_at')
-                ->whereYear('completed_at', $yr)
-                ->whereMonth('completed_at', $month)
-                ->get();
-
-            // Jarayondagi (completed_at yo'q) xizmatlar
-            $myPendingServices = \App\Models\ProjectService::where('assigned_user_id', $user->id)
-                ->whereNull('completed_at')
-                ->whereHas('project', fn($q) => $q->whereNotIn('status', ['tugallangan', 'taqdim_etilgan', 'bekor_qilingan']))
-                ->get();
-
-            $doneSum    = (float) $myDoneServices->sum('final_price');
-            $pendingSum = (float) $myPendingServices->sum('final_price');
-
-            // Mijoz to'lagan ulushga mutanosib "ochilgan" qism — Oylik hisobot/
-            // Buxgalteriya bilan bir xil formula (EmployeePayableService).
-            $clientPaid = (float) $myDoneServices->sum(
-                fn ($svc) => EmployeePayableService::commissionForService($svc, $svc->project)['comm_paid']
-            );
+            $rate  = EmployeePayableService::rateFor($user, sprintf('%04d-%02d', $yr, $month));
+            $stats = EmployeePayableService::statsForUser($user, sprintf('%04d-%02d', $yr, $month));
 
             $myStats = [
-                'done_count'    => $myDoneServices->count(),
-                'done_sum'      => round($doneSum * $rate / 100),
-                'client_paid'   => $clientPaid,
-                'pending_count' => $myPendingServices->count(),
-                'pending_sum'   => round($pendingSum * $rate / 100),
+                'done_count'    => $stats['project_count'],
+                'done_sum'      => round($stats['commission']),
+                'client_paid'   => $stats['client_paid'],
+                'pending_count' => $stats['pending_count'],
+                'pending_sum'   => round($stats['pending_commission']),
                 'rate'          => $rate,
             ];
         }

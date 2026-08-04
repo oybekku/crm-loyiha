@@ -71,6 +71,63 @@ class EmployeePayableService
     }
 
     /**
+     * Bitta hodim uchun, berilgan oyda — Oylik hisobot bilan AYNAN BIR XIL
+     * so'rovlar (loyiha ochilgan oyi bo'yicha, loyihalar soni bo'yicha
+     * deduplikatsiya qilingan) orqali hisoblangan qisqa statistika. Hodim
+     * bosh sahifasidagi shaxsiy statistika ham shu yerdan olinadi — shu
+     * bilan Oylik hisobotdagi va hodim ko'radigan raqam har doim mos keladi
+     * (avval ular alohida-alohida, boshqa "oy" mezoni bilan hisoblanardi —
+     * shu sabab chalkashlik chiqqan edi).
+     */
+    public static function statsForUser(User $user, string $month): array
+    {
+        [$year, $mon] = explode('-', $month);
+        $archiveStatuses = ['tugallangan', 'taqdim_etilgan', 'bekor_qilingan'];
+
+        $completedServices = ProjectService::with('project')
+            ->where('assigned_user_id', $user->id)
+            ->whereNotNull('completed_at')
+            ->whereHas('project', fn ($q) => $q->whereYear('created_at', $year)
+                ->whereMonth('created_at', $mon)
+                ->where('status', '!=', 'bekor_qilingan'))
+            ->get();
+
+        $commission = 0.0;
+        $clientPaid = 0.0;
+        $projectIds = [];
+        foreach ($completedServices as $service) {
+            if (!$service->project) continue;
+            $calc = self::commissionForService($service, $service->project);
+            $commission += $calc['commission'];
+            $clientPaid += $calc['comm_paid'];
+            $projectIds[$service->project_id] = true;
+        }
+
+        $pendingServices = ProjectService::with('project')
+            ->where('assigned_user_id', $user->id)
+            ->whereNull('completed_at')
+            ->whereHas('project', fn ($q) => $q->whereNotIn('status', $archiveStatuses)
+                ->whereYear('created_at', $year)
+                ->whereMonth('created_at', $mon))
+            ->get();
+
+        $pendingCommission = 0.0;
+        foreach ($pendingServices as $service) {
+            if (!$service->project) continue;
+            $pendingCommission += self::commissionForService($service, $service->project)['commission'];
+        }
+
+        return [
+            'project_count'      => count($projectIds),
+            'done_services'      => $completedServices->count(),
+            'commission'         => $commission,
+            'client_paid'        => $clientPaid,
+            'pending_count'      => $pendingServices->count(),
+            'pending_commission' => $pendingCommission,
+        ];
+    }
+
+    /**
      * Tanlangan oy ('Y-m') uchun har bir hodimga tegishli xarajat summasi —
      * "to'lanishi kerak" (mijoz to'lagan ulushga mutanosib ochilgan komissiya,
      * hali haqiqatda berilmagan bo'lsa ham — majburiyat sifatida) va HAQIQATDA
