@@ -343,6 +343,9 @@
                 </td>
                 <td style="text-align:center">
                     <span style="font-size:16px;font-weight:800;color:#374151">{{ $stat['project_count'] }}</span>
+                    @if($pendingCnt > 0)
+                    <div style="font-size:9px;color:#9ca3af;margin-top:1px" title="Tugallangan ({{ $stat['project_count'] }}) + kutayotgan ({{ $pendingCnt }}) — jami biriktirilgan ishlar">jami: {{ $stat['project_count'] + $pendingCnt }} ta</div>
+                    @endif
                 </td>
                 <td style="text-align:center">
                     @if($ontime > 0)
