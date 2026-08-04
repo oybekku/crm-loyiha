@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\EmployeeSalaryPayment;
 use App\Models\Expense;
 use App\Models\Project;
 use App\Models\ProjectService;
@@ -70,9 +71,14 @@ class EmployeePayableService
     }
 
     /**
-     * Tanlangan oy ('Y-m') uchun har bir hodimning "To'lanishi kerak" summasi
-     * — Oylik hisobot detalidagi bilan bir xil formula (mijoz to'lagan ulushga
-     * mutanosib ochilgan komissiya yig'indisi, faqat tugatilgan ishlar bo'yicha).
+     * Tanlangan oy ('Y-m') uchun har bir hodimga tegishli xarajat summasi —
+     * "to'lanishi kerak" (mijoz to'lagan ulushga mutanosib ochilgan komissiya,
+     * hali haqiqatda berilmagan bo'lsa ham — majburiyat sifatida) va HAQIQATDA
+     * berilgan oylik (EmployeeSalaryPayment) summasidan KATTASI. Bunisi kerak,
+     * chunki ortiqcha to'lov qilingan hodimlarda haqiqiy chiqim "to'lanishi
+     * kerak"dan katta bo'lib qoladi — shunda ham Buxgalteriya haqiqiy chiqqan
+     * pulni to'liq ko'rsatishi kerak, "Jami balans" haqiqatdan yaxshiroq
+     * ko'rinib qolmasligi uchun.
      *
      * @return Collection<int, array{user: \App\Models\User, amount: float}>
      */
@@ -101,6 +107,20 @@ class EmployeePayableService
                 $payable[$user->id] = ['user' => $user, 'amount' => 0.0];
             }
             $payable[$user->id]['amount'] += $calc['comm_paid'];
+        }
+
+        $actualPaid = EmployeeSalaryPayment::where('month', $month)
+            ->get()
+            ->groupBy('user_id')
+            ->map(fn ($g) => (float) $g->sum('amount'));
+
+        foreach ($actualPaid as $uid => $paidAmount) {
+            if (!isset($payable[$uid])) {
+                $user = User::find($uid);
+                if (!$user) continue;
+                $payable[$uid] = ['user' => $user, 'amount' => 0.0];
+            }
+            $payable[$uid]['amount'] = max($payable[$uid]['amount'], $paidAmount);
         }
 
         return collect($payable)
