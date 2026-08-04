@@ -221,8 +221,9 @@ body:has(.bx-page-root) .fi-body{background:#191a1b !important}
             </div>
         </div>
 
-        {{-- Shartnoma bo'yicha statistika — naqd pul emas, loyihalarning shartnoma
-             qiymati (mijoz hali to'lamagan qismi bilan birga) --}}
+        {{-- Shartnoma bo'yicha statistika — hozircha yashirilgan (so'ralgan).
+             Kerak bo'lsa @if(false) ni @if(true) ga almashtiring. --}}
+        @if(false)
         <div class="acc-card is-contract" style="cursor:default" draggable="false">
             <div style="display:flex;justify-content:space-between;align-items:flex-start">
                 <span class="acc-icon">📋</span>
@@ -243,6 +244,7 @@ body:has(.bx-page-root) .fi-body{background:#191a1b !important}
                 </div>
             </div>
         </div>
+        @endif
 
         @forelse($primaryAccs as $acc)
             @include('filament.pages.partials.buxgalteriya-account-card', ['acc' => $acc])
