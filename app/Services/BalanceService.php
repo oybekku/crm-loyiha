@@ -12,14 +12,21 @@ use App\Models\EmployeeAdvance;
  * Xodim "Mening balansim" oynasi uchun hisob-kitob.
  *
  * Qoidalar (kelishilgan):
- *  - Bir ish komissiyasi = ish narxi (final_price, chegirmadan keyingi) × xodim foizi
- *    (commission_rate, default 20%). Chegirma xodimga qo'shimcha yuk solmaydi — xodim
- *    har doim final_price'dan o'z ulushini oladi (proporsional, firma bilan birga).
- *    Admin/menejer komissiya olmaydi (0%).
- *  - "Tasdiqlangan kirim" = ish TUGATILGAN (completed_at) VA shu ishga to'liq TO'LANGAN bo'lsa.
- *  - "Jarayonda" = qolgan (tugatilmagan yoki to'lanmagan) ishlar komissiyasi.
+ *  - Bir ish komissiyasi = ish narxi (final_price, chegirmadan keyingi) × xodim foizi,
+ *    EmployeePayableService::commissionForService orqali — bu Oylik hisobot va
+ *    Buxgalteriya bilan AYNAN BIR XIL formula (loyihaning umumiy to'lov nisbatiga
+ *    mutanosib "ochilgan" ulush). Avval bu yerda alohida, qattiqroq qoida bor edi
+ *    ("faqat 100% to'langan ish hisoblanadi") — natijada shu oyna boshqa sahifalar
+ *    bilan mos kelmay, hodim "ortiqcha to'langan" bo'lsa ham "firma qarzdor" deb
+ *    ko'rsatib yuborardi. Endi hammasi bitta manbadan.
+ *  - "Tasdiqlangan kirim" = mijoz to'lagan ulushga mutanosib ochilgan komissiya
+ *    (comm_paid) — tugallangan ishlar bo'yicha.
+ *  - "Jarayonda" = hali "ochilmagan" qism (comm_remaining) — tugallangan ishning
+ *    mijoz hali to'lamagan qismi HAM, hali tugallanmagan ishlar HAM shu yerga kiradi.
  *  - "Chiqim" = xodim olgan oylik (EmployeeSalaryPayment) + avanslar (EmployeeAdvance).
- *  - "Balans / firma qarzi" = tasdiqlangan kirim − chiqim.
+ *  - "Balans" = tasdiqlangan kirim − chiqim. Manfiy bo'lsa — bu "firma qarzi" EMAS,
+ *    aksincha hodimga ortiqcha to'langan degani (Oylik hisobotdagi "Ortiqcha
+ *    to'langan" bilan bir xil son, faqat belgisi teskari).
  */
 class BalanceService
 {
@@ -52,7 +59,7 @@ class BalanceService
         $rate    = 0.0;   // qaytariladigan "umumiy" foiz — ko'rsatish uchun (pastda)
 
         if ($isRated) {
-            $services = ProjectService::with(['project.services', 'project.payments'])
+            $services = ProjectService::with('project')
                 ->where('assigned_user_id', $userId)
                 ->whereHas('project', function ($q) use ($year, $month) {
                     $q->where('status', '!=', 'bekor_qilingan');
@@ -66,23 +73,25 @@ class BalanceService
                 $price = (float) $s->final_price;
                 if ($price <= 0) continue;
 
-                $svcMonth  = $s->project?->created_at?->format('Y-m') ?? now()->format('Y-m');
-                $svcRate   = EmployeePayableService::rateFor($user, $svcMonth);
-                $rate      = $svcRate; // ko'rsatish uchun — oxirgi ko'rilgan xizmat foizi
+                $calc = EmployeePayableService::commissionForService($s, $s->project);
+                $rate = $calc['rate']; // ko'rsatish uchun — oxirgi ko'rilgan xizmat foizi
 
-                $commission = round($price * $svcRate / 100, 0);
+                $commission = $calc['commission'];
                 if ($commission <= 0) continue;
 
-                $paidForService = self::paidForService($s);
-                $isCompleted    = (bool) $s->completed_at;
-                $isPaid         = $paidForService >= $price - 0.01;
-                $confirmed      = $isCompleted && $isPaid;
+                // Faqat tugallangan ish uchun "ochilgan" (comm_paid) qism hisoblanadi —
+                // hali tugallanmagan ish butunlay "jarayonda" hisoblanadi (Oylik
+                // hisobotdagi "kutayotgan" bilan bir xil mantiq).
+                $isCompleted = (bool) $s->completed_at;
+                $commPaid    = $isCompleted ? $calc['comm_paid'] : 0.0;
+                $commLeft    = $commission - $commPaid;
 
-                if ($confirmed) {
-                    $earned += $commission;
-                } else {
-                    $pending += $commission;
-                }
+                $earned  += $commPaid;
+                $pending += $commLeft;
+
+                $status = !$isCompleted
+                    ? 'jarayonda'
+                    : ($commPaid >= $commission - 0.01 ? 'tasdiqlangan' : "qisman to'langan");
 
                 $txns[] = [
                     'type'    => 'ish',
@@ -92,7 +101,7 @@ class BalanceService
                     'number'  => $s->project?->number ?? '',
                     'service' => Project::serviceOptions()[$s->service_name] ?? $s->service_name,
                     'amount'  => $commission,
-                    'status'  => $confirmed ? 'tasdiqlangan' : 'jarayonda',
+                    'status'  => $status,
                 ];
             }
         }
@@ -144,54 +153,13 @@ class BalanceService
             'user_id'   => $userId,
             'user_name' => $user->name,
             'rate'      => $rate,
-            'earned'    => $earned,       // tasdiqlangan kirim
-            'pending'   => $pending,      // jarayonda
+            'earned'    => $earned,       // tasdiqlangan kirim (mijoz to'lagan ulushga mutanosib)
+            'pending'   => $pending,      // jarayonda (hali "ochilmagan" qism)
             'withdrawn' => $withdrawn,    // to'langan (chiqim)
-            'balance'   => $balance,      // firma qarzi (balans)
+            'balance'   => $balance,      // manfiy = ortiqcha to'langan (firma qarzi emas)
             'txns'      => $txns,
             'txn_count' => count($txns),
         ];
-    }
-
-    /**
-     * Loyiha to'lovlaridan shu xizmatga to'g'ri keladigan summani hisoblaymiz.
-     * To'lov 'services' bo'yicha taqsimlanadi (ProjectEditModal'dagi mantiq bilan bir xil).
-     * Agar to'lov xizmatlarga biriktirilmagan bo'lsa — narx ulushiga qarab taqsimlanadi.
-     */
-    private static function paidForService(ProjectService $s): float
-    {
-        $project = $s->project;
-        if (!$project) return 0.0;
-
-        $priceMap = [];
-        foreach ($project->services as $svc) {
-            $priceMap[$svc->service_name] = (float) $svc->final_price;
-        }
-        $totalPrice = array_sum($priceMap);
-        $myPrice    = $priceMap[$s->service_name] ?? 0;
-
-        $paid = 0.0;
-        foreach ($project->payments as $pay) {
-            $svcs = $pay->services ?? [];
-
-            if (empty($svcs)) {
-                // Biriktirilmagan to'lov — barcha xizmatlar narx ulushiga qarab
-                if ($totalPrice > 0) {
-                    $paid += (float) $pay->amount * ($myPrice / $totalPrice);
-                }
-                continue;
-            }
-
-            if (!in_array($s->service_name, $svcs)) continue;
-
-            $sumSel = 0.0;
-            foreach ($svcs as $sn) $sumSel += ($priceMap[$sn] ?? 0);
-            $paid += $sumSel > 0
-                ? (float) $pay->amount * ($myPrice / $sumSel)
-                : (float) $pay->amount / max(1, count($svcs));
-        }
-
-        return $paid;
     }
 
     private static function empty(): array

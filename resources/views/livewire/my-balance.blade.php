@@ -81,13 +81,26 @@
                             <div style="font-size:17px;font-weight:800;color:#15803d;margin-top:3px">{{ number_format($d['withdrawn'], 0, '.', ' ') }} <span style="font-size:11px;font-weight:600">so'm</span></div>
                         </div>
                     </div>
+                    {{-- Balans manfiy bo'lsa — bu firma qarzi EMAS, hodimga mijoz to'lagan
+                         ulushidan ortiq to'langan degani (Oylik hisobotdagi "Ortiqcha
+                         to'langan" bilan bir xil son). --}}
+                    @if($d['balance'] < 0)
                     <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:11px 13px;display:flex;justify-content:space-between;align-items:center">
                         <div>
-                            <div style="font-size:11px;color:#dc2626;font-weight:600">Qarzdorlik (firma qarzi)</div>
-                            <div style="font-size:19px;font-weight:800;color:#b91c1c;margin-top:3px">{{ number_format($d['balance'], 0, '.', ' ') }} <span style="font-size:11px;font-weight:600">so'm</span></div>
+                            <div style="font-size:11px;color:#dc2626;font-weight:600">Ortiqcha to'langan</div>
+                            <div style="font-size:19px;font-weight:800;color:#b91c1c;margin-top:3px">{{ number_format(abs($d['balance']), 0, '.', ' ') }} <span style="font-size:11px;font-weight:600">so'm</span></div>
+                        </div>
+                        <div style="font-size:10px;color:#9ca3af;text-align:right">Mijoz to'lagan ulushidan<br>ortiq berilgan pul</div>
+                    </div>
+                    @else
+                    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:11px 13px;display:flex;justify-content:space-between;align-items:center">
+                        <div>
+                            <div style="font-size:11px;color:#2563eb;font-weight:600">Qoldiq (hali olinmagan)</div>
+                            <div style="font-size:19px;font-weight:800;color:#1d4ed8;margin-top:3px">{{ number_format($d['balance'], 0, '.', ' ') }} <span style="font-size:11px;font-weight:600">so'm</span></div>
                         </div>
                         <div style="font-size:10px;color:#9ca3af;text-align:right">Olinishi mumkin<br>bo'lgan qoldiq</div>
                     </div>
+                    @endif
                 </div>
             </div>
 
@@ -132,10 +145,11 @@
                             <td style="padding:10px 10px">
                                 @php
                                     $stColor = match($t['status']) {
-                                        'tasdiqlangan'   => ['#dcfce7','#15803d'],
-                                        'jarayonda'      => ['#fef3c7','#b45309'],
-                                        'yechib olingan' => ['#e0e7ff','#4338ca'],
-                                        default          => ['#f3f4f6','#6b7280'],
+                                        'tasdiqlangan'    => ['#dcfce7','#15803d'],
+                                        "qisman to'langan" => ['#ffedd5','#c2410c'],
+                                        'jarayonda'       => ['#fef3c7','#b45309'],
+                                        'yechib olingan'  => ['#e0e7ff','#4338ca'],
+                                        default           => ['#f3f4f6','#6b7280'],
                                     };
                                 @endphp
                                 <span style="font-size:11px;font-weight:600;border-radius:5px;padding:2px 8px;background:{{ $stColor[0] }};color:{{ $stColor[1] }}">{{ $t['status'] }}</span>
