@@ -27,24 +27,27 @@ class ProjectResource extends Resource
     protected static ?string $navigationGroup = 'Loyihalar';
     protected static ?int $navigationSort = 2;
 
-    // Loyihalar ro'yxati menyu — faqat resource_project ruxsati bo'lganda ko'rinadi
+    // Loyihalar ro'yxati menyu — bajaruvchiga faqat o'ziga biriktirilgan
+    // loyihalarni o'qish uchun ochiq (getEloquentQuery() shu bilan cheklaydi),
+    // tahrirlash/o'chirish/kirish esa pastdagi canEdit/canView/canDelete orqali
+    // baribir yopiq qoladi.
     public static function canAccess(): bool
     {
         $user = auth()->user();
         if (!$user) return false;
-        if ($user->isBajaruvchi()) return false; // hodimga "Loyihalar ro'yxati" yopiq
+        if ($user->isBajaruvchi()) return true; // faqat ro'yxat, faqat o'z loyihalari
         if ($user->isAdmin()) return true;
         // Loyiha tahrirlash yoki ro'yxat ruxsati bo'lsa — resource sahifalariga kirish mumkin
         return $user->hasPermission(static::menuPermissionKey())
             || $user->hasPermission('loyiha_tahrirlash');
     }
 
-    // Menyu da "Loyihalar ro'yxati" ko'rinishi faqat resource_project ruxsati bo'lganda
+    // Menyu da "Loyihalar ro'yxati" ko'rinishi
     public static function canViewAny(): bool
     {
         $user = auth()->user();
         if (!$user) return false;
-        if ($user->isBajaruvchi()) return false; // hodimga menyuda ko'rinmaydi
+        if ($user->isBajaruvchi()) return true;
         if ($user->isAdmin()) return true;
         return $user->hasPermission(static::menuPermissionKey());
     }
@@ -76,6 +79,19 @@ class ProjectResource extends Resource
     public static function canDeleteAny(): bool
     {
         return auth()->user()?->role === 'admin';
+    }
+
+    // Bajaruvchi ro'yxatni ko'radi, lekin loyiha ICHIGA kira olmaydi (View/Edit
+    // sahifalari/oynasi) — tugmalar table()da yashirilgan, bu esa /edit URL'ga
+    // to'g'ridan-to'g'ri kirishning ham oldini oladi (himoya ikkinchi qatlami).
+    public static function canView(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        return !auth()->user()?->isBajaruvchi();
+    }
+
+    public static function canEdit(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        return !auth()->user()?->isBajaruvchi();
     }
 
     public static function form(Form $form): Form
@@ -378,13 +394,42 @@ class ProjectResource extends Resource
                 Tables\Columns\TextColumn::make('total_price')
                     ->label('Umumiy')
                     ->formatStateUsing(fn($state) => number_format($state, 0, '.', ' ') . " so'm")
-                    ->sortable(),
+                    ->sortable()
+                    ->visible(fn () => !auth()->user()?->isBajaruvchi()),
 
                 Tables\Columns\TextColumn::make('paid_amount')
                     ->label("To'langan")
                     ->formatStateUsing(fn($state) => number_format($state, 0, '.', ' ') . " so'm")
                     ->color('success')
-                    ->sortable(),
+                    ->sortable()
+                    ->visible(fn () => !auth()->user()?->isBajaruvchi()),
+
+                // Hodim uchun umumiy/to'langan summa o'rniga — faqat O'ZINING
+                // ulushi va o'shaning mijoz to'lovi asosida ochilgan qismi
+                // (EmployeePayableService — Oylik hisobot/Buxgalteriya bilan
+                // bir xil formula).
+                Tables\Columns\TextColumn::make('xodim_ulushi')
+                    ->label('Xodim ulushi')
+                    ->state(function (Project $record): float {
+                        $uid = auth()->id();
+                        return $record->services
+                            ->where('assigned_user_id', $uid)
+                            ->sum(fn ($svc) => \App\Services\EmployeePayableService::commissionForService($svc, $record)['commission']);
+                    })
+                    ->formatStateUsing(fn ($state) => number_format($state, 0, '.', ' ') . " so'm")
+                    ->visible(fn () => auth()->user()?->isBajaruvchi()),
+
+                Tables\Columns\TextColumn::make('mijoz_tolagan_ulush')
+                    ->label('Mijoz to\'lagan')
+                    ->state(function (Project $record): float {
+                        $uid = auth()->id();
+                        return $record->services
+                            ->where('assigned_user_id', $uid)
+                            ->sum(fn ($svc) => \App\Services\EmployeePayableService::commissionForService($svc, $record)['comm_paid']);
+                    })
+                    ->formatStateUsing(fn ($state) => number_format($state, 0, '.', ' ') . " so'm")
+                    ->color('success')
+                    ->visible(fn () => auth()->user()?->isBajaruvchi()),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Sana')
@@ -412,7 +457,8 @@ class ProjectResource extends Resource
                     ->icon('heroicon-o-printer')
                     ->color('info')
                     ->url(fn (Project $record) => route('print.project.ariza', $record))
-                    ->openUrlInNewTab(),
+                    ->openUrlInNewTab()
+                    ->visible(fn () => !auth()->user()?->isBajaruvchi()),
                 Tables\Actions\ViewAction::make()->label(''),
                 Tables\Actions\EditAction::make()->label(''),
                 Tables\Actions\DeleteAction::make()->label(''),
