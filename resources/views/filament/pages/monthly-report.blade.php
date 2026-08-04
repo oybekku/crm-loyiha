@@ -287,12 +287,12 @@
                 <th style="width:28px"></th>
                 <th>#</th>
                 <th>Hodim</th>
-                <th style="text-align:center" title="Bu oyda kamida bitta xizmati tugallangan loyihalar soni">Tugallangan</th>
+                <th style="text-align:center" title="Jami biriktirilgan loyihalar — tugallangan va hali kutayotgani birga">Loyihalar (jami)</th>
                 <th style="text-align:center">O'z vaqtida</th>
                 <th style="text-align:center">Kechikkan</th>
-                <th style="text-align:right">Xizmatlar jami</th>
-                <th style="text-align:right" title="Tugallangan ishlar komissiyasi (kutayotgan bilan birga — jami ish hajmi pastda)">Hisoblangan</th>
-                <th style="text-align:right;color:#ef4444">Jarima</th>
+                <th style="text-align:right" title="Barcha biriktirilgan ishlarning narxi — tugallangan va kutayotgani birga">Xizmatlar jami</th>
+                <th style="text-align:right" title="Barcha biriktirilgan ishlarning komissiyasi — tugallangan va kutayotgani birga">Hisoblangan</th>
+                <th style="text-align:right;color:#dc2626" title="Hodimga mijoz to'lagan ulushidan ko'proq berilgan pul (bo'lsa)">Ortiqcha to'langan</th>
                 <th style="text-align:right;color:#16a34a" title="Mijoz to'lagan ulushga mutanosib ochilgan summa — hodimga real to'lash mumkin bo'lgan pul. Mijoz hali to'lamagan qismi bu yerga kirmaydi.">To'lanishi kerak</th>
                 <th style="text-align:right;color:#2563eb">To'landi</th>
                 <th style="text-align:center;color:#f97316">Kutayotgan</th>
@@ -342,10 +342,14 @@
                     </div>
                 </td>
                 <td style="text-align:center">
-                    <span style="font-size:16px;font-weight:800;color:#374151">{{ $stat['project_count'] }}</span>
-                    @if($pendingCnt > 0)
-                    <div style="font-size:9px;color:#9ca3af;margin-top:1px" title="Tugallangan ({{ $stat['project_count'] }}) + kutayotgan ({{ $pendingCnt }}) — jami biriktirilgan ishlar">jami: {{ $stat['project_count'] + $pendingCnt }} ta</div>
-                    @endif
+                    <span style="font-size:16px;font-weight:800;color:#374151">{{ $stat['project_count'] + $pendingCnt }}</span>
+                    <div style="font-size:9px;color:#9ca3af;margin-top:1px">
+                        @if($pendingCnt > 0)
+                        {{ $stat['project_count'] }} tugallangan · {{ $pendingCnt }} kutayotgan
+                        @else
+                        hammasi tugallangan
+                        @endif
+                    </div>
                 </td>
                 <td style="text-align:center">
                     @if($ontime > 0)
@@ -367,30 +371,34 @@
                     <span style="color:#d1d5db;font-size:12px">—</span>
                     @endif
                 </td>
-                <td style="text-align:right;font-weight:600">{{ number_format($sTotal, 0, '.', ' ') }} so'm</td>
-                <td style="text-align:right">
-                    <span style="font-weight:700;color:#d97706">{{ number_format($comm, 0, '.', ' ') }} so'm</span>
+                <td style="text-align:right;font-weight:600">
+                    {{ number_format($sTotal + $pendingSum, 0, '.', ' ') }} so'm
                     @if($pendingCnt > 0)
-                    <div style="font-size:9px;color:#9ca3af;margin-top:1px" title="Tugallangan ({{ number_format($comm,0,'.',' ') }}) + kutayotgan ({{ number_format($stat['pending_commission'] ?? 0,0,'.',' ') }}) — jami ish hajmi">jami: {{ number_format($totalComm, 0, '.', ' ') }}</div>
+                    <div style="font-size:9px;color:#9ca3af;margin-top:1px" title="Shundan tugallangan ishlar narxi">tugallangan: {{ number_format($sTotal,0,'.',' ') }}</div>
                     @endif
                 </td>
-                {{-- Jarima input --}}
-                <td style="text-align:right" onclick="event.stopPropagation()">
-                    <input type="number" min="0"
-                           wire:model.live="penalties.{{ $uid }}"
-                           placeholder="0"
-                           style="width:90px;border:1px solid #fecaca;border-radius:6px;padding:3px 7px;font-size:12px;text-align:right;color:#dc2626;outline:none">
+                <td style="text-align:right">
+                    <span style="font-weight:700;color:#d97706">{{ number_format($totalComm, 0, '.', ' ') }} so'm</span>
+                    @if($pendingCnt > 0)
+                    <div style="font-size:9px;color:#9ca3af;margin-top:1px" title="Shundan tugallangan ishlar komissiyasi">tugallangan: {{ number_format($comm,0,'.',' ') }}</div>
+                    @endif
+                </td>
+                {{-- Ortiqcha to'langan — avval "Jarima" (qo'lda kiritiladigan, hech
+                     qayerda saqlanmaydigan) maydon bo'lgan, endi buning o'rniga
+                     hodimga mijoz to'lagan ulushidan ko'proq berilgan pul avtomatik
+                     ko'rsatiladi (rahbariyat buni oldindan ko'rishi uchun). --}}
+                <td style="text-align:right">
+                    @php $paidTotalRow = $stat['paid_total'] ?? 0; $overpaid = $stat['overpaid'] ?? 0; @endphp
+                    @if($overpaid > 0)
+                    <span style="font-weight:700;color:#dc2626">{{ number_format($overpaid, 0, '.', ' ') }} so'm</span>
+                    @else
+                    <span style="color:#d1d5db;font-size:12px">—</span>
+                    @endif
                 </td>
                 {{-- Mijoz to'lagan ulushga mutanosib "to'lanishi kerak" summa — real
-                     to'lash mumkin bo'lgan pul. Ortiqcha to'langan bo'lsa (masalan
-                     avansdan), qizil ogohlantirish sifatida shu yerda ko'rsatiladi,
-                     shunda admin oylik chiqarishdan oldin ko'radi. --}}
+                     to'lash mumkin bo'lgan pul. --}}
                 <td style="text-align:right">
-                    @php $paidTotalRow = $stat['paid_total'] ?? 0; @endphp
                     <span style="font-weight:700;color:#16a34a">{{ number_format($clientPayable, 0, '.', ' ') }} so'm</span>
-                    @if($paidTotalRow > $clientPayable)
-                    <div style="font-size:9px;color:#dc2626;font-weight:700;margin-top:1px" title="Hodimga mijoz to'lagan ulushidan ko'proq pul berilgan">ortiqcha: {{ number_format($paidTotalRow - $clientPayable, 0, '.', ' ') }}</div>
-                    @endif
                 </td>
                 {{-- To'landi (haqiqatda to'langan summa) --}}
                 <td style="text-align:right">
@@ -531,9 +539,9 @@
         <tbody>
         <tr class="mr-total-row">
             <td colspan="6" style="text-align:right">Jami:</td>
-            <td style="text-align:right">{{ number_format($totalServicesSum, 0, '.', ' ') }} so'm</td>
-            <td style="text-align:right;color:#d97706">{{ number_format($totalCommissions, 0, '.', ' ') }} so'm</td>
-            <td></td>
+            <td style="text-align:right">{{ number_format($totalWorkSum, 0, '.', ' ') }} so'm</td>
+            <td style="text-align:right;color:#d97706">{{ number_format($totalWorkCommission, 0, '.', ' ') }} so'm</td>
+            <td style="text-align:right;color:#dc2626">{{ $totalOverpaid > 0 ? number_format($totalOverpaid, 0, '.', ' ') . " so'm" : '—' }}</td>
             <td style="text-align:right;color:#16a34a">{{ number_format($totalClientPayable, 0, '.', ' ') }} so'm</td>
             <td style="text-align:right;color:#2563eb">{{ number_format($totalPaidOut, 0, '.', ' ') }} so'm</td>
             <td></td>{{-- Kutayotgan --}}

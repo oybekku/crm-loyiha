@@ -344,6 +344,7 @@ class MonthlyReport extends Page
             // bilan bir xil formula — comm_paid har bir tugallangan xizmat uchun
             // allaqachon shu tarzda hisoblangan (yuqorida, umumiy sikl ichida).
             $stat['client_payable'] = collect($stat['services'])->sum('comm_paid');
+            $stat['overpaid']       = max(0, $stat['paid_total'] - $stat['client_payable']);
 
             // Kutayotgan ishlar — LOYIHA shu oyda ochilgan bo'lsa, hali TUGATILMAGAN
             // xizmatlar (loyiha arxivga o'tgan bo'lsa ham ko'rsatilmaydi — u holda ish
@@ -488,6 +489,14 @@ class MonthlyReport extends Page
         // Hisoblangan (to'liq komissiya) bilan aralashtirilmasin.
         $totalClientPayable = array_sum(array_column($userStats, 'client_payable'));
         $totalPaidOut       = array_sum(array_column($userStats, 'paid_total'));
+        // Jami ish hajmi (tugallangan + kutayotgan) — rahbariyat "hodimning
+        // haqiqiy jami ishi" deb shu to'liq sonni ko'rishi kerak, faqat
+        // tugallanganini emas.
+        $totalPendingSum        = array_sum(array_column($userStats, 'pending_sum'));
+        $totalWorkSum           = $totalServicesSum + $totalPendingSum;
+        $totalPendingCommission = array_sum(array_column($userStats, 'pending_commission'));
+        $totalWorkCommission    = $totalCommissions + $totalPendingCommission;
+        $totalOverpaid          = array_sum(array_column($userStats, 'overpaid'));
 
         // Tugatilgan ishni 2 ga ajratish (ikkalasi ham komissiyaga kiradi — faqat ko'rsatish uchun):
         //  - To'liq: arxivga o'tgan (tugallangan/taqdim etilgan) loyihalardagilar
@@ -659,7 +668,8 @@ class MonthlyReport extends Page
         return compact(
             'userStats', 'warnings', 'projects',
             'totalServicesSum', 'totalCommissions', 'totalAdvances',
-            'totalClientPayable', 'totalPaidOut',
+            'totalClientPayable', 'totalPaidOut', 'totalPendingSum', 'totalWorkSum',
+            'totalPendingCommission', 'totalWorkCommission', 'totalOverpaid',
             'firmIncome', 'projectsTotal', 'allUsers',
             'pendingProjectsSum', 'pendingProjectsCount',
             'pendingProjectsPaid', 'pendingProjectsDebt', 'pendingProjectsPct',
