@@ -286,6 +286,11 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 .kb-maptype.active{background:#111827;color:#fff;border-color:#111827}
 .dark .kb-maptype{background:#27272a;color:#e5e7eb;border-color:#3f3f46}
 .dark .kb-maptype.active{background:#f4f4f5;color:#09090b}
+/* Xarita bo'limi — butun ekranga kattalashtirish */
+#kb-map-wrap{position:relative}
+.kb-map-box{width:100%;height:340px;border-radius:10px;border:1px solid #e2e8f0;background:#f3f4f6;overflow:hidden}
+#kb-map-wrap.kb-map-fullscreen{position:fixed;inset:0;z-index:1600;background:#fff;padding:16px;display:flex;flex-direction:column;overflow-y:auto}
+#kb-map-wrap.kb-map-fullscreen .kb-map-box{flex:1;height:auto;min-height:300px;border-radius:8px}
 /* Notify */
 .kb-notify{position:fixed;bottom:24px;right:24px;background:#16a34a;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 4px 14px rgba(0,0,0,.2);animation:slideIn .3s ease}
 @keyframes slideIn{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
@@ -1427,7 +1432,15 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                 Xaritadan manzil tanlash
             </div>
 
-            <div wire:ignore>
+            <div wire:ignore id="kb-map-wrap">
+                <button type="button" onclick="kbToggleMapFullscreen()" id="kb-map-expand-btn" title="Butun ekranga kattalashtirish"
+                        style="position:absolute;top:8px;right:8px;z-index:5;background:rgba(17,24,39,.75);color:#fff;border:none;border-radius:6px;width:30px;height:30px;cursor:pointer;display:flex;align-items:center;justify-content:center">
+                    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                </button>
+                <button type="button" onclick="kbToggleMapFullscreen()" id="kb-map-close-btn" title="Yopish"
+                        style="display:none;position:absolute;top:16px;right:16px;z-index:5;background:#111827;color:#fff;border:none;border-radius:8px;width:36px;height:36px;cursor:pointer;align-items:center;justify-content:center;font-size:18px">
+                    ✕
+                </button>
                 <div style="display:flex;gap:6px;margin-bottom:6px">
                     <button onclick="kbLocateMe()" id="kb-locate-btn" title="Joylashuvimni aniqlash"
                             style="background:#059669;color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap">
@@ -1437,7 +1450,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                         Mening joyim
                     </button>
                 </div>
-                <div id="modal-map" style="width:100%;height:340px;border-radius:10px;border:1px solid #e2e8f0;background:#f3f4f6;overflow:hidden"></div>
+                <div id="modal-map" class="kb-map-box"></div>
                 <div style="display:flex;gap:8px;margin-top:8px">
                     <button onclick="kbSetMapType('hybrid')" id="kb-btn-hybrid" class="kb-maptype active">Gibrid</button>
                     <button onclick="kbSetMapType('map')" id="kb-btn-map" class="kb-maptype">Xarita</button>
@@ -1448,13 +1461,12 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                     <div class="sel-loc-addr" id="selected-location-text"></div>
                     <div class="sel-loc-coords" id="selected-location-coords"></div>
                 </div>
-            </div>
-
-            <div id="kb-map-hint" style="display:none;font-size:12px;color:#dc2626;text-align:center;padding:4px 0;font-weight:500">
-                Ko'chalar ko'rinsin — xaritani kattalashtiring, keyin bosing
-            </div>
-            <div style="font-size:11px;color:#9ca3af;text-align:center;padding:4px 0">
-                Qidiring → yaqinlashtiring → uyga bosing
+                <div id="kb-map-hint" style="display:none;font-size:12px;color:#dc2626;text-align:center;padding:4px 0;font-weight:500">
+                    Ko'chalar ko'rinsin — xaritani kattalashtiring, keyin bosing
+                </div>
+                <div style="font-size:11px;color:#9ca3af;text-align:center;padding:4px 0">
+                    Qidiring → yaqinlashtiring → uyga bosing
+                </div>
             </div>
 
             {{-- Pasport ma'lumotlari (keyinchalik foydalanish uchun) --}}
@@ -2910,6 +2922,24 @@ function kbSetMapType(type) {
     document.querySelectorAll('.kb-maptype').forEach(function(b) { b.classList.remove('active'); });
     var ab = document.getElementById('kb-btn-' + type);
     if (ab) ab.classList.add('active');
+}
+
+// Xaritani butun ekranga kattalashtirish/asl holatiga qaytarish — joy
+// tanlashda ko'chalarni yaxshiroq ko'rish uchun. Konteyner CSS orqali
+// kattalashtiriladi, Yandex xaritasi esa fitToViewport() bilan shu yangi
+// o'lchamga moslashtiriladi (aks holda eski o'lchamda "qisilgan" ko'rinadi).
+function kbToggleMapFullscreen() {
+    var wrap = document.getElementById('kb-map-wrap');
+    var expandBtn = document.getElementById('kb-map-expand-btn');
+    var closeBtn = document.getElementById('kb-map-close-btn');
+    if (!wrap) return;
+    var goingFullscreen = !wrap.classList.contains('kb-map-fullscreen');
+    wrap.classList.toggle('kb-map-fullscreen', goingFullscreen);
+    if (expandBtn) expandBtn.style.display = goingFullscreen ? 'none' : 'flex';
+    if (closeBtn) closeBtn.style.display = goingFullscreen ? 'flex' : 'none';
+    setTimeout(function() {
+        if (kbMap) kbMap.container.fitToViewport();
+    }, 50);
 }
 
 function initKbMap() {
