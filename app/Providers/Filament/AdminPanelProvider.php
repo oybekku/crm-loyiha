@@ -345,6 +345,19 @@ body, .fi-main p, .fi-main span, .fi-main h1, .fi-main h2, .fi-main h3,
 .fi-dropdown-list-item span {
     color: #F3F4F6 !important;
 }
+/* Dropdown panel ichidagi filtr input/select maydonlari — matn oq bo'lgani
+   uchun fonini ham qorong'i qilamiz, aks holda kunduzgi rejimda oq fonda
+   oq matn ko'rinmay qoladi (Filtrlar panelidagi sana/oy tanlovlari). */
+.fi-dropdown-panel input,
+.fi-dropdown-panel select,
+.fi-dropdown-panel .fi-input,
+.fi-dropdown-panel .fi-select-input {
+    background-color: #1f2937 !important;
+    color: #F3F4F6 !important;
+}
+.fi-dropdown-panel input::placeholder {
+    color: #9ca3af !important;
+}
 .fi-dropdown-list-item button:hover,
 .fi-dropdown-list-item a:hover {
     background-color: rgba(255,255,255,0.1) !important;
