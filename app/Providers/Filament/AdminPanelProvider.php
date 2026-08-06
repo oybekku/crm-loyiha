@@ -338,6 +338,12 @@ body, .fi-main p, .fi-main span, .fi-main h1, .fi-main h2, .fi-main h3,
     border-radius: 12px !important;
     overflow: hidden !important;
 }
+/* Panel ichida select (Choices.js) ochilganda uning o'z ro'yxati
+   overflow:hidden tomonidan kesib tashlanmasin — filtr panellaridagi
+   oy kabi tanlovlar ochilganda ro'yxat butunlay ko'rinishi kerak. */
+.fi-dropdown-panel:has(.choices.is-open) {
+    overflow: visible !important;
+}
 .fi-dropdown-panel *,
 .fi-dropdown-list-item-label,
 .fi-dropdown-list-item button,
@@ -351,9 +357,16 @@ body, .fi-main p, .fi-main span, .fi-main h1, .fi-main h2, .fi-main h3,
 .fi-dropdown-panel input,
 .fi-dropdown-panel select,
 .fi-dropdown-panel .fi-input,
-.fi-dropdown-panel .fi-select-input {
+.fi-dropdown-panel .fi-select-input,
+.fi-dropdown-panel .choices__inner,
+.fi-dropdown-panel .choices__list--dropdown,
+.fi-dropdown-panel .choices__list--dropdown .choices__item,
+.fi-dropdown-panel .choices__list--dropdown .choices__input {
     background-color: #1f2937 !important;
     color: #F3F4F6 !important;
+}
+.fi-dropdown-panel .choices__list--dropdown .choices__item.is-highlighted {
+    background-color: rgba(255,255,255,0.1) !important;
 }
 .fi-dropdown-panel input::placeholder {
     color: #9ca3af !important;
