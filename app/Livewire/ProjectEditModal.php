@@ -43,6 +43,8 @@ class ProjectEditModal extends Component
     public $ei_newGenplan            = [];
     public array  $ei_genplanOrder   = [];   // yig'ish tartibi: [fileId => tartib raqami]
     public string $ei_status         = '';
+    public string $ei_openedAt       = '';
+    public string $ei_finishedAt     = '';
     public string $ei_workStatus     = 'yangi';
     public bool   $ei_isUrgent       = false;
     public bool   $ei_paymentRequested = false;
@@ -90,6 +92,11 @@ class ProjectEditModal extends Component
         $this->ei_newGenplan  = [];
         $this->ei_genplanOrder = [];
         $this->ei_status      = $p->status;
+        $this->ei_openedAt    = $p->created_at?->format('d.m.Y') ?? '';
+        $this->ei_finishedAt  = $p->statusLogs()
+            ->where('status', 'tugallangan')
+            ->latest('entered_at')
+            ->first()?->entered_at?->format('d.m.Y') ?? '';
         $this->ei_workStatus  = $p->work_status ?? 'yangi';
         $this->ei_isUrgent    = (bool) $p->is_urgent;
         $this->ei_paymentRequested = (bool) $p->payment_requested_at;

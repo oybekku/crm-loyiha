@@ -140,17 +140,19 @@ class PaymentResource extends Resource
                     ->getKeyFromRecordUsing(fn (Payment $record) => $record->project?->created_at?->format('Y-m') ?? '—')
                     ->getTitleFromRecordUsing(fn (Payment $record) => $record->project?->created_at
                         ? ucfirst($record->project->created_at->translatedFormat('F Y'))
-                        : "Noma'lum")
-                    ->scopeQueryByKeyUsing(fn (Builder $query, string $key) => $query
-                        ->whereHas('project', fn ($q) => $q->whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$key])))
+                        : "Noma'lum (loyiha o'chirilgan/arxivda)")
+                    ->scopeQueryByKeyUsing(fn (Builder $query, string $key) => $key === '—'
+                        ? $query->whereDoesntHave('project')
+                        : $query->whereHas('project', fn ($q) => $q->whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$key])))
                     ->collapsible(),
 
                 Tables\Grouping\Group::make('project.owner_name')
                     ->label('Mijoz')
                     ->getKeyFromRecordUsing(fn (Payment $record) => $record->project?->owner_name ?? '—')
                     ->getTitleFromRecordUsing(fn (Payment $record) => $record->project?->owner_name ?? "Noma'lum mijoz")
-                    ->scopeQueryByKeyUsing(fn (Builder $query, string $key) => $query
-                        ->whereHas('project', fn ($q) => $q->where('owner_name', $key)))
+                    ->scopeQueryByKeyUsing(fn (Builder $query, string $key) => $key === '—'
+                        ? $query->whereDoesntHave('project')
+                        : $query->whereHas('project', fn ($q) => $q->where('owner_name', $key)))
                     ->collapsible(),
             ])
             ->filters([

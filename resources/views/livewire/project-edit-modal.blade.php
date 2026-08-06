@@ -5,7 +5,12 @@
         {{-- STICKY SARLAVHA --}}
         <div style="flex-shrink:0;padding:18px 26px 14px;border-bottom:1px solid #eef2f7">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-                <span style="font-size:17px;font-weight:700;color:#111827;display:flex;align-items:center;gap:8px">✏️ Loyiha ma'lumotini tahrirlash</span>
+                <div style="display:flex;flex-direction:column;gap:2px">
+                    <span style="font-size:17px;font-weight:700;color:#111827;display:flex;align-items:center;gap:8px">✏️ Loyiha ma'lumotini tahrirlash</span>
+                    <span style="font-size:12px;color:#6b7280">
+                        Ochilgan: {{ $ei_openedAt ?: '—' }}@if($ei_finishedAt) &nbsp;·&nbsp; Tugagan: {{ $ei_finishedAt }}@endif
+                    </span>
+                </div>
                 <button wire:click="closeEditInfoModal" style="background:#f3f4f6;border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;color:#6b7280;font-size:15px;line-height:1;transition:background .15s" onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">✕</button>
             </div>
 
