@@ -371,6 +371,17 @@ body, .fi-main p, .fi-main span, .fi-main h1, .fi-main h2, .fi-main h3,
 .fi-dropdown-panel input::placeholder {
     color: #9ca3af !important;
 }
+/* Sana tanlash kalendari (Filamentning o'z komponenti, fi-fo-date-time-picker-panel) —
+   tashqi panel doim qorong'i qilib qo'yilgan, lekin bu ichki kichik panel
+   o'zining kunduzgi rejim uchun mo'ljallangan OQ fonini saqlab qolardi —
+   matn esa (yuqoridagi qoida bilan) oq rangga majburlangani sabab
+   oq fonda oq matn bo'lib, kun raqamlari deyarli ko'rinmay qolgan edi. */
+.fi-dropdown-panel .fi-fo-date-time-picker-panel {
+    background-color: #1f2937 !important;
+}
+.fi-dropdown-panel .fi-fo-date-time-picker-panel [class*='bg-gray-50'] {
+    background-color: rgba(255,255,255,0.1) !important;
+}
 .fi-dropdown-list-item button:hover,
 .fi-dropdown-list-item a:hover {
     background-color: rgba(255,255,255,0.1) !important;
