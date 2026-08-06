@@ -171,6 +171,30 @@ class PaymentResource extends Resource
                             ->when($data['from'] ?? null, fn ($q, $date) => $q->whereDate('created_at', '>=', $date))
                             ->when($data['until'] ?? null, fn ($q, $date) => $q->whereDate('created_at', '<=', $date));
                     }),
+
+                Filter::make('project_month')
+                    ->label('Tegishli oy (loyiha)')
+                    ->form([
+                        \Filament\Forms\Components\Select::make('month')
+                            ->label('Oy')
+                            ->options(fn () => \App\Models\Project::query()
+                                ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as ym")
+                                ->distinct()
+                                ->orderByDesc('ym')
+                                ->pluck('ym', 'ym')
+                                ->mapWithKeys(fn ($ym) => [
+                                    $ym => ucfirst(\Illuminate\Support\Carbon::createFromFormat('Y-m-d', "{$ym}-01")->translatedFormat('F Y')),
+                                ]))
+                            ->placeholder('Barchasi'),
+                    ])
+                    ->query(fn (Builder $query, array $data): Builder => $query
+                        ->when($data['month'] ?? null, fn ($q, $ym) => $q->whereHas(
+                            'project',
+                            fn ($pq) => $pq->whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$ym])
+                        )))
+                    ->indicateUsing(fn (array $data): ?string => ($data['month'] ?? null)
+                        ? 'Tegishli oy: ' . ucfirst(\Illuminate\Support\Carbon::createFromFormat('Y-m-d', "{$data['month']}-01")->translatedFormat('F Y'))
+                        : null),
             ])
             ->actions([
                 Tables\Actions\Action::make('open_project')
