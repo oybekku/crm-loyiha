@@ -163,8 +163,8 @@ class PaymentResource extends Resource
 
                 Filter::make('created_range')
                     ->form([
-                        \Filament\Forms\Components\DatePicker::make('from')->label('Kimdan'),
-                        \Filament\Forms\Components\DatePicker::make('until')->label('Kimgacha'),
+                        \Filament\Forms\Components\DatePicker::make('from')->label('Kimdan')->native(false)->displayFormat('d.m.Y'),
+                        \Filament\Forms\Components\DatePicker::make('until')->label('Kimgacha')->native(false)->displayFormat('d.m.Y'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
@@ -185,6 +185,7 @@ class PaymentResource extends Resource
                                 ->mapWithKeys(fn ($ym) => [
                                     $ym => ucfirst(\Illuminate\Support\Carbon::createFromFormat('Y-m-d', "{$ym}-01")->translatedFormat('F Y')),
                                 ]))
+                            ->native(false)
                             ->placeholder('Barchasi'),
                     ])
                     ->query(fn (Builder $query, array $data): Builder => $query
