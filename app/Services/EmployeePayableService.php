@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\AccountTransfer;
 use App\Models\EmployeeSalaryPayment;
 use App\Models\Expense;
 use App\Models\Project;
@@ -218,5 +219,41 @@ class EmployeePayableService
                 ]
             );
         }
+    }
+
+    /**
+     * Xarajat hisobiga yozilgan komissiyalar haqiqatda qaysi hisobdan
+     * (masalan "Naqd pul") to'langanini aks ettirish uchun, o'sha oy
+     * jami komissiya summasida $sourceAccountId'dan $expenseAccountId'ga
+     * avtomatik "o'tkazma" yozib/yangilab qo'yadi. Shu bilan manba hisob
+     * balansi real kamayadi, xarajat hisobi esa kirim=chiqim bo'lib 0 da
+     * qoladi (faqat "kimga qancha" tafsilotini ko'rsatish uchun xizmat
+     * qiladi). syncExpenses() bilan bir xil joydan, bir xil vaqtda
+     * chaqiriladi — shuning uchun ikkalasi doim sinxron.
+     */
+    public static function syncCommissionTransfer(string $month, int $sourceAccountId, int $expenseAccountId): void
+    {
+        $total = (float) self::forMonth($month)->sum('amount');
+
+        if ($sourceAccountId === $expenseAccountId || $total <= 0) {
+            AccountTransfer::where('from_account_id', $sourceAccountId)
+                ->where('to_account_id', $expenseAccountId)
+                ->where('month', $month)
+                ->delete();
+
+            return;
+        }
+
+        [$year, $mon] = explode('-', $month);
+        $transferDate = Carbon::create((int) $year, (int) $mon, 1)->endOfMonth()->toDateString();
+
+        AccountTransfer::updateOrCreate(
+            ['from_account_id' => $sourceAccountId, 'to_account_id' => $expenseAccountId, 'month' => $month],
+            [
+                'amount'        => $total,
+                'comment'       => "{$month} oyi xodimlar komissiyasi (avtomatik)",
+                'transfer_date' => $transferDate,
+            ]
+        );
     }
 }

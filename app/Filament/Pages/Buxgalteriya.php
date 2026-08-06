@@ -39,6 +39,7 @@ class Buxgalteriya extends Page
     public bool   $formIsFavorite   = false;
     public bool   $formIsPersonal   = false;
     public bool   $formIsExpenseAccount = false;
+    public bool   $formIsCommissionSource = false;
 
     // ── Karta foni (rasm yuklash) ──
     public $bgUpload = null;
@@ -101,6 +102,7 @@ class Buxgalteriya extends Page
             $this->formIsFavorite    = (bool) $acc->is_favorite;
             $this->formIsPersonal    = (bool) $acc->is_personal;
             $this->formIsExpenseAccount = (bool) $acc->is_expense_account;
+            $this->formIsCommissionSource = (bool) $acc->is_commission_source;
         } else {
             $this->formType          = 'karta';
             $this->formName          = '';
@@ -111,6 +113,7 @@ class Buxgalteriya extends Page
             $this->formIsFavorite    = false;
             $this->formIsPersonal    = false;
             $this->formIsExpenseAccount = false;
+            $this->formIsCommissionSource = false;
         }
 
         $this->showAccountModal = true;
@@ -140,6 +143,7 @@ class Buxgalteriya extends Page
             'is_favorite'        => $this->formIsFavorite,
             'is_personal'        => $this->formIsPersonal,
             'is_expense_account' => $this->formIsExpenseAccount,
+            'is_commission_source' => $this->formIsCommissionSource,
         ];
 
         if ($this->editAccountId) {
@@ -155,6 +159,13 @@ class Buxgalteriya extends Page
         if ($this->formIsExpenseAccount) {
             FinancialAccount::whereKeyNot($this->editAccountId ?: ($acc->id ?? 0))
                 ->update(['is_expense_account' => false]);
+        }
+
+        // Faqat bitta hisob "Komissiya manba hisobi" bo'la oladi — xodimlar
+        // komissiyasi qaysi hisobdan "chiqarilgani" aniq bo'lishi uchun.
+        if ($this->formIsCommissionSource) {
+            FinancialAccount::whereKeyNot($this->editAccountId ?: ($acc->id ?? 0))
+                ->update(['is_commission_source' => false]);
         }
 
         $this->closeAccountModal();
@@ -391,6 +402,19 @@ class Buxgalteriya extends Page
         $expenseAccountId = FinancialAccount::where('is_expense_account', true)->value('id');
         if ($expenseAccountId) {
             EmployeePayableService::syncExpenses(sprintf('%04d-%02d', $year, $month), $expenseAccountId);
+
+            // Komissiya real qaysi hisobdan (masalan "Naqd pul") to'langanini
+            // aks ettirish uchun — o'sha hisobdan Xarajatlar hisobiga avtomatik
+            // o'tkazma yoziladi. "Komissiya manba hisobi" belgilanmagan bo'lsa
+            // hech narsa qilinmaydi (eski xatti-harakat saqlanadi).
+            $commissionSourceId = FinancialAccount::where('is_commission_source', true)->value('id');
+            if ($commissionSourceId) {
+                EmployeePayableService::syncCommissionTransfer(
+                    sprintf('%04d-%02d', $year, $month),
+                    $commissionSourceId,
+                    $expenseAccountId
+                );
+            }
         }
 
         // Shartnoma bo'yicha statistika (Bosh sahifadagi "Moliyaviy statistika"
@@ -464,6 +488,7 @@ class Buxgalteriya extends Page
             'bxMonthLabel'     => $bxMonthLabel,
             'expenses'         => $expenses,
             'expenseAccountId' => $expenseAccountId,
+            'commissionSourceId' => $commissionSourceId ?? null,
             'transfers'        => $transfers,
             'allAccounts'      => FinancialAccount::orderBy('name')->get(),
             'contractTotal'    => $contractTotal,

@@ -271,6 +271,10 @@ body:has(.bx-page-root) .fi-body{background:#191a1b !important}
         <div style="padding:10px 18px;font-size:11.5px;color:#fbbf24;background:#3a2e0d;border-top:1px solid #2a2a2e">
             ⚠ Xodimlar komissiyasi avtomatik yozilishi uchun bitta hisobni "Xarajatlar hisobi" deb belgilang (hisobni tahrirlashda).
         </div>
+        @elseif(!$commissionSourceId)
+        <div style="padding:10px 18px;font-size:11.5px;color:#fbbf24;background:#3a2e0d;border-top:1px solid #2a2a2e">
+            ⚠ Komissiya haqiqiy hisobdan (masalan Naqd pul) real "chiqarilishi" uchun bitta hisobni "Komissiya manba hisobi" deb belgilang (hisobni tahrirlashda). Aks holda Xarajatlar hisobi manfiy bo'lib turadi, lekin manba hisob balansi kamaymaydi.
+        </div>
         @endif
         <div class="exp-list" x-show="open" x-collapse>
             @forelse($expenses as $exp)
@@ -408,9 +412,13 @@ body:has(.bx-page-root) .fi-body{background:#191a1b !important}
                 <input type="checkbox" id="bx-personal" wire:model="formIsPersonal" style="width:16px;height:16px">
                 <label for="bx-personal" style="font-size:12px;color:#94a3b8;cursor:pointer;margin-bottom:0">Shaxsiy/xarajat hisobi (masalan xodimga) — "Jami balans"ga qo'shilmaydi</label>
             </div>
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
                 <input type="checkbox" id="bx-expense-acc" wire:model="formIsExpenseAccount" style="width:16px;height:16px">
                 <label for="bx-expense-acc" style="font-size:12px;color:#94a3b8;cursor:pointer;margin-bottom:0">Xarajatlar hisobi — xodimlar komissiyasi (Oylik hisobotdagi "To'lanishi kerak") shu hisobga avtomatik yoziladi</label>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px">
+                <input type="checkbox" id="bx-commission-src" wire:model="formIsCommissionSource" style="width:16px;height:16px">
+                <label for="bx-commission-src" style="font-size:12px;color:#94a3b8;cursor:pointer;margin-bottom:0">Komissiya manba hisobi — xodimlarga komissiya shu hisobdan (masalan Naqd pul) real to'lanadi, har oy shu summada avtomatik o'tkazma yoziladi</label>
             </div>
 
             <div style="display:flex;gap:10px">

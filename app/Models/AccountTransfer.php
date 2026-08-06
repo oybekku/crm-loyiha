@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class AccountTransfer extends Model
 {
     protected $fillable = [
-        'from_account_id', 'to_account_id', 'amount', 'transfer_date', 'comment', 'created_by',
+        'from_account_id', 'to_account_id', 'amount', 'transfer_date', 'comment', 'created_by', 'month',
     ];
 
     protected $casts = [
