@@ -69,6 +69,12 @@ class PaymentResource extends Resource
                     ->searchable()
                     ->description(fn (Payment $record) => $record->project?->owner_name ?? '—'),
 
+                Tables\Columns\TextColumn::make('project.created_at')
+                    ->label('Tegishli oy')
+                    ->formatStateUsing(fn ($state) => $state ? ucfirst($state->translatedFormat('F Y')) : '—')
+                    ->description('loyiha ochilgan oy')
+                    ->toggleable(),
+
                 Tables\Columns\TextColumn::make('project.address')
                     ->label('Manzil')
                     ->limit(30)
@@ -79,7 +85,12 @@ class PaymentResource extends Resource
                     ->formatStateUsing(fn ($state) => number_format($state, 0, '.', ' ') . " so'm")
                     ->weight('bold')
                     ->color('success')
-                    ->sortable(),
+                    ->sortable()
+                    ->summarize(
+                        Tables\Columns\Summarizers\Sum::make()
+                            ->label('Jami')
+                            ->formatStateUsing(fn ($state) => number_format($state, 0, '.', ' ') . " so'm")
+                    ),
 
                 Tables\Columns\BadgeColumn::make('method')
                     ->label('Usul')
@@ -102,6 +113,46 @@ class PaymentResource extends Resource
                     ->placeholder('—'),
             ])
             ->defaultSort('created_at', 'desc')
+            ->defaultGroup(
+                Tables\Grouping\Group::make('created_at')
+                    ->label('Oy')
+                    ->getKeyFromRecordUsing(fn (Payment $record) => $record->created_at?->format('Y-m'))
+                    ->getTitleFromRecordUsing(fn (Payment $record) => $record->created_at
+                        ? ucfirst($record->created_at->translatedFormat('F Y'))
+                        : '—')
+                    ->scopeQueryByKeyUsing(fn (Builder $query, string $key) => $query
+                        ->whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$key]))
+                    ->collapsible()
+            )
+            ->groups([
+                Tables\Grouping\Group::make('created_at')
+                    ->label('Oy (kiritilgan)')
+                    ->getKeyFromRecordUsing(fn (Payment $record) => $record->created_at?->format('Y-m'))
+                    ->getTitleFromRecordUsing(fn (Payment $record) => $record->created_at
+                        ? ucfirst($record->created_at->translatedFormat('F Y'))
+                        : '—')
+                    ->scopeQueryByKeyUsing(fn (Builder $query, string $key) => $query
+                        ->whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$key]))
+                    ->collapsible(),
+
+                Tables\Grouping\Group::make('project.created_at')
+                    ->label('Tegishli oy (loyiha)')
+                    ->getKeyFromRecordUsing(fn (Payment $record) => $record->project?->created_at?->format('Y-m') ?? '—')
+                    ->getTitleFromRecordUsing(fn (Payment $record) => $record->project?->created_at
+                        ? ucfirst($record->project->created_at->translatedFormat('F Y'))
+                        : "Noma'lum")
+                    ->scopeQueryByKeyUsing(fn (Builder $query, string $key) => $query
+                        ->whereHas('project', fn ($q) => $q->whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$key])))
+                    ->collapsible(),
+
+                Tables\Grouping\Group::make('project.owner_name')
+                    ->label('Mijoz')
+                    ->getKeyFromRecordUsing(fn (Payment $record) => $record->project?->owner_name ?? '—')
+                    ->getTitleFromRecordUsing(fn (Payment $record) => $record->project?->owner_name ?? "Noma'lum mijoz")
+                    ->scopeQueryByKeyUsing(fn (Builder $query, string $key) => $query
+                        ->whereHas('project', fn ($q) => $q->where('owner_name', $key)))
+                    ->collapsible(),
+            ])
             ->filters([
                 Filter::make('today')
                     ->label('Faqat bugun')
