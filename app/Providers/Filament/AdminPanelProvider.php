@@ -509,17 +509,17 @@ body, .fi-main p, .fi-main span, .fi-main h1, .fi-main h2, .fi-main h3,
 
                     return <<<'HTML'
 <div id="bh-splash" style="position:fixed;inset:0;z-index:999999;background:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column;transition:opacity .5s ease">
-    <svg width="420" height="260" viewBox="0 0 640 360" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M50,300 L580,300" stroke="#111" stroke-width="3" pathLength="1" style="stroke-dasharray:1;stroke-dashoffset:1;animation:bh-splash-draw .5s ease forwards"/>
-        <path d="M50,300 C160,296 400,294 560,290" stroke="#111" stroke-width="3" pathLength="1" style="stroke-dasharray:1;stroke-dashoffset:1;animation:bh-splash-draw .9s ease forwards .40s"/>
-        <path d="M50,300 C140,280 360,255 540,240" stroke="#111" stroke-width="3" pathLength="1" style="stroke-dasharray:1;stroke-dashoffset:1;animation:bh-splash-draw .9s ease forwards .43s"/>
-        <path d="M50,300 C130,260 330,210 500,190" stroke="#111" stroke-width="3" pathLength="1" style="stroke-dasharray:1;stroke-dashoffset:1;animation:bh-splash-draw .9s ease forwards .46s"/>
-        <path d="M50,300 C120,235 300,165 460,140" stroke="#111" stroke-width="3" pathLength="1" style="stroke-dasharray:1;stroke-dashoffset:1;animation:bh-splash-draw .9s ease forwards .49s"/>
-        <path d="M50,300 C110,210 270,120 420,90" stroke="#111" stroke-width="3" pathLength="1" style="stroke-dasharray:1;stroke-dashoffset:1;animation:bh-splash-draw .9s ease forwards .52s"/>
-        <path d="M50,300 C105,185 245,85 380,50" stroke="#111" stroke-width="3" pathLength="1" style="stroke-dasharray:1;stroke-dashoffset:1;animation:bh-splash-draw .9s ease forwards .55s"/>
-        <path d="M50,300 C100,160 220,50 260,20" stroke="#111" stroke-width="3" pathLength="1" style="stroke-dasharray:1;stroke-dashoffset:1;animation:bh-splash-draw .9s ease forwards .58s"/>
+    <svg width="588" height="364" viewBox="0 0 640 360" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M50,300 L580,300" stroke="#111" stroke-width="3" pathLength="1" style="stroke-dasharray:1;stroke-dashoffset:1;animation:bh-splash-draw .6s ease forwards"/>
+        <path d="M50,300 C330,300 560,295 560,290" stroke="#111" stroke-width="3" pathLength="1" style="stroke-dasharray:1;stroke-dashoffset:1;animation:bh-splash-draw 1.2s ease forwards .50s"/>
+        <path d="M50,300 C320,300 540,270 540,240" stroke="#111" stroke-width="3" pathLength="1" style="stroke-dasharray:1;stroke-dashoffset:1;animation:bh-splash-draw 1.2s ease forwards .55s"/>
+        <path d="M50,300 C298,300 500,245 500,190" stroke="#111" stroke-width="3" pathLength="1" style="stroke-dasharray:1;stroke-dashoffset:1;animation:bh-splash-draw 1.2s ease forwards .60s"/>
+        <path d="M50,300 C276,300 460,220 460,140" stroke="#111" stroke-width="3" pathLength="1" style="stroke-dasharray:1;stroke-dashoffset:1;animation:bh-splash-draw 1.2s ease forwards .65s"/>
+        <path d="M50,300 C254,300 420,195 420,90" stroke="#111" stroke-width="3" pathLength="1" style="stroke-dasharray:1;stroke-dashoffset:1;animation:bh-splash-draw 1.2s ease forwards .70s"/>
+        <path d="M50,300 C232,300 380,175 380,50" stroke="#111" stroke-width="3" pathLength="1" style="stroke-dasharray:1;stroke-dashoffset:1;animation:bh-splash-draw 1.2s ease forwards .75s"/>
+        <path d="M50,300 C166,300 260,160 260,20" stroke="#111" stroke-width="3" pathLength="1" style="stroke-dasharray:1;stroke-dashoffset:1;animation:bh-splash-draw 1.2s ease forwards .80s"/>
     </svg>
-    <div style="margin-top:4px;font-family:inherit;font-size:26px;font-weight:300;letter-spacing:.04em;color:#111;opacity:0;animation:bh-splash-text 0.6s ease forwards 1.5s">MPH Architecture</div>
+    <div style="margin-top:4px;font-family:inherit;font-size:26px;font-weight:300;letter-spacing:.04em;color:#111;opacity:0;animation:bh-splash-text 0.6s ease forwards 2.1s">MPH Architecture</div>
 </div>
 <style>
 @keyframes bh-splash-draw { to { stroke-dashoffset:0; } }
@@ -530,8 +530,8 @@ setTimeout(function () {
     var el = document.getElementById('bh-splash');
     if (!el) return;
     el.style.opacity = '0';
-    setTimeout(function () { el.remove(); }, 550);
-}, 2300);
+    setTimeout(function () { el.remove(); }, 500);
+}, 2800);
 </script>
 HTML;
                 }
