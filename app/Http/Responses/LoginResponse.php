@@ -16,6 +16,12 @@ class LoginResponse implements LoginResponseContract
 {
     public function toResponse($request)
     {
+        // Login'dan keyin ochiladigan birinchi sahifada bir martalik
+        // "zagruzka" animatsiyasi ko'rsatilsin (AdminPanelProvider'dagi
+        // panels::body.start render hook shu bayroqni o'qib, darhol
+        // o'chiradi — shu bilan faqat shu bir sahifada ko'rinadi).
+        session(['bh_show_splash' => true]);
+
         return redirect()->intended(KanbanBoard::getUrl());
     }
 }
