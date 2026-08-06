@@ -402,9 +402,16 @@
                     @endif
                 </td>
                 {{-- Mijoz to'lagan ulushga mutanosib "to'lanishi kerak" summa — real
-                     to'lash mumkin bo'lgan pul. --}}
+                     to'lash mumkin bo'lgan pul, allaqachon to'langani ayirilgan
+                     holda (aks holda "Ortiqcha to'langan" bilan bir vaqtda
+                     ko'rsatilib chalkashlik tug'dirardi). --}}
                 <td style="text-align:right">
-                    <span style="font-weight:700;color:#16a34a">{{ number_format($clientPayable, 0, '.', ' ') }} so'm</span>
+                    @php $payableRemaining = $stat['payable_remaining'] ?? max(0, $clientPayable - $paidTotalRow); @endphp
+                    @if($payableRemaining > 0)
+                    <span style="font-weight:700;color:#16a34a">{{ number_format($payableRemaining, 0, '.', ' ') }} so'm</span>
+                    @else
+                    <span style="color:#d1d5db;font-size:12px">—</span>
+                    @endif
                 </td>
                 {{-- To'landi (haqiqatda to'langan summa) --}}
                 <td style="text-align:right">
@@ -547,7 +554,7 @@
             <td style="text-align:right">{{ number_format($totalWorkSum, 0, '.', ' ') }} so'm</td>
             <td style="text-align:right;color:#d97706">{{ number_format($totalWorkCommission, 0, '.', ' ') }} so'm</td>
             <td style="text-align:right;color:#dc2626">{{ $totalOverpaid > 0 ? number_format($totalOverpaid, 0, '.', ' ') . " so'm" : '—' }}</td>
-            <td style="text-align:right;color:#16a34a">{{ number_format($totalClientPayable, 0, '.', ' ') }} so'm</td>
+            <td style="text-align:right;color:#16a34a">{{ number_format($totalPayableRemaining, 0, '.', ' ') }} so'm</td>
             <td style="text-align:right;color:#2563eb">{{ number_format($totalPaidOut, 0, '.', ' ') }} so'm</td>
             <td></td>{{-- Kutayotgan --}}
         </tr>
@@ -930,7 +937,11 @@
     // bu summa ham o'sadi).
     $dUmumiySumma    = collect($ds['all_items'] ?? [])->sum('share');
     $dToLandiJami    = collect($ds['all_items'] ?? [])->sum('share_paid');
-    $dToLanishiKerak = $dToLandiJami;
+    // Allaqachon to'langanini ayirib tashlaymiz — aks holda hodimga ortiqcha
+    // to'langan bo'lsa ham (yuqoridagi "Ortiqcha to'langan"), bu yerda yana
+    // "to'lash kerak" summasi ko'rsatilib, ikkalasi bir vaqtda chiqib
+    // chalkashlik tug'dirardi.
+    $dToLanishiKerak = max(0, $dToLandiJami - $dPaidTotal);
 @endphp
 <div style="position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
 <div style="background:#fff;border-radius:16px;width:100%;max-width:860px;margin:auto;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3)">

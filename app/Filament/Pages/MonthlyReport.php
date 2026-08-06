@@ -393,6 +393,11 @@ class MonthlyReport extends Page
             // allaqachon shu tarzda hisoblangan (yuqorida, umumiy sikl ichida).
             $stat['client_payable'] = collect($stat['services'])->sum('comm_paid');
             $stat['overpaid']       = max(0, $stat['paid_total'] - $stat['client_payable']);
+            // Hali to'lanmagan qism — allaqachon to'langanini ayirib tashlaymiz,
+            // aks holda hodimga ortiqcha to'langan bo'lsa ham (yuqoridagi
+            // "Ortiqcha to'langan"), bu yerda yana "to'lash kerak" summasi
+            // chiqib, ikkalasi bir vaqtda ko'rsatilib chalkashlik tug'dirardi.
+            $stat['payable_remaining'] = max(0, $stat['client_payable'] - $stat['paid_total']);
 
             // Kutayotgan ishlar — LOYIHA shu oyda ochilgan bo'lsa, hali TUGATILMAGAN
             // xizmatlar (loyiha arxivga o'tgan bo'lsa ham ko'rsatilmaydi — u holda ish
@@ -535,7 +540,7 @@ class MonthlyReport extends Page
         $projectsTotal     = $projects->count();
         // Mijoz to'lagan ulushga mutanosib jami "to'lanishi kerak" summa —
         // Hisoblangan (to'liq komissiya) bilan aralashtirilmasin.
-        $totalClientPayable = array_sum(array_column($userStats, 'client_payable'));
+        $totalPayableRemaining = array_sum(array_column($userStats, 'payable_remaining'));
         $totalPaidOut       = array_sum(array_column($userStats, 'paid_total'));
         // Jami ish hajmi (tugallangan + kutayotgan) — rahbariyat "hodimning
         // haqiqiy jami ishi" deb shu to'liq sonni ko'rishi kerak, faqat
@@ -716,7 +721,7 @@ class MonthlyReport extends Page
         return compact(
             'userStats', 'warnings', 'projects',
             'totalServicesSum', 'totalCommissions', 'totalAdvances',
-            'totalClientPayable', 'totalPaidOut', 'totalPendingSum', 'totalWorkSum',
+            'totalPayableRemaining', 'totalPaidOut', 'totalPendingSum', 'totalWorkSum',
             'totalPendingCommission', 'totalWorkCommission', 'totalOverpaid',
             'firmIncome', 'projectsTotal', 'allUsers',
             'pendingProjectsSum', 'pendingProjectsCount',
