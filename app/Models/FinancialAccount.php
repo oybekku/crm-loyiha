@@ -64,6 +64,22 @@ class FinancialAccount extends Model
         return $income - $spent + $transfersIn - $transfersOut;
     }
 
+    /** "Xarajatlar hisobi" kartasida ko'rsatish uchun — shu hisobga yozilgan
+     *  BARCHA xarajatlar (komissiya, oylik, boshqa) yig'indisi, manfiy son
+     *  sifatida. getBalanceAttribute()dan farqli o'laroq, kirim (o'tkazma)
+     *  bilan tenglashtirilmaydi — shu bilan "qancha xarajat qilindi" doim
+     *  ko'rinib turadi, hatto manba hisobdan pul o'tkazilgan bo'lsa ham.
+     *  "Jami balans" hisob-kitobiga bu emas, getBalanceAttribute() ishlatiladi
+     *  — aks holda summa ikki marta hisoblanib qolardi. */
+    public function getExpenseTotalAttribute(): float
+    {
+        $spent = array_key_exists('expenses_sum_amount', $this->attributes)
+            ? (float) $this->attributes['expenses_sum_amount']
+            : (float) $this->expenses()->sum('amount');
+
+        return -$spent;
+    }
+
     public static function typeOptions(): array
     {
         return [

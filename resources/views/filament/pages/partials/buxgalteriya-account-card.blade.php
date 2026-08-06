@@ -42,8 +42,12 @@
 
     <div class="acc-bottom">
         <div>
-            <div class="acc-balance-lbl">Balans</div>
+            <div class="acc-balance-lbl">{{ $acc->is_expense_account ? 'Jami xarajat' : 'Balans' }}</div>
+            @if($acc->is_expense_account)
+            <div class="acc-balance" style="color:#f87171">{{ number_format($acc->expense_total, 0, '.', ' ') }} <span style="font-size:11px;opacity:.7;color:#f87171">so'm</span></div>
+            @else
             <div class="acc-balance">{{ number_format($acc->balance, 0, '.', ' ') }} <span style="font-size:11px;opacity:.7;color:#4ade80">so'm</span></div>
+            @endif
         </div>
         @if($acc->type === 'karta' && $acc->expiry_date)
         <div class="acc-sub-right">Amal qilish<br>{{ $acc->expiry_date }}</div>
