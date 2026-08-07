@@ -56,7 +56,7 @@ class PaymentResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn (Builder $query) => $query->with(['project', 'createdBy']))
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['project', 'createdBy', 'account']))
             ->columns([
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Kiritilgan vaqt')
@@ -100,6 +100,12 @@ class PaymentResource extends Resource
                         'info'    => 'bank',
                         'warning' => 'karta',
                     ]),
+
+                Tables\Columns\TextColumn::make('account.name')
+                    ->label('Hisob')
+                    ->formatStateUsing(fn ($state, Payment $record) => $state ?: ($record->account?->type ? (\App\Models\FinancialAccount::typeOptions()[$record->account->type] ?? $record->account->type) : null))
+                    ->color(fn (Payment $record) => $record->account_id ? null : 'danger')
+                    ->placeholder("⚠ Bog'lanmagan"),
 
                 Tables\Columns\TextColumn::make('createdBy.name')
                     ->label('Kim kiritdi')
@@ -160,6 +166,12 @@ class PaymentResource extends Resource
                     ->label('Faqat bugun')
                     ->query(fn (Builder $query) => $query->whereDate('created_at', today()))
                     ->toggle(),
+
+                Filter::make('unlinked')
+                    ->label("Bog'lanmagan to'lovlar")
+                    ->query(fn (Builder $query) => $query->whereNull('account_id'))
+                    ->toggle()
+                    ->indicateUsing(fn (): string => "Hisobga bog'lanmagan to'lovlar"),
 
                 Filter::make('created_range')
                     ->form([
