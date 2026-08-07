@@ -54,9 +54,8 @@ class EmployeePayableService
         $price      = (float) $service->final_price;
         $commission = round($price * $rate / 100, 2);
 
-        $projTotal = (float) ($project->total_price ?? 0);
-        $projPaid  = (float) ($project->paid_amount ?? 0);
-        $paidRatio = $projTotal > 0 ? min(1, $projPaid / $projTotal) : 0;
+        $paidForService = $project ? self::paidAmountForService($service, $project) : 0.0;
+        $paidRatio      = $price > 0 ? min(1, $paidForService / $price) : 0;
 
         $commPaid      = round($commission * $paidRatio, 0);
         $commRemaining = max(0, $commission - $commPaid);
@@ -69,6 +68,46 @@ class EmployeePayableService
             'comm_paid'      => $commPaid,
             'comm_remaining' => $commRemaining,
         ];
+    }
+
+    /**
+     * Bitta xizmat uchun mijoz aniq qancha to'lagan — loyihaning UMUMIY
+     * to'langan foizidan farqli o'laroq (bu xatoga sabab bo'lgan edi: bitta
+     * xodimning to'liq to'langan ishi, loyihadagi BOSHQA xodimning hali
+     * to'lanmagan ishi tufayli sun'iy kamaytirilib yuborilardi). Har bir
+     * to'lov qaysi xizmat(lar) uchun ekani (Payment.services) bo'yicha,
+     * narxga mutanosib taqsimlanadi — "Loyiha tahrirlash" oynasidagi
+     * xizmatlar ro'yxatida ko'rsatiladigan foiz bilan AYNAN BIR XIL mantiq
+     * (ProjectEditModal::buildEiServices()).
+     */
+    public static function paidAmountForService(ProjectService $service, Project $project): float
+    {
+        $project->loadMissing(['services', 'payments']);
+
+        $priceMap = [];
+        foreach ($project->services as $s) {
+            $priceMap[$s->service_name] = (float) $s->final_price;
+        }
+
+        $paid = 0.0;
+        foreach ($project->payments as $pay) {
+            $svcs = $pay->services ?? [];
+            if (empty($svcs) || !in_array($service->service_name, $svcs, true)) {
+                continue;
+            }
+
+            $sumSel = 0.0;
+            foreach ($svcs as $sn) {
+                $sumSel += ($priceMap[$sn] ?? 0);
+            }
+
+            $sp    = $priceMap[$service->service_name] ?? 0;
+            $paid += $sumSel > 0
+                ? (float) $pay->amount * ($sp / $sumSel)
+                : (float) $pay->amount / count($svcs);
+        }
+
+        return $paid;
     }
 
     /**
