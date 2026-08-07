@@ -265,7 +265,7 @@ body:has(.bx-page-root) .fi-body{background:#191a1b !important}
     @endphp
     <div class="exp-panel">
         <div class="exp-head" style="cursor:default;flex-wrap:wrap">
-            <span class="exp-head-title">📆 Kun(lar) bo'yicha tushum</span>
+            <span class="exp-head-title">📆 Kun(lar) bo'yicha tushum <span style="font-size:10.5px;color:#64748b;font-weight:500">({{ $bxMonthLabel }} oyida ochilgan loyihalar)</span></span>
             <span style="font-size:11px;color:#64748b">Kimdan</span>
             <input type="date" wire:model.live="bxDayFrom" min="{{ $bxMonthStart }}" max="{{ $bxMonthEnd }}"
                    title="Faqat {{ $bxMonthLabel }} oyi ichidan tanlang"

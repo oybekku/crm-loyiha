@@ -435,8 +435,11 @@ class Buxgalteriya extends Page
 
         // Kun(lar) bo'yicha tushum — ixtiyoriy. Faqat "Kimdan" to'ldirilsa,
         // bitta kunlik natija; ikkalasi ham to'ldirilsa, oraliq (masalan
-        // 01.08 — 03.08) bo'yicha jami. To'lov sanasi (payment_date)
-        // bo'yicha hisoblanadi, joriy ko'rib turgan oy bilan cheklangan.
+        // 01.08 — 03.08) bo'yicha jami. To'lov sanasi (payment_date) bo'yicha
+        // hisoblanadi VA sahifaning yuqorisida tanlangan oy (loyiha ochilgan
+        // oyi) bilan bir xil qoidaga bo'ysunadi — aks holda boshqa oyda
+        // ochilgan loyihaga tegishli to'lov ham qo'shilib, "Jami balans" va
+        // boshqa ko'rsatkichlar bilan mos kelmay qolardi.
         $dayPayments = collect();
         $dayIncome   = null;
         if ($this->bxDayFrom) {
@@ -446,6 +449,7 @@ class Buxgalteriya extends Page
             $dayPayments = \App\Models\Payment::with('project')
                 ->whereDate('payment_date', '>=', $dayFrom)
                 ->whereDate('payment_date', '<=', $dayTo)
+                ->whereHas('project', fn ($q) => $q->whereYear('created_at', $year)->whereMonth('created_at', $month))
                 ->orderBy('payment_date')
                 ->orderByDesc('created_at')
                 ->get();
