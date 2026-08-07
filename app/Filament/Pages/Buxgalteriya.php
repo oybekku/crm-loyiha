@@ -86,6 +86,10 @@ class Buxgalteriya extends Page
         $date = \Carbon\Carbon::create($this->bxYear, $this->bxMonth, 1)->addMonths($delta);
         $this->bxYear  = (int) $date->year;
         $this->bxMonth = (int) $date->month;
+
+        // Oy o'zgarsa, avval tanlangan kun endi boshqa oyga tegishli bo'lib
+        // qolishi mumkin — chalkashlik bo'lmasligi uchun tozalaymiz.
+        $this->bxSelectedDay = null;
     }
 
     public function openAccountModal(?int $id = null): void

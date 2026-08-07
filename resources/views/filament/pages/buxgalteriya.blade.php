@@ -257,11 +257,17 @@ body:has(.bx-page-root) .fi-body{background:#191a1b !important}
     </div>
 
     {{-- ── Kun bo'yicha tushum — bitta sana tanlab, o'sha kunga tushgan
-         barcha to'lovlar yig'indisini ko'rish (oy filtridan mustaqil) ── --}}
+         barcha to'lovlar yig'indisini ko'rish (joriy ko'rib turgan oy
+         ichidagi kunlar bilan cheklangan — chalkashlik bo'lmasligi uchun) ── --}}
+    @php
+        $bxMonthStart = \Carbon\Carbon::create($bxYear, $bxMonth, 1)->toDateString();
+        $bxMonthEnd   = \Carbon\Carbon::create($bxYear, $bxMonth, 1)->endOfMonth()->toDateString();
+    @endphp
     <div class="exp-panel">
         <div class="exp-head" style="cursor:default">
             <span class="exp-head-title">📆 Kun bo'yicha tushum</span>
-            <input type="date" wire:model.live="bxSelectedDay"
+            <input type="date" wire:model.live="bxSelectedDay" min="{{ $bxMonthStart }}" max="{{ $bxMonthEnd }}"
+                   title="Faqat {{ $bxMonthLabel }} oyi ichidan tanlang"
                    style="background:#0d1117;border:1px solid #2a2a2e;color:#e2e8f0;border-radius:8px;padding:6px 10px;font-size:12.5px">
             @if($bxSelectedDay)
                 <span class="exp-head-total" style="color:#4ade80 !important">{{ number_format($dayIncome, 0, '.', ' ') }} so'm</span>
