@@ -6,12 +6,19 @@ use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
+use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 
-class MonthlyReportEmployeesSheet implements FromArray, WithTitle, WithStyles, WithColumnWidths
+/**
+ * WithStrictNullComparison — PhpSpreadsheet'ning fromArray() usulida
+ * standart holatda 0 (raqam) qiymati null bilan bir xil (==) solishtirilib,
+ * katak bo'sh qoldirilar edi (masalan "To'lanishi kerak: 0 so'm" butunlay
+ * yo'qolib qolardi). Bu interfeys qat'iy (===) solishtirishga o'tkazadi.
+ */
+class MonthlyReportEmployeesSheet implements FromArray, WithTitle, WithStyles, WithColumnWidths, WithStrictNullComparison
 {
     private array $rows = [];
     private array $employeeHeaderRows = [];
@@ -45,17 +52,18 @@ class MonthlyReportEmployeesSheet implements FromArray, WithTitle, WithStyles, W
             'K' => 16,
             'L' => 16,
             'M' => 16,
+            'N' => 16,
         ];
     }
 
     public function array(): array
     {
         // Title row
-        $this->rows[] = ["OYLIK HISOBOT — {$this->monthLabel}", '', '', '', '', '', '', '', '', '', '', '', ''];
+        $this->rows[] = ["OYLIK HISOBOT — {$this->monthLabel}", '', '', '', '', '', '', '', '', '', '', '', '', ''];
         $this->employeeHeaderRows[] = $this->currentRow;
         $this->currentRow++;
 
-        $this->rows[] = ['', '', '', '', '', '', '', '', '', '', '', '', ''];
+        $this->rows[] = ['', '', '', '', '', '', '', '', '', '', '', '', '', ''];
         $this->currentRow++;
 
         foreach ($this->userStats as $stat) {
@@ -66,15 +74,19 @@ class MonthlyReportEmployeesSheet implements FromArray, WithTitle, WithStyles, W
             $rate = $stat['services'][0]['rate'] ?? (float)($user->commission_rate ?? 20);
             $role = $user->role_name ?? ucfirst($user->role ?? '');
 
-            $advTotal   = (float)($stat['advance_total'] ?? 0);
-            $netPayable = (float)($stat['net_payable']   ?? max(0, ($stat['commission'] ?? 0) - $advTotal));
+            $advTotal          = (float)($stat['advance_total'] ?? 0);
+            $overpaid          = (float)($stat['overpaid'] ?? 0);
+            // "To'lanishi kerak" — Oylik hisobotdagi "To'liq ma'lumot" oynasi
+            // bilan AYNAN BIR XIL manba (allaqachon to'langani ayirilgan holda),
+            // eski "net_payable" (faqat komissiya − avans) bilan aralashtirilmasin.
+            $payableRemaining  = (float)($stat['payable_remaining'] ?? 0);
 
             // Employee header
             $this->rows[] = [
                 "Hodim: {$user->name}",
                 "Lavozim: {$role}",
                 "Ulush: {$rate}%",
-                '', '', '', '', '', '', '', '', '', '',
+                '', '', '', '', '', '', '', '', '', '', '',
             ];
             $this->employeeHeaderRows[] = $this->currentRow;
             $this->currentRow++;
@@ -93,7 +105,8 @@ class MonthlyReportEmployeesSheet implements FromArray, WithTitle, WithStyles, W
                 'To\'langan',
                 'Holat',
                 'Avans olingan',
-                'Qolgan to\'lov',
+                'Ortiqcha to\'langan',
+                'To\'lanishi kerak',
             ];
             $this->subheaderRows[] = $this->currentRow;
             $this->currentRow++;
@@ -127,7 +140,8 @@ class MonthlyReportEmployeesSheet implements FromArray, WithTitle, WithStyles, W
                     $paidAt,
                     $holat,
                     '', // avans — faqat total qatorida
-                    '', // qolgan — faqat total qatorida
+                    '', // ortiqcha to'langan — faqat total qatorida
+                    '', // to'lanishi kerak — faqat total qatorida
                 ];
                 $serviceTotal += (float)$srv['price'];
                 $commTotal    += (float)$srv['commission'];
@@ -143,13 +157,14 @@ class MonthlyReportEmployeesSheet implements FromArray, WithTitle, WithStyles, W
                 '', '',
                 'Avans: ' . ($advTotal > 0 ? number_format($advTotal, 0, '.', ' ') . " so'm" : '—'),
                 $advTotal > 0 ? $advTotal : '',
-                $netPayable,
+                $overpaid > 0 ? $overpaid : '',
+                $payableRemaining,
             ];
             $this->totalRows[] = $this->currentRow;
             $this->currentRow++;
 
             // Empty separator row
-            $this->rows[] = ['', '', '', '', '', '', '', '', '', '', '', '', ''];
+            $this->rows[] = ['', '', '', '', '', '', '', '', '', '', '', '', '', ''];
             $this->currentRow++;
         }
 
@@ -161,7 +176,7 @@ class MonthlyReportEmployeesSheet implements FromArray, WithTitle, WithStyles, W
         $styles = [];
 
         // Title row
-        $sheet->mergeCells('A1:M1');
+        $sheet->mergeCells('A1:N1');
         $styles[1] = [
             'font'      => ['bold' => true, 'size' => 14, 'color' => ['rgb' => 'FFFFFF']],
             'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '1D4ED8']],
@@ -171,7 +186,7 @@ class MonthlyReportEmployeesSheet implements FromArray, WithTitle, WithStyles, W
 
         foreach ($this->employeeHeaderRows as $row) {
             if ($row === 1) continue;
-            $sheet->mergeCells("A{$row}:M{$row}");
+            $sheet->mergeCells("A{$row}:N{$row}");
             $styles[$row] = [
                 'font' => ['bold' => true, 'size' => 11, 'color' => ['rgb' => '1E40AF']],
                 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'DBEAFE']],
@@ -201,7 +216,7 @@ class MonthlyReportEmployeesSheet implements FromArray, WithTitle, WithStyles, W
         $lastRow = $this->currentRow - 1;
         $sheet->getStyle("F3:F{$lastRow}")->getNumberFormat()->setFormatCode('#,##0');
         $sheet->getStyle("H3:H{$lastRow}")->getNumberFormat()->setFormatCode('#,##0');
-        $sheet->getStyle("L3:M{$lastRow}")->getNumberFormat()->setFormatCode('#,##0');
+        $sheet->getStyle("L3:N{$lastRow}")->getNumberFormat()->setFormatCode('#,##0');
 
         return $styles;
     }
