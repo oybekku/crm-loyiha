@@ -47,23 +47,24 @@ class MonthlyReportEmployeesSheet implements FromArray, WithTitle, WithStyles, W
             'F' => 14,
             'G' => 8,
             'H' => 14,
-            'I' => 13,
+            'I' => 14,
             'J' => 13,
-            'K' => 16,
+            'K' => 13,
             'L' => 16,
             'M' => 16,
             'N' => 16,
+            'O' => 16,
         ];
     }
 
     public function array(): array
     {
         // Title row
-        $this->rows[] = ["OYLIK HISOBOT — {$this->monthLabel}", '', '', '', '', '', '', '', '', '', '', '', '', ''];
+        $this->rows[] = ["OYLIK HISOBOT — {$this->monthLabel}", '', '', '', '', '', '', '', '', '', '', '', '', '', ''];
         $this->employeeHeaderRows[] = $this->currentRow;
         $this->currentRow++;
 
-        $this->rows[] = ['', '', '', '', '', '', '', '', '', '', '', '', '', ''];
+        $this->rows[] = ['', '', '', '', '', '', '', '', '', '', '', '', '', '', ''];
         $this->currentRow++;
 
         foreach ($this->userStats as $stat) {
@@ -86,7 +87,7 @@ class MonthlyReportEmployeesSheet implements FromArray, WithTitle, WithStyles, W
                 "Hodim: {$user->name}",
                 "Lavozim: {$role}",
                 "Ulush: {$rate}%",
-                '', '', '', '', '', '', '', '', '', '', '',
+                '', '', '', '', '', '', '', '', '', '', '', '',
             ];
             $this->employeeHeaderRows[] = $this->currentRow;
             $this->currentRow++;
@@ -101,8 +102,9 @@ class MonthlyReportEmployeesSheet implements FromArray, WithTitle, WithStyles, W
                 'Narx (so\'m)',
                 'Foiz',
                 'Ulush (so\'m)',
+                'To\'landi (so\'m)',
                 'Muddat',
-                'To\'langan',
+                'Tugatilgan',
                 'Holat',
                 'Avans olingan',
                 'Ortiqcha to\'langan',
@@ -112,8 +114,9 @@ class MonthlyReportEmployeesSheet implements FromArray, WithTitle, WithStyles, W
             $this->currentRow++;
 
             // Service rows
-            $serviceTotal = 0.0;
-            $commTotal    = 0.0;
+            $serviceTotal  = 0.0;
+            $commTotal     = 0.0;
+            $commPaidTotal = 0.0;
 
             foreach ($stat['services'] as $j => $srv) {
                 $deadline = $srv['deadline_date'] ? $srv['deadline_date']->format('d.m.Y') : '—';
@@ -136,6 +139,10 @@ class MonthlyReportEmployeesSheet implements FromArray, WithTitle, WithStyles, W
                     (float)$srv['price'],
                     ($srv['rate'] ?? $rate) > 0 ? "{$srv['rate']}%" : '—',
                     (float)$srv['commission'],
+                    // Har bir loyiha bo'yicha ALOHIDA to'langan ulush — sahifadagi
+                    // "To'liq ma'lumot" oynasidagi har qatordagi "To'landi" (yashil)
+                    // ustuni bilan AYNAN BIR XIL (mijoz to'lagan ulushga mutanosib).
+                    (float)($srv['comm_paid'] ?? 0),
                     $deadline,
                     $paidAt,
                     $holat,
@@ -143,8 +150,9 @@ class MonthlyReportEmployeesSheet implements FromArray, WithTitle, WithStyles, W
                     '', // ortiqcha to'langan — faqat total qatorida
                     '', // to'lanishi kerak — faqat total qatorida
                 ];
-                $serviceTotal += (float)$srv['price'];
-                $commTotal    += (float)$srv['commission'];
+                $serviceTotal  += (float)$srv['price'];
+                $commTotal     += (float)$srv['commission'];
+                $commPaidTotal += (float)($srv['comm_paid'] ?? 0);
                 $this->currentRow++;
             }
 
@@ -154,6 +162,7 @@ class MonthlyReportEmployeesSheet implements FromArray, WithTitle, WithStyles, W
                 $serviceTotal,
                 '',
                 $commTotal,
+                $commPaidTotal,
                 '', '',
                 'Avans: ' . ($advTotal > 0 ? number_format($advTotal, 0, '.', ' ') . " so'm" : '—'),
                 $advTotal > 0 ? $advTotal : '',
@@ -164,7 +173,7 @@ class MonthlyReportEmployeesSheet implements FromArray, WithTitle, WithStyles, W
             $this->currentRow++;
 
             // Empty separator row
-            $this->rows[] = ['', '', '', '', '', '', '', '', '', '', '', '', '', ''];
+            $this->rows[] = ['', '', '', '', '', '', '', '', '', '', '', '', '', '', ''];
             $this->currentRow++;
         }
 
@@ -176,7 +185,7 @@ class MonthlyReportEmployeesSheet implements FromArray, WithTitle, WithStyles, W
         $styles = [];
 
         // Title row
-        $sheet->mergeCells('A1:N1');
+        $sheet->mergeCells('A1:O1');
         $styles[1] = [
             'font'      => ['bold' => true, 'size' => 14, 'color' => ['rgb' => 'FFFFFF']],
             'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '1D4ED8']],
@@ -186,7 +195,7 @@ class MonthlyReportEmployeesSheet implements FromArray, WithTitle, WithStyles, W
 
         foreach ($this->employeeHeaderRows as $row) {
             if ($row === 1) continue;
-            $sheet->mergeCells("A{$row}:N{$row}");
+            $sheet->mergeCells("A{$row}:O{$row}");
             $styles[$row] = [
                 'font' => ['bold' => true, 'size' => 11, 'color' => ['rgb' => '1E40AF']],
                 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'DBEAFE']],
@@ -215,8 +224,8 @@ class MonthlyReportEmployeesSheet implements FromArray, WithTitle, WithStyles, W
         // Number format for price columns
         $lastRow = $this->currentRow - 1;
         $sheet->getStyle("F3:F{$lastRow}")->getNumberFormat()->setFormatCode('#,##0');
-        $sheet->getStyle("H3:H{$lastRow}")->getNumberFormat()->setFormatCode('#,##0');
-        $sheet->getStyle("L3:N{$lastRow}")->getNumberFormat()->setFormatCode('#,##0');
+        $sheet->getStyle("H3:I{$lastRow}")->getNumberFormat()->setFormatCode('#,##0');
+        $sheet->getStyle("M3:O{$lastRow}")->getNumberFormat()->setFormatCode('#,##0');
 
         return $styles;
     }
