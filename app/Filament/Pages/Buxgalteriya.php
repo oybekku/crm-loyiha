@@ -49,9 +49,10 @@ class Buxgalteriya extends Page
     public ?int $bxYear  = null;
     public ?int $bxMonth = null;
 
-    // ── Kun bo'yicha tushum (ixtiyoriy — bitta sanani tanlab, o'sha kunda
-    //    kirgan to'lovlar yig'indisini ko'rish uchun) ──
-    public ?string $bxSelectedDay = null;
+    // ── Kun(lar) bo'yicha tushum (ixtiyoriy) — faqat "Kimdan" to'ldirilsa,
+    //    bitta kunlik natija; ikkalasi ham to'ldirilsa, oraliq bo'yicha jami. ──
+    public ?string $bxDayFrom = null;
+    public ?string $bxDayTo   = null;
 
     // ── Xarajat qo'shish/tahrirlash oynasi ──
     public bool   $showExpenseModal = false;
@@ -87,9 +88,16 @@ class Buxgalteriya extends Page
         $this->bxYear  = (int) $date->year;
         $this->bxMonth = (int) $date->month;
 
-        // Oy o'zgarsa, avval tanlangan kun endi boshqa oyga tegishli bo'lib
-        // qolishi mumkin — chalkashlik bo'lmasligi uchun tozalaymiz.
-        $this->bxSelectedDay = null;
+        // Oy o'zgarsa, avval tanlangan kun(lar) endi boshqa oyga tegishli
+        // bo'lib qolishi mumkin — chalkashlik bo'lmasligi uchun tozalaymiz.
+        $this->bxDayFrom = null;
+        $this->bxDayTo   = null;
+    }
+
+    public function bxClearDayFilter(): void
+    {
+        $this->bxDayFrom = null;
+        $this->bxDayTo   = null;
     }
 
     public function openAccountModal(?int $id = null): void
@@ -425,14 +433,20 @@ class Buxgalteriya extends Page
             }
         }
 
-        // Kun bo'yicha tushum — ixtiyoriy, alohida bir sana tanlanganda o'sha
-        // kunda kirgan (to'lov sanasi bo'yicha) barcha to'lovlar yig'indisi.
-        // Oy filtridan mustaqil — istalgan oydagi/kundagi to'lovni ko'rish uchun.
+        // Kun(lar) bo'yicha tushum — ixtiyoriy. Faqat "Kimdan" to'ldirilsa,
+        // bitta kunlik natija; ikkalasi ham to'ldirilsa, oraliq (masalan
+        // 01.08 — 03.08) bo'yicha jami. To'lov sanasi (payment_date)
+        // bo'yicha hisoblanadi, joriy ko'rib turgan oy bilan cheklangan.
         $dayPayments = collect();
         $dayIncome   = null;
-        if ($this->bxSelectedDay) {
+        if ($this->bxDayFrom) {
+            $dayFrom = $this->bxDayFrom;
+            $dayTo   = $this->bxDayTo ?: $this->bxDayFrom;
+
             $dayPayments = \App\Models\Payment::with('project')
-                ->whereDate('payment_date', $this->bxSelectedDay)
+                ->whereDate('payment_date', '>=', $dayFrom)
+                ->whereDate('payment_date', '<=', $dayTo)
+                ->orderBy('payment_date')
                 ->orderByDesc('created_at')
                 ->get();
             $dayIncome = (float) $dayPayments->sum('amount');

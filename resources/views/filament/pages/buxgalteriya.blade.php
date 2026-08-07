@@ -256,25 +256,30 @@ body:has(.bx-page-root) .fi-body{background:#191a1b !important}
         <input type="file" x-ref="bgFileInput" wire:model="bgUpload" accept="image/*" style="display:none">
     </div>
 
-    {{-- ── Kun bo'yicha tushum — bitta sana tanlab, o'sha kunga tushgan
-         barcha to'lovlar yig'indisini ko'rish (joriy ko'rib turgan oy
-         ichidagi kunlar bilan cheklangan — chalkashlik bo'lmasligi uchun) ── --}}
+    {{-- ── Kun(lar) bo'yicha tushum — bitta sana yoki sana oralig'ini tanlab,
+         o'sha davrga tushgan barcha to'lovlar yig'indisini ko'rish (joriy
+         ko'rib turgan oy ichidagi kunlar bilan cheklangan) ── --}}
     @php
         $bxMonthStart = \Carbon\Carbon::create($bxYear, $bxMonth, 1)->toDateString();
         $bxMonthEnd   = \Carbon\Carbon::create($bxYear, $bxMonth, 1)->endOfMonth()->toDateString();
     @endphp
     <div class="exp-panel">
-        <div class="exp-head" style="cursor:default">
-            <span class="exp-head-title">📆 Kun bo'yicha tushum</span>
-            <input type="date" wire:model.live="bxSelectedDay" min="{{ $bxMonthStart }}" max="{{ $bxMonthEnd }}"
+        <div class="exp-head" style="cursor:default;flex-wrap:wrap">
+            <span class="exp-head-title">📆 Kun(lar) bo'yicha tushum</span>
+            <span style="font-size:11px;color:#64748b">Kimdan</span>
+            <input type="date" wire:model.live="bxDayFrom" min="{{ $bxMonthStart }}" max="{{ $bxMonthEnd }}"
                    title="Faqat {{ $bxMonthLabel }} oyi ichidan tanlang"
                    style="background:#0d1117;border:1px solid #2a2a2e;color:#e2e8f0;border-radius:8px;padding:6px 10px;font-size:12.5px">
-            @if($bxSelectedDay)
+            <span style="font-size:11px;color:#64748b">Kimgacha</span>
+            <input type="date" wire:model.live="bxDayTo" min="{{ $bxMonthStart }}" max="{{ $bxMonthEnd }}"
+                   title="Bo'sh qoldirsangiz — faqat 'Kimdan' kuni hisoblanadi"
+                   style="background:#0d1117;border:1px solid #2a2a2e;color:#e2e8f0;border-radius:8px;padding:6px 10px;font-size:12.5px">
+            @if($bxDayFrom)
                 <span class="exp-head-total" style="color:#4ade80 !important">{{ number_format($dayIncome, 0, '.', ' ') }} so'm</span>
-                <button wire:click="$set('bxSelectedDay', null)" style="background:transparent;border:none;color:#64748b;cursor:pointer;font-size:16px;line-height:1;flex-shrink:0" title="Tozalash">✕</button>
+                <button wire:click="bxClearDayFilter" style="background:transparent;border:none;color:#64748b;cursor:pointer;font-size:16px;line-height:1;flex-shrink:0" title="Tozalash">✕</button>
             @endif
         </div>
-        @if($bxSelectedDay)
+        @if($bxDayFrom)
         <div class="exp-list">
             @forelse($dayPayments as $pay)
             <div class="exp-row">
@@ -284,11 +289,11 @@ body:has(.bx-page-root) .fi-body{background:#191a1b !important}
                 <span class="exp-amount" style="color:#4ade80 !important">+ {{ number_format($pay->amount, 0, '.', ' ') }} so'm</span>
             </div>
             @empty
-            <div class="exp-empty">Bu kunda to'lov bo'lmagan</div>
+            <div class="exp-empty">Bu davrda to'lov bo'lmagan</div>
             @endforelse
         </div>
         @else
-        <div style="padding:0 18px 16px;font-size:12px;color:#64748b">Sanani tanlang — o'sha kundagi tushumlar shu yerda ko'rinadi.</div>
+        <div style="padding:0 18px 16px;font-size:12px;color:#64748b">Sanani tanlang — o'sha kun(lar)dagi tushumlar shu yerda ko'rinadi.</div>
         @endif
     </div>
 
