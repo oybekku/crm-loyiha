@@ -49,6 +49,10 @@ class Buxgalteriya extends Page
     public ?int $bxYear  = null;
     public ?int $bxMonth = null;
 
+    // ── Kun bo'yicha tushum (ixtiyoriy — bitta sanani tanlab, o'sha kunda
+    //    kirgan to'lovlar yig'indisini ko'rish uchun) ──
+    public ?string $bxSelectedDay = null;
+
     // ── Xarajat qo'shish/tahrirlash oynasi ──
     public bool   $showExpenseModal = false;
     public ?int   $editExpenseId    = null;
@@ -417,6 +421,19 @@ class Buxgalteriya extends Page
             }
         }
 
+        // Kun bo'yicha tushum — ixtiyoriy, alohida bir sana tanlanganda o'sha
+        // kunda kirgan (to'lov sanasi bo'yicha) barcha to'lovlar yig'indisi.
+        // Oy filtridan mustaqil — istalgan oydagi/kundagi to'lovni ko'rish uchun.
+        $dayPayments = collect();
+        $dayIncome   = null;
+        if ($this->bxSelectedDay) {
+            $dayPayments = \App\Models\Payment::with('project')
+                ->whereDate('payment_date', $this->bxSelectedDay)
+                ->orderByDesc('created_at')
+                ->get();
+            $dayIncome = (float) $dayPayments->sum('amount');
+        }
+
         // Shartnoma bo'yicha statistika (Bosh sahifadagi "Moliyaviy statistika"
         // bilan bir xil hisob-kitob) — loyiha shu oyda OCHILGAN bo'lsa hisobga
         // olinadi. Bu — "Jami balans"dan farqli o'laroq, mijoz hali to'lamagan
@@ -489,6 +506,8 @@ class Buxgalteriya extends Page
             'expenses'         => $expenses,
             'expenseAccountId' => $expenseAccountId,
             'commissionSourceId' => $commissionSourceId ?? null,
+            'dayPayments'      => $dayPayments,
+            'dayIncome'        => $dayIncome,
             'transfers'        => $transfers,
             'allAccounts'      => FinancialAccount::orderBy('name')->get(),
             'contractTotal'    => $contractTotal,

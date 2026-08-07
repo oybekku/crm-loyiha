@@ -256,6 +256,36 @@ body:has(.bx-page-root) .fi-body{background:#191a1b !important}
         <input type="file" x-ref="bgFileInput" wire:model="bgUpload" accept="image/*" style="display:none">
     </div>
 
+    {{-- ── Kun bo'yicha tushum — bitta sana tanlab, o'sha kunga tushgan
+         barcha to'lovlar yig'indisini ko'rish (oy filtridan mustaqil) ── --}}
+    <div class="exp-panel">
+        <div class="exp-head" style="cursor:default">
+            <span class="exp-head-title">📆 Kun bo'yicha tushum</span>
+            <input type="date" wire:model.live="bxSelectedDay"
+                   style="background:#0d1117;border:1px solid #2a2a2e;color:#e2e8f0;border-radius:8px;padding:6px 10px;font-size:12.5px">
+            @if($bxSelectedDay)
+                <span class="exp-head-total" style="color:#4ade80 !important">{{ number_format($dayIncome, 0, '.', ' ') }} so'm</span>
+                <button wire:click="$set('bxSelectedDay', null)" style="background:transparent;border:none;color:#64748b;cursor:pointer;font-size:16px;line-height:1;flex-shrink:0" title="Tozalash">✕</button>
+            @endif
+        </div>
+        @if($bxSelectedDay)
+        <div class="exp-list">
+            @forelse($dayPayments as $pay)
+            <div class="exp-row">
+                <span class="exp-date">{{ $pay->payment_date?->format('d.m.Y') }}</span>
+                <span class="exp-acc-badge">{{ \App\Models\Payment::methodOptions()[$pay->method] ?? $pay->method }}</span>
+                <span class="exp-comment">{{ $pay->project?->number }} — {{ $pay->project?->owner_name }}</span>
+                <span class="exp-amount" style="color:#4ade80 !important">+ {{ number_format($pay->amount, 0, '.', ' ') }} so'm</span>
+            </div>
+            @empty
+            <div class="exp-empty">Bu kunda to'lov bo'lmagan</div>
+            @endforelse
+        </div>
+        @else
+        <div style="padding:0 18px 16px;font-size:12px;color:#64748b">Sanani tanlang — o'sha kundagi tushumlar shu yerda ko'rinadi.</div>
+        @endif
+    </div>
+
     {{-- ── Xarajatlar (rasxodlar) — svernut qilinadigan ro'yxat ── --}}
     <div class="exp-panel" x-data="{ open: false }">
         <div class="exp-head" @click="open = !open">
