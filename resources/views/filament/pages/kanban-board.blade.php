@@ -2419,7 +2419,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
      ochilishi mumkin bo'lgani uchun undan balandroq bo'lishi shart, aks holda
      orqada qolib, tugmalari bosilmay qoladi. --}}
 @if($showEditPaymentModal)
-@php $editPmt = \App\Models\Payment::with('project')->find($editPaymentId); @endphp
+@php $editPmt = \App\Models\Payment::with('project.services')->find($editPaymentId); @endphp
 <div style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1500;display:flex;align-items:center;justify-content:center;padding:16px">
     <div style="background:#fff;border-radius:14px;width:100%;max-width:380px;max-height:90vh;overflow-y:auto;padding:24px;box-shadow:0 25px 80px rgba(0,0,0,.3)" wire:click.stop>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
@@ -2482,6 +2482,29 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
         <div style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;margin-bottom:14px">
             <span style="font-size:14px">⚠️</span>
             <span style="font-size:11.5px;color:#92400e !important">Bu to'lov hozircha hech qaysi hisobga bog'lanmagan — Buxgalteriyada ko'rinmayapti. Yuqoridan hisob tanlab, saqlang.</span>
+        </div>
+        @endif
+        @if($editPmt && $editPmt->project && $editPmt->project->services->count())
+        <div style="margin-bottom:14px">
+            <label style="font-size:12px;font-weight:500;color:#374151;display:block;margin-bottom:6px">Qaysi xizmat uchun to'lov?</label>
+            @if(empty($editPaymentServices))
+            <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;margin-bottom:8px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px">
+                <span style="font-size:12px">⚠️</span>
+                <span style="font-size:11.5px;color:#b91c1c !important">Bu to'lov hech qaysi xizmatga bog'lanmagan — komissiya hisobida ko'rinmaydi.</span>
+            </div>
+            @endif
+            <div style="display:flex;flex-direction:column;gap:6px">
+                @foreach($editPmt->project->services as $esvc)
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:#111827 !important;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:8px 12px">
+                    <input type="checkbox"
+                           wire:model.live="editPaymentServices"
+                           value="{{ $esvc->service_name }}"
+                           style="width:15px;height:15px;cursor:pointer;accent-color:#2563eb">
+                    <span style="font-weight:600;color:#111827 !important">{{ \App\Models\Project::serviceOptions()[$esvc->service_name] ?? $esvc->service_name }}</span>
+                    <span style="margin-left:auto;font-size:12px;color:#6b7280 !important">{{ number_format($esvc->final_price, 0, '.', ' ') }} so'm</span>
+                </label>
+                @endforeach
+            </div>
         </div>
         @endif
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">

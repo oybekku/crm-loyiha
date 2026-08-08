@@ -99,6 +99,7 @@ class KanbanBoard extends Page
     public string $editPaymentAmount    = '';
     public string $editPaymentMethod    = 'naqd';
     public ?int   $editPaymentAccountId = null;
+    public array  $editPaymentServices  = []; // tanlangan xizmatlar
 
     // To'lovni o'chirish (PIN kod bilan)
     public bool   $showDeletePaymentModal = false;
@@ -988,6 +989,7 @@ class KanbanBoard extends Page
         $this->editPaymentAmount    = (string)(float)$payment->amount;
         $this->editPaymentMethod    = $payment->method ?: 'naqd';
         $this->editPaymentAccountId = $payment->account_id;
+        $this->editPaymentServices  = $payment->services ?? [];
         $this->showEditPaymentModal = true;
     }
 
@@ -998,6 +1000,7 @@ class KanbanBoard extends Page
         $this->editPaymentAmount    = '';
         $this->editPaymentMethod    = 'naqd';
         $this->editPaymentAccountId = null;
+        $this->editPaymentServices  = [];
     }
 
     // To'lov usuli o'zgarsa — eski hisob boshqa turga tegishli bo'lib
@@ -1031,7 +1034,10 @@ class KanbanBoard extends Page
         $accountChanged = $payment->method !== $this->editPaymentMethod
             || $payment->account_id !== $this->editPaymentAccountId;
 
-        if ($oldAmount === $newAmount && !$accountChanged) {
+        $newServices     = !empty($this->editPaymentServices) ? array_values($this->editPaymentServices) : null;
+        $servicesChanged = ($payment->services ?? null) !== $newServices;
+
+        if ($oldAmount === $newAmount && !$accountChanged && !$servicesChanged) {
             $this->closeEditPayment();
             return;
         }
@@ -1040,6 +1046,7 @@ class KanbanBoard extends Page
             'amount'     => $newAmount,
             'method'     => $this->editPaymentMethod,
             'account_id' => $this->editPaymentAccountId,
+            'services'   => $newServices,
         ]);
 
         PaymentLog::create([
