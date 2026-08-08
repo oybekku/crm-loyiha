@@ -8,6 +8,15 @@ class Dashboard extends \Filament\Pages\Dashboard
     protected ?string $heading    = '';
     protected ?string $subheading = '';
 
+    // Xisobchi umumiy Dashboard'ni (moliyaviy vidjetlar bilan) umuman
+    // ko'rmasligi kerak — o'zining "Yangi loyihalar" navbatiga yo'naltiriladi.
+    public function mount(): void
+    {
+        if (auth()->user()?->isHisobchi()) {
+            redirect(XisobchiQueue::getUrl())->send();
+        }
+    }
+
     public function getColumns(): int | array
     {
         return 1;

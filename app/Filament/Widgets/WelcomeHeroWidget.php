@@ -14,6 +14,13 @@ class WelcomeHeroWidget extends Widget
     protected int|string|array $columnSpan = 'full';
     protected static ?int $sort = -2;
 
+    // Xisobchi faqat "Yangi loyihalar (DIDOX)" navbatini ko'rishi kerak —
+    // moliyaviy umumiy statistika unga ko'rinmasligi shart.
+    public static function canView(): bool
+    {
+        return !(auth()->user()?->isHisobchi() ?? false);
+    }
+
     // Tanlangan davr (oy/yil) — loyihalar ochilgan oyiga qarab filtrlanadi
     public ?int $selYear  = null;
     public ?int $selMonth = null;
