@@ -13,7 +13,7 @@ class Dashboard extends \Filament\Pages\Dashboard
     public function mount(): void
     {
         if (auth()->user()?->isHisobchi()) {
-            redirect(XisobchiQueue::getUrl())->send();
+            $this->redirect(XisobchiQueue::getUrl());
         }
     }
 
