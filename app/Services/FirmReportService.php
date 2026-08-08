@@ -74,12 +74,12 @@ class FirmReportService
 
         uasort($employeeComm, fn ($a, $b) => $b['commission'] <=> $a['commission']);
 
-        // Umumiy loyihalar (barcha)
-        $allProjectsCount = (int)   Project::count();
-        $allProjectsSum   = (float) Project::sum('total_price');
+        // Umumiy loyihalar (barcha) — vaqtincha to'xtatilganlar statistikadan chiqarilgan
+        $allProjectsCount = (int)   Project::excludePaused()->count();
+        $allProjectsSum   = (float) Project::excludePaused()->sum('total_price');
 
         // Qilinmagan (arxivda emas) loyihalar
-        $pendingQuery = Project::whereNotIn('status', $archiveStatuses);
+        $pendingQuery = Project::whereNotIn('status', $archiveStatuses)->excludePaused();
         $pendingSum   = (float) (clone $pendingQuery)->sum('total_price');
         $pendingPaid  = (float) (clone $pendingQuery)->sum('paid_amount');
         $pendingDebt  = $pendingSum - $pendingPaid;

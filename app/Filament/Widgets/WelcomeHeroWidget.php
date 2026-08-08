@@ -73,8 +73,11 @@ class WelcomeHeroWidget extends Widget
 
         // Tanlangan oy/yil bo'yicha — loyiha OCHILGAN (created_at) oyiga qarab.
         // Shu sababli o'tgan oy loyihalari keyingi oyga "o'tmaydi" (har oy alohida).
+        // Vaqtincha to'xtatilgan ("o'lik") loyihalar statistikaga kirmaydi —
+        // ular Kanban board'da ko'rinishda qoladi, lekin hisobotlarga qo'shilmaydi.
         $baseQuery->whereYear('created_at', $this->selYear)
-                  ->whereMonth('created_at', $this->selMonth);
+                  ->whereMonth('created_at', $this->selMonth)
+                  ->excludePaused();
 
         // Arxiv (yakunlangan) bosqichlar — bazadan olinadi, shu sababli yangi status
         // qo'shilsa/o'zgarsa ham statistika hisoblagichlari avtomatik to'g'ri qoladi.
@@ -118,7 +121,7 @@ class WelcomeHeroWidget extends Widget
             // loyihalar diqqat talab ishlarда ko'rinmaydi
             ->whereHas('project', fn ($q) => $q
                 ->whereNotIn('status', array_merge($archiveStatuses, ['tolov_jarayonida', 'tolangan']))
-                ->whereNull('timer_paused_at')
+                ->excludePaused()
                 ->whereYear('created_at', $this->selYear)
                 ->whereMonth('created_at', $this->selMonth))
             ->with(['project:id,number,owner_name,status', 'assignedUser:id,name']);

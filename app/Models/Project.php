@@ -261,6 +261,16 @@ class Project extends Model
         ];
     }
 
+    // Vaqtincha to'xtatilgan ("o'lik") loyihalarni statistikadan chiqarib
+    // tashlash uchun — Dashboard, Oylik hisobot, Buxgalteriya va shu kabi
+    // umumiy hisobotlarda qo'llanadi. Kanban board va tahrirlash oynasi
+    // buni ATAYLAB qo'llamaydi — u yerda to'xtatilgan loyiha ham ko'rinishi
+    // va boshqarilishi kerak.
+    public function scopeExcludePaused($query)
+    {
+        return $query->whereNull('timer_paused_at');
+    }
+
     public static function categoryOptions(): array
     {
         return [

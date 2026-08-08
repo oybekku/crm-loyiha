@@ -601,6 +601,7 @@ class MonthlyReport extends Page
 
         // Qilinmagan ishlar — shu oyda OCHILGAN, arxivda emas, hali tugallanmagan
         $pendingQuery         = Project::whereNotIn('status', $archiveStatuses)
+            ->excludePaused()
             ->whereYear('created_at', $year)->whereMonth('created_at', $month);
         $pendingProjectsSum   = (float) (clone $pendingQuery)->sum('total_price');
         $pendingProjectsPaid  = (float) (clone $pendingQuery)->sum('paid_amount');
@@ -695,6 +696,7 @@ class MonthlyReport extends Page
         // ══ MyGOV — kim orqali kelgan (FISH bo'yicha), loyiha ochilgan oyга ══
         $mygovData = \App\Models\Project::whereNotNull('mygov_fish')
             ->where('mygov_fish', '!=', '')
+            ->excludePaused()
             ->whereYear('created_at', $normYear)
             ->get(['mygov_fish', 'created_at']);
         $mygovCounts = []; // [fish][oy] => son
@@ -715,8 +717,8 @@ class MonthlyReport extends Page
 
 
         // Umumiy loyihalar — shu oyda ochilgan barcha loyihalar
-        $allProjectsCount = (int)   Project::whereYear('created_at', $year)->whereMonth('created_at', $month)->count();
-        $allProjectsSum   = (float) Project::whereYear('created_at', $year)->whereMonth('created_at', $month)->sum('total_price');
+        $allProjectsCount = (int)   Project::excludePaused()->whereYear('created_at', $year)->whereMonth('created_at', $month)->count();
+        $allProjectsSum   = (float) Project::excludePaused()->whereYear('created_at', $year)->whereMonth('created_at', $month)->sum('total_price');
 
         return compact(
             'userStats', 'warnings', 'projects',

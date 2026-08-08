@@ -460,7 +460,7 @@ class Buxgalteriya extends Page
         // bilan bir xil hisob-kitob) — loyiha shu oyda OCHILGAN bo'lsa hisobga
         // olinadi. Bu — "Jami balans"dan farqli o'laroq, mijoz hali to'lamagan
         // qismini ham ko'rsatadi (naqd pul emas, shartnoma qiymati).
-        $contractQuery = Project::whereYear('created_at', $year)->whereMonth('created_at', $month);
+        $contractQuery = Project::excludePaused()->whereYear('created_at', $year)->whereMonth('created_at', $month);
         $contractTotal = (float) (clone $contractQuery)->sum('total_price');
         $contractPaid  = (float) (clone $contractQuery)->sum('paid_amount');
         $contractDebt  = $contractTotal - $contractPaid;
