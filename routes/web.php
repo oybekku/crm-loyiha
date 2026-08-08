@@ -171,6 +171,21 @@ Route::middleware(['auth'])->group(function () {
         ]);
     })->name('print.project.rozilik');
 
+    // DIDOX shartnoma (PDF — HTML shablondan dompdf orqali, avtomat to'ldiriladi,
+    // shartnoma narxi loyiha summasidan mustaqil, doim qat'iy 250 000 so'm)
+    Route::get('/print/project/{project}/didox', function (\App\Models\Project $project) {
+        $html   = view('print.didox-shartnoma', compact('project'))->render();
+        $dompdf = new \Dompdf\Dompdf();
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->loadHtml($html, 'UTF-8');
+        $dompdf->render();
+        $fname = 'shartnoma-didox-' . ($project->seq_no ?: $project->id) . '.pdf';
+        return response($dompdf->output(), 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $fname . '"',
+        ]);
+    })->name('print.project.didox');
+
     // ── PDF ga qo'lda pechat urish (faqat admin) ──
     Route::get('/pechat/{file}', function (\App\Models\ProjectFile $file) {
         abort_unless(auth()->user()?->isAdmin(), 403);
