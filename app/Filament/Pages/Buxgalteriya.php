@@ -6,7 +6,6 @@ use App\Models\AccountTransfer;
 use App\Models\Expense;
 use App\Models\FinancialAccount;
 use App\Models\Project;
-use App\Services\EmployeePayableService;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Storage;
@@ -409,29 +408,10 @@ class Buxgalteriya extends Page
         $year  = $this->bxYear;
         $month = $this->bxMonth;
 
-        // Xodimlar komissiyasi ("To'lanishi kerak" — Oylik hisobotdagi bilan bir
-        // xil formula, EmployeePayableService) "Xarajatlar hisobi" deb belgilangan
-        // hisobga real Xarajat qatori sifatida yozib/yangilab qo'yiladi — shu bilan
-        // o'sha hisobning balansi va umumiy xarajat/balans summalari doim Oylik
-        // hisobot bilan sinxron bo'ladi (aksincha, saqlab qo'yish shart emas —
-        // sahifa har ochilganda qayta hisoblanadi).
-        $expenseAccountId = FinancialAccount::where('is_expense_account', true)->value('id');
-        if ($expenseAccountId) {
-            EmployeePayableService::syncExpenses(sprintf('%04d-%02d', $year, $month), $expenseAccountId);
-
-            // Komissiya real qaysi hisobdan (masalan "Naqd pul") to'langanini
-            // aks ettirish uchun — o'sha hisobdan Xarajatlar hisobiga avtomatik
-            // o'tkazma yoziladi. "Komissiya manba hisobi" belgilanmagan bo'lsa
-            // hech narsa qilinmaydi (eski xatti-harakat saqlanadi).
-            $commissionSourceId = FinancialAccount::where('is_commission_source', true)->value('id');
-            if ($commissionSourceId) {
-                EmployeePayableService::syncCommissionTransfer(
-                    sprintf('%04d-%02d', $year, $month),
-                    $commissionSourceId,
-                    $expenseAccountId
-                );
-            }
-        }
+        // Xodimlar komissiyasi ENDI avtomatik xarajat sifatida yozilmaydi —
+        // admin so'rovi bilan o'chirildi (hali real oylik BERILMAGAN bo'lsa
+        // ham "xarajat" deb ko'rsatib, chalkashtirar edi). Endi oylik/komissiya
+        // faqat admin o'zi "Xarajat qo'shish" orqali REAL to'laganda kiritiladi.
 
         // Kun(lar) bo'yicha tushum — ixtiyoriy. Faqat "Kimdan" to'ldirilsa,
         // bitta kunlik natija; ikkalasi ham to'ldirilsa, oraliq (masalan
