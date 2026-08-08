@@ -412,6 +412,10 @@ class Buxgalteriya extends Page
         // admin so'rovi bilan o'chirildi (hali real oylik BERILMAGAN bo'lsa
         // ham "xarajat" deb ko'rsatib, chalkashtirar edi). Endi oylik/komissiya
         // faqat admin o'zi "Xarajat qo'shish" orqali REAL to'laganda kiritiladi.
+        // Bu ikkala ID hali ham UI'da tegishli hisob kartasini belgilash
+        // (badge) uchun ishlatiladi.
+        $expenseAccountId   = FinancialAccount::where('is_expense_account', true)->value('id');
+        $commissionSourceId = FinancialAccount::where('is_commission_source', true)->value('id');
 
         // Kun(lar) bo'yicha tushum — ixtiyoriy. Faqat "Kimdan" to'ldirilsa,
         // bitta kunlik natija; ikkalasi ham to'ldirilsa, oraliq (masalan
