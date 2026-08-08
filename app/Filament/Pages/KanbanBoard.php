@@ -97,6 +97,7 @@ class KanbanBoard extends Page
     public bool   $showEditPaymentModal = false;
     public int    $editPaymentId        = 0;
     public string $editPaymentAmount    = '';
+    public string $editPaymentDate      = '';
     public string $editPaymentMethod    = 'naqd';
     public ?int   $editPaymentAccountId = null;
     public array  $editPaymentServices  = []; // tanlangan xizmatlar
@@ -987,6 +988,7 @@ class KanbanBoard extends Page
         if (!$payment) return;
         $this->editPaymentId        = $paymentId;
         $this->editPaymentAmount    = (string)(float)$payment->amount;
+        $this->editPaymentDate      = $payment->payment_date?->format('Y-m-d') ?? now()->format('Y-m-d');
         $this->editPaymentMethod    = $payment->method ?: 'naqd';
         $this->editPaymentAccountId = $payment->account_id;
         $this->editPaymentServices  = $payment->services ?? [];
@@ -998,6 +1000,7 @@ class KanbanBoard extends Page
         $this->showEditPaymentModal = false;
         $this->editPaymentId        = 0;
         $this->editPaymentAmount    = '';
+        $this->editPaymentDate      = '';
         $this->editPaymentMethod    = 'naqd';
         $this->editPaymentAccountId = null;
         $this->editPaymentServices  = [];
@@ -1017,11 +1020,13 @@ class KanbanBoard extends Page
         $this->validate(
             [
                 'editPaymentAmount'    => 'required|numeric|min:1',
+                'editPaymentDate'      => 'required|date',
                 'editPaymentMethod'    => 'required|in:naqd,bank,karta',
                 'editPaymentAccountId' => $accountRequired ? 'required|exists:financial_accounts,id' : 'nullable',
             ],
             ['editPaymentAmount.required'    => 'Summa kiritilishi shart',
              'editPaymentAmount.min'         => 'Summa 0 dan katta bo\'lishi kerak',
+             'editPaymentDate.required'      => 'Sana kiritilishi shart',
              'editPaymentAccountId.required' => "Qaysi hisobga tushganini tanlang — aks holda pul Buxgalteriyada ko'rinmaydi"]
         );
 
@@ -1034,19 +1039,22 @@ class KanbanBoard extends Page
         $accountChanged = $payment->method !== $this->editPaymentMethod
             || $payment->account_id !== $this->editPaymentAccountId;
 
+        $dateChanged = $payment->payment_date?->format('Y-m-d') !== $this->editPaymentDate;
+
         $newServices     = !empty($this->editPaymentServices) ? array_values($this->editPaymentServices) : null;
         $servicesChanged = ($payment->services ?? null) !== $newServices;
 
-        if ($oldAmount === $newAmount && !$accountChanged && !$servicesChanged) {
+        if ($oldAmount === $newAmount && !$accountChanged && !$dateChanged && !$servicesChanged) {
             $this->closeEditPayment();
             return;
         }
 
         $payment->update([
-            'amount'     => $newAmount,
-            'method'     => $this->editPaymentMethod,
-            'account_id' => $this->editPaymentAccountId,
-            'services'   => $newServices,
+            'amount'       => $newAmount,
+            'payment_date' => $this->editPaymentDate,
+            'method'       => $this->editPaymentMethod,
+            'account_id'   => $this->editPaymentAccountId,
+            'services'     => $newServices,
         ]);
 
         PaymentLog::create([

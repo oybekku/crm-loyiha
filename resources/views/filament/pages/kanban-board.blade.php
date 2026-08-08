@@ -2447,6 +2447,13 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                    onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#e5e7eb'">
             @error('editPaymentAmount')<span style="font-size:11px;color:#dc2626 !important">{{ $message }}</span>@enderror
         </div>
+        <div style="margin-bottom:14px">
+            <label style="font-size:12px;font-weight:500;color:#374151;display:block;margin-bottom:6px">To'lov sanasi</label>
+            <input wire:model.live="editPaymentDate" type="date"
+                   style="width:100%;padding:10px 12px;border:2px solid {{ $errors->has('editPaymentDate') ? '#dc2626' : '#e5e7eb' }};border-radius:8px;font-size:14px;outline:none;box-sizing:border-box"
+                   onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#e5e7eb'">
+            @error('editPaymentDate')<span style="font-size:11px;color:#dc2626 !important">{{ $message }}</span>@enderror
+        </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
             <div>
                 <label style="font-size:12px;font-weight:500;color:#374151;display:block;margin-bottom:6px">To'lov usuli</label>
