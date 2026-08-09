@@ -53,4 +53,10 @@ return [
         'webhook_secret' => env('TELEGRAM_WEBHOOK_SECRET'),
     ],
 
+    // Wacom Signature SDK (STU-300 imzo planshetidan mijoz imzosini olish)
+    'wacom' => [
+        'sig_key'    => env('WACOM_SIG_KEY'),
+        'sig_secret' => env('WACOM_SIG_SECRET'),
+    ],
+
 ];

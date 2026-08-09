@@ -190,6 +190,8 @@
     .sign-actions { display: flex; gap: 10px; align-items: center; padding: 12px 16px; border-top: 1px solid #e5e7eb; flex-shrink: 0; }
     .sign-actions button { border: none; border-radius: 8px; padding: 13px 22px; font-size: 15px; font-weight: 700; cursor: pointer; }
     .s-clear { background: #f1f5f9; color: #475569; }
+    .s-stu { background: #0891b2; color: #fff; }
+    .s-stu:disabled { background: #cbd5e1; color: #64748b; cursor: not-allowed; }
     .s-cancel { background: #e5e7eb; color: #374151; }
     .s-done { background: #16a34a; color: #fff; }
 
@@ -698,6 +700,7 @@
         <canvas id="signCanvas"></canvas>
         <div class="sign-actions">
             <button class="s-clear" type="button" onclick="clearSign()">🧹 Tozalash</button>
+            <button class="s-stu" type="button" id="stuCaptureBtn" onclick="captureFromSTU()" disabled title="STU planshetni ulang">🖊️ STU planshet bilan</button>
             <span style="flex:1"></span>
             <button class="s-cancel" type="button" onclick="closeSignPad()">Bekor</button>
             <button class="s-done" type="button" onclick="finishSign()">✓ Saqlash</button>
@@ -778,6 +781,22 @@ async function finishSign(){
         location.reload();
     } catch (e) { alert('Xatolik: ' + e.message); }
 }
+
+// Wacom STU planshetidan olingan imzo rasmini shu canvasga chizib qo'yadi —
+// shundan keyin oddiy "✓ Saqlash" tugmasi (finishSign) o'zgarishsiz ishlaydi.
+function setSignatureImage(dataUrl){
+    const c = document.getElementById('signCanvas');
+    const img = new Image();
+    img.onload = () => {
+        signCtx.clearRect(0, 0, c.width, c.height);
+        const scale = Math.min(c.width / img.width, c.height / img.height);
+        const w = img.width * scale, h = img.height * scale;
+        signCtx.drawImage(img, (c.width - w) / 2, (c.height - h) / 2, w, h);
+        signDrawn = true;
+    };
+    img.src = dataUrl;
+}
+window.setSignatureImage = setSignatureImage;
 
 // ── Mijoz imzosini sudrab joylashtirish / o'lchamini o'zgartirish ──
 // Joylashuv brauzerda (shu kompyuterda, shu loyiha uchun) eslab qolinadi.
@@ -942,6 +961,76 @@ function viewMode(mode) {
 }
 // Sahifa ochilganda — URL'dagi ?view= parametriga qarab boshlang'ich ko'rinish
 viewMode(new URLSearchParams(location.search).get('view') === 'mijoz' ? 'mijoz' : 'firma');
+</script>
+
+{{-- Wacom STU-300 imzo planshetidan (WebHID orqali, mahalliy dastursiz)
+     mijoz imzosini olish. Faqat https (yoki localhost) sahifada ishlaydi. --}}
+<script type="module">
+import SigSDK from "/js/wacom/signature-sdk.js";
+
+let wacomSDK = null, wacomSigObj = null;
+
+async function initWacom() {
+    try {
+        wacomSDK = await new SigSDK();
+        wacomSigObj = new wacomSDK.SigObj();
+        await wacomSigObj.setLicence(
+            @json(config('services.wacom.sig_key')),
+            @json(config('services.wacom.sig_secret'))
+        );
+        const btn = document.getElementById('stuCaptureBtn');
+        if (wacomSDK.STUDevice.isHIDSupported()) {
+            btn.disabled = false;
+            btn.title = "STU planshetdan imzo olish";
+        } else {
+            btn.title = "Bu brauzer WebHID'ni qo'llab-quvvatlamaydi (Chrome/Edge ishlating)";
+        }
+    } catch (e) {
+        console.error('Wacom Signature SDK ishga tushmadi', e);
+    }
+}
+initWacom();
+
+window.captureFromSTU = async function () {
+    if (!wacomSDK || !wacomSigObj) { alert("Imzo qurilmasi tizimi hali tayyor emas, biroz kuting"); return; }
+    let stuDevice = null;
+    try {
+        const devices = await wacomSDK.STUDevice.requestDevices();
+        if (devices.length === 0) return;
+        stuDevice = new wacomSDK.STUDevice(devices[0]);
+        const config = new wacomSDK.Config();
+        const captDialog = new wacomSDK.StuCaptDialog(stuDevice, config);
+
+        captDialog.addEventListener(wacomSDK.EventType.OK, async function () {
+            try {
+                // pikselga aylantirish (dpi asosida) — imzoning haqiqiy nisbatini saqlaydi
+                let w = Math.trunc((96 * wacomSigObj.getWidth(false) * 0.01) / 25.4);
+                let h = Math.trunc((96 * wacomSigObj.getHeight(false) * 0.01) / 25.4);
+                const scale = Math.min(300 / w, 200 / h);
+                let rw = Math.trunc(w * scale);
+                const rh = Math.trunc(h * scale);
+                if (rw % 4 !== 0) rw += rw % 4;
+
+                const image = await wacomSigObj.renderBitmap(
+                    rw, rh, "image/png", 4, "#152a6e", "white", 0, 0,
+                    wacomSDK.RenderFlags.RenderEncodeData.value
+                );
+                window.setSignatureImage(image);
+            } catch (e) {
+                alert("Imzoni o'qishda xato: " + e);
+            }
+            stuDevice.delete();
+        });
+        captDialog.addEventListener(wacomSDK.EventType.CANCEL, function () {
+            stuDevice.delete();
+        });
+
+        await captDialog.open(wacomSigObj, "", "", null, wacomSDK.KeyType.SHA512, null);
+    } catch (e) {
+        alert("STU qurilmasi bilan bog'lanishda xato: " + e);
+        if (stuDevice) stuDevice.delete();
+    }
+};
 </script>
 </body>
 </html>
