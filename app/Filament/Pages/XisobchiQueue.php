@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\Project;
+use App\Models\ProjectStatusLog;
 use Filament\Pages\Page;
 
 // Faqat "hisobchi" (va nazorat uchun admin) ko'radigan, ruxsatnomalar
@@ -30,5 +31,30 @@ class XisobchiQueue extends Page
             ->get();
 
         return compact('projects');
+    }
+
+    // Hisobchi DIDOX shartnomani tayyorlab bo'lgach bosadi — loyiha
+    // avtomatik "Yangi Toposyomka" navbatiga o'tadi.
+    public function markDidoxDone(int $projectId): void
+    {
+        $user = auth()->user();
+        if (!$user?->isHisobchi() && !$user?->isAdmin()) return;
+
+        $project = Project::where('status', 'yangi_loyihalar')->find($projectId);
+        if (!$project) return;
+
+        ProjectStatusLog::where('project_id', $project->id)
+            ->whereNull('left_at')
+            ->update(['left_at' => now()]);
+
+        ProjectStatusLog::create([
+            'project_id' => $project->id,
+            'status'     => 'yangi_toposyomka',
+            'entered_at' => now(),
+        ]);
+
+        $project->update(['status' => 'yangi_toposyomka']);
+
+        $this->dispatch('notify', type: 'success', message: "«{$project->owner_name}» — shartnoma tayyor, Toposyomka navbatiga yuborildi");
     }
 }

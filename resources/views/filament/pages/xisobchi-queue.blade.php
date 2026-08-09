@@ -15,8 +15,12 @@
 .xq-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px 20px;margin-top:8px}
 .xq-empty{color:#9ca3af;font-size:13px;text-align:center;padding:30px 0}
 .dark .xq-empty{color:#64748b}
-.xq-btn{background:#0891b2;border:none;color:#fff;font-size:12px;padding:8px 16px;border-radius:6px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.xq-btn{background:#0891b2;border:none;color:#fff;font-size:12px;padding:8px 16px;border-radius:6px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.xq-btn-ready{background:#16a34a}
+#xq-notify-box{display:none;position:fixed;top:16px;right:16px;z-index:9999;color:#fff;font-size:13px;font-weight:600;padding:10px 16px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.2)}
 </style>
+
+<div id="xq-notify-box"></div>
 
 <div class="xq-panel">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
@@ -32,9 +36,18 @@
                 <span class="xq-num">{{ $p->number }}</span>
                 <span class="xq-name">&nbsp;{{ $p->owner_name }}</span>
             </div>
-            <a href="{{ route('print.project.didox', $p) }}" target="_blank" class="xq-btn">
-                🔷 DIDOX shartnoma
-            </a>
+            <div style="display:flex;flex-direction:column;gap:8px;align-items:stretch">
+                <a href="{{ route('print.project.didox', $p) }}" target="_blank" class="xq-btn" style="justify-content:center">
+                    🔷 DIDOX shartnoma
+                </a>
+                <button type="button"
+                        wire:click.stop="markDidoxDone({{ $p->id }})"
+                        wire:confirm="Shartnoma tayyor va loyiha Toposyomka navbatiga yuboriladimi?"
+                        class="xq-btn xq-btn-ready"
+                        style="justify-content:center">
+                    ✅ Tayor
+                </button>
+            </div>
         </div>
         <div class="xq-grid">
             <div>
@@ -70,4 +83,18 @@
     <div class="xq-empty">Hozircha yangi loyiha yo'q</div>
     @endforelse
 </div>
+
+<script>
+document.addEventListener('livewire:initialized', function () {
+    Livewire.on('notify', function (data) {
+        var d = Array.isArray(data) ? data[0] : data;
+        var box = document.getElementById('xq-notify-box');
+        if (!box) return;
+        box.textContent = d.message || '';
+        box.style.background = d.type === 'success' ? '#16a34a' : '#dc2626';
+        box.style.display = 'block';
+        setTimeout(function() { box.style.display = 'none'; }, 3500);
+    });
+});
+</script>
 </x-filament-panels::page>
