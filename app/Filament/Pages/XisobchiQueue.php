@@ -24,9 +24,19 @@ class XisobchiQueue extends Page
         return $user?->isHisobchi() || $user?->isAdmin();
     }
 
+    // yangi = yangi ochilgan loyihalar (DIDOX shartnoma tuzish),
+    // tugallangan = admin "O'tkazish → DIDOX" orqali yuborgan tugagan loyihalar
+    public string $tab = 'yangi';
+
+    public function setTab(string $tab): void
+    {
+        $this->tab = $tab === 'tugallangan' ? 'tugallangan' : 'yangi';
+    }
+
     protected function getViewData(): array
     {
-        $projects = Project::where('status', 'yangi_loyihalar')
+        $status   = $this->tab === 'tugallangan' ? 'didox' : 'yangi_loyihalar';
+        $projects = Project::where('status', $status)
             ->orderBy('created_at')
             ->get();
 

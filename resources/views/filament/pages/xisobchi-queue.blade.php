@@ -17,15 +17,24 @@
 .dark .xq-empty{color:#64748b}
 .xq-btn{background:#0891b2;border:none;color:#fff;font-size:12px;padding:8px 16px;border-radius:6px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
 .xq-btn-ready{background:#16a34a}
+.xq-tabs{display:flex;gap:8px;margin-bottom:14px}
+.xq-tab{background:transparent;border:1px solid #d1d5db;color:#6b7280;font-size:13px;font-weight:700;padding:8px 16px;border-radius:8px;cursor:pointer}
+.dark .xq-tab{border-color:#334155;color:#94a3b8}
+.xq-tab.active{background:#0891b2;border-color:#0891b2;color:#fff}
 #xq-notify-box{display:none;position:fixed;top:16px;right:16px;z-index:9999;color:#fff;font-size:13px;font-weight:600;padding:10px 16px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.2)}
 </style>
 
 <div id="xq-notify-box"></div>
 
+<div class="xq-tabs">
+    <button type="button" wire:click="setTab('yangi')" class="xq-tab @if($tab === 'yangi') active @endif">Yangi loyihalar</button>
+    <button type="button" wire:click="setTab('tugallangan')" class="xq-tab @if($tab === 'tugallangan') active @endif">Tugallangan loyihalar</button>
+</div>
+
 <div class="xq-panel">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
         <svg width="16" height="16" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z"/></svg>
-        <span style="font-size:14px;font-weight:700">Yangi loyihalar</span>
+        <span style="font-size:14px;font-weight:700">{{ $tab === 'tugallangan' ? 'Tugallangan loyihalar' : 'Yangi loyihalar' }}</span>
         <span style="background:#dcfce7;color:#16a34a;font-size:11px;font-weight:700;border-radius:10px;padding:1px 8px">{{ $projects->count() }} ta</span>
     </div>
 
@@ -40,6 +49,7 @@
                 <a href="{{ route('print.project.didox', $p) }}" target="_blank" class="xq-btn" style="justify-content:center">
                     🔷 DIDOX shartnoma
                 </a>
+                @if($tab === 'yangi')
                 <button type="button"
                         wire:click.stop="markDidoxDone({{ $p->id }})"
                         wire:confirm="Shartnoma tayyor va loyiha Toposyomka navbatiga yuboriladimi?"
@@ -47,6 +57,7 @@
                         style="justify-content:center">
                     ✅ Tayor
                 </button>
+                @endif
             </div>
         </div>
         <div class="xq-grid">
@@ -80,7 +91,7 @@
         </div>
     </div>
     @empty
-    <div class="xq-empty">Hozircha yangi loyiha yo'q</div>
+    <div class="xq-empty">{{ $tab === 'tugallangan' ? "Hozircha tugallangan loyiha yo'q" : "Hozircha yangi loyiha yo'q" }}</div>
     @endforelse
 </div>
 
