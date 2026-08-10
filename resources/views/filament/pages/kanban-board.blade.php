@@ -861,6 +861,13 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             </div>
             @endif
 
+            {{-- Shot-faktura DIDOX orqali yuborilgani --}}
+            @if($project->invoice_sent_at)
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+                <span style="background:#cffafe;color:#0891b2;border:1px solid #a5f3fc;border-radius:6px;font-size:10.5px;font-weight:700;padding:2px 8px;white-space:nowrap">✅ Shot-faktura qilindi — DIDOX</span>
+            </div>
+            @endif
+
             {{-- Status delay badge --}}
             @if($statusDelay > 0)
             <div class="p-delay-warn">Bu bosqichda {{ $daysInStatus }} kun ({{ $statusDelay }} kun kechikdi)</div>

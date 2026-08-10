@@ -89,7 +89,7 @@ class XisobchiQueue extends Page
             'entered_at' => now(),
         ]);
 
-        $project->update(['status' => 'tugallangan']);
+        $project->update(['status' => 'tugallangan', 'invoice_sent_at' => now()]);
 
         $this->dispatch('notify', type: 'success', message: "«{$project->owner_name}» — shot-faktura yuborildi, Tugallangan bo'limiga qaytdi");
     }
