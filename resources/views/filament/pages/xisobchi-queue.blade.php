@@ -57,6 +57,14 @@
                         style="justify-content:center">
                     ✅ Tayor
                 </button>
+                @else
+                <button type="button"
+                        wire:click.stop="markInvoiceDone({{ $p->id }})"
+                        wire:confirm="Shot-faktura yuborildi va loyiha Tugallangan bo'limiga qaytariladimi?"
+                        class="xq-btn xq-btn-ready"
+                        style="justify-content:center">
+                    ✅ Tayor
+                </button>
                 @endif
             </div>
         </div>

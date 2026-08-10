@@ -67,4 +67,30 @@ class XisobchiQueue extends Page
 
         $this->dispatch('notify', type: 'success', message: "«{$project->owner_name}» — shartnoma tayyor, Toposyomka navbatiga yuborildi");
     }
+
+    // Hisobchi "Tugallangan loyihalar" (DIDOX) navbatida shot-fakturani
+    // jo'natib bo'lgach bosadi — loyiha "Tugallangan"ga qaytadi. Qachon
+    // bajarilgani ProjectStatusLog'dagi 'didox' yozuvining left_at'ida qoladi.
+    public function markInvoiceDone(int $projectId): void
+    {
+        $user = auth()->user();
+        if (!$user?->isHisobchi() && !$user?->isAdmin()) return;
+
+        $project = Project::where('status', 'didox')->find($projectId);
+        if (!$project) return;
+
+        ProjectStatusLog::where('project_id', $project->id)
+            ->whereNull('left_at')
+            ->update(['left_at' => now()]);
+
+        ProjectStatusLog::create([
+            'project_id' => $project->id,
+            'status'     => 'tugallangan',
+            'entered_at' => now(),
+        ]);
+
+        $project->update(['status' => 'tugallangan']);
+
+        $this->dispatch('notify', type: 'success', message: "«{$project->owner_name}» — shot-faktura yuborildi, Tugallangan bo'limiga qaytdi");
+    }
 }
