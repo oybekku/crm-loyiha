@@ -92,6 +92,12 @@ class Login extends BaseLogin
             $this->pendingUserId = $user->id;
             $this->pendingRemember = (bool) ($data['remember'] ?? false);
             $this->otpStep = true;
+
+            // Filament forma keshi shu so'rov ichida bir marta ($this->form->getState()
+            // chaqirilganda) allaqachon eski (email/parol) sxema bilan yasalib bo'lgan —
+            // otpStep o'zgargani formani avtomatik qayta qurmaydi. Shu sabab majburan
+            // qayta yasaymiz, aks holda "kod" maydoni o'rniga eski forma ko'rinib qolardi.
+            $this->cacheForms();
             $this->form->fill();
 
             Notification::make()
