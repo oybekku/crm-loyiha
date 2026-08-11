@@ -1,19 +1,12 @@
 <x-filament-panels::page>
 <div class="bx-page-root">
 <style>
-/* Shu sahifada chap navigatsiya menyusini yashirish va asosiy maydonni
-   to'liq kenglikka, qora fonga chiqarish (Click ilovasi uslubidagi
-   to'liq ekranli ko'rinish uchun). :has() bilan faqat shu sahifa DOM'ida
-   bo'lganda ishlaydi — boshqa sahifalarga ta'sir qilmaydi. */
-body:has(.bx-page-root) .fi-main-sidebar{display:none !important}
-body:has(.bx-page-root) .fi-main{max-width:100% !important;padding:0 !important;background:#191a1b !important;min-height:100vh}
-/* Filament "kunduzgi" (light) temada .fi-body/html oq fonli qoladi va bu
-   sahifa doim qora fonli bo'lishi kerak (tema qanday bo'lishidan qat'iy
-   nazar) — shu sababli tashqi qatlamlar ham majburiy qora qilinadi. */
-body:has(.bx-page-root){background:#191a1b !important}
-body:has(.bx-page-root) .fi-body{background:#191a1b !important}
-
-.bx-wrap{max-width:1200px;margin:0 auto;color:#e2e8f0;padding:28px 20px}
+/* Chap navigatsiya menyusi va sahifa kengligi endi boshqa sahifalar
+   (Dashboard/Oylik hisobot) bilan bir xil — "Click ilovasi" uslubidagi
+   qora rang endi shu ichki panelning ozida (.bx-wrap), butun sahifada
+   emas, shunda hodisa "boshqa oyna ochilganday" tuyulmaydi. */
+.bx-wrap{max-width:1200px;margin:0 auto;color:#e2e8f0;padding:28px 24px;
+    background:#191a1b;border-radius:20px;box-shadow:0 1px 8px rgba(0,0,0,.15)}
 .bx-back{display:inline-flex;align-items:center;gap:6px;color:#94a3b8 !important;font-size:13px;text-decoration:none;margin-bottom:18px}
 .bx-back:hover{color:#e2e8f0 !important}
 .bx-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:22px}

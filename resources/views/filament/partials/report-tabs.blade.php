@@ -52,10 +52,16 @@
     box-shadow:0 0 0 1px #1d4ed8,0 5px 4px rgba(37,99,235,.15),0 12px 9px rgba(37,99,235,.12)}
 .rt-btn.rt-active:hover{background-color:#1d4ed8}
 
+/* Filament sahifaning ozi ichki <span>larga qorongi matn rangini majburlab
+   qoyadi (odatda oq fonda sezilmaydi, lekin Buxgalteriyaning qora fonida
+   matn butunlay yoqolib qoladi) - shu sababli rang har doim span'larga
+   ham aniq, !important bilan takrorlanadi. */
+.rt-btn span{color:inherit !important}
+
 .dark .rt-btn,
-.rt-tabs--dark .rt-btn{background-color:transparent;color:#cbd5e1;box-shadow:0 0 0 1px rgba(255,255,255,.18)}
+.rt-tabs--dark .rt-btn{background-color:rgba(255,255,255,.05);color:#e2e8f0;box-shadow:0 0 0 1px rgba(255,255,255,.22)}
 .dark .rt-btn:hover,
-.rt-tabs--dark .rt-btn:hover{background-color:rgba(255,255,255,.06)}
+.rt-tabs--dark .rt-btn:hover{background-color:rgba(255,255,255,.1)}
 .dark .rt-btn.rt-active,
 .rt-tabs--dark .rt-btn.rt-active{background-color:#2563eb;color:#fff;box-shadow:0 0 0 1px #3b82f6}
 
