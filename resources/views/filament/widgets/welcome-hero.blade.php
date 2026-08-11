@@ -391,7 +391,7 @@
         @php
             $mLbls  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Okt','Nov','Dec'];
             $mColors = array_fill(0, 12, 'linear-gradient(180deg,#9ca3af,#6b7280)');
-            $yMax = $maxIncome > 0 ? $maxIncome : 1;
+            $yMax = $maxCount > 0 ? $maxCount : 1;
         @endphp
         <div class="bh-secret" :class="{ 'bh-locked': !statShown }">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
@@ -404,20 +404,20 @@
         </div>
         <div style="display:flex;gap:0;align-items:flex-end;">
             <div class="bh-chart-yaxis">
-                <span>{{ $yMax > 0 ? number_format($yMax/1000000,0).'M' : '40' }}</span>
-                <span>{{ $yMax > 0 ? number_format($yMax/2000000,0).'M' : '20' }}</span>
+                <span>{{ $yMax > 0 ? number_format($yMax,0) : '10' }}</span>
+                <span>{{ $yMax > 0 ? number_format($yMax/2,0) : '5' }}</span>
                 <span>0</span>
             </div>
             <div class="bh-bars" style="flex:1">
-                @foreach($monthlyIncome as $i => $inc)
+                @foreach($monthlyCounts as $i => $cnt)
                 @php
-                    $h     = max(3, (int)round(($inc / $yMax) * 78));
+                    $h     = max(3, (int)round(($cnt / $yMax) * 78));
                     $isSel = ($i+1) === $selMonth;
                 @endphp
                 <div class="bh-bar-col {{ $isSel ? 'bh-bar-col--cur' : '' }}"
                      wire:click="selectMonth({{ $i+1 }})"
                      style="cursor:pointer"
-                     title="{{ $mLbls[$i] }} {{ $selYear }} — tanlash">
+                     title="{{ $mLbls[$i] }} {{ $selYear }} — {{ $cnt }} ta loyiha">
                     <div class="bh-bar"
                          style="--h:{{$h}}px;background:{{ $isSel ? 'linear-gradient(180deg,#3b82f6,#2563eb)' : $mColors[$i] }};opacity:{{ $isSel ? '1' : '.5' }};animation-delay:{{$i*.05}}s;">
                     </div>

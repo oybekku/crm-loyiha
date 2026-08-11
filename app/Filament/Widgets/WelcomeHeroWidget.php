@@ -2,7 +2,6 @@
 
 namespace App\Filament\Widgets;
 
-use App\Models\Payment;
 use App\Models\Project;
 use App\Services\EmployeePayableService;
 use Filament\Widgets\Widget;
@@ -47,14 +46,23 @@ class WelcomeHeroWidget extends Widget
         $this->selYear  ??= (int) now()->year;
         $this->selMonth ??= (int) now()->month;
         $year = $this->selYear;
+        $isEmployee = $user?->isBajaruvchi();
 
-        $monthlyIncome = [];
+        // "Loyiha dinamikasi" grafigi — pastdagi "Jami loyihalar" statistikasi
+        // bilan bir xil narsani ko'rsatishi kerak: shu oyda OCHILGAN loyihalar
+        // soni (avval to'lovlar summasi ko'rsatilardi — ikkalasi turlicha
+        // hikoya aytib, chalkashtirib yuborardi).
+        $monthlyCounts = [];
         for ($m = 1; $m <= 12; $m++) {
-            $monthlyIncome[] = (float) Payment::whereYear('created_at', $year)
+            $q = $isEmployee
+                ? Project::whereHas('services', fn($qq) => $qq->where('assigned_user_id', $user->id))
+                : Project::query();
+            $monthlyCounts[] = $q->whereYear('created_at', $year)
                 ->whereMonth('created_at', $m)
-                ->sum('amount');
+                ->excludePaused()
+                ->count();
         }
-        $maxIncome = max($monthlyIncome) ?: 1;
+        $maxCount = max($monthlyCounts) ?: 1;
 
         $quotes = [
             "Har bir loyiha — kelajakka yozilgan xat.",
@@ -70,8 +78,6 @@ class WelcomeHeroWidget extends Widget
             ->latest()
             ->limit(4)
             ->get();
-
-        $isEmployee = $user?->isBajaruvchi();
 
         // ── Umumiy (admin/menejer uchun) yoki shaxsiy (bajaruvchi uchun) ──
         $baseQuery = $isEmployee
@@ -234,8 +240,8 @@ class WelcomeHeroWidget extends Widget
             'activeCount'   => (clone $baseQuery)->whereNotIn('status', ['tugallangan', 'bekor_qilingan', 'arxiv'])->count(),
             'doneCount'     => $doneCount,
             'quote'         => $quotes[now()->dayOfYear % count($quotes)],
-            'monthlyIncome' => $monthlyIncome,
-            'maxIncome'     => $maxIncome,
+            'monthlyCounts' => $monthlyCounts,
+            'maxCount'      => $maxCount,
             'currentMonth'  => (int) now()->month,
             'recentProjects'=> $recentProjects,
             'statProjects'  => $totalCount,
