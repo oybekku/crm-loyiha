@@ -87,7 +87,7 @@ class FirmReportService
         foreach ($activeAssignees as $u) {
             if (in_array($u->role, ['admin', 'menejer'])) continue;
             if (!isset($employeeComm[$u->id])) {
-                $employeeComm[$u->id] = ['name' => $u->name, 'commission' => 0.0];
+                $employeeComm[$u->id] = ['name' => $u->name, 'commission' => 0.0, 'payable' => 0.0, 'paid' => 0.0, 'kerak' => 0.0];
             }
         }
 
