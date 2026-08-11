@@ -53,6 +53,14 @@
         color: #374151;
     }
     .main-table .value { font-size: 14px; color: #111; }
+    .section-title {
+        font-size: 12px;
+        font-weight: 800;
+        color: #1d4ed8;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        margin: 14px 0 6px;
+    }
     .main-table .qr-cell {
         width: 110px;
         text-align: center;
@@ -64,6 +72,24 @@
     .qr-wrap { text-align: center; padding: 6px; }
     .qr-wrap img { width: 96px; height: 96px; display: block; margin: 0 auto 5px; }
     .qr-wrap p { font-size: 10px; color: #666; line-height: 1.4; }
+
+    /* Ariza sarlavhasini tahrirlash (logo/matn/QR o'lchami — admin) */
+    .hdr-logo-wrap, .hdr-qr-wrap, .hdr-text-wrap { position: relative; flex-shrink: 0; }
+    .hdr-text-wrap { flex-shrink: 1; }
+    .hdr-rsz {
+        display: none;
+        position: absolute; right: -10px; bottom: -10px; width: 20px; height: 20px;
+        background: #2563eb; border: 2px solid #fff; border-radius: 50%;
+        cursor: nwse-resize; z-index: 10; box-shadow: 0 1px 4px rgba(0,0,0,.4);
+    }
+    .header-editing-active .hdr-rsz { display: block; }
+    .header-editing-active .hdr-logo-wrap,
+    .header-editing-active .hdr-qr-wrap,
+    .header-editing-active #arizaHeaderText {
+        outline: 2px dashed #2563eb; outline-offset: 4px;
+    }
+    .header-editing-active #arizaHeaderText { cursor: text; }
+    @media print { .hdr-rsz { display: none !important; } }
 
     /* Conditions */
     .conditions {
@@ -226,6 +252,9 @@
     <button id="stampEditBtn" onclick="toggleStampEdit()" style="background:#fff;color:#374151;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;">
         ✏️ Pechatni joylashtirish
     </button>
+    <button id="headerEditBtn" onclick="toggleHeaderEdit()" style="background:#fff;color:#374151;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;">
+        ✏️ Sarlavhani tahrirlash
+    </button>
     @endif
     <div style="width:1px;height:28px;background:rgba(255,255,255,0.3);"></div>
     <button onclick="window.open('{{ route('print.project.obloshka', $project) }}?qavat=1','_blank')" style="background:#fff;color:#1d4ed8;border:none;padding:8px 18px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;">
@@ -374,6 +403,99 @@
     } else {
         setupStampDrag();
     }
+
+    // ── Ariza sarlavhasi: logo/QR o'lchami (burchakdan sudrab) + firma matni
+    //    (to'g'ridan-to'g'ri sahifada, contenteditable) — hammasi saqlanadi va
+    //    barcha arizalarga umumiy qo'llaniladi (DesignSettingsService orqali). ──
+    const HEADER_SAVE_URL = '{{ route('print.ariza-header-settings.save') }}';
+    let headerEditOn = false;
+
+    function toggleHeaderEdit() {
+        headerEditOn = !headerEditOn;
+        const btn = document.getElementById('headerEditBtn');
+        document.querySelector('.header')?.classList.toggle('header-editing-active', headerEditOn);
+        const textEl = document.getElementById('arizaHeaderText');
+        if (textEl) textEl.contentEditable = headerEditOn ? 'true' : 'false';
+        if (btn) {
+            btn.style.background = headerEditOn ? '#2563eb' : '#fff';
+            btn.style.color = headerEditOn ? '#fff' : '#374151';
+            btn.textContent = headerEditOn ? '✓ Sarlavha tahrirlash tugadi' : '✏️ Sarlavhani tahrirlash';
+        }
+        if (!headerEditOn) saveHeaderText();
+    }
+
+    function saveHeaderSettings(payload) {
+        const csrf = document.querySelector('meta[name=csrf-token]').content;
+        fetch(HEADER_SAVE_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+            body: JSON.stringify(payload)
+        }).then(r => r.json()).then(d => { if (d.ok) stampToast(); });
+    }
+
+    function saveHeaderText() {
+        const txt = document.getElementById('arizaHeaderText');
+        if (txt) saveHeaderSettings({ header_html: txt.innerHTML });
+    }
+
+    // Logo/QR — burchagidagi doiradan sudrab o'lchamini o'zgartirish.
+    // Matn bloki — burchagidan sudrab shrift o'lchamini o'zgartirish.
+    function setupHeaderResize() {
+        let mode = null, sx = 0, startVal = 0, targetEl = null, fontMode = false;
+
+        document.querySelectorAll('.hdr-rsz').forEach(handle => {
+            const start = (x) => {
+                if (!headerEditOn) return;
+                const name = handle.dataset.target;
+                targetEl = name === 'logo' ? document.getElementById('arizaLogo')
+                         : name === 'qr'   ? document.getElementById('arizaQr')
+                         : document.getElementById('arizaHeaderText');
+                if (!targetEl) return;
+                fontMode = name === 'text';
+                mode = 'resize';
+                sx = x;
+                startVal = fontMode
+                    ? parseFloat(getComputedStyle(targetEl).fontSize)
+                    : targetEl.getBoundingClientRect().width;
+            };
+            handle.addEventListener('mousedown', e => { start(e.clientX); e.stopPropagation(); e.preventDefault(); });
+            handle.addEventListener('touchstart', e => { const t = e.touches[0]; start(t.clientX); e.stopPropagation(); }, { passive: true });
+        });
+
+        const applyResize = (x) => {
+            if (!mode || !targetEl) return;
+            const delta = x - sx;
+            if (fontMode) {
+                const newSize = Math.max(9, Math.min(24, startVal + delta * 0.08));
+                targetEl.style.fontSize = newSize + 'px';
+            } else {
+                const newW = Math.max(24, Math.min(200, startVal + delta));
+                targetEl.style.width  = newW + 'px';
+                targetEl.style.height = newW + 'px';
+            }
+        };
+        const endResize = () => {
+            if (!mode) return;
+            mode = null;
+            if (fontMode) {
+                saveHeaderSettings({ header_font: Math.round(parseFloat(document.getElementById('arizaHeaderText').style.fontSize)) });
+            } else if (targetEl.id === 'arizaLogo') {
+                saveHeaderSettings({ logo_width: Math.round(targetEl.getBoundingClientRect().width) });
+            } else if (targetEl.id === 'arizaQr') {
+                saveHeaderSettings({ qr_width: Math.round(targetEl.getBoundingClientRect().width) });
+            }
+        };
+
+        window.addEventListener('mousemove', e => applyResize(e.clientX));
+        window.addEventListener('mouseup', endResize);
+        window.addEventListener('touchmove', e => { if (!mode) return; const t = e.touches[0]; applyResize(t.clientX); }, { passive: true });
+        window.addEventListener('touchend', endResize);
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupHeaderResize);
+    } else {
+        setupHeaderResize();
+    }
 </script>
 @endif
 
@@ -382,18 +504,25 @@
 <div class="copy1">
     <!-- HEADER -->
     <div class="header" style="display:flex;align-items:center;justify-content:space-between;gap:16px;">
-        <img src="/images/logo.jpg" alt="MY PERFECT HOME" style="width:78px;height:78px;object-fit:contain;flex-shrink:0;">
-        <div style="text-align:center;font-size:13px;line-height:1.6;">
-            <strong style="font-size:15px;display:block;margin-bottom:2px;">"MY PERFECT HOME" MCHJ</strong>
-            Toshkent shahri, Yangihayot tumani<br>
-            Uzar ko'chasi, 60-uy, 46-xona<br>
-            MFO 01125&nbsp;&nbsp;INN 308515451<br>
-            OKED 41100<br>
-            Tel: +998 77 091 91 01, +998 99 468 19 91
+        <div class="hdr-logo-wrap">
+            <img id="arizaLogo" src="/images/logo.jpg" alt="MY PERFECT HOME" style="width:{{ (int) $stamp['ariza_logo_width'] }}px;height:{{ (int) $stamp['ariza_logo_width'] }}px;object-fit:contain;flex-shrink:0;display:block;">
+            <div class="hdr-rsz no-print" data-target="logo" title="O'lcham"></div>
         </div>
-        <div class="qr-wrap" style="flex-shrink:0;">
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=96x96&data={{ urlencode(route('track.project', ltrim($project->number, '#'))) }}" alt="QR">
-            <p>Buyurtma raqamini<br>skanerlang</p>
+        <div class="hdr-text-wrap">
+            <div id="arizaHeaderText" style="text-align:center;font-size:{{ (int) $stamp['ariza_header_font'] }}px;line-height:1.6;outline:none;">{!! $stamp['ariza_header_html'] ?: '<strong style="font-size:1.15em;display:block;margin-bottom:2px;">&quot;MY PERFECT HOME&quot; MCHJ</strong>
+                Toshkent shahri, Yangihayot tumani<br>
+                Uzar ko\'chasi, 60-uy, 46-xona<br>
+                MFO 01125&nbsp;&nbsp;INN 308515451<br>
+                OKED 41100<br>
+                Tel: +998 77 091 91 01, +998 99 468 19 91' !!}</div>
+            <div class="hdr-rsz no-print" data-target="text" title="Shrift o'lchami"></div>
+        </div>
+        <div class="hdr-qr-wrap">
+            <div class="qr-wrap" style="flex-shrink:0;">
+                <img id="arizaQr" src="https://api.qrserver.com/v1/create-qr-code/?size=96x96&data={{ urlencode(route('track.project', ltrim($project->number, '#'))) }}" alt="QR" style="width:{{ (int) $stamp['ariza_qr_width'] }}px;height:{{ (int) $stamp['ariza_qr_width'] }}px;">
+                <p>Buyurtma raqamini<br>skanerlang</p>
+            </div>
+            <div class="hdr-rsz no-print" data-target="qr" title="O'lcham"></div>
         </div>
     </div>
 
@@ -510,6 +639,74 @@
             <td class="label" id="lbl-note">Izohlar</td>
             <td class="value" style="min-height:44px;font-style:{{ $project->description ? 'normal' : 'italic' }};color:{{ $project->description ? '#111' : '#999' }};">
                 {{ $project->description ?: '—' }}
+            </td>
+        </tr>
+    </table>
+
+    <!-- JISMONIY SHAXS MA'LUMOTLARI -->
+    <div class="section-title">Jismoniy shaxs ma'lumotlari</div>
+    <table class="main-table">
+        <tr>
+            <td class="label">JSHSHIR (PINFL)</td>
+            <td class="value">{{ $project->pinfl ?: '—' }}</td>
+        </tr>
+        <tr>
+            <td class="label">F.I.Sh</td>
+            <td class="value">{{ $project->owner_name }}</td>
+        </tr>
+        <tr>
+            <td class="label">Pasport seriya va raqami</td>
+            <td class="value">{{ $project->passport_series ?: '—' }}</td>
+        </tr>
+        <tr>
+            <td class="label">Telefon raqam</td>
+            <td class="value">
+                @if($project->phones)
+                    @foreach($project->phones as $phone)
+                        {{ is_array($phone) ? ($phone['phone'] ?? '') : $phone }}@if(!$loop->last),@endif
+                    @endforeach
+                @else
+                    —
+                @endif
+            </td>
+        </tr>
+        <tr>
+            <td class="label">Arizachi turi</td>
+            <td class="value">{{ \App\Models\Project::applicantTypeOptions()[$project->applicant_type] ?? '—' }}</td>
+        </tr>
+    </table>
+
+    <!-- OBYEKT MA'LUMOTLARI -->
+    <div class="section-title">Obyekt ma'lumotlari</div>
+    <table class="main-table">
+        <tr>
+            <td class="label">Ko'chmas mulk (kadastr raqami)</td>
+            <td class="value">{{ $project->cadastre_number ?: '—' }}</td>
+        </tr>
+        <tr>
+            <td class="label">Obyektning joylashgan hudud</td>
+            <td class="value">{{ \App\Models\Project::regionOptions()[$project->region] ?? '—' }}</td>
+        </tr>
+        <tr>
+            <td class="label">Obyektning joylashgan tuman</td>
+            <td class="value">{{ $project->district ?: '—' }}</td>
+        </tr>
+        <tr>
+            <td class="label">Ro'yxatga olishga asos bo'luvchi hujjat turi</td>
+            <td class="value">{{ $project->registration_basis ?: '—' }}</td>
+        </tr>
+        <tr>
+            <td class="label">Obyekt manzili</td>
+            <td class="value">{{ $project->address }}</td>
+        </tr>
+        <tr>
+            <td class="label">Huquqni belgilovchi asos fayli</td>
+            <td class="value">
+                @if($project->ownership_document_path)
+                    <a href="{{ asset('storage/' . $project->ownership_document_path) }}" target="_blank" style="color:#1d4ed8;text-decoration:none;font-weight:700;">⬇ Yuklab olish</a>
+                @else
+                    —
+                @endif
             </td>
         </tr>
     </table>

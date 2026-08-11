@@ -13,6 +13,7 @@ class Project extends Model
     protected $fillable = [
         'number', 'seq_no', 'owner_name', 'title', 'address', 'oblozhka_address', 'signature_path', 'latitude', 'longitude', 'phones',
         'passport_series', 'passport_issued_by', 'pinfl',
+        'applicant_type', 'cadastre_number', 'region', 'district', 'registration_basis', 'ownership_document_path',
         'description', 'category', 'status', 'work_status', 'assigned_user_id',
         'total_price', 'paid_amount', 'deadline_date', 'timer_paused_at', 'invoice_sent_at',
         'payment_requested_at', 'payment_requested_by',
@@ -286,6 +287,37 @@ class Project extends Model
             'toposyomka'  => 'Toposyomka',
             'eskiz_loyiha'=> 'Eskiz loyiha',
             'ariza'       => 'Ariza',
+        ];
+    }
+
+    // Ariza (Qabul arizasi) chop etishda — "Arizachi turi" va "Obyekt hududi"
+    public static function applicantTypeOptions(): array
+    {
+        return [
+            'mulk_egasi'     => 'Mulk egasi',
+            'vakolatli_shaxs'=> 'Vakolatli shaxs (ishonchnoma bo\'yicha)',
+            'meros_oluvchi'  => 'Meros oluvchi',
+            'boshqa'         => 'Boshqa',
+        ];
+    }
+
+    public static function regionOptions(): array
+    {
+        return [
+            'toshkent_shahri'   => 'Toshkent shahri',
+            'toshkent_viloyati' => 'Toshkent viloyati',
+            'andijon'           => 'Andijon viloyati',
+            'buxoro'            => 'Buxoro viloyati',
+            'fargona'           => "Farg'ona viloyati",
+            'jizzax'            => 'Jizzax viloyati',
+            'xorazm'            => 'Xorazm viloyati',
+            'namangan'          => 'Namangan viloyati',
+            'navoiy'            => 'Navoiy viloyati',
+            'qashqadaryo'       => 'Qashqadaryo viloyati',
+            'qoraqalpogiston'   => "Qoraqalpog'iston Respublikasi",
+            'samarqand'         => 'Samarqand viloyati',
+            'sirdaryo'          => 'Sirdaryo viloyati',
+            'surxondaryo'       => 'Surxondaryo viloyati',
         ];
     }
 }

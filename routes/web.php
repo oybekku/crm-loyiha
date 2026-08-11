@@ -145,6 +145,27 @@ Route::middleware(['auth'])->group(function () {
         return response()->json(['ok' => true]);
     })->name('print.stamp-settings.save');
 
+    // Ariza sarlavhasi: logo/QR o'lchami va firma matni (admin, barcha arizalarga umumiy) —
+    // "Sarlavhani tahrirlash" rejimida sudrab-o'zgartiriladi.
+    Route::post('/print/ariza-header-settings', function (\Illuminate\Http\Request $request) {
+        abort_unless(auth()->user()?->isAdmin(), 403);
+        $data = \App\Services\DesignSettingsService::get();
+        if ($request->has('logo_width')) {
+            $data['ariza_logo_width'] = max(24, min(200, (int) $request->input('logo_width')));
+        }
+        if ($request->has('qr_width')) {
+            $data['ariza_qr_width'] = max(48, min(200, (int) $request->input('qr_width')));
+        }
+        if ($request->has('header_font')) {
+            $data['ariza_header_font'] = max(9, min(24, (int) $request->input('header_font')));
+        }
+        if ($request->has('header_html')) {
+            $data['ariza_header_html'] = strip_tags((string) $request->input('header_html'), '<strong><br><b><i><u><span>');
+        }
+        \App\Services\DesignSettingsService::save($data);
+        return response()->json(['ok' => true]);
+    })->name('print.ariza-header-settings.save');
+
     // Chegirma flayeri (A4 da 3 ta)
     Route::get('/print/project/{project}/chegirma', function (\App\Models\Project $project) {
         return view('print.chegirma', compact('project'));

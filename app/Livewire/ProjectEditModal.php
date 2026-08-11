@@ -36,6 +36,14 @@ class ProjectEditModal extends Component
     public string $ei_passportSeries   = '';
     public string $ei_passportIssuedBy = '';
     public string $ei_pinfl            = '';
+    public string $ei_applicantType      = '';
+    public string $ei_cadastreNumber     = '';
+    public string $ei_region             = '';
+    public string $ei_district           = '';
+    public string $ei_registrationBasis  = '';
+    public $ei_newOwnershipDoc           = null;
+    public string $ei_ownershipDocName   = '';
+    public string $ei_ownershipDocUrl    = '';
     public array  $ei_services       = [];
     public array  $ei_files          = [];
     public $ei_newFiles              = [];
@@ -85,6 +93,14 @@ class ProjectEditModal extends Component
         $this->ei_passportSeries   = $p->passport_series ?? '';
         $this->ei_passportIssuedBy = $p->passport_issued_by ?? '';
         $this->ei_pinfl            = $p->pinfl ?? '';
+        $this->ei_applicantType     = $p->applicant_type ?? '';
+        $this->ei_cadastreNumber    = $p->cadastre_number ?? '';
+        $this->ei_region            = $p->region ?? '';
+        $this->ei_district          = $p->district ?? '';
+        $this->ei_registrationBasis = $p->registration_basis ?? '';
+        $this->ei_newOwnershipDoc   = null;
+        $this->ei_ownershipDocName  = $p->ownership_document_path ? basename($p->ownership_document_path) : '';
+        $this->ei_ownershipDocUrl   = $p->ownership_document_path ? asset('storage/' . $p->ownership_document_path) : '';
         $this->ei_services    = $this->buildEiServices($p);
         $this->ei_files       = $this->buildEiFiles($p, 'hujjat');
         $this->ei_genplan     = $this->buildEiFiles($p, 'genplan');
@@ -384,6 +400,11 @@ class ProjectEditModal extends Component
             'passport_series'    => trim($this->ei_passportSeries) ?: null,
             'passport_issued_by' => trim($this->ei_passportIssuedBy) ?: null,
             'pinfl'              => trim($this->ei_pinfl) ?: null,
+            'applicant_type'      => $this->ei_applicantType ?: null,
+            'cadastre_number'     => trim($this->ei_cadastreNumber) ?: null,
+            'region'              => $this->ei_region ?: null,
+            'district'            => trim($this->ei_district) ?: null,
+            'registration_basis'  => trim($this->ei_registrationBasis) ?: null,
         ]);
 
         $this->closeEditInfoModal();
@@ -520,6 +541,45 @@ class ProjectEditModal extends Component
         $this->storeUploads($this->ei_newFiles, 'hujjat');
         $this->ei_newFiles = [];
         $this->ei_files = $this->buildEiFiles(Project::find($this->editInfoId), 'hujjat');
+    }
+
+    // Huquqni belgilovchi asos fayli (hadya/oldi-sotdi shartnomasi va h.k.) —
+    // yagona fayl, to'g'ridan-to'g'ri projects.ownership_document_path'da saqlanadi.
+    public function updatedEiNewOwnershipDoc(): void
+    {
+        $p = Project::find($this->editInfoId);
+        if (!$p || !$this->ei_newOwnershipDoc) return;
+
+        $file = $this->ei_newOwnershipDoc;
+        if ($file->getSize() > 100 * 1024 * 1024) {
+            $this->dispatch('notify', type: 'error', message: "Fayl hajmi 100 MB dan katta");
+            $this->ei_newOwnershipDoc = null;
+            return;
+        }
+
+        if ($p->ownership_document_path) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($p->ownership_document_path);
+        }
+
+        $path = $file->store('project-files/' . $p->id . '/ownership', 'public');
+        $p->update(['ownership_document_path' => $path]);
+
+        $this->ei_newOwnershipDoc  = null;
+        $this->ei_ownershipDocName = basename($path);
+        $this->ei_ownershipDocUrl  = asset('storage/' . $path);
+        $this->dispatch('notify', type: 'success', message: 'Fayl yuklandi!');
+    }
+
+    public function eiDeleteOwnershipDoc(): void
+    {
+        $p = Project::find($this->editInfoId);
+        if (!$p || !$p->ownership_document_path) return;
+
+        \Illuminate\Support\Facades\Storage::disk('public')->delete($p->ownership_document_path);
+        $p->update(['ownership_document_path' => null]);
+        $this->ei_ownershipDocName = '';
+        $this->ei_ownershipDocUrl  = '';
+        $this->dispatch('notify', type: 'success', message: "Fayl o'chirildi");
     }
 
     public function updatedEiNewGenplan(): void

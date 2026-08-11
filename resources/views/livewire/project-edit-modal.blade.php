@@ -198,6 +198,72 @@
             </div>
         </div>
 
+        {{-- Ro'yxatga olish / obyekt ma'lumotlari (ariza uchun) --}}
+        <div style="margin-bottom:12px;padding:12px 14px;border:1px solid #e5e7eb;border-radius:10px;background:#fafbfc">
+            <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">🏘️ Ro'yxatga olish / obyekt ma'lumotlari</div>
+
+            <div style="margin-bottom:10px">
+                <label style="font-size:11px;font-weight:600;color:#374151;display:block;margin-bottom:4px">Arizachi turi</label>
+                <select wire:model="ei_applicantType" style="width:100%;padding:8px 11px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;background:#fff">
+                    <option value="">— Tanlanmagan —</option>
+                    @foreach(\App\Models\Project::applicantTypeOptions() as $key => $label)
+                        <option value="{{ $key }}">{{ $label }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div style="margin-bottom:10px">
+                <label style="font-size:11px;font-weight:600;color:#374151;display:block;margin-bottom:4px">Ko'chmas mulk kadastr raqami</label>
+                <input wire:model="ei_cadastreNumber" type="text" placeholder="11:06:10:01:03:0339" style="width:100%;padding:8px 11px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box">
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+                <div>
+                    <label style="font-size:11px;font-weight:600;color:#374151;display:block;margin-bottom:4px">Hudud (viloyat)</label>
+                    <select wire:model="ei_region" style="width:100%;padding:8px 11px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;background:#fff">
+                        <option value="">— Tanlanmagan —</option>
+                        @foreach(\App\Models\Project::regionOptions() as $key => $label)
+                            <option value="{{ $key }}">{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size:11px;font-weight:600;color:#374151;display:block;margin-bottom:4px">Tuman</label>
+                    <input wire:model="ei_district" type="text" placeholder="Quyichirchiq tumani" style="width:100%;padding:8px 11px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box">
+                </div>
+            </div>
+
+            <div style="margin-bottom:12px">
+                <label style="font-size:11px;font-weight:600;color:#374151;display:block;margin-bottom:4px">Ro'yxatga olishga asos bo'luvchi hujjat turi</label>
+                <input wire:model="ei_registrationBasis" type="text" placeholder="Hadya shartnomasi" style="width:100%;padding:8px 11px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box">
+            </div>
+
+            <div x-data="{ up:false, prog:0 }"
+                 x-on:livewire-upload-start="up=true; prog=0"
+                 x-on:livewire-upload-finish="up=false; prog=100"
+                 x-on:livewire-upload-error="up=false"
+                 x-on:livewire-upload-progress="prog=$event.detail.progress">
+                <label style="font-size:11px;font-weight:600;color:#374151;display:block;margin-bottom:4px">Huquqni belgilovchi asos fayli</label>
+                @if($ei_ownershipDocUrl)
+                <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;margin-bottom:8px">
+                    <span style="font-size:16px">📎</span>
+                    <a href="{{ $ei_ownershipDocUrl }}" target="_blank" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#374151;font-size:13px;text-decoration:none">{{ $ei_ownershipDocName }}</a>
+                    <button wire:click="eiDeleteOwnershipDoc" onclick="return confirm('Faylni o\'chirasizmi?')" style="background:#fef2f2;border:1px solid #fecaca;border-radius:5px;color:#dc2626;cursor:pointer;padding:2px 7px;font-size:11px">🗑</button>
+                </div>
+                @endif
+                <input wire:model="ei_newOwnershipDoc" type="file" style="width:100%;font-size:12px;padding:8px;border:1.5px dashed #c7d2fe;border-radius:8px;background:#fafbff;box-sizing:border-box;cursor:pointer">
+                <div x-show="up" x-cloak style="margin-top:10px">
+                    <div style="height:9px;background:#e5e7eb;border-radius:6px;overflow:hidden">
+                        <div style="height:100%;background:linear-gradient(90deg,#3b82f6,#2563eb);border-radius:6px;transition:width .2s" x-bind:style="'width:'+prog+'%'"></div>
+                    </div>
+                    <div style="font-size:12px;color:#2563eb;margin-top:5px;font-weight:700;display:flex;align-items:center;gap:6px">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                        Yuklanmoqda... <span x-text="prog+'%'"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         {{-- GENPLAN — pechat uriladigan PDFlar (Manzil ostida) --}}
         <div style="margin-bottom:12px;border:1px solid #bbf7d0;border-radius:10px;overflow:hidden">
             <div style="background:#f0fdf4;padding:9px 14px;font-size:13px;font-weight:700;color:#166534;border-bottom:1px solid #bbf7d0">📐 GENPLAN <span style="font-weight:400;color:#9ca3af">— pechat uchun PDF</span></div>
