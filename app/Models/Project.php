@@ -108,6 +108,60 @@ class Project extends Model
                     ->update(['submitted_at' => null]);
             }
         });
+
+        // ── Faoliyat jurnali: kim, qachon, nimani o'zgartirdi ──
+        // Menejerlar endi o'z akkountida ishlagani uchun kerak (avtomatik
+        // ichki yangilanishlar — saveQuietly() — bu yerga umuman kirmaydi).
+        static::updated(function ($project) {
+            if (!auth()->check()) return;
+
+            $watched = [
+                'owner_name'       => "Mijoz F.I.Sh",
+                'address'          => 'Manzil',
+                'status'           => 'Status',
+                'category'         => 'Turi',
+                'deadline_date'    => 'Muddat',
+                'assigned_user_id' => "Mas'ul xodim",
+            ];
+
+            $lines = [];
+            foreach ($watched as $field => $label) {
+                if (!$project->wasChanged($field)) continue;
+
+                $old = $project->getOriginal($field);
+                $new = $project->{$field};
+
+                $lines[] = match ($field) {
+                    'status'   => "{$label}: " . (self::statusOptions()[$old] ?? ($old ?: '—')) . ' → ' . (self::statusOptions()[$new] ?? ($new ?: '—')),
+                    'category' => "{$label}: " . (self::categoryOptions()[$old] ?? ($old ?: '—')) . ' → ' . (self::categoryOptions()[$new] ?? ($new ?: '—')),
+                    'assigned_user_id' => "{$label}: " . ($old ? (User::find($old)?->name ?? '—') : '—') . ' → ' . ($new ? (User::find($new)?->name ?? '—') : '—'),
+                    'deadline_date'    => "{$label}: " . ($old ? \Illuminate\Support\Carbon::parse($old)->format('d.m.Y') : '—') . ' → ' . ($new ? \Illuminate\Support\Carbon::parse($new)->format('d.m.Y') : '—'),
+                    default    => "{$label}: " . ($old !== null && $old !== '' ? $old : '—') . ' → ' . ($new !== null && $new !== '' ? $new : '—'),
+                };
+            }
+
+            if ($lines) {
+                ActivityLog::create([
+                    'user_id'        => auth()->id(),
+                    'project_id'     => $project->id,
+                    'project_number' => $project->number,
+                    'action'         => 'project_edited',
+                    'description'    => implode('; ', $lines),
+                ]);
+            }
+        });
+
+        static::deleted(function ($project) {
+            if (!auth()->check() || $project->isForceDeleting()) return;
+
+            ActivityLog::create([
+                'user_id'        => auth()->id(),
+                'project_id'     => $project->id,
+                'project_number' => $project->number,
+                'action'         => 'project_deleted',
+                'description'    => "«{$project->owner_name}» — {$project->address}",
+            ]);
+        });
     }
 
     public function assignedUser()
