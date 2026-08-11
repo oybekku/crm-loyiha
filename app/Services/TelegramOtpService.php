@@ -97,7 +97,6 @@ class TelegramOtpService
         if (Cache::has($cooldownKey)) {
             return true;
         }
-        Cache::put($cooldownKey, true, now()->addSeconds(60));
 
         $code = (string) random_int(100000, 999999);
         Cache::put(self::cacheKey($user->id, $purpose), $code, now()->addMinutes(5));
@@ -111,6 +110,13 @@ class TelegramOtpService
         foreach ($recipients as $chatId) {
             $ok = self::send($chatId, $text) || $ok;
         }
+
+        // Cooldown faqat MUVAFFAQIYATLI yuborishdan keyin o'rnatiladi — aks holda
+        // tarmoq xatosida "qayta yuborish" 60 soniya bloklanib qolardi.
+        if ($ok) {
+            Cache::put($cooldownKey, true, now()->addSeconds(60));
+        }
+
         return $ok;
     }
 
@@ -129,14 +135,21 @@ class TelegramOtpService
         if (Cache::has($cooldownKey)) {
             return true;
         }
-        Cache::put($cooldownKey, true, now()->addSeconds(60));
 
         $code = (string) random_int(100000, 999999);
         Cache::put(self::cacheKey($user->id, 'login'), $code, now()->addMinutes(5));
 
         $text = "🔐 Tizimga kirish uchun tasdiqlash kodi:\n\n<b>{$code}</b>\n\nBu kod 5 daqiqa amal qiladi. Agar bu urinish siz tomoningizdan bo'lmasa, e'tiborsiz qoldiring va parolingizni almashtiring.";
 
-        return self::send($user->telegram_chat_id, $text);
+        $ok = self::send($user->telegram_chat_id, $text);
+
+        // Cooldown faqat MUVAFFAQIYATLI yuborishdan keyin o'rnatiladi — aks holda
+        // tarmoq xatosida foydalanuvchi "qayta yuborish"ni 60 soniya bosolmay qolardi.
+        if ($ok) {
+            Cache::put($cooldownKey, true, now()->addSeconds(60));
+        }
+
+        return $ok;
     }
 
     public static function verifyOtp(User $user, string $code, string $purpose = 'tasdiqlash'): bool
@@ -160,17 +173,28 @@ class TelegramOtpService
         return "telegram_otp:{$userId}:{$purpose}";
     }
 
+    /**
+     * Beget'dagi Telegram'ga chiquvchi ulanish beqaror (taxminan har 5
+     * urinishdan 1 tasi timeout bo'ladi) — shu sabab bir necha marta
+     * qayta urinamiz, aks holda foydalanuvchiga tasodifan kod yetib bormaydi.
+     */
     private static function send(string $chatId, string $text): bool
     {
-        try {
-            $resp = Http::timeout(10)->post(
-                "https://api.telegram.org/bot" . self::token() . "/sendMessage",
-                ['chat_id' => $chatId, 'text' => $text, 'parse_mode' => 'HTML']
-            );
-            return $resp->successful();
-        } catch (\Throwable $e) {
-            Log::warning('TelegramOtpService: yuborish xatosi — ' . $e->getMessage());
-            return false;
+        for ($attempt = 1; $attempt <= 3; $attempt++) {
+            try {
+                $resp = Http::timeout(6)->post(
+                    "https://api.telegram.org/bot" . self::token() . "/sendMessage",
+                    ['chat_id' => $chatId, 'text' => $text, 'parse_mode' => 'HTML']
+                );
+                if ($resp->successful()) {
+                    return true;
+                }
+                Log::warning("TelegramOtpService: yuborish xatosi (urinish {$attempt}/3) — HTTP " . $resp->status());
+            } catch (\Throwable $e) {
+                Log::warning("TelegramOtpService: yuborish xatosi (urinish {$attempt}/3) — " . $e->getMessage());
+            }
         }
+
+        return false;
     }
 }

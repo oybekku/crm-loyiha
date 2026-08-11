@@ -77,12 +77,22 @@ class Login extends BaseLogin
         ) {
             Filament::auth()->logout();
 
+            $sent = TelegramOtpService::sendLoginOtp($user);
+
+            if (! $sent) {
+                Notification::make()
+                    ->title('Kod yuborilmadi')
+                    ->body('Telegram serveriga ulanib bo\'lmadi — internet/hosting tomonida vaqtinchalik uzilish bo\'lishi mumkin. Birozdan keyin qayta urinib ko\'ring.')
+                    ->danger()
+                    ->send();
+
+                return null;
+            }
+
             $this->pendingUserId = $user->id;
             $this->pendingRemember = (bool) ($data['remember'] ?? false);
             $this->otpStep = true;
             $this->form->fill();
-
-            TelegramOtpService::sendLoginOtp($user);
 
             Notification::make()
                 ->title('Tasdiqlash kodi Telegram\'ga yuborildi')
@@ -142,6 +152,43 @@ class Login extends BaseLogin
         }
 
         return parent::getForms();
+    }
+
+    /**
+     * @return array<\Filament\Actions\Action|\Filament\Actions\ActionGroup>
+     */
+    protected function getFormActions(): array
+    {
+        if (! $this->otpStep) {
+            return parent::getFormActions();
+        }
+
+        return [
+            $this->getAuthenticateFormAction(),
+            \Filament\Actions\Action::make('resendLoginOtp')
+                ->label('Kodni qayta yuborish')
+                ->link()
+                ->action('resendLoginOtp'),
+        ];
+    }
+
+    public function resendLoginOtp(): void
+    {
+        $user = $this->pendingUserId ? User::find($this->pendingUserId) : null;
+
+        if (! $user) {
+            return;
+        }
+
+        if (TelegramOtpService::sendLoginOtp($user)) {
+            Notification::make()->title('Kod qayta yuborildi')->success()->send();
+        } else {
+            Notification::make()
+                ->title('Yuborilmadi')
+                ->body('Telegram serveriga ulanib bo\'lmadi, birozdan keyin qayta urinib ko\'ring.')
+                ->danger()
+                ->send();
+        }
     }
 
     protected function getOtpCodeFormComponent(): TextInput
