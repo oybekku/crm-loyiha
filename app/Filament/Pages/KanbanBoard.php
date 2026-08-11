@@ -53,6 +53,11 @@ class KanbanBoard extends Page
     public string $passport_series     = '';   // Pasport: AD 3824135
     public string $passport_issued_by  = '';   // Kim tomonidan berilgan
     public string $pinfl               = '';   // ПИНФЛ
+    public string $applicant_type      = '';   // Arizachi turi
+    public string $cadastre_number     = '';   // Ko'chmas mulk kadastr raqami
+    public string $region              = '';   // Obyekt hududi (viloyat)
+    public string $district            = '';   // Obyekt tumani
+    public string $registration_basis  = '';   // Ro'yxatga olish asosi hujjati
     public array  $assigned_user_ids = [];
     public string $deadline_days     = '';
     public bool   $showDeadlineConfirm   = false;
@@ -267,7 +272,7 @@ class KanbanBoard extends Page
     {
         $user = auth()->user();
         if ($user?->isHisobchi()) return;
-        $this->reset(['owner_name', 'proj_title', 'address', 'latitude', 'longitude', 'description', 'mygov_fish', 'passport_series', 'passport_issued_by', 'pinfl', 'assigned_user_ids', 'deadline_days', 'showDeadlineConfirm']);
+        $this->reset(['owner_name', 'proj_title', 'address', 'latitude', 'longitude', 'description', 'mygov_fish', 'passport_series', 'passport_issued_by', 'pinfl', 'applicant_type', 'cadastre_number', 'region', 'district', 'registration_basis', 'assigned_user_ids', 'deadline_days', 'showDeadlineConfirm']);
         $this->phones             = ['+998'];
         $this->category           = 'turar';
         $this->uploadedFiles      = [];
@@ -1336,6 +1341,11 @@ class KanbanBoard extends Page
             'passport_series'    => trim($this->passport_series) ?: null,
             'passport_issued_by' => trim($this->passport_issued_by) ?: null,
             'pinfl'              => trim($this->pinfl) ?: null,
+            'applicant_type'      => $this->applicant_type ?: null,
+            'cadastre_number'     => trim($this->cadastre_number) ?: null,
+            'region'              => $this->region ?: null,
+            'district'            => trim($this->district) ?: null,
+            'registration_basis'  => trim($this->registration_basis) ?: null,
             'status'           => 'yangi',
             'assigned_user_id' => $primaryUserId,
             'deadline_date'    => ($this->deadline_days > 0) ? now()->addDays((int)$this->deadline_days)->toDateString() : null,

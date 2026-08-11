@@ -1492,6 +1492,43 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                     <input wire:model.live="pinfl" class="kb-input" inputmode="numeric" placeholder="Masalan: 32209712860013">
                 </div>
             </div>
+
+            {{-- Ro'yxatga olish / obyekt ma'lumotlari (ariza uchun) --}}
+            <div style="margin-top:14px;padding:14px;border:1px solid #e2e8f0;border-radius:10px;background:#fafbfc">
+                <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:10px;display:flex;align-items:center;gap:6px">🏘️ Ro'yxatga olish / obyekt ma'lumotlari <span style="font-weight:400;color:#9ca3af">(ixtiyoriy)</span></div>
+                <div style="margin-bottom:10px">
+                    <label class="kb-label">Arizachi turi</label>
+                    <select wire:model.live="applicant_type" class="kb-input">
+                        <option value="">— Tanlanmagan —</option>
+                        @foreach(\App\Models\Project::applicantTypeOptions() as $k => $v)
+                        <option value="{{ $k }}">{{ $v }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div style="margin-bottom:10px">
+                    <label class="kb-label">Ko'chmas mulk kadastr raqami</label>
+                    <input wire:model.live="cadastre_number" class="kb-input" placeholder="Masalan: 11:06:10:01:03:0339">
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+                    <div>
+                        <label class="kb-label">Hudud (viloyat)</label>
+                        <select wire:model.live="region" class="kb-input">
+                            <option value="">— Tanlanmagan —</option>
+                            @foreach(\App\Models\Project::regionOptions() as $k => $v)
+                            <option value="{{ $k }}">{{ $v }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="kb-label">Tuman</label>
+                        <input wire:model.live="district" class="kb-input" placeholder="Masalan: Quyichirchiq tumani">
+                    </div>
+                </div>
+                <div>
+                    <label class="kb-label">Ro'yxatga olishga asos bo'luvchi hujjat turi</label>
+                    <input wire:model.live="registration_basis" class="kb-input" placeholder="Masalan: Hadya shartnomasi">
+                </div>
+            </div>
         </div>
     </div>
     @endif
