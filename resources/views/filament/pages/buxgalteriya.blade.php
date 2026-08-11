@@ -6,8 +6,6 @@
    qora dizaynida qoladi (haqiqiy bank kartasi kabi), chunki ular ozi
    bilan birga oz foni/rangini olib yuradi. */
 .bx-wrap{color:#111827}
-.bx-back{display:inline-flex;align-items:center;gap:6px;color:#6b7280 !important;font-size:13px;text-decoration:none;margin-bottom:18px}
-.bx-back:hover{color:#111827 !important}
 .bx-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:22px}
 .bx-title{font-size:20px;font-weight:800;color:#111827 !important}
 .bx-add{background:#2563eb;color:#fff;border:none;border-radius:10px;padding:11px 20px;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
@@ -188,8 +186,6 @@
    mustaqil qora dizaynida qoladi (allaqachon har ikkala rejimda ham
    bir xil ishlaydi) — faqat oq-fonli elementlar qorong'ilashtiriladi. ════ */
 .dark .bx-wrap{color:#e2e8f0}
-.dark .bx-back{color:#94a3b8 !important}
-.dark .bx-back:hover{color:#e2e8f0 !important}
 .dark .bx-title{color:#f1f5f9 !important}
 
 .dark .acc-act-btn{background:rgba(255,255,255,.08);color:#cbd5e1 !important}
@@ -238,8 +234,6 @@
 </style>
 
 <div class="bx-wrap">
-    <a href="{{ route('filament.admin.pages.kanban-board') }}" class="bx-back">← Ortga</a>
-
     @include('filament.partials.report-tabs', ['dark' => true])
 
     <div class="bx-top">
