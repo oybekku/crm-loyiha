@@ -54,19 +54,29 @@ class Login extends BaseLogin
         }
 
         $data = $this->form->getState();
+        $credentials = $this->getCredentialsFromFormData($data);
 
-        if (! Filament::auth()->attempt($this->getCredentialsFromFormData($data), $data['remember'] ?? false)) {
+        // Filament::auth()->attempt() o'rniga validate() ishlatamiz — bu faqat
+        // email/parolni tekshiradi, LEKIN sessiyaga kiritib qo'ymaydi (session
+        // migratsiya/CSRF token yangilanishini keltirib chiqarmaydi). 2FA kerak
+        // bo'lsa, haqiqiy login FAQAT kod tasdiqlangandan keyin (pastda,
+        // verifyLoginOtp() ichida) sodir bo'ladi — shu bilan sahifa hali
+        // ochilgan paytdagi sessiya/token o'zgarmasdan qoladi va "sahifa
+        // muddati tugadi" xatosi chiqmaydi.
+        if (! Filament::auth()->validate($credentials)) {
             $this->throwFailureValidationException();
         }
 
-        $user = Filament::auth()->user();
+        $user = User::where('email', $credentials['email'])->first();
+
+        if (! $user) {
+            $this->throwFailureValidationException();
+        }
 
         if (
             ($user instanceof FilamentUser) &&
             (! $user->canAccessPanel(Filament::getCurrentPanel()))
         ) {
-            Filament::auth()->logout();
-
             $this->throwFailureValidationException();
         }
 
@@ -75,8 +85,6 @@ class Login extends BaseLogin
             TelegramOtpService::otpRequired() &&
             TelegramOtpService::isLinked($user)
         ) {
-            Filament::auth()->logout();
-
             $sent = TelegramOtpService::sendLoginOtp($user);
 
             if (! $sent) {
@@ -109,6 +117,9 @@ class Login extends BaseLogin
             return null;
         }
 
+        // 2FA talab qilinmaydi (Telegramga ulanmagan) — validate() login qilmagani
+        // uchun bu yerda haqiqiy login shu yerda amalga oshadi.
+        Filament::auth()->login($user, (bool) ($data['remember'] ?? false));
         session()->regenerate();
 
         return app(LoginResponse::class);
