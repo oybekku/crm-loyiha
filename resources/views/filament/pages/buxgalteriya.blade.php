@@ -174,6 +174,67 @@
 .trf-empty{padding:26px;text-align:center;color:#9ca3af !important;font-size:12.5px}
 
 .acc-personal-badge{font-size:8px;font-weight:800;color:#7c3aed !important;background:#f3e8ff;border-radius:5px;padding:3px 7px;white-space:nowrap;align-self:flex-start;margin-left:6px}
+
+/* Ilgari inline style="..." bolgan, endi klassga otkazilgan elementlar
+   (inline style .dark bilan almashtirib bolmaydi). */
+.bx-date-input{background:#fff;border:1px solid #e2e8f0;color:#111827;border-radius:8px;padding:6px 10px;font-size:12.5px}
+.bx-warn-box{padding:10px 18px;font-size:11.5px;color:#92400e;background:#fffbeb;border-top:1px solid #fde68a}
+.bx-auto-badge{background:#f0fdfa;color:#0d9488 !important}
+.bx-plus-placeholder{width:28px;height:28px;border-radius:8px;background:#f3f4f6;color:#9ca3af;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700}
+.bx-cancel-btn{flex:1;padding:11px;border-radius:9px;border:1px solid #e5e7eb;background:#fff;color:#6b7280;font-weight:700;font-size:13px;cursor:pointer}
+.bx-check-label{font-size:12px;color:#6b7280;cursor:pointer;margin-bottom:0}
+
+/* ════ TUNGI REJIM (.dark) — .acc-card oilasi ozgarmaydi, ozining
+   mustaqil qora dizaynida qoladi (allaqachon har ikkala rejimda ham
+   bir xil ishlaydi) — faqat oq-fonli elementlar qorong'ilashtiriladi. ════ */
+.dark .bx-wrap{color:#e2e8f0}
+.dark .bx-back{color:#94a3b8 !important}
+.dark .bx-back:hover{color:#e2e8f0 !important}
+.dark .bx-title{color:#f1f5f9 !important}
+
+.dark .acc-act-btn{background:rgba(255,255,255,.08);color:#cbd5e1 !important}
+.dark .acc-act-btn:hover{background:rgba(255,255,255,.16)}
+
+.dark .bx-empty{color:#64748b !important;background:#1a1a1d;border-color:#2a2a2e}
+
+.dark .bx-modal{background:#161b22;color:#e2e8f0}
+.dark .bx-field label{color:#94a3b8 !important}
+.dark .bx-field input,.dark .bx-field select{background:#0d1117;border-color:#2a2a2e;color:#eee !important}
+.dark .bx-type-tab{background:#0d1117;border-color:#2a2a2e;color:#94a3b8 !important}
+.dark .bx-type-tab.active{background:#12224a;color:#93c5fd !important}
+
+.dark .bx-month{background:#161b22;border-color:#2a2a2e}
+.dark .bx-month-btn{background:#1a1a1d;color:#94a3b8 !important}
+.dark .bx-month-btn:hover{background:#232326;color:#e2e8f0 !important}
+.dark .bx-month-lbl{color:#60a5fa !important}
+
+.dark .exp-panel,.dark .trf-panel{background:#161b22;border-color:#2a2a2e;box-shadow:none}
+.dark .exp-head-title,.dark .trf-head-title{color:#f1f5f9 !important}
+.dark .exp-head-total{color:#f87171 !important}
+.dark .trf-head-total{color:#60a5fa !important}
+.dark .exp-head-chev,.dark .trf-head-chev{color:#64748b !important}
+.dark .exp-head-add{background:#7f1d1d;color:#fca5a5 !important;border-color:transparent}
+.dark .exp-head-add:hover{background:#991b1b;color:#fecaca !important}
+.dark .trf-head-add{background:#1e3a5f;color:#93c5fd !important;border-color:transparent}
+.dark .trf-head-add:hover{background:#254a75;color:#bfdbfe !important}
+.dark .exp-list,.dark .trf-list{border-top-color:#2a2a2e}
+.dark .exp-row,.dark .trf-row{border-bottom-color:#1f242c}
+.dark .exp-row:hover,.dark .trf-row:hover{background:#1a1f28}
+.dark .exp-date,.dark .trf-date{color:#64748b !important}
+.dark .exp-acc-badge{color:#93c5fd !important;background:#12224a}
+.dark .exp-comment,.dark .trf-comment{color:#cbd5e1 !important}
+.dark .exp-amount{color:#f87171 !important}
+.dark .trf-path,.dark .trf-amount{color:#93c5fd !important}
+.dark .exp-empty,.dark .trf-empty{color:#64748b !important}
+
+.dark .acc-personal-badge{color:#c4b5fd !important;background:#312e81}
+
+.dark .bx-date-input{background:#0d1117;border-color:#2a2a2e;color:#e2e8f0 !important}
+.dark .bx-warn-box{color:#fbbf24 !important;background:#3a2e0d;border-top-color:#2a2a2e}
+.dark .bx-auto-badge{background:#1e3a3a;color:#5eead4 !important}
+.dark .bx-plus-placeholder{background:rgba(255,255,255,.08);color:#64748b !important}
+.dark .bx-cancel-btn{border-color:#2a2a2e;background:#0d1117;color:#94a3b8 !important}
+.dark .bx-check-label{color:#94a3b8 !important}
 </style>
 
 <div class="bx-wrap">
@@ -268,11 +329,11 @@
             <span style="font-size:11px;color:#64748b">Kimdan</span>
             <input type="date" wire:model.live="bxDayFrom" min="{{ $bxMonthStart }}" max="{{ $bxMonthEnd }}"
                    title="Faqat {{ $bxMonthLabel }} oyi ichidan tanlang"
-                   style="background:#fff;border:1px solid #e2e8f0;color:#111827;border-radius:8px;padding:6px 10px;font-size:12.5px">
+                   class="bx-date-input">
             <span style="font-size:11px;color:#64748b">Kimgacha</span>
             <input type="date" wire:model.live="bxDayTo" min="{{ $bxMonthStart }}" max="{{ $bxMonthEnd }}"
                    title="Bo'sh qoldirsangiz — faqat 'Kimdan' kuni hisoblanadi"
-                   style="background:#fff;border:1px solid #e2e8f0;color:#111827;border-radius:8px;padding:6px 10px;font-size:12.5px">
+                   class="bx-date-input">
             @if($bxDayFrom)
                 <span class="exp-head-total" style="color:#4ade80 !important">{{ number_format($dayIncome, 0, '.', ' ') }} so'm</span>
                 <button wire:click="bxClearDayFilter" style="background:transparent;border:none;color:#64748b;cursor:pointer;font-size:16px;line-height:1;flex-shrink:0" title="Tozalash">✕</button>
@@ -308,11 +369,11 @@
             <svg class="exp-head-chev" :style="open ? 'transform:rotate(180deg)' : ''" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
         @if(!$expenseAccountId)
-        <div style="padding:10px 18px;font-size:11.5px;color:#92400e;background:#fffbeb;border-top:1px solid #fde68a">
+        <div class="bx-warn-box">
             ⚠ Xodimlar komissiyasi avtomatik yozilishi uchun bitta hisobni "Xarajatlar hisobi" deb belgilang (hisobni tahrirlashda).
         </div>
         @elseif(!$commissionSourceId)
-        <div style="padding:10px 18px;font-size:11.5px;color:#92400e;background:#fffbeb;border-top:1px solid #fde68a">
+        <div class="bx-warn-box">
             ⚠ Komissiya haqiqiy hisobdan (masalan Naqd pul) real "chiqarilishi" uchun bitta hisobni "Komissiya manba hisobi" deb belgilang (hisobni tahrirlashda). Aks holda Xarajatlar hisobi manfiy bo'lib turadi, lekin manba hisob balansi kamaymaydi.
         </div>
         @endif
@@ -321,7 +382,7 @@
             <div class="exp-row" @if($exp->is_auto) title="Oylik hisobotdagi 'To'lanishi kerak' summasidan avtomatik hisoblanadi" @endif>
                 <span class="exp-date">{{ $exp->expense_date->format('d.m.Y') }}</span>
                 @if($exp->is_auto)
-                <span class="exp-acc-badge" style="background:#f0fdfa;color:#0d9488">👤 avtomatik</span>
+                <span class="exp-acc-badge bx-auto-badge">👤 avtomatik</span>
                 @else
                 <span class="exp-acc-badge">{{ $exp->account ? ($exp->account->name ?: $typeOptions[$exp->account->type]) : '—' }}</span>
                 @endif
@@ -377,7 +438,7 @@
          title="Kerak bo'lmagan kartalarni shu yerga sudrab tashlang"
          @dragover.prevent="over=true" @dragleave="over=false"
          @drop.prevent="over=false; $wire.call('moveAccountSection', $event.dataTransfer.getData('text/plain'), true)">
-        <span style="width:28px;height:28px;border-radius:8px;background:#f3f4f6;color:#9ca3af;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700">+</span>
+        <span class="bx-plus-placeholder">+</span>
         <input type="file" x-ref="bgFileInput" wire:model="bgUpload" accept="image/*" style="display:none">
     </div>
     @else
@@ -446,23 +507,23 @@
 
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
                 <input type="checkbox" id="bx-fav" wire:model="formIsFavorite" style="width:16px;height:16px">
-                <label for="bx-fav" style="font-size:12px;color:#94a3b8;cursor:pointer;margin-bottom:0">Belgilangan (ko'k ramka) sifatida boshlash</label>
+                <label for="bx-fav" class="bx-check-label">Belgilangan (ko'k ramka) sifatida boshlash</label>
             </div>
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
                 <input type="checkbox" id="bx-personal" wire:model="formIsPersonal" style="width:16px;height:16px">
-                <label for="bx-personal" style="font-size:12px;color:#94a3b8;cursor:pointer;margin-bottom:0">Shaxsiy/xarajat hisobi (masalan xodimga) — "Jami balans"ga qo'shilmaydi</label>
+                <label for="bx-personal" class="bx-check-label">Shaxsiy/xarajat hisobi (masalan xodimga) — "Jami balans"ga qo'shilmaydi</label>
             </div>
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
                 <input type="checkbox" id="bx-expense-acc" wire:model="formIsExpenseAccount" style="width:16px;height:16px">
-                <label for="bx-expense-acc" style="font-size:12px;color:#94a3b8;cursor:pointer;margin-bottom:0">Xarajatlar hisobi — xodimlar komissiyasi (Oylik hisobotdagi "To'lanishi kerak") shu hisobga avtomatik yoziladi</label>
+                <label for="bx-expense-acc" class="bx-check-label">Xarajatlar hisobi — xodimlar komissiyasi (Oylik hisobotdagi "To'lanishi kerak") shu hisobga avtomatik yoziladi</label>
             </div>
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px">
                 <input type="checkbox" id="bx-commission-src" wire:model="formIsCommissionSource" style="width:16px;height:16px">
-                <label for="bx-commission-src" style="font-size:12px;color:#94a3b8;cursor:pointer;margin-bottom:0">Komissiya manba hisobi — xodimlarga komissiya shu hisobdan (masalan Naqd pul) real to'lanadi, har oy shu summada avtomatik o'tkazma yoziladi</label>
+                <label for="bx-commission-src" class="bx-check-label">Komissiya manba hisobi — xodimlarga komissiya shu hisobdan (masalan Naqd pul) real to'lanadi, har oy shu summada avtomatik o'tkazma yoziladi</label>
             </div>
 
             <div style="display:flex;gap:10px">
-                <button wire:click="closeAccountModal" style="flex:1;padding:11px;border-radius:9px;border:1px solid #e5e7eb;background:#fff;color:#6b7280;font-weight:700;font-size:13px;cursor:pointer">Bekor</button>
+                <button wire:click="closeAccountModal" class="bx-cancel-btn">Bekor</button>
                 <button wire:click="saveAccount" style="flex:1;padding:11px;border-radius:9px;border:none;background:#16a34a;color:#fff;font-weight:700;font-size:13px;cursor:pointer">Saqlash</button>
             </div>
         </div>
@@ -508,7 +569,7 @@
             </div>
 
             <div style="display:flex;gap:10px;margin-top:4px">
-                <button wire:click="closeExpenseModal" style="flex:1;padding:11px;border-radius:9px;border:1px solid #e5e7eb;background:#fff;color:#6b7280;font-weight:700;font-size:13px;cursor:pointer">Bekor</button>
+                <button wire:click="closeExpenseModal" class="bx-cancel-btn">Bekor</button>
                 <button wire:click="saveExpense" style="flex:1;padding:11px;border-radius:9px;border:none;background:#dc2626;color:#fff;font-weight:700;font-size:13px;cursor:pointer">Saqlash</button>
             </div>
         </div>
@@ -565,7 +626,7 @@
             </div>
 
             <div style="display:flex;gap:10px;margin-top:4px">
-                <button wire:click="closeTransferModal" style="flex:1;padding:11px;border-radius:9px;border:1px solid #e5e7eb;background:#fff;color:#6b7280;font-weight:700;font-size:13px;cursor:pointer">Bekor</button>
+                <button wire:click="closeTransferModal" class="bx-cancel-btn">Bekor</button>
                 <button wire:click="saveTransfer" style="flex:1;padding:11px;border-radius:9px;border:none;background:#2563eb;color:#fff;font-weight:700;font-size:13px;cursor:pointer">O'tkazish</button>
             </div>
         </div>
