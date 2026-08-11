@@ -1143,21 +1143,27 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
         // yuborilardi (natijada sakrab-sakrab, battar tebranardi). Endi har bir
         // "sabab"ni aniq "aks-sado" bilan juftlab, faqat o'sha aniq hodisa kelganda
         // bloklaymiz — qachon kelishidan (sinxron/asinxron) qat'i nazar ishlaydi.
-        var expectTop = false, expectWrap = false;
+        // Eski usul (bitta bayroq, "keyingi hodisada iste'mol qilinadi") tez-tez
+        // (masalan tepadagi scrollbar tugmachasini sichqoncha bilan sudraganda)
+        // bir freym ichida bir necha marta ishga tushardi — bayroq bitta hodisada
+        // "iste'mol" bo'lib, keyingi (haligacha bizning yozganimizning o'zi
+        // bo'lgan) aks-sado hodisasi haqiqiy deb qabul qilinib, ESKI qiymatni
+        // ORQAGA yozib, faol sudrashni "qaltiratib" qo'yardi. Endi vaqt oynasi
+        // (60ms) bilan bostiramiz — shu oyna ichida kelgan BARCHA aks-sadolar
+        // e'tiborga olinmaydi, faqat bitta emas.
+        var lastWriteWrap = 0, lastWriteTop = 0;
+        var ECHO_WINDOW = 60;
         top.addEventListener('scroll', function(){
-            if(expectTop){ expectTop = false; return; }
-            // Qiymat o'zgarmasa brauzer aks-sado hodisasini yubormaydi — shu holda
-            // bayroqni ko'tarib qo'ymaymiz, aks holda u "osilib" qolib, keyingi
-            // haqiqiy sudrashni noto'g'ri bloklab qo'yishi mumkin edi.
+            if(Date.now() - lastWriteTop < ECHO_WINDOW) return;
             if(wrap.scrollLeft !== top.scrollLeft){
-                expectWrap = true;
+                lastWriteWrap = Date.now();
                 wrap.scrollLeft = top.scrollLeft;
             }
         });
         wrap.addEventListener('scroll', function(){
-            if(expectWrap){ expectWrap = false; return; }
+            if(Date.now() - lastWriteWrap < ECHO_WINDOW) return;
             if(top.scrollLeft !== wrap.scrollLeft){
-                expectTop = true;
+                lastWriteTop = Date.now();
                 top.scrollLeft = wrap.scrollLeft;
             }
         });
