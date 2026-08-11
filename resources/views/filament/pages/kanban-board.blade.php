@@ -3,10 +3,25 @@
 <style>
 /* ===== KANBAN ===== */
 .kanban-wrap{display:flex;gap:14px;overflow-x:auto;padding-bottom:16px;align-items:flex-start;min-height:200px}
+/* Doskaning o'z (pastki) gorizontal scrollbari yashiriladi — tepadagi
+   sinxron panel bilan ikkalasi birga ko'rinib, sinxronlashda "qaltirab"
+   qolardi. Endi faqat tepadagi panel ko'rinadi, aylantirish funksiyasi
+   (overflow-x:auto) o'zi ishlab turaveradi, faqat vizual scrollbar yashirin. */
+.kanban-wrap{scrollbar-width:none;-ms-overflow-style:none}
+.kanban-wrap::-webkit-scrollbar{display:none}
 /* Tepadagi sinxron gorizontal scroll paneli */
 .kanban-scroll-top{overflow-x:auto;overflow-y:hidden;position:sticky;top:0;z-index:6;height:16px;margin-bottom:4px;background:rgba(0,0,0,0.03);border-radius:6px}
 .kanban-scroll-top > div{height:1px}
 .dark .kanban-scroll-top{background:rgba(255,255,255,0.06)}
+
+/* Yon strelkalar — sahifa pastga surilganda ham bo'limlar orasida
+   gorizontal o'tish uchun (tepadagi scrollbar ko'zdan yo'qolganda). */
+.kb-side-arrow{position:fixed;top:50%;transform:translateY(-50%);z-index:45;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.92);border:1px solid rgba(0,0,0,.06);box-shadow:0 4px 18px rgba(0,0,0,.16);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#374151;transition:opacity .15s,background .15s;opacity:0;pointer-events:none}
+.kb-side-arrow.kb-visible{opacity:1;pointer-events:auto}
+.kb-side-arrow:hover{background:#fff}
+.dark .kb-side-arrow{background:rgba(31,41,55,.92);border-color:rgba(255,255,255,.08);color:#e5e7eb}
+.dark .kb-side-arrow:hover{background:#1f2937}
+@media(max-width:1023px){.kb-side-arrow{display:none !important}}
 .kanban-col{min-width:500px;max-width:500px;flex-shrink:0;border-radius:10px;overflow:hidden}
 .col-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;font-weight:700;font-size:13px;letter-spacing:0.01em}
 .col-count{background:rgba(255,255,255,.15);border-radius:12px;padding:2px 9px;font-size:11px;font-weight:600;color:#cbd5e1}
@@ -567,6 +582,12 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 
 @if(!$filterStatus)
 <div class="kanban-scroll-top" id="kanban-scroll-top" style="{{ $search ? 'display:none' : '' }}"><div></div></div>
+<button type="button" id="kb-scroll-left" class="kb-side-arrow kb-side-arrow-left" title="Chapga" aria-label="Chapga">
+    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+</button>
+<button type="button" id="kb-scroll-right" class="kb-side-arrow kb-side-arrow-right" title="O'ngga" aria-label="O'ngga">
+    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+</button>
 @endif
 <div class="kanban-wrap" id="kanban-wrap" style="{{ $search ? 'display:none' : '' }}">
 @foreach($statuses as $statusKey => $status)
@@ -1141,7 +1162,41 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             }
         });
     }
-    function init(){ setTimeout(sync, 80); }
+    // ── Yon strelkalar (chap/o'ng) — doska aylantiriladigan bo'lsagina va
+    //    hali chetiga yetmagan tomonda ko'rinadi. Sahifa pastga surilganda
+    //    ham (tepadagi scrollbar ko'zdan yo'qolsa ham) shu orqali bo'limlar
+    //    orasida o'tish mumkin bo'ladi. ──
+    function updateArrows(){
+        var wrap = document.getElementById('kanban-wrap');
+        var L = document.getElementById('kb-scroll-left');
+        var R = document.getElementById('kb-scroll-right');
+        if(!wrap || !L || !R) return;
+        var scrollable = wrap.scrollWidth > wrap.clientWidth + 5;
+        var atStart = wrap.scrollLeft <= 4;
+        var atEnd   = wrap.scrollLeft >= (wrap.scrollWidth - wrap.clientWidth - 4);
+        L.classList.toggle('kb-visible', scrollable && !atStart);
+        R.classList.toggle('kb-visible', scrollable && !atEnd);
+
+        // Chap/o'ng chegarani sidebar kengligidan qat'iy nazar doskaning
+        // haqiqiy chetiga (getBoundingClientRect) moslab qo'yamiz — sidebar
+        // yig'ilsa/yozilsa ham strelka doim doska chetida turadi.
+        var rect = wrap.getBoundingClientRect();
+        L.style.left  = Math.max(8, rect.left + 8) + 'px';
+        R.style.right = Math.max(8, window.innerWidth - rect.right + 8) + 'px';
+    }
+    function scrollByColumn(direction){
+        var wrap = document.getElementById('kanban-wrap');
+        if(!wrap) return;
+        var col = wrap.querySelector('.kanban-col');
+        var amount = (col ? col.getBoundingClientRect().width : 500) + 14;
+        wrap.scrollBy({ left: direction * amount, behavior: 'smooth' });
+    }
+    document.getElementById('kb-scroll-left')?.addEventListener('click', function(){ scrollByColumn(-1); });
+    document.getElementById('kb-scroll-right')?.addEventListener('click', function(){ scrollByColumn(1); });
+    document.getElementById('kanban-wrap')?.addEventListener('scroll', updateArrows);
+    window.addEventListener('resize', updateArrows);
+
+    function init(){ setTimeout(function(){ sync(); updateArrows(); }, 80); }
     if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
     else init();
     document.addEventListener('livewire:navigated', init);
@@ -1171,6 +1226,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             }
             attempts++;
             if(attempts === 8) sync();
+            updateArrows();
             if(attempts < 60){ requestAnimationFrame(tick); }
             else { restoring = false; }
         }
@@ -1203,6 +1259,15 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
         if(w && w.contains(e.target)){
             saveScroll();
             restoreSeq();
+        }
+    }, true);
+
+    // Sidebar yig'ish/yozish tugmasi bosilsa — strelka joyini animatsiya
+    // davomida (~0.3s) qayta hisoblab boramiz, aks holda eski joyida qotib qolardi.
+    document.addEventListener('click', function(e){
+        if(e.target.closest && e.target.closest('#bh-tgl-btn')){
+            var n = 0;
+            var iv = setInterval(function(){ updateArrows(); if(++n > 20) clearInterval(iv); }, 20);
         }
     }, true);
 })();
@@ -2411,8 +2476,15 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
         {{-- Existing payments list --}}
         @if($payProj && $payProj->payments->count() > 0)
         <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px">
-            <div style="font-size:11px;font-weight:600;color:#6b7280;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">
-                Kiritilgan to'lovlar
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                <div style="font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.5px">
+                    Kiritilgan to'lovlar
+                </div>
+                <button onclick="event.stopPropagation()"
+                        wire:click.stop="openPaymentLogs({{ $payProj->id }})"
+                        style="font-size:10px;padding:3px 8px;border-radius:5px;border:1px solid #e5e7eb;background:#fff;color:#6b7280;cursor:pointer;white-space:nowrap">
+                    🕐 Tarix
+                </button>
             </div>
             @foreach($payProj->payments->sortByDesc('payment_date') as $pmt)
             <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;{{ !$loop->last ? 'border-bottom:1px solid #f1f5f9' : '' }}">
@@ -2697,6 +2769,22 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                 Saqlash
             </button>
         </div>
+    </div>
+</div>
+@endif
+
+{{-- TO'LOVLAR TARIXI MODAL --}}
+@if($showPaymentLogsModal)
+@php $plProject = \App\Models\Project::with('paymentLogs.user')->find($paymentLogsProjectId); @endphp
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1500;display:flex;align-items:center;justify-content:center;padding:16px" wire:click.self="closePaymentLogsModal">
+    <div style="background:#fff;border-radius:14px;padding:20px 24px;max-width:520px;width:100%;box-shadow:0 25px 80px rgba(0,0,0,.3)" wire:click.stop>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <span style="font-size:15px;font-weight:700;color:#111827">To'lovlar tarixi — {{ $plProject?->owner_name }}</span>
+            <button wire:click="closePaymentLogsModal" style="background:none;border:none;cursor:pointer;color:#6b7280;font-size:20px;line-height:1">✕</button>
+        </div>
+        @if($plProject)
+        @include('filament.modals.payment-logs', ['project' => $plProject])
+        @endif
     </div>
 </div>
 @endif

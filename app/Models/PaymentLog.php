@@ -39,6 +39,7 @@ class PaymentLog extends Model
         return match($this->action) {
             'created'           => "To'lov qo'shildi",
             'edited'            => "Summa o'zgartirildi",
+            'deleted'           => "To'lov o'chirildi",
             'employee_assigned' => "Hodim biriktirildi",
             default             => $this->action,
         };

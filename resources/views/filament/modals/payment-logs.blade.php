@@ -4,6 +4,7 @@
 .pl-icon{width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center}
 .pl-icon-created{background:#dcfce7}
 .pl-icon-edited{background:#dbeafe}
+.pl-icon-deleted{background:#fee2e2}
 .pl-icon-employee{background:#fef3c7}
 .pl-body{flex:1;min-width:0}
 .pl-action{font-size:12px;font-weight:600;color:#111827}
@@ -12,6 +13,7 @@
 .pl-amount{font-size:12px;font-weight:700}
 .pl-created{color:#16a34a}
 .pl-edited{color:#2563eb}
+.pl-deleted{color:#dc2626}
 .pl-strikethrough{text-decoration:line-through;color:#9ca3af;font-weight:400}
 </style>
 
@@ -50,6 +52,7 @@
         $iconClass = match($log->action) {
             'created'           => 'pl-icon-created',
             'edited'            => 'pl-icon-edited',
+            'deleted'           => 'pl-icon-deleted',
             'employee_assigned' => 'pl-icon-employee',
             default             => 'pl-icon-created',
         };
@@ -60,6 +63,8 @@
             <svg width="14" height="14" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
             @elseif($log->action === 'edited')
             <svg width="14" height="14" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            @elseif($log->action === 'deleted')
+            <svg width="14" height="14" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6h16z"/></svg>
             @else
             <svg width="14" height="14" fill="none" stroke="#d97706" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
             @endif
@@ -67,7 +72,11 @@
         <div class="pl-body">
             <div style="display:flex;align-items:center;justify-content:space-between">
                 <span class="pl-action">{{ $log->actionLabel() }}</span>
-                @if($log->amount)
+                @if($log->action === 'deleted' && $log->old_amount)
+                <span class="pl-amount pl-deleted">
+                    <span class="pl-strikethrough">{{ number_format((float)$log->old_amount, 0, '.', ' ') }} so'm</span>
+                </span>
+                @elseif($log->amount)
                 <span class="pl-amount {{ $log->action === 'edited' ? 'pl-edited' : 'pl-created' }}">
                     @if($log->old_amount)
                     <span class="pl-strikethrough">{{ number_format((float)$log->old_amount, 0, '.', ' ') }}</span>

@@ -106,6 +106,12 @@ class KanbanBoard extends Page
     public string $editPaymentMethod    = 'naqd';
     public ?int   $editPaymentAccountId = null;
     public array  $editPaymentServices  = []; // tanlangan xizmatlar
+    public string $editPaymentPin       = '';
+    public bool   $editPaymentPinError  = false;
+
+    // Payment logs (tarix) modal state
+    public bool $showPaymentLogsModal = false;
+    public int  $paymentLogsProjectId = 0;
 
     // To'lovni o'chirish (PIN kod bilan)
     public bool   $showDeletePaymentModal = false;
@@ -997,7 +1003,14 @@ class KanbanBoard extends Page
         $this->editPaymentMethod    = $payment->method ?: 'naqd';
         $this->editPaymentAccountId = $payment->account_id;
         $this->editPaymentServices  = $payment->services ?? [];
+        $this->editPaymentPin       = '';
+        $this->editPaymentPinError  = false;
         $this->showEditPaymentModal = true;
+
+        \App\Services\TelegramOtpService::sendOtp(
+            auth()->user(), 'edit_payment',
+            "Summani tahrirlash: " . number_format((float) $payment->amount, 0, '.', ' ') . " so'm (" . ($payment->project?->owner_name ?? '—') . ")"
+        );
     }
 
     public function closeEditPayment(): void
@@ -1009,6 +1022,8 @@ class KanbanBoard extends Page
         $this->editPaymentMethod    = 'naqd';
         $this->editPaymentAccountId = null;
         $this->editPaymentServices  = [];
+        $this->editPaymentPin       = '';
+        $this->editPaymentPinError  = false;
     }
 
     // To'lov usuli o'zgarsa — eski hisob boshqa turga tegishli bo'lib
@@ -1020,6 +1035,11 @@ class KanbanBoard extends Page
 
     public function saveEditPayment(): void
     {
+        if (!\App\Services\TelegramOtpService::verifyOtp(auth()->user(), $this->editPaymentPin, 'edit_payment')) {
+            $this->editPaymentPinError = true;
+            return;
+        }
+
         $accountRequired = \App\Models\FinancialAccount::where('type', $this->editPaymentMethod)->exists();
 
         $this->validate(
@@ -1131,6 +1151,19 @@ class KanbanBoard extends Page
 
         $this->closeDeletePayment();
         $this->dispatch('notify', type: 'success', message: "To'lov o'chirildi!");
+    }
+
+    // ── To'lovlar tarixi (kim, qachon, qancha o'zgargani) ───────────────────
+    public function openPaymentLogs(int $projectId): void
+    {
+        $this->paymentLogsProjectId = $projectId;
+        $this->showPaymentLogsModal = true;
+    }
+
+    public function closePaymentLogsModal(): void
+    {
+        $this->showPaymentLogsModal = false;
+        $this->paymentLogsProjectId = 0;
     }
 
     // ── Xizmat narxini tahrirlash (Joriy narx — Telegram tasdiqlash kodi bilan) ──
