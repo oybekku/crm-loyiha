@@ -13,7 +13,7 @@
 .bx-add{background:#2563eb;color:#fff;border:none;border-radius:10px;padding:11px 20px;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
 .bx-add:hover{background:#1d4ed8}
 
-.bx-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.bx-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;max-width:1200px;margin:0 auto}
 @media (max-width:900px){.bx-grid{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:600px){.bx-grid{grid-template-columns:1fr}}
 
@@ -134,7 +134,7 @@
 .bx-month-lbl{font-size:13px;font-weight:700;color:#2563eb !important;min-width:112px;text-align:center;white-space:nowrap}
 
 /* Xarajatlar (rasxodlar) bo'limi */
-.exp-panel{margin-top:22px;background:#fff;border:1px solid #f1f5f9;border-radius:14px;overflow:hidden;box-shadow:0 1px 8px rgba(0,0,0,.04)}
+.exp-panel{margin-top:22px;background:#fff;border:1px solid #f1f5f9;border-radius:14px;overflow:hidden;box-shadow:0 1px 8px rgba(0,0,0,.04);max-width:1200px;margin-left:auto;margin-right:auto}
 .exp-head{display:flex;align-items:center;gap:10px;padding:16px 18px;cursor:pointer;user-select:none}
 .exp-head-title{font-size:14px;font-weight:800;color:#111827 !important;display:flex;align-items:center;gap:8px}
 .exp-head-total{font-size:15px;font-weight:800;color:#dc2626 !important;margin-left:auto}
@@ -154,7 +154,7 @@
 .exp-empty{padding:26px;text-align:center;color:#9ca3af !important;font-size:12.5px}
 
 /* Pul o'tkazmalari bo'limi (Xarajatlar bilan bir xil naqsh, ko'k rangda) */
-.trf-panel{margin-top:14px;background:#fff;border:1px solid #f1f5f9;border-radius:14px;overflow:hidden;box-shadow:0 1px 8px rgba(0,0,0,.04)}
+.trf-panel{margin-top:14px;background:#fff;border:1px solid #f1f5f9;border-radius:14px;overflow:hidden;box-shadow:0 1px 8px rgba(0,0,0,.04);max-width:1200px;margin-left:auto;margin-right:auto}
 .trf-head{display:flex;align-items:center;gap:10px;padding:16px 18px;cursor:pointer;user-select:none}
 .trf-head-title{font-size:14px;font-weight:800;color:#111827 !important;display:flex;align-items:center;gap:8px}
 .trf-head-total{font-size:15px;font-weight:800;color:#2563eb !important;margin-left:auto}
