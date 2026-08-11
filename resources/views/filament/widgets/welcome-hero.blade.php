@@ -518,13 +518,24 @@
             @endif
         </div>
         @if(!empty($firmReport))
-        <div class="bh-stat-value" style="font-size:24px">{{ number_format($firmReport['hodimlarUlushi'], 0, '.', ' ') }} <span style="font-size:14px;font-weight:600">so'm</span></div>
-        <div class="bh-stat-desc" style="white-space:normal">{{ $firmReport['toLanganCount'] }} ta loyiha bo'yicha hisoblangan — hali to'lov emas</div>
-        <div style="display:flex;flex-direction:column;gap:3px;margin-top:12px;font-size:12.5px">
+        <div class="bh-stat-value" style="font-size:24px">{{ number_format($firmReport['toLanishiKerakJami'], 0, '.', ' ') }} <span style="font-size:14px;font-weight:600">so'm</span></div>
+        <div class="bh-stat-desc" style="white-space:normal">{{ $firmReport['toLanganCount'] }} ta loyiha bo'yicha hodimlarga hali to'lanmagan qism</div>
+        <div style="margin-top:12px;font-size:11px">
+            <div style="display:grid;grid-template-columns:1.3fr .9fr .9fr .9fr;gap:4px;padding-bottom:4px;border-bottom:1px dashed #e5e7eb;font-size:9.5px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.3px">
+                <span>Hodim</span>
+                <span style="text-align:right">Hisob.</span>
+                <span style="text-align:right">Kerak</span>
+                <span style="text-align:right">To'landi</span>
+            </div>
             @foreach($firmReport['employeeComm'] as $emp)
-            <div style="display:flex;justify-content:space-between"><span style="color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">👷 {{ $emp['name'] }}</span><span style="font-weight:700;color:#d97706">{{ number_format($emp['commission'], 0, '.', ' ') }}</span></div>
+            <div style="display:grid;grid-template-columns:1.3fr .9fr .9fr .9fr;gap:4px;padding:4px 0;border-bottom:1px dashed #f3f4f6">
+                <span style="color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">👷 {{ $emp['name'] }}</span>
+                <span style="text-align:right;font-weight:600;color:#374151">{{ number_format($emp['commission'], 0, '.', ' ') }}</span>
+                <span style="text-align:right;font-weight:700;color:{{ $emp['kerak'] > 0 ? '#d97706' : '#9ca3af' }}">{{ number_format($emp['kerak'], 0, '.', ' ') }}</span>
+                <span style="text-align:right;font-weight:600;color:#16a34a">{{ number_format($emp['paid'], 0, '.', ' ') }}</span>
+            </div>
             @endforeach
-            <div style="display:flex;justify-content:space-between;border-top:1px dashed #e5e7eb;margin-top:3px;padding-top:5px"><span style="color:#065f46;font-weight:600">🏢 Firma</span><span style="font-weight:800;color:#059669">{{ number_format($firmReport['firmaDaromadi'], 0, '.', ' ') }}</span></div>
+            <div style="display:flex;justify-content:space-between;margin-top:5px;padding-top:5px;border-top:1px dashed #e5e7eb"><span style="color:#065f46;font-weight:600">🏢 Firma</span><span style="font-weight:800;color:#059669">{{ number_format($firmReport['firmaDaromadi'], 0, '.', ' ') }}</span></div>
         </div>
         @else
         <div class="bh-stat-value" style="font-size:26px">{{ number_format($statTotalSum, 0, '.', ' ') }} <span style="font-size:15px;font-weight:600">so'm</span></div>

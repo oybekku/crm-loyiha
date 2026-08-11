@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\EmployeeSalaryPayment;
 use App\Models\Project;
 use App\Models\ProjectService;
 
@@ -20,7 +21,7 @@ class FirmReportService
         // bo'lsa, o'sha oy hisobotiga tushadi (xizmat qachon biriktirilgan/tugatilganidan
         // qat'i nazar). Shu bilan har oyning loyihalar soni/summasi va hodimlar hisoboti
         // doim mos keladi — chalkashlik bo'lmaydi. Bekor qilingan loyiha hisobga olinmaydi.
-        $completed = ProjectService::with('assignedUser')
+        $completed = ProjectService::with(['assignedUser', 'project'])
             ->whereNotNull('completed_at')
             ->whereNotNull('assigned_user_id')
             ->whereHas('project', fn ($q) =>
@@ -30,15 +31,16 @@ class FirmReportService
 
         $jamiTushum     = 0.0;
         $hodimlarUlushi = 0.0;
-        $employeeComm   = [];   // uid => ['name' => ..., 'commission' => ...]
+        $employeeComm   = [];   // uid => ['name','commission'(hisoblangan),'payable'(mijoz to'lagan ulushга mutanosib)]
         $projIds        = [];
 
         foreach ($completed as $s) {
-            if (!$s->assignedUser) continue;
+            if (!$s->assignedUser || !$s->project) continue;
 
-            $price = (float) $s->final_price;
-            $rate  = EmployeePayableService::rateFor($s->assignedUser, $month);
-            $comm = round($price * $rate / 100, 0);
+            $calc = EmployeePayableService::commissionForService($s, $s->project);
+            $price    = $calc['price'];
+            $comm     = $calc['commission'];
+            $commPaid = $calc['comm_paid']; // mijoz to'lagan ulushga mutanosib "ochilgan" komissiya
 
             $jamiTushum     += $price;
             $hodimlarUlushi += $comm;
@@ -46,10 +48,27 @@ class FirmReportService
 
             $uid = $s->assigned_user_id;
             if (!isset($employeeComm[$uid])) {
-                $employeeComm[$uid] = ['name' => $s->assignedUser->name, 'commission' => 0.0];
+                $employeeComm[$uid] = ['name' => $s->assignedUser->name, 'commission' => 0.0, 'payable' => 0.0];
             }
             $employeeComm[$uid]['commission'] += $comm;
+            $employeeComm[$uid]['payable']    += $commPaid;
         }
+
+        // Hodimga HAQIQATDA berilgan ish haqi to'lovlari (shu oy) — EmployeeSalaryPayment.
+        $paidByUser = EmployeeSalaryPayment::where('month', $month)
+            ->get()
+            ->groupBy('user_id')
+            ->map(fn ($g) => (float) $g->sum('amount'));
+
+        $toLanishiKerakJami = 0.0;
+        foreach ($employeeComm as $uid => &$emp) {
+            $paid   = (float) ($paidByUser[$uid] ?? 0);
+            $kerak  = max(0, $emp['payable'] - $paid);
+            $emp['paid']  = $paid;
+            $emp['kerak'] = $kerak;
+            $toLanishiKerakJami += $kerak;
+        }
+        unset($emp);
 
         $firmaDaromadi = $jamiTushum - $hodimlarUlushi;
         $toLanganCount = count($projIds);
@@ -93,6 +112,7 @@ class FirmReportService
             'firmaDaromadi'    => $firmaDaromadi,
             'toLanganCount'    => $toLanganCount,
             'employeeComm'     => array_values($employeeComm),
+            'toLanishiKerakJami' => $toLanishiKerakJami,
             'allProjectsCount' => $allProjectsCount,
             'allProjectsSum'   => $allProjectsSum,
             'pendingCount'     => $pendingCount,
