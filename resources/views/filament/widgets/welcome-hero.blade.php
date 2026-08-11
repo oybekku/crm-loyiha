@@ -267,7 +267,7 @@
 /* ── Bottom stats ── */
 .bh-bottom {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
     gap: 16px;
     margin-top: 16px;
     position: relative;
@@ -341,7 +341,7 @@
 }
 
 @media(max-width:1100px) {
-    .bh-bottom { grid-template-columns: 1fr 1fr; }
+    .bh-bottom { grid-template-columns: 1fr 1fr 1fr; }
     .bh-row3  { grid-template-columns: 1fr 1fr 1fr; }
     .bh-row3-recent { grid-column: 1 / -1; }
 }
@@ -477,29 +477,9 @@
 </div>
 @endif
 
-{{-- ── BOTTOM: 4 alohida stat karta (faqat admin/menejer) ── --}}
+{{-- ── BOTTOM: 3 alohida stat karta (faqat admin/menejer) ── --}}
 @if(!$isEmployee)
 <div class="bh-bottom bh-secret" :class="{ 'bh-locked': !statShown }">
-
-    {{-- Jami loyihalar --}}
-    <div class="bh-stat bh-stat--blue">
-        <div class="bh-stat-head" style="display:flex;align-items:center;gap:8px">
-            <div class="bh-stat-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-            </div>
-            <div class="bh-stat-label">Jami loyihalar</div>
-            <div class="bh-stat-value" style="margin-left:auto;line-height:1"
-                 x-data="{n:0}"
-                 x-init="setTimeout(()=>{let t={{ $statProjects }},d=900,s=Date.now(),iv=setInterval(()=>{let p=Math.min((Date.now()-s)/d,1);n=Math.floor((1-Math.pow(1-p,3))*t);if(p>=1){n=t;clearInterval(iv);}},16);},300)"
-                 x-text="n">0</div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:3px;margin-top:10px;font-size:13px;color:#6b7280">
-            <div>Yangi: <strong style="color:#374151">{{ $statYangi }}</strong></div>
-            <div>Jarayonda: <strong style="color:#374151">{{ $statJarayon }}</strong></div>
-            <div>Tugallangan: <strong style="color:#374151">{{ $statDone }}</strong></div>
-            <div>Vaqti o'tgan: <strong style="color:{{ $statOverdue > 0 ? '#dc2626' : '#374151' }}">{{ $statOverdue }}</strong></div>
-        </div>
-    </div>
 
     {{-- Moliyaviy statistika — 58 tani ham, 52 tani ham, 6 tani ham alohida-alohida ko'rsatadi --}}
     <div class="bh-stat bh-stat--red">
@@ -555,21 +535,24 @@
         @endif
     </div>
 
-    {{-- Vaqti o'tgan loyihalar --}}
-    <div class="bh-stat bh-stat--purple" x-data="{open:false}">
-        <div class="bh-stat-head">
+    {{-- Jami loyihalar (Vaqti o'tgan shu yerda, alohida karta shart emas) --}}
+    <div class="bh-stat bh-stat--blue">
+        <div class="bh-stat-head" style="display:flex;align-items:center;gap:8px">
             <div class="bh-stat-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
             </div>
-            <div class="bh-stat-label">Vaqti o'tgan</div>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between">
-            <div class="bh-stat-value"
+            <div class="bh-stat-label">Jami loyihalar</div>
+            <div class="bh-stat-value" style="margin-left:auto;line-height:1"
                  x-data="{n:0}"
-                 x-init="setTimeout(()=>{let t={{ $statOverdue }},d=900,s=Date.now(),iv=setInterval(()=>{let p=Math.min((Date.now()-s)/d,1);n=Math.floor((1-Math.pow(1-p,3))*t);if(p>=1){n=t;clearInterval(iv);}},16);},900)"
+                 x-init="setTimeout(()=>{let t={{ $statProjects }},d=900,s=Date.now(),iv=setInterval(()=>{let p=Math.min((Date.now()-s)/d,1);n=Math.floor((1-Math.pow(1-p,3))*t);if(p>=1){n=t;clearInterval(iv);}},16);},300)"
                  x-text="n">0</div>
         </div>
-        <div class="bh-stat-desc">Muddati o'tib ketgan loyihalar</div>
+        <div style="display:flex;flex-direction:column;gap:3px;margin-top:10px;font-size:13px;color:#6b7280">
+            <div>Yangi: <strong style="color:#374151">{{ $statYangi }}</strong></div>
+            <div>Jarayonda: <strong style="color:#374151">{{ $statJarayon }}</strong></div>
+            <div>Tugallangan: <strong style="color:#374151">{{ $statDone }}</strong></div>
+            <div>Vaqti o'tgan: <strong style="color:{{ $statOverdue > 0 ? '#dc2626' : '#374151' }}">{{ $statOverdue }}</strong></div>
+        </div>
     </div>
 
 </div>
