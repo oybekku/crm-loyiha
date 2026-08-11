@@ -381,24 +381,26 @@
 
 <div class="copy1">
     <!-- HEADER -->
-    <div class="header">
-        <div class="header-left" style="display:flex;align-items:center;gap:14px;">
-            <img src="/images/logo.jpg" alt="MY PERFECT HOME" style="width:56px;height:56px;object-fit:contain;flex-shrink:0;">
-            <div>
-                <h1>Qabul arizasi</h1>
-                <div class="order-num">
-                    <span>Ariza</span>
-                    <span class="num-badge">{{ $project->number }}</span>
-                    &nbsp;&nbsp;{{ $project->created_at->format('d.m.Y') }}
-                </div>
-            </div>
-        </div>
-        <div class="header-right">
-            <strong>"MY PERFECT HOME" MCHJ</strong>
-            Toshkent shahri, Yangihayot tumani, Uzar ko'chasi, 60-uy, 46-xona<br>
-            MFO 01125&nbsp;&nbsp;INN 308515451&nbsp;&nbsp;OKED 41100<br>
+    <div class="header" style="display:flex;align-items:center;justify-content:space-between;gap:16px;">
+        <img src="/images/logo.jpg" alt="MY PERFECT HOME" style="width:78px;height:78px;object-fit:contain;flex-shrink:0;">
+        <div style="text-align:center;font-size:13px;line-height:1.6;">
+            <strong style="font-size:15px;display:block;margin-bottom:2px;">"MY PERFECT HOME" MCHJ</strong>
+            Toshkent shahri, Yangihayot tumani<br>
+            Uzar ko'chasi, 60-uy, 46-xona<br>
+            MFO 01125&nbsp;&nbsp;INN 308515451<br>
+            OKED 41100<br>
             Tel: +998 77 091 91 01, +998 99 468 19 91
         </div>
+        <div class="qr-wrap" style="flex-shrink:0;">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=96x96&data={{ urlencode(route('track.project', ltrim($project->number, '#'))) }}" alt="QR">
+            <p>Buyurtma raqamini<br>skanerlang</p>
+        </div>
+    </div>
+
+    <div class="order-num" style="justify-content:center;margin-bottom:8px;">
+        <h1 style="font-size:18px;">Qabul arizasi</h1>
+        <span class="num-badge">{{ $project->number }}</span>
+        &nbsp;&nbsp;{{ $project->created_at->format('d.m.Y') }}
     </div>
 
     <!-- MAIN DATA TABLE -->
@@ -412,12 +414,6 @@
                         &nbsp;&nbsp;{{ is_array($phone) ? ($phone['phone'] ?? '') : $phone }}@if(!$loop->last),@endif
                     @endforeach
                 @endif
-            </td>
-            <td class="qr-cell" rowspan="9">
-                <div class="qr-wrap">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=96x96&data={{ urlencode(route('track.project', ltrim($project->number, '#'))) }}" alt="QR">
-                    <p id="qr-text">Buyurtma raqamini<br>skanerlang</p>
-                </div>
             </td>
         </tr>
         <tr>
@@ -484,57 +480,39 @@
             @endphp
             <tr>
                 <td class="label" style="padding-left:14px;font-weight:600;color:#374151;">{{ $svcLabel }}</td>
-                <td class="value" colspan="2" style="font-weight:700;">{{ number_format($svcPrice, 0, ',', ' ') }} UZS</td>
+                <td class="value" style="font-weight:700;">{{ number_format($svcPrice, 0, ',', ' ') }} UZS</td>
             </tr>
             <tr>
                 <td class="label" style="padding-left:14px;font-weight:400;color:#6b7280;font-size:12px;border-top:none;">{{ $svcLabel }} To'langan:</td>
-                <td class="value" colspan="2" style="color:{{ $svcPaid > 0 ? '#166534' : '#991b1b' }};font-weight:700;font-size:13px;border-top:none;">{{ number_format($svcPaid, 0, ',', ' ') }} UZS</td>
+                <td class="value" style="color:{{ $svcPaid > 0 ? '#166534' : '#991b1b' }};font-weight:700;font-size:13px;border-top:none;">{{ number_format($svcPaid, 0, ',', ' ') }} UZS</td>
             </tr>
             @endforeach
         @endif
         <tr>
             <td class="label" id="lbl-total" style="font-weight:800;">Umumiy narx</td>
-            <td class="value" colspan="2" style="font-size:15px;font-weight:700;">{{ number_format($project->total_price, 0, ',', ' ') }} UZS</td>
+            <td class="value" style="font-size:15px;font-weight:700;">{{ number_format($project->total_price, 0, ',', ' ') }} UZS</td>
         </tr>
         @if($project->services && $project->services->count() > 0)
         <tr>
             <td class="label" style="font-weight:600;color:#374151;">Umumiy To'langan:</td>
-            <td class="value" colspan="2" style="font-size:14px;font-weight:700;color:{{ $paidAmount > 0 ? '#166534' : '#991b1b' }};">{{ number_format($paidAmount, 0, ',', ' ') }} UZS</td>
+            <td class="value" style="font-size:14px;font-weight:700;color:{{ $paidAmount > 0 ? '#166534' : '#991b1b' }};">{{ number_format($paidAmount, 0, ',', ' ') }} UZS</td>
         </tr>
         @endif
         <tr>
             <td class="label" id="lbl-paid">Oldindan to'lov</td>
-            <td class="value" colspan="2" style="font-size:15px;font-weight:700;color:#166534;">{{ number_format($project->paid_amount, 0, ',', ' ') }} UZS</td>
+            <td class="value" style="font-size:15px;font-weight:700;color:#166534;">{{ number_format($project->paid_amount, 0, ',', ' ') }} UZS</td>
         </tr>
         <tr>
             <td class="label" id="lbl-remaining">Qoldiq to'lov</td>
-            <td class="value" colspan="2" style="font-size:15px;font-weight:700;color:#991b1b;">{{ number_format(max(0, $project->total_price - $project->paid_amount), 0, ',', ' ') }} UZS</td>
+            <td class="value" style="font-size:15px;font-weight:700;color:#991b1b;">{{ number_format(max(0, $project->total_price - $project->paid_amount), 0, ',', ' ') }} UZS</td>
         </tr>
         <tr>
             <td class="label" id="lbl-note">Izohlar</td>
-            <td class="value" colspan="2" style="min-height:44px;font-style:{{ $project->description ? 'normal' : 'italic' }};color:{{ $project->description ? '#111' : '#999' }};">
+            <td class="value" style="min-height:44px;font-style:{{ $project->description ? 'normal' : 'italic' }};color:{{ $project->description ? '#111' : '#999' }};">
                 {{ $project->description ?: '—' }}
             </td>
         </tr>
     </table>
-
-    <!-- SIGNATURES -->
-    <div class="signatures">
-        <div class="sig-block">
-            <div class="sig-title" id="sig-company">Kompaniya vakili:</div>
-            <div class="sig-line"></div>
-            <div class="sig-label" id="sig-label-sign">Imzo / muhr</div>
-            <div class="sig-name">Sarimsakov J.</div>
-            <img src="/images/imzo.png?v=2" class="stamp-img" alt="">
-        </div>
-        <div class="sig-block sig-right">
-            <div class="sig-title" id="sig-client">Buyurtmachi:</div>
-            <div class="sig-line"></div>
-            <div class="sig-label">Imzo</div>
-            <div class="sig-name">{{ $project->owner_name }}</div>
-            <div style="font-size:11px;color:#888;margin-top:3px;" id="sig-agree">shartlar bilan tanishib, rozilik bildirdi</div>
-        </div>
-    </div>
 
     <div class="footer-date">
         <span id="footer-created">Ariza tuzilgan sana:</span>
