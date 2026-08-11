@@ -25,6 +25,11 @@ class Buxgalteriya extends Page
     protected static ?string $navigationGroup = 'Sozlamalar';
     protected static ?int    $navigationSort  = 12;
     protected static ?string $title           = 'Buxgalteriya';
+    // Filament avtomatik H1 sarlavhasi ochirilgan - sahifada ozining
+    // ".bx-title" sarlavhasi bor, ikkitasi takrorlanmasin va report-tabs
+    // Dashboard'dagi bilan bir xil joyda tursin.
+    protected ?string $heading    = '';
+    protected ?string $subheading = '';
 
     // ── Hisob qo'shish/tahrirlash oynasi ──
     public bool   $showAccountModal = false;

@@ -22,6 +22,10 @@ class MonthlyReport extends Page
     protected static ?string $navigationGroup = 'Sozlamalar';
     protected static ?int    $navigationSort  = 11;
     protected static ?string $title           = 'Oylik hisobot';
+    // Filament avtomatik H1 sarlavhasi ochirilgan - report-tabs bilan bir xil
+    // joylashuv uchun (Dashboard'dagi kabi), pastda oz sarlavha bor.
+    protected ?string $heading    = '';
+    protected ?string $subheading = '';
 
     public string $selectedMonth = '';
 

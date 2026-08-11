@@ -30,8 +30,8 @@
 @endphp
 
 <style>
-.rt-tabs{--rt-dot-size:6px;--rt-line-weight:1px;--rt-line-distance:.55rem .7rem;--rt-speed:.35s;
-    display:flex;gap:2px;margin-bottom:18px;flex-wrap:wrap}
+.rt-tabs{--rt-dot-size:8.4px;--rt-line-weight:1px;--rt-line-distance:.77rem .98rem;--rt-speed:.35s;
+    display:flex;gap:4px;margin-bottom:18px;flex-wrap:wrap}
 
 .rt-wrap{position:relative;display:flex;justify-content:center;align-items:center;
     padding:var(--rt-line-distance);background-color:transparent;
@@ -39,9 +39,9 @@
 .rt-wrap:has(.rt-btn:hover){animation:rt-bg-change calc(var(--rt-speed) * 4) ease-in-out forwards}
 @keyframes rt-bg-change{80%{background-color:transparent}100%{background-color:#2563eb22}}
 
-.rt-btn{position:relative;display:inline-flex;align-items:center;gap:6px;
-    padding:.6rem 1.1rem;background-color:#fff;background-image:linear-gradient(#fff0,#0000000a);
-    border:none;color:#374151;font-family:inherit;font-size:13px;font-weight:700;
+.rt-btn{position:relative;display:inline-flex;align-items:center;gap:8px;
+    padding:.84rem 1.54rem;background-color:#fff;background-image:linear-gradient(#fff0,#0000000a);
+    border:none;color:#374151;font-family:inherit;font-size:18px;font-weight:700;
     text-decoration:none;border-radius:30% / 200%;cursor:pointer;
     box-shadow:0 0 0 1px #d1d5db,0 1px 1px rgba(3,7,18,.02),0 5px 4px rgba(3,7,18,.04),0 12px 9px rgba(3,7,18,.06);
     transition:background-color .2s ease-in-out,transform .2s ease-in-out,box-shadow .2s ease-in-out,border-radius .3s ease-in-out}
