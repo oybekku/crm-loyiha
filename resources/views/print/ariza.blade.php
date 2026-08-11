@@ -38,21 +38,21 @@
         letter-spacing: 0.05em;
     }
 
-    /* Main table */
+    /* Main table — kataksiz, faqat qator ostida ingichka chiziq */
     .main-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+    .main-table tr { border-bottom: 1px solid #e0e0e0; }
+    .main-table tr:last-child { border-bottom: none; }
     .main-table td {
-        border: 1.5px solid #c8d0db;
-        padding: 5px 10px;
-        vertical-align: middle;
+        padding: 9px 8px;
+        vertical-align: top;
     }
     .main-table .label {
-        width: 34%;
-        font-weight: 700;
-        background: #f0f4f8;
+        width: 40%;
+        font-weight: 600;
         font-size: 13px;
-        color: #374151;
+        color: #111;
     }
-    .main-table .value { font-size: 14px; color: #111; }
+    .main-table .value { font-size: 14px; color: #333; }
     .section-title {
         font-size: 12px;
         font-weight: 800;
@@ -569,71 +569,6 @@
         <tr>
             <td class="label" id="lbl-deadline">Taxminiy muddat</td>
             <td class="value">{{ $project->deadline_date ? $project->deadline_date->format('d.m.Y') : '—' }}</td>
-        </tr>
-        @if($project->services && $project->services->count() > 0)
-            @php
-                $totalPrice = (float) $project->total_price;
-                $paidAmount = (float) $project->paid_amount;
-                // Xizmat narxlari (nom => final_price)
-                $priceMap = [];
-                foreach ($project->services as $s) {
-                    $priceMap[$s->service_name] = (float) $s->final_price;
-                }
-                // Har xizmat uchun to'langan ulush — HAR ISHNING NARXIGA PROPORSIONAL
-                $svcPaidMap = [];
-                foreach ($project->payments as $pay) {
-                    $svcs = $pay->services ?? [];
-                    if (empty($svcs)) continue;
-                    $sumSel = 0;
-                    foreach ($svcs as $sn) { $sumSel += ($priceMap[$sn] ?? 0); }
-                    foreach ($svcs as $sn) {
-                        $svcPrice = $priceMap[$sn] ?? 0;
-                        $share = $sumSel > 0
-                            ? (float)$pay->amount * ($svcPrice / $sumSel)
-                            : (float)$pay->amount / count($svcs);
-                        $svcPaidMap[$sn] = ($svcPaidMap[$sn] ?? 0) + $share;
-                    }
-                }
-                // Agar xizmat belgilanmagan bo'lsa — proportional taqsimlash
-                $hasTagged = !empty($svcPaidMap);
-            @endphp
-            @foreach($project->services as $svc)
-            @php
-                $svcPrice = (float) $svc->final_price;
-                if ($hasTagged) {
-                    $svcPaid = $svcPaidMap[$svc->service_name] ?? 0;
-                } else {
-                    $svcPaid = $totalPrice > 0 ? round($paidAmount * $svcPrice / $totalPrice) : 0;
-                }
-                $svcLabel = \App\Models\Project::serviceOptions()[$svc->service_name] ?? $svc->service_name;
-            @endphp
-            <tr>
-                <td class="label" style="padding-left:14px;font-weight:600;color:#374151;">{{ $svcLabel }}</td>
-                <td class="value" style="font-weight:700;">{{ number_format($svcPrice, 0, ',', ' ') }} UZS</td>
-            </tr>
-            <tr>
-                <td class="label" style="padding-left:14px;font-weight:400;color:#6b7280;font-size:12px;border-top:none;">{{ $svcLabel }} To'langan:</td>
-                <td class="value" style="color:{{ $svcPaid > 0 ? '#166534' : '#991b1b' }};font-weight:700;font-size:13px;border-top:none;">{{ number_format($svcPaid, 0, ',', ' ') }} UZS</td>
-            </tr>
-            @endforeach
-        @endif
-        <tr>
-            <td class="label" id="lbl-total" style="font-weight:800;">Umumiy narx</td>
-            <td class="value" style="font-size:15px;font-weight:700;">{{ number_format($project->total_price, 0, ',', ' ') }} UZS</td>
-        </tr>
-        @if($project->services && $project->services->count() > 0)
-        <tr>
-            <td class="label" style="font-weight:600;color:#374151;">Umumiy To'langan:</td>
-            <td class="value" style="font-size:14px;font-weight:700;color:{{ $paidAmount > 0 ? '#166534' : '#991b1b' }};">{{ number_format($paidAmount, 0, ',', ' ') }} UZS</td>
-        </tr>
-        @endif
-        <tr>
-            <td class="label" id="lbl-paid">Oldindan to'lov</td>
-            <td class="value" style="font-size:15px;font-weight:700;color:#166534;">{{ number_format($project->paid_amount, 0, ',', ' ') }} UZS</td>
-        </tr>
-        <tr>
-            <td class="label" id="lbl-remaining">Qoldiq to'lov</td>
-            <td class="value" style="font-size:15px;font-weight:700;color:#991b1b;">{{ number_format(max(0, $project->total_price - $project->paid_amount), 0, ',', ' ') }} UZS</td>
         </tr>
         <tr>
             <td class="label" id="lbl-note">Izohlar</td>
