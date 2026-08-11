@@ -55,8 +55,8 @@ class KanbanBoard extends Page
     public string $pinfl               = '';   // ПИНФЛ
     public string $applicant_type      = '';   // Arizachi turi
     public string $cadastre_number     = '';   // Ko'chmas mulk kadastr raqami
-    public string $region              = '';   // Obyekt hududi (viloyat)
-    public string $district            = '';   // Obyekt tumani
+    public string $region              = 'toshkent_viloyati'; // Obyekt hududi (viloyat) — standart
+    public string $district            = 'Quyichirchiq tumani'; // Obyekt tumani — standart
     public string $registration_basis  = '';   // Ro'yxatga olish asosi hujjati
     public array  $assigned_user_ids = [];
     public string $deadline_days     = '';
