@@ -50,6 +50,7 @@
         color: #111;
     }
     .main-table .value { font-size: 14px; color: #333; }
+    .main-table tr:nth-child(even) td { background: #f3f4f6; }
     .section-title {
         font-size: 12px;
         font-weight: 800;
@@ -157,6 +158,20 @@
         border-top: 1px solid #e5e7eb;
         padding-top: 8px;
     }
+
+    .footer-date-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 12px;
+        border-top: 1px solid #e5e7eb;
+        padding-top: 8px;
+    }
+    .footer-date-row .footer-date { margin-top: 0; border-top: none; padding-top: 0; flex: 1; text-align: right; }
+    .footer-loc-qr { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+    .footer-loc-qr img { width: 34px; height: 34px; display: block; }
+    .footer-loc-qr span { font-size: 9px; color: #888; line-height: 1.3; max-width: 60px; }
 
     /* Mijoz nusxasi — ramkasiz, sof matn ko'rinishi */
     .conditions-plain {
@@ -565,20 +580,6 @@
             <td class="label" id="lbl-address">Ob'ekt manzili</td>
             <td class="value">{{ $project->address }}</td>
         </tr>
-        <tr>
-            <td class="label" id="lbl-worker">Mas'ul xodim</td>
-            <td class="value">{{ $project->assignedUsers->pluck('name')->join(', ') ?: '—' }}</td>
-        </tr>
-        <tr>
-            <td class="label" id="lbl-deadline">Taxminiy muddat</td>
-            <td class="value">{{ $project->deadline_date ? $project->deadline_date->format('d.m.Y') : '—' }}</td>
-        </tr>
-        <tr>
-            <td class="label" id="lbl-note">Izohlar</td>
-            <td class="value" style="min-height:44px;font-style:{{ $project->description ? 'normal' : 'italic' }};color:{{ $project->description ? '#111' : '#999' }};">
-                {{ $project->description ?: '—' }}
-            </td>
-        </tr>
     </table>
 
     <!-- JISMONIY SHAXS MA'LUMOTLARI -->
@@ -639,12 +640,25 @@
         </tr>
     </table>
 
-    <div class="footer-date">
-        <span id="footer-created">Ariza tuzilgan sana:</span>
-        {{ $project->created_at->format('d.m.Y H:i') }}
-        &nbsp;|&nbsp;
-        <span id="footer-printed">Chop etilgan:</span>
-        {{ now()->format('d.m.Y H:i') }}
+    <div class="footer-date-row">
+        @php
+            $mapQuery = ($project->latitude && $project->longitude)
+                ? $project->latitude.','.$project->longitude
+                : $project->address;
+        @endphp
+        @if($mapQuery)
+        <div class="footer-loc-qr">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=68x68&margin=0&data={{ urlencode('https://maps.google.com/?q='.$mapQuery) }}" alt="Lokatsiya QR">
+            <span>Obyekt<br>lokatsiyasi</span>
+        </div>
+        @endif
+        <div class="footer-date">
+            <span id="footer-created">Ariza tuzilgan sana:</span>
+            {{ $project->created_at->format('d.m.Y H:i') }}
+            &nbsp;|&nbsp;
+            <span id="footer-printed">Chop etilgan:</span>
+            {{ now()->format('d.m.Y H:i') }}
+        </div>
     </div>
 
 </div><!-- /copy1 -->
