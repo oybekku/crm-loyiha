@@ -169,9 +169,9 @@
         padding-top: 8px;
     }
     .footer-date-row .footer-date { margin-top: 0; border-top: none; padding-top: 0; flex: 1; text-align: right; }
-    .footer-loc-qr { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
-    .footer-loc-qr img { width: 34px; height: 34px; display: block; }
-    .footer-loc-qr span { font-size: 9px; color: #888; line-height: 1.3; max-width: 60px; }
+    .footer-loc-qr { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .footer-loc-qr img { width: 68px; height: 68px; display: block; }
+    .footer-loc-qr span { font-size: 11px; color: #666; line-height: 1.3; max-width: 80px; }
 
     /* Mijoz nusxasi — ramkasiz, sof matn ko'rinishi */
     .conditions-plain {
@@ -241,7 +241,6 @@
 
     @media print {
         body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        .page { padding: 10mm 12mm; }
         .no-print { display: none !important; }
         .sign-ov { display: none !important; }
     }
@@ -648,7 +647,7 @@
         @endphp
         @if($mapQuery)
         <div class="footer-loc-qr">
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=68x68&margin=0&data={{ urlencode('https://maps.google.com/?q='.$mapQuery) }}" alt="Lokatsiya QR">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=136x136&margin=0&data={{ urlencode('https://maps.google.com/?q='.$mapQuery) }}" alt="Lokatsiya QR">
             <span>Obyekt<br>lokatsiyasi</span>
         </div>
         @endif
