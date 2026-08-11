@@ -96,7 +96,7 @@
         @continue(!$rtTab['show'])
         @php $rtActive = $rtCurrent === $rtTab['route']; @endphp
         <div class="rt-wrap">
-            <a href="{{ route($rtTab['route']) }}" wire:navigate class="rt-btn {{ $rtActive ? 'rt-active' : '' }}">
+            <a href="{{ route($rtTab['route']) }}" wire:navigate.hover class="rt-btn {{ $rtActive ? 'rt-active' : '' }}">
                 <span>{{ $rtTab['icon'] }}</span>
                 <span>{{ $rtTab['label'] }}</span>
             </a>
