@@ -247,7 +247,8 @@
     @endif
 </div>
 
-{{-- UMUMIY STATISTIKA --}}
+{{-- UMUMIY STATISTIKA (yashirilgan) --}}
+@if(false)
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:18px">
     <div class="mr-stat mr-stat--neutral">
         <div class="mr-stat-num">{{ $projectsTotal }}</div>
@@ -266,6 +267,7 @@
         <div class="mr-stat-lbl">Firma sof daromadi</div>
     </div>
 </div>
+@endif
 
 {{-- HODIMLAR JADVALI --}}
 <div class="mr-card">
@@ -669,7 +671,8 @@
 </div>
 @endif
 
-{{-- FIRMA HISOBOTI --}}
+{{-- FIRMA HISOBOTI (yashirilgan) --}}
+@if(false)
 <div class="mr-card">
     <div style="font-size:15px;font-weight:700;color:#111827;margin-bottom:16px;display:flex;align-items:center;gap:8px">
         <svg width="16" height="16" fill="none" stroke="#059669" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
@@ -816,6 +819,7 @@
     </div>
 
 </div>
+@endif
 
 {{-- TUGATILGAN ISHLAR RO'YXATI (yashirilgan) --}}
 @if(false)
