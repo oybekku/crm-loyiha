@@ -2173,6 +2173,10 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                 <label style="font-size:12px;font-weight:600;color:#374151 !important;display:block;margin-bottom:8px">Qaysi xizmat uchun to'lov?</label>
                 <div style="display:flex;flex-direction:column;gap:6px">
                     @foreach($payProj->services as $svc)
+                    @php
+                        $svcPaid = \App\Services\EmployeePayableService::paidAmountForService($svc, $payProj);
+                        $svcPct  = $svc->final_price > 0 ? min(100, (int) round($svcPaid / $svc->final_price * 100)) : 0;
+                    @endphp
                     <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:8px 12px;transition:border-color .15s"
                          :style="$wire.paymentSelectedServices.includes('{{ $svc->service_name }}') ? 'border-color:#2563eb;background:#eff6ff' : ''">
                         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:#111827 !important">
@@ -2182,6 +2186,9 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                                    style="width:15px;height:15px;cursor:pointer;accent-color:#2563eb">
                             <span style="font-weight:600;color:#111827 !important">{{ \App\Models\Project::serviceOptions()[$svc->service_name] ?? $svc->service_name }}</span>
                             <span style="margin-left:auto;font-size:12px;color:#6b7280 !important">{{ number_format($svc->final_price, 0, '.', ' ') }} so'm</span>
+                            <span style="font-size:12px;font-weight:700;color:{{ $svcPct >= 100 ? '#16a34a' : ($svcPct > 0 ? '#2563eb' : '#9ca3af') }} !important">
+                                {{ number_format($svcPaid, 0, '.', ' ') }} so'm ({{ $svcPct }}%)
+                            </span>
                         </label>
                         @if(auth()->user()?->isAdmin())
                         <div style="margin-top:6px">
@@ -2509,6 +2516,10 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             @endif
             <div style="display:flex;flex-direction:column;gap:6px">
                 @foreach($editPmt->project->services as $esvc)
+                @php
+                    $esvcPaid = \App\Services\EmployeePayableService::paidAmountForService($esvc, $editPmt->project);
+                    $esvcPct  = $esvc->final_price > 0 ? min(100, (int) round($esvcPaid / $esvc->final_price * 100)) : 0;
+                @endphp
                 <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:#111827 !important;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:8px 12px">
                     <input type="checkbox"
                            wire:model.live="editPaymentServices"
@@ -2516,6 +2527,9 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                            style="width:15px;height:15px;cursor:pointer;accent-color:#2563eb">
                     <span style="font-weight:600;color:#111827 !important">{{ \App\Models\Project::serviceOptions()[$esvc->service_name] ?? $esvc->service_name }}</span>
                     <span style="margin-left:auto;font-size:12px;color:#6b7280 !important">{{ number_format($esvc->final_price, 0, '.', ' ') }} so'm</span>
+                    <span style="font-size:12px;font-weight:700;color:{{ $esvcPct >= 100 ? '#16a34a' : ($esvcPct > 0 ? '#2563eb' : '#9ca3af') }} !important">
+                        {{ number_format($esvcPaid, 0, '.', ' ') }} so'm ({{ $esvcPct }}%)
+                    </span>
                 </label>
                 @endforeach
             </div>
