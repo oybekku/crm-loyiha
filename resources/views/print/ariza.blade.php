@@ -133,10 +133,6 @@
         padding-top: 8px;
     }
 
-    /* Language hidden */
-    .lang-uz, .lang-ru { display: none; }
-    .lang-uz.active, .lang-ru.active { display: block; }
-
     /* Mijoz nusxasi — ramkasiz, sof matn ko'rinishi */
     .conditions-plain {
         border: none;
@@ -217,18 +213,6 @@
 
 <!-- Toolbar -->
 <div class="no-print" style="text-align:center;padding:10px 16px;background:#1e40af;border-bottom:1px solid #1d4ed8;position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;">
-    <!-- Language selector -->
-    <div style="display:flex;gap:4px;background:rgba(255,255,255,0.15);border-radius:7px;padding:3px;">
-        <button id="btn-uz" onclick="setLang('uz')"
-            style="background:#fff;color:#1d4ed8;border:none;padding:6px 18px;border-radius:5px;font-size:13px;font-weight:700;cursor:pointer;">
-            🇺🇿 O'zbek
-        </button>
-        <button id="btn-ru" onclick="setLang('ru')"
-            style="background:transparent;color:#fff;border:none;padding:6px 18px;border-radius:5px;font-size:13px;font-weight:600;cursor:pointer;">
-            🇷🇺 Русский
-        </button>
-    </div>
-    <div style="width:1px;height:28px;background:rgba(255,255,255,0.3);"></div>
     <button id="btn-view-firma" class="view-btn" onclick="viewMode('firma')" style="background:#fff;color:#1d4ed8;border:none;padding:8px 22px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;">
         👁 Firma nusxasi
     </button>
@@ -398,18 +382,22 @@
 <div class="copy1">
     <!-- HEADER -->
     <div class="header">
-        <div class="header-left">
-            <h1 id="title-text">Qabul arizasi</h1>
-            <div class="order-num">
-                <span id="label-ariza">Ariza</span>
-                <span class="num-badge">{{ $project->number }}</span>
-                &nbsp;&nbsp;{{ $project->created_at->format('d.m.Y') }}
+        <div class="header-left" style="display:flex;align-items:center;gap:14px;">
+            <img src="/images/logo.jpg" alt="MY PERFECT HOME" style="width:56px;height:56px;object-fit:contain;flex-shrink:0;">
+            <div>
+                <h1>Qabul arizasi</h1>
+                <div class="order-num">
+                    <span>Ariza</span>
+                    <span class="num-badge">{{ $project->number }}</span>
+                    &nbsp;&nbsp;{{ $project->created_at->format('d.m.Y') }}
+                </div>
             </div>
         </div>
         <div class="header-right">
-            <strong>BESTHOME CRM</strong>
-            +998 99 468 19 91<br>
-            {{ now()->format('d.m.Y H:i') }}
+            <strong>"MY PERFECT HOME" MCHJ</strong>
+            Toshkent shahri, Yangihayot tumani, Uzar ko'chasi, 60-uy, 46-xona<br>
+            MFO 01125&nbsp;&nbsp;INN 308515451&nbsp;&nbsp;OKED 41100<br>
+            Tel: +998 77 091 91 01, +998 99 468 19 91
         </div>
     </div>
 
@@ -437,10 +425,8 @@
             <td class="value">
                 @php
                     $cats = ['turar'=>'Turar-joy','tijorat'=>'Tijorat binosi','qishloq'=>'Qishloq qurilishi','sanoat'=>'Sanoat binosi','boshqa'=>'Boshqa'];
-                    $catsRu = ['turar'=>'Жилое здание','tijorat'=>'Коммерческое здание','qishloq'=>'Сельское строительство','sanoat'=>'Промышленное здание','boshqa'=>'Другое'];
                 @endphp
-                <span class="lang-uz active">{{ $cats[$project->category] ?? $project->category }}</span>
-                <span class="lang-ru">{{ $catsRu[$project->category] ?? $project->category }}</span>
+                {{ $cats[$project->category] ?? $project->category }}
             </td>
         </tr>
         <tr>
@@ -532,56 +518,6 @@
         </tr>
     </table>
 
-    <!-- CONDITIONS: Uzbek -->
-    <div class="conditions lang-uz active">
-        <h3>{{ $project->number }} sonli shartnomaga ilova</h3>
-        <p style="font-weight:700;margin-bottom:8px;font-size:13px;">Bildirishnoma</p>
-        <p style="line-height:1.75;text-align:justify;">
-            Men {{ $project->created_at->format('d.m.Y') }} yildagi
-            <strong>№{{ $project->seq_no }}</strong> sonli obyektning loyiha hujjatlarini ishlab chiqish haqidagi
-            shartnomaga ko'ra buyurtmachi (mulkdor)
-            <strong>{{ $project->owner_name }}</strong>
-            ushbu bildirishnoma bilan shuni ma'lum qilamanki, Vazirlar Mahkamasining 2026 yil 13 apreldagi
-            167-son qarori bilan tasdiqlangan "Yakka tartibdagi uy-joylar hamda kichik hajmdagi noturar bino va
-            inshootlarni qurish hamda rekonstruksiya qilish ishlari yuzasidan xususiy qurilish nazoratini amalga
-            oshirish tartibi to'g'risidagi nizom"ning 1-bob 5-bandiga (Xususiy qurilish nazorati buyurtmachining
-            (mulkdor) ixtiyori bilan amalga oshiriladi. Mazkur holatlarda buyurtmachi (mulkdor) xususiy qurilish
-            nazoratini amalga oshirish zarurati mavjud emasligi to'g'risida obyektning loyiha hujjatlarini ishlab
-            chiqqan loyiha tashkilotiga u bilan obyektning loyiha hujjatlarini ishlab chiqish bo'yicha
-            shartnomani tuzish jarayonida yozma ravishda bildirishnomani taqdim etadi) muvofiq mazkur
-            obyektning loyiha hujjatlarini ishlab chiqilishi bilan cheklanaman va buyurtmachi (mulkdor) sifatida
-            loyiha tashkiloti tomonidan xususiy qurilish nazoratini amalga oshirish zarurati mavjud emasligini
-            ma'lum qilaman.
-        </p>
-        <p style="margin-top:10px;line-height:1.7;color:#444;">
-            Yuqoridagi bildirishnomani o'qib chiqdim, unga nisbatan e'tiroz va qo'shimchalarim yo'q.
-            Kelib chiqadigan salbiy oqibatlar uchun javobgarlikni o'z zimmamda bo'lishidan xabardorman.
-        </p>
-    </div>
-
-    <!-- CONDITIONS: Russian -->
-    <div class="conditions lang-ru">
-        <h3>Приложение к договору № {{ $project->number }}</h3>
-        <p style="font-weight:700;margin-bottom:8px;font-size:12px;">Уведомление</p>
-        <p style="line-height:1.75;text-align:justify;">
-            Я, являясь Заказчиком (собственником) по договору № <strong>{{ $project->seq_no }}</strong>
-            от {{ $project->created_at->format('d.m.Y') }} года на разработку проектной документации объекта
-            <strong>{{ $project->owner_name }}</strong>,
-            настоящим уведомлением сообщаю, что в соответствии с «Положением о порядке осуществления частного
-            строительного контроля за работами по строительству и реконструкции индивидуального жилья, а также
-            малогабаритных нежилых зданий и сооружений», утвержденным Постановлением Кабинета Министров от
-            13 апреля 2026 года № 167, я ограничиваюсь лишь разработкой проектной документации данного объекта.
-        </p>
-        <p style="margin-top:10px;line-height:1.7;color:#444;">
-            В качестве Заказчика (собственника) заявляю об отсутствии необходимости в осуществлении частного
-            строительного контроля со стороны проектной организации.
-        </p>
-        <p style="margin-top:8px;line-height:1.7;color:#444;">
-            С вышеуказанным уведомлением ознакомлен(а), возражений и дополнений не имею.
-            Осведомлен(а) о принятии на себя ответственности за любые возможные негативные последствия.
-        </p>
-    </div>
-
     <!-- SIGNATURES -->
     <div class="signatures">
         <div class="sig-block">
@@ -612,7 +548,7 @@
 
 <!-- ===== MIJOZ UCHUN 2-NUSXA (summalar yo'q) ===== -->
 <div class="copy2">
-    <div class="conditions conditions-plain lang-uz active">
+    <div class="conditions conditions-plain">
         <div class="bild-title">BILDIRISHNOMA</div>
         <hr class="bild-title-line">
         <p style="line-height:1.75;text-align:justify;">
@@ -634,26 +570,6 @@
         <p style="margin-top:10px;line-height:1.7;color:#444;">
             Yuqoridagi bildirishnomani o'qib chiqdim, unga nisbatan e'tiroz va qo'shimchalarim yo'q.
             Kelib chiqadigan salbiy oqibatlar uchun javobgarlikni o'z zimmamda bo'lishidan xabardorman.
-        </p>
-    </div>
-    <div class="conditions conditions-plain lang-ru">
-        <div class="bild-title">УВЕДОМЛЕНИЕ</div>
-        <hr class="bild-title-line">
-        <p style="line-height:1.75;text-align:justify;">
-            Я, являясь Заказчиком (собственником) по договору № <strong>{{ $project->seq_no }}</strong>
-            от {{ $project->created_at->format('d.m.Y') }} года на разработку проектной документации объекта
-            <strong>{{ $project->owner_name }}</strong>, настоящим уведомлением сообщаю, что в соответствии с
-            «Положением о порядке осуществления частного строительного контроля», утвержденным Постановлением
-            Кабинета Министров от 13 апреля 2026 года № 167, я ограничиваюсь лишь разработкой проектной
-            документации данного объекта.
-        </p>
-        <p style="margin-top:8px;line-height:1.7;color:#444;">
-            В качестве Заказчика (собственника) заявляю об отсутствии необходимости в осуществлении частного
-            строительного контроля со стороны проектной организации.
-        </p>
-        <p style="margin-top:8px;line-height:1.7;color:#444;">
-            С вышеуказанным уведомлением ознакомлен(а), возражений и дополнений не имею.
-            Осведомлен(а) о принятии на себя ответственности за любые возможные негативные последствия.
         </p>
     </div>
 
@@ -864,90 +780,6 @@ setupSigDrag();
 </script>
 
 <script>
-const translations = {
-    uz: {
-        title: 'Qabul arizasi',
-        ariza: 'Ariza',
-        qrText: 'Buyurtma raqamini<br>skanerlang',
-        lblClient: "Mijoz (F.I.Sh)",
-        lblType: 'Loyiha turi',
-        lblName: 'Loyiha nomi',
-        lblAddress: "Ob'ekt manzili",
-        lblWorker: "Mas'ul xodim",
-        lblDeadline: 'Taxminiy muddat',
-        lblTotal: 'Umumiy narx',
-        lblPaid: "Oldindan to'lov",
-        lblRemaining: "Qoldiq to'lov",
-        lblNote: 'Izohlar',
-        sigCompany: 'Kompaniya vakili:',
-        sigClient: 'Buyurtmachi:',
-        sigLabelSign: 'Imzo / muhr',
-        sigAgree: "shartlar bilan tanishib, rozilik bildirdi",
-        footerCreated: 'Ariza tuzilgan sana:',
-        footerPrinted: 'Chop etilgan:',
-    },
-    ru: {
-        title: 'Приёмная квитанция',
-        ariza: 'Квитанция',
-        qrText: 'Отсканируйте<br>номер заказа',
-        lblClient: 'Клиент (Ф.И.О.)',
-        lblType: 'Тип проекта',
-        lblName: 'Название проекта',
-        lblAddress: 'Адрес объекта',
-        lblWorker: 'Ответственный',
-        lblDeadline: 'Ориентировочный срок',
-        lblTotal: 'Общая стоимость',
-        lblPaid: 'Предоплата',
-        lblRemaining: 'Остаток к оплате',
-        lblNote: 'Примечания',
-        sigCompany: 'Представитель компании:',
-        sigClient: 'Заказчик:',
-        sigLabelSign: 'Подпись / печать',
-        sigAgree: 'ознакомлен с условиями и согласен',
-        footerCreated: 'Дата составления:',
-        footerPrinted: 'Дата печати:',
-    }
-};
-
-function setLang(lang) {
-    const t = translations[lang];
-
-    document.getElementById('title-text').textContent = t.title;
-    document.getElementById('label-ariza').textContent = t.ariza;
-    document.getElementById('qr-text').innerHTML = t.qrText;
-    document.getElementById('lbl-client').textContent = t.lblClient;
-    document.getElementById('lbl-type').textContent = t.lblType;
-    document.getElementById('lbl-name').textContent = t.lblName;
-    document.getElementById('lbl-address').textContent = t.lblAddress;
-    document.getElementById('lbl-worker').textContent = t.lblWorker;
-    document.getElementById('lbl-deadline').textContent = t.lblDeadline;
-    document.getElementById('lbl-total').textContent = t.lblTotal;
-    document.getElementById('lbl-paid').textContent = t.lblPaid;
-    document.getElementById('lbl-remaining').textContent = t.lblRemaining;
-    document.getElementById('lbl-note').textContent = t.lblNote;
-    document.getElementById('sig-company').textContent = t.sigCompany;
-    document.getElementById('sig-client').textContent = t.sigClient;
-    document.getElementById('sig-label-sign').textContent = t.sigLabelSign;
-    document.getElementById('sig-agree').textContent = t.sigAgree;
-    document.getElementById('footer-created').textContent = t.footerCreated;
-    document.getElementById('footer-printed').textContent = t.footerPrinted;
-
-    // Show/hide conditions and category spans
-    document.querySelectorAll('.lang-uz').forEach(el => el.classList.toggle('active', lang === 'uz'));
-    document.querySelectorAll('.lang-ru').forEach(el => el.classList.toggle('active', lang === 'ru'));
-
-    // Button styles
-    const btnUz = document.getElementById('btn-uz');
-    const btnRu = document.getElementById('btn-ru');
-    if (lang === 'uz') {
-        btnUz.style.cssText = 'background:#fff;color:#1d4ed8;border:none;padding:6px 18px;border-radius:5px;font-size:13px;font-weight:700;cursor:pointer;';
-        btnRu.style.cssText = 'background:transparent;color:#fff;border:none;padding:6px 18px;border-radius:5px;font-size:13px;font-weight:600;cursor:pointer;';
-    } else {
-        btnRu.style.cssText = 'background:#fff;color:#1d4ed8;border:none;padding:6px 18px;border-radius:5px;font-size:13px;font-weight:700;cursor:pointer;';
-        btnUz.style.cssText = 'background:transparent;color:#fff;border:none;padding:6px 18px;border-radius:5px;font-size:13px;font-weight:600;cursor:pointer;';
-    }
-}
-
 function viewMode(mode) {
     document.body.classList.remove('view-firma', 'view-mijoz');
     document.body.classList.add('view-' + mode);
