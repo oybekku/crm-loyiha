@@ -35,7 +35,8 @@
             <button type="button" wire:click="eiGoPayment" style="padding:6px 11px;border-radius:7px;border:1px solid #86efac;background:#f0fdf4;color:#16a34a;font-size:12px;font-weight:600;cursor:pointer">💳 To'lov</button>
             @endif
 
-            @if(auth()->user()?->canSeeAllProjects())
+            {{-- "To'lovga" (eiRequestPayment/eiCancelRequest) yashirilgan --}}
+            @if(false && auth()->user()?->canSeeAllProjects())
                 @if($ei_paymentRequested)
                 <button type="button" wire:click="eiCancelRequest" style="padding:6px 11px;border-radius:7px;border:1px solid #fcd34d;background:#fef3c7;color:#b45309;font-size:12px;font-weight:600;cursor:pointer">🕐 Navbatda</button>
                 @else
