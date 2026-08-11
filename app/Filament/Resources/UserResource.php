@@ -91,8 +91,8 @@ class UserResource extends Resource
                     ->label('🔐 Telegram tasdiqlash kodi (admin login/parolini o\'zgartirish uchun)')
                     ->password()
                     ->dehydrated(false)
-                    ->visible(fn($operation, $record) => $operation === 'edit' && $record?->isAdmin())
-                    ->required(fn($operation, $record) => $operation === 'edit' && $record?->isAdmin())
+                    ->visible(fn($operation, $record) => $operation === 'edit' && $record?->isAdmin() && \App\Services\TelegramOtpService::otpRequired())
+                    ->required(fn($operation, $record) => $operation === 'edit' && $record?->isAdmin() && \App\Services\TelegramOtpService::otpRequired())
                     ->afterStateHydrated(function ($operation, $record) {
                         if ($operation === 'edit' && $record?->isAdmin()) {
                             \App\Services\TelegramOtpService::sendOtp(

@@ -51,6 +51,9 @@ return [
         'bot_token'    => env('TELEGRAM_BOT_TOKEN'),
         'bot_username' => env('TELEGRAM_BOT_USERNAME'), // @ belgisisiz, masalan: BestHomeCrmBot
         'webhook_secret' => env('TELEGRAM_WEBHOOK_SECRET'),
+        // Vaqtincha o'chirish uchun (masalan Telegram serverga ulanmayotganda):
+        // .env'ga TELEGRAM_OTP_REQUIRED=false qo'shish — barcha PIN-tasdiqlashlar bypass bo'ladi.
+        'otp_required' => env('TELEGRAM_OTP_REQUIRED', true),
     ],
 
     // Wacom Signature SDK (STU-300 imzo planshetidan mijoz imzosini olish)

@@ -140,7 +140,8 @@ class ProjectStatusResource extends Resource
                         Forms\Components\TextInput::make('_pin')
                             ->label('Telegram kodi')
                             ->password()
-                            ->required()
+                            ->visible(fn () => \App\Services\TelegramOtpService::otpRequired())
+                            ->required(fn () => \App\Services\TelegramOtpService::otpRequired())
                             ->placeholder('······'),
                     ]))
                     ->before(function (array $data, $record, Tables\Actions\EditAction $action) {

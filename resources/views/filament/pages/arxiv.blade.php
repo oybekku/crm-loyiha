@@ -176,6 +176,7 @@ $getBadgeStyle = function(string $status) use ($archiveBadgeColors): string {
 <div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:flex;align-items:center;justify-content:center">
     <div style="background:#fff;border-radius:16px;padding:28px 32px;width:320px;box-shadow:0 25px 60px rgba(0,0,0,.2)">
         <div style="font-size:16px;font-weight:700;color:#111827;margin-bottom:6px">🔐 Telegram kodi</div>
+        @if(\App\Services\TelegramOtpService::otpRequired())
         @if(!\App\Services\TelegramOtpService::isLinked(auth()->user()))
         <div style="font-size:13px;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;margin-bottom:12px">
             Avval <a href="{{ route('filament.admin.pages.telegram-settings') }}" style="color:#4338ca;font-weight:600">Telegramingizni bog'lang</a>.
@@ -189,6 +190,9 @@ $getBadgeStyle = function(string $status) use ($archiveBadgeColors): string {
                placeholder="······" autofocus maxlength="6">
         @if($pinError)
         <div style="font-size:12px;color:#ef4444;margin-bottom:10px">❌ Noto'g'ri yoki eskirgan kod</div>
+        @endif
+        @else
+        <div style="font-size:13px;color:#9ca3af;margin-bottom:12px">Tasdiqlash kodi vaqtincha o'chirilgan (Telegram ishlamayapti)</div>
         @endif
         <div style="display:flex;gap:8px;margin-top:12px">
             <button wire:click="$set('showPinModal',false)"

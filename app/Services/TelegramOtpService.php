@@ -30,6 +30,12 @@ class TelegramOtpService
         return filled(self::token());
     }
 
+    /** false bo'lsa — barcha PIN-tasdiqlashlar bypass qilinadi (masalan Telegramга ulanmayotganda). */
+    public static function otpRequired(): bool
+    {
+        return (bool) config('services.telegram.otp_required', true);
+    }
+
     /** Bog'lash uchun havola — admin shu havolani Telegram'da ochib, botga /start bosadi. */
     public static function linkUrl(User $user): ?string
     {
@@ -80,6 +86,9 @@ class TelegramOtpService
      */
     public static function sendOtp(User $user, string $purpose = 'tasdiqlash', ?string $actionLabel = null): bool
     {
+        if (!self::otpRequired()) {
+            return true;
+        }
         if (!self::isConfigured() || !self::isLinked($user)) {
             return false;
         }
@@ -107,6 +116,10 @@ class TelegramOtpService
 
     public static function verifyOtp(User $user, string $code, string $purpose = 'tasdiqlash'): bool
     {
+        if (!self::otpRequired()) {
+            return true;
+        }
+
         $key = self::cacheKey($user->id, $purpose);
         $expected = Cache::get($key);
         if (!$expected || !hash_equals((string) $expected, trim($code))) {
