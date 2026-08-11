@@ -1,16 +1,15 @@
 <x-filament-panels::page>
 <div class="bx-page-root">
 <style>
-/* Chap navigatsiya menyusi va sahifa kengligi endi boshqa sahifalar
-   (Dashboard/Oylik hisobot) bilan bir xil — "Click ilovasi" uslubidagi
-   qora rang endi shu ichki panelning ozida (.bx-wrap), butun sahifada
-   emas, shunda hodisa "boshqa oyna ochilganday" tuyulmaydi. */
-.bx-wrap{max-width:1200px;margin:0 auto;color:#e2e8f0;padding:28px 24px;
-    background:#191a1b;border-radius:20px;box-shadow:0 1px 8px rgba(0,0,0,.15)}
-.bx-back{display:inline-flex;align-items:center;gap:6px;color:#94a3b8 !important;font-size:13px;text-decoration:none;margin-bottom:18px}
-.bx-back:hover{color:#e2e8f0 !important}
+/* Sahifa endi boshqa ikkitasi (Dashboard/Oylik hisobot) bilan bir xil
+   oddiy oq fonda — faqat hisob kartalari (.acc-card) ozining mustaqil
+   qora dizaynida qoladi (haqiqiy bank kartasi kabi), chunki ular ozi
+   bilan birga oz foni/rangini olib yuradi. */
+.bx-wrap{color:#111827}
+.bx-back{display:inline-flex;align-items:center;gap:6px;color:#6b7280 !important;font-size:13px;text-decoration:none;margin-bottom:18px}
+.bx-back:hover{color:#111827 !important}
 .bx-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:22px}
-.bx-title{font-size:20px;font-weight:800;color:#f1f5f9 !important}
+.bx-title{font-size:20px;font-weight:800;color:#111827 !important}
 .bx-add{background:#2563eb;color:#fff;border:none;border-radius:10px;padding:11px 20px;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
 .bx-add:hover{background:#1d4ed8}
 
@@ -84,8 +83,13 @@
 .acc-star.on{color:#3b82f6 !important;transform:scale(1.15)}
 .acc-actions{position:absolute;top:16px;right:40px;display:flex;gap:4px;opacity:0;transition:opacity .2s;z-index:2}
 .acc-card:hover .acc-actions{opacity:1}
-.acc-act-btn{width:24px;height:24px;border-radius:6px;border:none;background:rgba(255,255,255,.12);color:#e2e8f0 !important;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px}
-.acc-act-btn:hover{background:rgba(255,255,255,.25)}
+/* Bazaviy (oq fonli qatorlar — Xarajatlar/Otkazmalar royxatidagi
+   tahrirlash/ochirish tugmalari) uchun ochroq rang; qora kartalar
+   ichida esa pastdagi .acc-card qoidasi shaffof-oq variantni qaytaradi. */
+.acc-act-btn{width:24px;height:24px;border-radius:6px;border:none;background:#f3f4f6;color:#6b7280 !important;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px}
+.acc-act-btn:hover{background:#e5e7eb}
+.acc-card .acc-act-btn{background:rgba(255,255,255,.12);color:#e2e8f0 !important}
+.acc-card .acc-act-btn:hover{background:rgba(255,255,255,.25)}
 
 .acc-icon{font-size:20px;opacity:.9}
 .acc-icon-wrap{width:34px;height:25px;border-radius:6px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:14px}
@@ -112,64 +116,64 @@
 .acc-balance{font-size:20px;font-weight:900;color:#4ade80 !important;margin-top:2px}
 .acc-sub-right{font-size:9px;color:rgba(255,255,255,.45) !important;text-align:right;line-height:1.4}
 
-.bx-empty{grid-column:1/-1;text-align:center;color:#64748b !important;padding:30px;font-size:13px;background:#1a1a1d;border-radius:14px;border:1px dashed #2a2a2e}
+.bx-empty{grid-column:1/-1;text-align:center;color:#9ca3af !important;padding:30px;font-size:13px;background:#f9fafb;border-radius:14px;border:1px dashed #e5e7eb}
 
 /* Modal */
-.bx-modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px}
-.bx-modal{background:#161b22;color:#e2e8f0;border-radius:16px;width:100%;max-width:440px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.bx-modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px}
+.bx-modal{background:#fff;color:#111827;border-radius:16px;width:100%;max-width:440px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
 .bx-field{margin-bottom:14px}
-.bx-field label{font-size:12px;font-weight:600;color:#94a3b8 !important;display:block;margin-bottom:5px}
-.bx-field input,.bx-field select{width:100%;padding:9px 12px;border:1.5px solid #2a2a2e;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;background:#0d1117;color:#eee !important}
+.bx-field label{font-size:12px;font-weight:600;color:#6b7280 !important;display:block;margin-bottom:5px}
+.bx-field input,.bx-field select{width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;background:#fff;color:#111827 !important}
 .bx-type-tabs{display:flex;gap:6px;margin-bottom:16px}
-.bx-type-tab{flex:1;padding:9px;border-radius:9px;border:1.5px solid #2a2a2e;background:#0d1117;color:#94a3b8 !important;font-size:12px;font-weight:700;cursor:pointer;text-align:center}
-.bx-type-tab.active{border-color:#2563eb;background:#12224a;color:#93c5fd !important}
+.bx-type-tab{flex:1;padding:9px;border-radius:9px;border:1.5px solid #e2e8f0;background:#f9fafb;color:#6b7280 !important;font-size:12px;font-weight:700;cursor:pointer;text-align:center}
+.bx-type-tab.active{border-color:#2563eb;background:#eff6ff;color:#2563eb !important}
 
-.bx-month{display:flex;align-items:center;gap:4px;background:#161b22;border:1.5px solid #2a2a2e;border-radius:9px;padding:3px 5px}
-.bx-month-btn{background:#1a1a1d;border:none;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:15px;color:#94a3b8 !important;line-height:1}
-.bx-month-btn:hover{background:#232326;color:#e2e8f0 !important}
-.bx-month-lbl{font-size:13px;font-weight:700;color:#60a5fa !important;min-width:112px;text-align:center;white-space:nowrap}
+.bx-month{display:flex;align-items:center;gap:4px;background:#f9fafb;border:1.5px solid #e2e8f0;border-radius:9px;padding:3px 5px}
+.bx-month-btn{background:#fff;border:none;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:15px;color:#6b7280 !important;line-height:1}
+.bx-month-btn:hover{background:#f3f4f6;color:#111827 !important}
+.bx-month-lbl{font-size:13px;font-weight:700;color:#2563eb !important;min-width:112px;text-align:center;white-space:nowrap}
 
 /* Xarajatlar (rasxodlar) bo'limi */
-.exp-panel{margin-top:22px;background:#161b22;border:1.5px solid #2a2a2e;border-radius:14px;overflow:hidden}
+.exp-panel{margin-top:22px;background:#fff;border:1px solid #f1f5f9;border-radius:14px;overflow:hidden;box-shadow:0 1px 8px rgba(0,0,0,.04)}
 .exp-head{display:flex;align-items:center;gap:10px;padding:16px 18px;cursor:pointer;user-select:none}
-.exp-head-title{font-size:14px;font-weight:800;color:#f1f5f9 !important;display:flex;align-items:center;gap:8px}
-.exp-head-total{font-size:15px;font-weight:800;color:#f87171 !important;margin-left:auto}
-.exp-head-chev{color:#64748b !important;transition:transform .2s;flex-shrink:0}
-.exp-head-add{background:#7f1d1d;color:#fca5a5 !important;border:none;border-radius:8px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;flex-shrink:0}
-.exp-head-add:hover{background:#991b1b;color:#fecaca !important}
-.exp-list{border-top:1px solid #2a2a2e}
-.exp-row{display:flex;align-items:center;gap:12px;padding:11px 18px;border-bottom:1px solid #1f242c}
+.exp-head-title{font-size:14px;font-weight:800;color:#111827 !important;display:flex;align-items:center;gap:8px}
+.exp-head-total{font-size:15px;font-weight:800;color:#dc2626 !important;margin-left:auto}
+.exp-head-chev{color:#9ca3af !important;transition:transform .2s;flex-shrink:0}
+.exp-head-add{background:#fef2f2;color:#dc2626 !important;border:1px solid #fecaca;border-radius:8px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;flex-shrink:0}
+.exp-head-add:hover{background:#fee2e2;color:#b91c1c !important}
+.exp-list{border-top:1px solid #f1f5f9}
+.exp-row{display:flex;align-items:center;gap:12px;padding:11px 18px;border-bottom:1px solid #f8fafc}
 .exp-row:last-child{border-bottom:none}
-.exp-row:hover{background:#1a1f28}
-.exp-date{font-size:11px;color:#64748b !important;font-family:monospace;flex-shrink:0;width:66px}
-.exp-acc-badge{font-size:10px;font-weight:700;color:#93c5fd !important;background:#12224a;border-radius:5px;padding:3px 8px;white-space:nowrap;flex-shrink:0}
-.exp-comment{font-size:12.5px;color:#cbd5e1 !important;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.exp-amount{font-size:13.5px;font-weight:800;color:#f87171 !important;flex-shrink:0;white-space:nowrap}
+.exp-row:hover{background:#f9fafb}
+.exp-date{font-size:11px;color:#9ca3af !important;font-family:monospace;flex-shrink:0;width:66px}
+.exp-acc-badge{font-size:10px;font-weight:700;color:#2563eb !important;background:#eff6ff;border-radius:5px;padding:3px 8px;white-space:nowrap;flex-shrink:0}
+.exp-comment{font-size:12.5px;color:#374151 !important;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.exp-amount{font-size:13.5px;font-weight:800;color:#dc2626 !important;flex-shrink:0;white-space:nowrap}
 .exp-row-actions{display:flex;gap:4px;flex-shrink:0;opacity:0;transition:opacity .15s}
 .exp-row:hover .exp-row-actions{opacity:1}
-.exp-empty{padding:26px;text-align:center;color:#64748b !important;font-size:12.5px}
+.exp-empty{padding:26px;text-align:center;color:#9ca3af !important;font-size:12.5px}
 
 /* Pul o'tkazmalari bo'limi (Xarajatlar bilan bir xil naqsh, ko'k rangda) */
-.trf-panel{margin-top:14px;background:#161b22;border:1.5px solid #2a2a2e;border-radius:14px;overflow:hidden}
+.trf-panel{margin-top:14px;background:#fff;border:1px solid #f1f5f9;border-radius:14px;overflow:hidden;box-shadow:0 1px 8px rgba(0,0,0,.04)}
 .trf-head{display:flex;align-items:center;gap:10px;padding:16px 18px;cursor:pointer;user-select:none}
-.trf-head-title{font-size:14px;font-weight:800;color:#f1f5f9 !important;display:flex;align-items:center;gap:8px}
-.trf-head-total{font-size:15px;font-weight:800;color:#60a5fa !important;margin-left:auto}
-.trf-head-chev{color:#64748b !important;transition:transform .2s;flex-shrink:0}
-.trf-head-add{background:#1e3a5f;color:#93c5fd !important;border:none;border-radius:8px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;flex-shrink:0}
-.trf-head-add:hover{background:#254a75;color:#bfdbfe !important}
-.trf-list{border-top:1px solid #2a2a2e}
-.trf-row{display:flex;align-items:center;gap:12px;padding:11px 18px;border-bottom:1px solid #1f242c}
+.trf-head-title{font-size:14px;font-weight:800;color:#111827 !important;display:flex;align-items:center;gap:8px}
+.trf-head-total{font-size:15px;font-weight:800;color:#2563eb !important;margin-left:auto}
+.trf-head-chev{color:#9ca3af !important;transition:transform .2s;flex-shrink:0}
+.trf-head-add{background:#eff6ff;color:#2563eb !important;border:1px solid #bfdbfe;border-radius:8px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;flex-shrink:0}
+.trf-head-add:hover{background:#dbeafe;color:#1d4ed8 !important}
+.trf-list{border-top:1px solid #f1f5f9}
+.trf-row{display:flex;align-items:center;gap:12px;padding:11px 18px;border-bottom:1px solid #f8fafc}
 .trf-row:last-child{border-bottom:none}
-.trf-row:hover{background:#1a1f28}
-.trf-date{font-size:11px;color:#64748b !important;font-family:monospace;flex-shrink:0;width:66px}
-.trf-path{font-size:12px;color:#93c5fd !important;flex-shrink:0;white-space:nowrap;font-weight:600}
-.trf-comment{font-size:12.5px;color:#cbd5e1 !important;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.trf-amount{font-size:13.5px;font-weight:800;color:#60a5fa !important;flex-shrink:0;white-space:nowrap}
+.trf-row:hover{background:#f9fafb}
+.trf-date{font-size:11px;color:#9ca3af !important;font-family:monospace;flex-shrink:0;width:66px}
+.trf-path{font-size:12px;color:#2563eb !important;flex-shrink:0;white-space:nowrap;font-weight:600}
+.trf-comment{font-size:12.5px;color:#374151 !important;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.trf-amount{font-size:13.5px;font-weight:800;color:#2563eb !important;flex-shrink:0;white-space:nowrap}
 .trf-row-actions{display:flex;gap:4px;flex-shrink:0;opacity:0;transition:opacity .15s}
 .trf-row:hover .trf-row-actions{opacity:1}
-.trf-empty{padding:26px;text-align:center;color:#64748b !important;font-size:12.5px}
+.trf-empty{padding:26px;text-align:center;color:#9ca3af !important;font-size:12.5px}
 
-.acc-personal-badge{font-size:8px;font-weight:800;color:#c4b5fd !important;background:#312e81;border-radius:5px;padding:3px 7px;white-space:nowrap;align-self:flex-start;margin-left:6px}
+.acc-personal-badge{font-size:8px;font-weight:800;color:#7c3aed !important;background:#f3e8ff;border-radius:5px;padding:3px 7px;white-space:nowrap;align-self:flex-start;margin-left:6px}
 </style>
 
 <div class="bx-wrap">
@@ -264,11 +268,11 @@
             <span style="font-size:11px;color:#64748b">Kimdan</span>
             <input type="date" wire:model.live="bxDayFrom" min="{{ $bxMonthStart }}" max="{{ $bxMonthEnd }}"
                    title="Faqat {{ $bxMonthLabel }} oyi ichidan tanlang"
-                   style="background:#0d1117;border:1px solid #2a2a2e;color:#e2e8f0;border-radius:8px;padding:6px 10px;font-size:12.5px">
+                   style="background:#fff;border:1px solid #e2e8f0;color:#111827;border-radius:8px;padding:6px 10px;font-size:12.5px">
             <span style="font-size:11px;color:#64748b">Kimgacha</span>
             <input type="date" wire:model.live="bxDayTo" min="{{ $bxMonthStart }}" max="{{ $bxMonthEnd }}"
                    title="Bo'sh qoldirsangiz — faqat 'Kimdan' kuni hisoblanadi"
-                   style="background:#0d1117;border:1px solid #2a2a2e;color:#e2e8f0;border-radius:8px;padding:6px 10px;font-size:12.5px">
+                   style="background:#fff;border:1px solid #e2e8f0;color:#111827;border-radius:8px;padding:6px 10px;font-size:12.5px">
             @if($bxDayFrom)
                 <span class="exp-head-total" style="color:#4ade80 !important">{{ number_format($dayIncome, 0, '.', ' ') }} so'm</span>
                 <button wire:click="bxClearDayFilter" style="background:transparent;border:none;color:#64748b;cursor:pointer;font-size:16px;line-height:1;flex-shrink:0" title="Tozalash">✕</button>
@@ -304,11 +308,11 @@
             <svg class="exp-head-chev" :style="open ? 'transform:rotate(180deg)' : ''" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
         @if(!$expenseAccountId)
-        <div style="padding:10px 18px;font-size:11.5px;color:#fbbf24;background:#3a2e0d;border-top:1px solid #2a2a2e">
+        <div style="padding:10px 18px;font-size:11.5px;color:#92400e;background:#fffbeb;border-top:1px solid #fde68a">
             ⚠ Xodimlar komissiyasi avtomatik yozilishi uchun bitta hisobni "Xarajatlar hisobi" deb belgilang (hisobni tahrirlashda).
         </div>
         @elseif(!$commissionSourceId)
-        <div style="padding:10px 18px;font-size:11.5px;color:#fbbf24;background:#3a2e0d;border-top:1px solid #2a2a2e">
+        <div style="padding:10px 18px;font-size:11.5px;color:#92400e;background:#fffbeb;border-top:1px solid #fde68a">
             ⚠ Komissiya haqiqiy hisobdan (masalan Naqd pul) real "chiqarilishi" uchun bitta hisobni "Komissiya manba hisobi" deb belgilang (hisobni tahrirlashda). Aks holda Xarajatlar hisobi manfiy bo'lib turadi, lekin manba hisob balansi kamaymaydi.
         </div>
         @endif
@@ -317,7 +321,7 @@
             <div class="exp-row" @if($exp->is_auto) title="Oylik hisobotdagi 'To'lanishi kerak' summasidan avtomatik hisoblanadi" @endif>
                 <span class="exp-date">{{ $exp->expense_date->format('d.m.Y') }}</span>
                 @if($exp->is_auto)
-                <span class="exp-acc-badge" style="background:#1e3a3a;color:#5eead4">👤 avtomatik</span>
+                <span class="exp-acc-badge" style="background:#f0fdfa;color:#0d9488">👤 avtomatik</span>
                 @else
                 <span class="exp-acc-badge">{{ $exp->account ? ($exp->account->name ?: $typeOptions[$exp->account->type]) : '—' }}</span>
                 @endif
@@ -373,7 +377,7 @@
          title="Kerak bo'lmagan kartalarni shu yerga sudrab tashlang"
          @dragover.prevent="over=true" @dragleave="over=false"
          @drop.prevent="over=false; $wire.call('moveAccountSection', $event.dataTransfer.getData('text/plain'), true)">
-        <span style="width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,.08);color:#64748b;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700">+</span>
+        <span style="width:28px;height:28px;border-radius:8px;background:#f3f4f6;color:#9ca3af;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700">+</span>
         <input type="file" x-ref="bgFileInput" wire:model="bgUpload" accept="image/*" style="display:none">
     </div>
     @else
@@ -383,7 +387,7 @@
         <div class="trf-head" style="cursor:default">
             <span class="trf-head-title">📥 Ikkinchi bo'lim <span style="font-size:11px;color:#64748b;font-weight:600">— kerak bo'lmagan kartalarni shu yerga sudrab tashlang</span></span>
         </div>
-        <div style="padding:18px;border-top:1px solid #2a2a2e">
+        <div style="padding:18px;border-top:1px solid #f1f5f9">
             <div class="bx-grid">
                 @foreach($secondaryAccs as $acc)
                     @include('filament.pages.partials.buxgalteriya-account-card', ['acc' => $acc])
@@ -458,7 +462,7 @@
             </div>
 
             <div style="display:flex;gap:10px">
-                <button wire:click="closeAccountModal" style="flex:1;padding:11px;border-radius:9px;border:1px solid #2a2a2e;background:#0d1117;color:#94a3b8;font-weight:700;font-size:13px;cursor:pointer">Bekor</button>
+                <button wire:click="closeAccountModal" style="flex:1;padding:11px;border-radius:9px;border:1px solid #e5e7eb;background:#fff;color:#6b7280;font-weight:700;font-size:13px;cursor:pointer">Bekor</button>
                 <button wire:click="saveAccount" style="flex:1;padding:11px;border-radius:9px;border:none;background:#16a34a;color:#fff;font-weight:700;font-size:13px;cursor:pointer">Saqlash</button>
             </div>
         </div>
@@ -504,7 +508,7 @@
             </div>
 
             <div style="display:flex;gap:10px;margin-top:4px">
-                <button wire:click="closeExpenseModal" style="flex:1;padding:11px;border-radius:9px;border:1px solid #2a2a2e;background:#0d1117;color:#94a3b8;font-weight:700;font-size:13px;cursor:pointer">Bekor</button>
+                <button wire:click="closeExpenseModal" style="flex:1;padding:11px;border-radius:9px;border:1px solid #e5e7eb;background:#fff;color:#6b7280;font-weight:700;font-size:13px;cursor:pointer">Bekor</button>
                 <button wire:click="saveExpense" style="flex:1;padding:11px;border-radius:9px;border:none;background:#dc2626;color:#fff;font-weight:700;font-size:13px;cursor:pointer">Saqlash</button>
             </div>
         </div>
@@ -561,7 +565,7 @@
             </div>
 
             <div style="display:flex;gap:10px;margin-top:4px">
-                <button wire:click="closeTransferModal" style="flex:1;padding:11px;border-radius:9px;border:1px solid #2a2a2e;background:#0d1117;color:#94a3b8;font-weight:700;font-size:13px;cursor:pointer">Bekor</button>
+                <button wire:click="closeTransferModal" style="flex:1;padding:11px;border-radius:9px;border:1px solid #e5e7eb;background:#fff;color:#6b7280;font-weight:700;font-size:13px;cursor:pointer">Bekor</button>
                 <button wire:click="saveTransfer" style="flex:1;padding:11px;border-radius:9px;border:none;background:#2563eb;color:#fff;font-weight:700;font-size:13px;cursor:pointer">O'tkazish</button>
             </div>
         </div>
