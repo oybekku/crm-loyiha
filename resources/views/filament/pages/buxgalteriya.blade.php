@@ -182,6 +182,8 @@ body:has(.bx-page-root) .fi-body{background:#191a1b !important}
 <div class="bx-wrap">
     <a href="{{ route('filament.admin.pages.kanban-board') }}" class="bx-back">← Ortga</a>
 
+    @include('filament.partials.report-tabs', ['dark' => true])
+
     <div class="bx-top">
         <div class="bx-title">💳 Buxgalteriya</div>
         <div style="display:flex;align-items:center;gap:10px">

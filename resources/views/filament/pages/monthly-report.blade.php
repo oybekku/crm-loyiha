@@ -55,6 +55,8 @@
 .dark .mr-warn-row td{background:#2d1515}
 </style>
 
+@include('filament.partials.report-tabs')
+
 {{-- FILTER --}}
 <div class="mr-card" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:14px 20px">
     <div style="display:flex;align-items:center;gap:8px">
