@@ -1297,6 +1297,20 @@ class KanbanBoard extends Page
         $project->update(['status' => $newStatus]);
     }
 
+    // "Nomi" maydoni yonidagi tezkor teglar (Toposyomka / Eskiz loyiha) —
+    // bosilganda nom maydoniga qo'shiladi/olib tashlanadi, ikkalasi ham
+    // tanlansa "Toposyomka, Eskiz loyiha" bo'lib to'ladi.
+    public function toggleTitleTag(string $tag): void
+    {
+        $tags = array_values(array_filter(array_map('trim', explode(',', $this->proj_title))));
+        if (in_array($tag, $tags, true)) {
+            $tags = array_values(array_diff($tags, [$tag]));
+        } else {
+            $tags[] = $tag;
+        }
+        $this->proj_title = implode(', ', $tags);
+    }
+
     // ── Save ─────────────────────────────────────────────────────────────
     public function createProject(): void
     {

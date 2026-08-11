@@ -1309,7 +1309,19 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             </div>
 
             <div>
-                <label class="kb-label">Nomi</label>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                    <label class="kb-label" style="margin-bottom:0">Nomi</label>
+                    @php $titleTags = array_filter(array_map('trim', explode(',', $proj_title))); @endphp
+                    @foreach(['Toposyomka', 'Eskiz loyiha'] as $tag)
+                    <button type="button" wire:click="toggleTitleTag('{{ $tag }}')"
+                        style="font-size:11px;padding:2px 10px;border-radius:99px;cursor:pointer;font-weight:600;
+                        {{ in_array($tag, $titleTags, true)
+                            ? 'background:#2563eb;color:#fff;border:1px solid #2563eb;'
+                            : 'background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;' }}">
+                        {{ $tag }}
+                    </button>
+                    @endforeach
+                </div>
                 <input wire:model.live="proj_title" class="kb-input" placeholder="Loyiha nomini kiriting...">
             </div>
 
