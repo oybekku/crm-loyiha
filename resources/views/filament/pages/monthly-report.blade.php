@@ -290,8 +290,6 @@
                 <th>#</th>
                 <th>Hodim</th>
                 <th style="text-align:center" title="Jami biriktirilgan loyihalar — tugallangan va hali kutayotgani birga">Loyihalar (jami)</th>
-                <th style="text-align:center">O'z vaqtida</th>
-                <th style="text-align:center">Kechikkan</th>
                 <th style="text-align:right" title="Barcha biriktirilgan ishlarning narxi — tugallangan va kutayotgani birga">Xizmatlar jami</th>
                 <th style="text-align:right" title="Barcha biriktirilgan ishlarning komissiyasi — tugallangan va kutayotgani birga">Hisoblangan</th>
                 <th style="text-align:right;color:#dc2626" title="Hodimga mijoz to'lagan ulushidan ko'proq berilgan pul (bo'lsa)">Ortiqcha to'langan</th>
@@ -359,26 +357,6 @@
                         @endif
                     </div>
                 </td>
-                <td style="text-align:center">
-                    @if($ontime > 0)
-                    <span style="display:inline-flex;align-items:center;gap:4px;background:#dcfce7;color:#16a34a;font-size:12px;font-weight:700;border-radius:6px;padding:3px 10px">
-                        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
-                        {{ $ontime }}
-                    </span>
-                    @else
-                    <span style="color:#d1d5db;font-size:12px">—</span>
-                    @endif
-                </td>
-                <td style="text-align:center">
-                    @if($late > 0)
-                    <span style="display:inline-flex;align-items:center;gap:4px;background:#fee2e2;color:#dc2626;font-size:12px;font-weight:700;border-radius:6px;padding:3px 10px">
-                        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                        {{ $late }}
-                    </span>
-                    @else
-                    <span style="color:#d1d5db;font-size:12px">—</span>
-                    @endif
-                </td>
                 <td style="text-align:right;font-weight:600">
                     {{ number_format($sTotal + $pendingSum, 0, '.', ' ') }} so'm
                     @if($pendingCnt > 0)
@@ -437,7 +415,7 @@
 
             {{-- Detail row --}}
 <tr x-show="open" x-cloak style="display:none">
-                <td colspan="13" style="padding:0;background:#f8fafc;border-bottom:2px solid #e2e8f0">
+                <td colspan="11" style="padding:0;background:#f8fafc;border-bottom:2px solid #e2e8f0">
                     <div style="padding:12px 16px">
                         {{-- Per-employee mini stats --}}
                         <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap">
@@ -552,7 +530,7 @@
         @endforeach
         <tbody>
         <tr class="mr-total-row">
-            <td colspan="6" style="text-align:right">Jami:</td>
+            <td colspan="4" style="text-align:right">Jami:</td>
             <td style="text-align:right">{{ number_format($totalWorkSum, 0, '.', ' ') }} so'm</td>
             <td style="text-align:right;color:#d97706">{{ number_format($totalWorkCommission, 0, '.', ' ') }} so'm</td>
             <td style="text-align:right;color:#dc2626">{{ $totalOverpaid > 0 ? number_format($totalOverpaid, 0, '.', ' ') . " so'm" : '—' }}</td>
