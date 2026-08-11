@@ -1,0 +1,161 @@
+<?php
+
+namespace App\Filament\Pages\Auth;
+
+use App\Models\User;
+use App\Services\TelegramOtpService;
+use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
+use Filament\Facades\Filament;
+use Filament\Forms\Components\TextInput;
+use Filament\Http\Responses\Auth\Contracts\LoginResponse;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Notifications\Notification;
+use Filament\Pages\Auth\Login as BaseLogin;
+use Illuminate\Validation\ValidationException;
+
+/**
+ * Standart Filament login sahifasi + Telegram orqali 2 bosqichli tasdiqlash (2FA):
+ *
+ *  1-bosqich: email + parol — muvaffaqiyatli bo'lsa va foydalanuvchi
+ *     Telegramga ulangan bo'lsa (telegram_chat_id bor), kirish YAKUNLANMAYDI —
+ *     shu foydalanuvchining o'ziga (faqat unga) 6 xonali kod yuboriladi va
+ *     forma "kod kiriting" bosqichiga o'tadi.
+ *  2-bosqich: kod tekshiriladi — to'g'ri bo'lsa, kirish yakunlanadi.
+ *
+ * Agar foydalanuvchi hali Telegramga ulanmagan bo'lsa — 2FA talab qilinmaydi,
+ * u odatdagidek darhol kiradi (Telegramni "Sozlamalar → Telegram bog'lash"
+ * orqali keyinroq ulaydi).
+ */
+class Login extends BaseLogin
+{
+    // discoverPages() app/Filament/Pages ichidagi hammasini avtomatik ro'yxatga
+    // oladi — bu esa alohida "oddiy sahifa" sifatida ham ro'yxatdan o'tib,
+    // ->login() orqali berilgan asosiy login route bilan to'qnashishi mumkin edi.
+    protected static bool $isDiscovered = false;
+
+    public bool $otpStep = false;
+
+    public ?int $pendingUserId = null;
+
+    public bool $pendingRemember = false;
+
+    public function authenticate(): ?LoginResponse
+    {
+        if ($this->otpStep) {
+            return $this->verifyLoginOtp();
+        }
+
+        try {
+            $this->rateLimit(5);
+        } catch (TooManyRequestsException $exception) {
+            $this->getRateLimitedNotification($exception)?->send();
+
+            return null;
+        }
+
+        $data = $this->form->getState();
+
+        if (! Filament::auth()->attempt($this->getCredentialsFromFormData($data), $data['remember'] ?? false)) {
+            $this->throwFailureValidationException();
+        }
+
+        $user = Filament::auth()->user();
+
+        if (
+            ($user instanceof FilamentUser) &&
+            (! $user->canAccessPanel(Filament::getCurrentPanel()))
+        ) {
+            Filament::auth()->logout();
+
+            $this->throwFailureValidationException();
+        }
+
+        if (
+            TelegramOtpService::isConfigured() &&
+            TelegramOtpService::otpRequired() &&
+            TelegramOtpService::isLinked($user)
+        ) {
+            Filament::auth()->logout();
+
+            $this->pendingUserId = $user->id;
+            $this->pendingRemember = (bool) ($data['remember'] ?? false);
+            $this->otpStep = true;
+            $this->form->fill();
+
+            TelegramOtpService::sendLoginOtp($user);
+
+            Notification::make()
+                ->title('Tasdiqlash kodi Telegram\'ga yuborildi')
+                ->body('Botdagi xabardan 6 xonali kodni kiriting.')
+                ->success()
+                ->send();
+
+            return null;
+        }
+
+        session()->regenerate();
+
+        return app(LoginResponse::class);
+    }
+
+    protected function verifyLoginOtp(): ?LoginResponse
+    {
+        try {
+            $this->rateLimit(5);
+        } catch (TooManyRequestsException $exception) {
+            $this->getRateLimitedNotification($exception)?->send();
+
+            return null;
+        }
+
+        $data = $this->form->getState();
+        $user = $this->pendingUserId ? User::find($this->pendingUserId) : null;
+
+        if (! $user || ! TelegramOtpService::verifyOtp($user, (string) ($data['code'] ?? ''), 'login')) {
+            throw ValidationException::withMessages([
+                'data.code' => 'Kod noto\'g\'ri yoki muddati tugagan.',
+            ]);
+        }
+
+        Filament::auth()->login($user, $this->pendingRemember);
+        session()->regenerate();
+
+        $this->otpStep = false;
+        $this->pendingUserId = null;
+
+        return app(LoginResponse::class);
+    }
+
+    /**
+     * @return array<int|string, \Filament\Forms\Form>
+     */
+    protected function getForms(): array
+    {
+        if ($this->otpStep) {
+            return [
+                'form' => $this->form(
+                    $this->makeForm()
+                        ->schema([$this->getOtpCodeFormComponent()])
+                        ->statePath('data'),
+                ),
+            ];
+        }
+
+        return parent::getForms();
+    }
+
+    protected function getOtpCodeFormComponent(): TextInput
+    {
+        return TextInput::make('code')
+            ->label('Telegramdan kelgan tasdiqlash kodi')
+            ->required()
+            ->numeric()
+            ->autofocus()
+            ->extraInputAttributes(['tabindex' => 1, 'autocomplete' => 'one-time-code', 'maxlength' => 6]);
+    }
+
+    public function getHeading(): string|\Illuminate\Contracts\Support\Htmlable
+    {
+        return $this->otpStep ? 'Tasdiqlash kodini kiriting' : parent::getHeading();
+    }
+}

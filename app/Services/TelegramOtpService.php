@@ -114,6 +114,31 @@ class TelegramOtpService
         return $ok;
     }
 
+    /**
+     * Login paytidagi 2FA kodi — sendOtp() dan farqli, faqat SHU foydalanuvchining
+     * o'z Telegramiga yuboriladi (boshqa ulangan xodimlarga emas, chunki bu shaxsiy
+     * login kodi, umumiy tasdiqlash emas).
+     */
+    public static function sendLoginOtp(User $user): bool
+    {
+        if (!self::isConfigured() || !self::isLinked($user)) {
+            return false;
+        }
+
+        $cooldownKey = self::cacheKey($user->id, 'login') . ':cooldown';
+        if (Cache::has($cooldownKey)) {
+            return true;
+        }
+        Cache::put($cooldownKey, true, now()->addSeconds(60));
+
+        $code = (string) random_int(100000, 999999);
+        Cache::put(self::cacheKey($user->id, 'login'), $code, now()->addMinutes(5));
+
+        $text = "🔐 Tizimga kirish uchun tasdiqlash kodi:\n\n<b>{$code}</b>\n\nBu kod 5 daqiqa amal qiladi. Agar bu urinish siz tomoningizdan bo'lmasa, e'tiborsiz qoldiring va parolingizni almashtiring.";
+
+        return self::send($user->telegram_chat_id, $text);
+    }
+
     public static function verifyOtp(User $user, string $code, string $purpose = 'tasdiqlash'): bool
     {
         if (!self::otpRequired()) {
