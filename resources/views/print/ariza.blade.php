@@ -22,10 +22,9 @@
         padding-bottom: 8px;
         border-bottom: 3px solid #1d4ed8;
     }
-    .header-left h1 { font-size: 24px; font-weight: 900; color: #1d4ed8; margin-bottom: 3px; letter-spacing: -0.5px; }
-    .header-left .order-num { font-size: 13px; color: #444; display: flex; align-items: center; gap: 8px; }
-    .header-right { text-align: right; font-size: 13px; line-height: 1.7; }
-    .header-right strong { font-size: 15px; display: block; margin-bottom: 2px; }
+    .order-num h1 { font-size: 18px; font-weight: 900; color: #1d4ed8; letter-spacing: -0.5px; }
+    .order-num .value { display: flex; align-items: center; gap: 12px; }
+    .order-date { color: #444; font-size: 13px; }
 
     .num-badge {
         display: inline-block;
@@ -38,12 +37,10 @@
         letter-spacing: 0.05em;
     }
 
-    /* Main table — kataksiz, faqat qator ostida ingichka chiziq */
+    /* Main table — qatorlar orasida chiziq yo'q, sof matn ko'rinishi */
     .main-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
-    .main-table tr { border-bottom: 1px solid #e0e0e0; }
-    .main-table tr:last-child { border-bottom: none; }
     .main-table td {
-        padding: 9px 8px;
+        padding: 8px 8px;
         vertical-align: top;
     }
     .main-table .label {
@@ -59,7 +56,9 @@
         color: #1d4ed8;
         text-transform: uppercase;
         letter-spacing: 0.03em;
-        margin: 14px 0 6px;
+        margin: 4px 0 6px;
+        padding-top: 12px;
+        border-top: 2px solid #1d4ed8;
     }
     .main-table .qr-cell {
         width: 110px;
@@ -505,7 +504,7 @@
     <!-- HEADER -->
     <div class="header" style="display:flex;align-items:center;justify-content:space-between;gap:16px;">
         <div class="hdr-logo-wrap">
-            <img id="arizaLogo" src="/images/logo.jpg" alt="MY PERFECT HOME" style="width:{{ (int) $stamp['ariza_logo_width'] }}px;height:{{ (int) $stamp['ariza_logo_width'] }}px;object-fit:contain;flex-shrink:0;display:block;">
+            <img id="arizaLogo" src="/images/logo-mph.png" alt="MY PERFECT HOME" style="width:{{ (int) $stamp['ariza_logo_width'] }}px;height:{{ (int) $stamp['ariza_logo_width'] }}px;object-fit:contain;flex-shrink:0;display:block;">
             <div class="hdr-rsz no-print" data-target="logo" title="O'lcham"></div>
         </div>
         <div class="hdr-text-wrap">
@@ -526,11 +525,15 @@
         </div>
     </div>
 
-    <div class="order-num" style="justify-content:center;margin-bottom:8px;">
-        <h1 style="font-size:18px;">Qabul arizasi</h1>
-        <span class="num-badge">{{ $project->number }}</span>
-        &nbsp;&nbsp;{{ $project->created_at->format('d.m.Y') }}
-    </div>
+    <table class="main-table order-num">
+        <tr>
+            <td class="label"><h1>Qabul arizasi</h1></td>
+            <td class="value">
+                <span class="num-badge">{{ $project->number }}</span>
+                <span class="order-date">{{ $project->created_at->format('d.m.Y') }}</span>
+            </td>
+        </tr>
+    </table>
 
     <!-- MAIN DATA TABLE -->
     <table class="main-table">
@@ -633,16 +636,6 @@
         <tr>
             <td class="label">Obyekt manzili</td>
             <td class="value">{{ $project->address }}</td>
-        </tr>
-        <tr>
-            <td class="label">Huquqni belgilovchi asos fayli</td>
-            <td class="value">
-                @if($project->ownership_document_path)
-                    <a href="{{ asset('storage/' . $project->ownership_document_path) }}" target="_blank" style="color:#1d4ed8;text-decoration:none;font-weight:700;">⬇ Yuklab olish</a>
-                @else
-                    —
-                @endif
-            </td>
         </tr>
     </table>
 

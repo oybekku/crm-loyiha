@@ -103,7 +103,7 @@ class DesignSettingsService
             'stamp_top'   => -75,
 
             // Ariza chop etish — sarlavha (logo / firma matni / QR)
-            'ariza_logo_width'  => 56,
+            'ariza_logo_width'  => 150,
             'ariza_qr_width'    => 96,
             'ariza_header_font' => 13,
             'ariza_header_html' => '',
