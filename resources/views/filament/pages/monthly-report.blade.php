@@ -752,7 +752,8 @@
         </div>
     </div>
 
-    {{-- Taxminiy taqsimot — alohida karta --}}
+    {{-- Taxminiy taqsimot — alohida karta (yashirilgan) --}}
+    @if(false)
     <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:16px;margin-top:0">
         <div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:12px">~ Taxminiy taqsimot (faol loyihalar bo'yicha)</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
@@ -790,6 +791,7 @@
         </div>
         @endif
     </div>
+    @endif
 
     {{-- Foiz hisob --}}
     @php
@@ -815,7 +817,8 @@
 
 </div>
 
-{{-- TUGATILGAN ISHLAR RO'YXATI --}}
+{{-- TUGATILGAN ISHLAR RO'YXATI (yashirilgan) --}}
+@if(false)
 <div class="mr-card">
     <div style="font-size:15px;font-weight:700;color:#111827;margin-bottom:14px;display:flex;align-items:center;gap:8px">
         <svg width="16" height="16" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
@@ -885,9 +888,10 @@
     <div style="text-align:center;color:#9ca3af;padding:24px;font-size:13px">Bu oyda tugatilgan ish yo'q</div>
     @endif
 </div>
+@endif
 
-{{-- OGOHLANTIRISHLAR --}}
-@if($warnings->count() > 0)
+{{-- OGOHLANTIRISHLAR (yashirilgan) --}}
+@if(false && $warnings->count() > 0)
 <div class="mr-card" style="border:1.5px solid #fca5a5">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
         <svg width="18" height="18" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
