@@ -26,15 +26,24 @@
 
 <div id="xq-notify-box"></div>
 
+@php
+$xqTabLabels = [
+    'yangi'       => 'Yangi loyihalar',
+    'yangi_didox' => 'Yangi Didox',
+    'tugallangan' => 'Tugallangan loyihalar',
+];
+@endphp
+
 <div class="xq-tabs">
     <button type="button" wire:click="setTab('yangi')" class="xq-tab @if($tab === 'yangi') active @endif">Yangi loyihalar</button>
+    <button type="button" wire:click="setTab('yangi_didox')" class="xq-tab @if($tab === 'yangi_didox') active @endif">Yangi Didox</button>
     <button type="button" wire:click="setTab('tugallangan')" class="xq-tab @if($tab === 'tugallangan') active @endif">Tugallangan loyihalar</button>
 </div>
 
 <div class="xq-panel">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
         <svg width="16" height="16" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z"/></svg>
-        <span style="font-size:14px;font-weight:700">{{ $tab === 'tugallangan' ? 'Tugallangan loyihalar' : 'Yangi loyihalar' }}</span>
+        <span style="font-size:14px;font-weight:700">{{ $xqTabLabels[$tab] }}</span>
         <span style="background:#dcfce7;color:#16a34a;font-size:11px;font-weight:700;border-radius:10px;padding:1px 8px">{{ $projects->count() }} ta</span>
     </div>
 
@@ -57,7 +66,7 @@
                         style="justify-content:center">
                     ✅ Tayor
                 </button>
-                @else
+                @elseif($tab === 'tugallangan')
                 <button type="button"
                         wire:click.stop="markInvoiceDone({{ $p->id }})"
                         wire:confirm="Shot-faktura yuborildi va loyiha Tugallangan bo'limiga qaytariladimi?"
@@ -99,7 +108,12 @@
         </div>
     </div>
     @empty
-    <div class="xq-empty">{{ $tab === 'tugallangan' ? "Hozircha tugallangan loyiha yo'q" : "Hozircha yangi loyiha yo'q" }}</div>
+    <div class="xq-empty">
+        @if($tab === 'tugallangan') Hozircha tugallangan loyiha yo'q
+        @elseif($tab === 'yangi_didox') Hozircha "Yangi Didox"ga o'tkazilgan loyiha yo'q
+        @else Hozircha yangi loyiha yo'q
+        @endif
+    </div>
     @endforelse
 </div>
 
