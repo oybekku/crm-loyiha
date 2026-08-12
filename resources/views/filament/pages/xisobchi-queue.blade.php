@@ -30,14 +30,14 @@
 $xqTabLabels = [
     'yangi'       => 'Yangi loyihalar',
     'yangi_didox' => 'Yangi Didox',
-    'tugallangan' => 'Tugallangan loyihalar',
+    'tugallangan' => 'Shot-faktura kerak',
 ];
 @endphp
 
 <div class="xq-tabs">
     <button type="button" wire:click="setTab('yangi')" class="xq-tab @if($tab === 'yangi') active @endif">Yangi loyihalar</button>
     <button type="button" wire:click="setTab('yangi_didox')" class="xq-tab @if($tab === 'yangi_didox') active @endif">Yangi Didox</button>
-    <button type="button" wire:click="setTab('tugallangan')" class="xq-tab @if($tab === 'tugallangan') active @endif">Tugallangan loyihalar</button>
+    <button type="button" wire:click="setTab('tugallangan')" class="xq-tab @if($tab === 'tugallangan') active @endif">Shot-faktura kerak</button>
 </div>
 
 <div class="xq-panel">
@@ -69,7 +69,7 @@ $xqTabLabels = [
                 @elseif($tab === 'tugallangan')
                 <button type="button"
                         wire:click.stop="markInvoiceDone({{ $p->id }})"
-                        wire:confirm="Shot-faktura yuborildi va loyiha Tugallangan bo'limiga qaytariladimi?"
+                        wire:confirm="Shot-faktura yuborildimi?"
                         class="xq-btn xq-btn-ready"
                         style="justify-content:center">
                     ✅ Tayor
@@ -109,7 +109,7 @@ $xqTabLabels = [
     </div>
     @empty
     <div class="xq-empty">
-        @if($tab === 'tugallangan') Hozircha tugallangan loyiha yo'q
+        @if($tab === 'tugallangan') Hozircha shot-faktura kutayotgan loyiha yo'q
         @elseif($tab === 'yangi_didox') Hozircha "Yangi Didox"ga o'tkazilgan loyiha yo'q
         @else Hozircha yangi loyiha yo'q
         @endif

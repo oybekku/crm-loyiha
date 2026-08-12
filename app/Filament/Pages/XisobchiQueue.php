@@ -28,7 +28,12 @@ class XisobchiQueue extends Page
     // yangi_didox = admin/menejer "O'tkazish → Yangi Didox" orqali TANLAB
     //   yuborgan loyihalar (barcha "Yangi loyihalar" emas, faqat DIDOX
     //   kerak bo'lganlari),
-    // tugallangan = admin "O'tkazish → DIDOX" orqali yuborgan tugagan loyihalar
+    // tugallangan = is_didox=true VA holati "tugallangan" bo'lgan, lekin
+    //   hali shot-faktura yuborilmagan loyihalar — AVTOMATIK chiqadi,
+    //   admin/menejer qo'lda status o'zgartirishi shart emas (loyiha
+    //   qachon "Yangi Didox"dan o'tgan bo'lsa, doimiy is_didox belgisi
+    //   tufayli — ish qachon va qanday tugatilishidan qat'i nazar shu
+    //   yerda ko'rinadi).
     public string $tab = 'yangi';
 
     protected const TABS = ['yangi', 'yangi_didox', 'tugallangan'];
@@ -40,14 +45,15 @@ class XisobchiQueue extends Page
 
     protected function getViewData(): array
     {
-        $status = match ($this->tab) {
-            'yangi_didox'  => 'yangi_didox',
-            'tugallangan'  => 'didox',
-            default        => 'yangi_loyihalar',
+        $projects = match ($this->tab) {
+            'yangi_didox' => Project::where('status', 'yangi_didox')->orderBy('created_at')->get(),
+            'tugallangan' => Project::where('is_didox', true)
+                ->where('status', 'tugallangan')
+                ->whereNull('invoice_sent_at')
+                ->orderBy('created_at')
+                ->get(),
+            default => Project::where('status', 'yangi_loyihalar')->orderBy('created_at')->get(),
         };
-        $projects = Project::where('status', $status)
-            ->orderBy('created_at')
-            ->get();
 
         return compact('projects');
     }
@@ -78,28 +84,22 @@ class XisobchiQueue extends Page
     }
 
     // Hisobchi "Tugallangan loyihalar" (DIDOX) navbatida shot-fakturani
-    // jo'natib bo'lgach bosadi — loyiha "Tugallangan"ga qaytadi. Qachon
-    // bajarilgani ProjectStatusLog'dagi 'didox' yozuvining left_at'ida qoladi.
+    // jo'natib bo'lgach bosadi. Loyiha status'i o'zgarmaydi (allaqachon
+    // "tugallangan") — faqat invoice_sent_at belgilanadi, shu bilan bu
+    // ro'yxatdan avtomatik chiqib ketadi.
     public function markInvoiceDone(int $projectId): void
     {
         $user = auth()->user();
         if (!$user?->isHisobchi() && !$user?->isAdmin()) return;
 
-        $project = Project::where('status', 'didox')->find($projectId);
+        $project = Project::where('is_didox', true)
+            ->where('status', 'tugallangan')
+            ->whereNull('invoice_sent_at')
+            ->find($projectId);
         if (!$project) return;
 
-        ProjectStatusLog::where('project_id', $project->id)
-            ->whereNull('left_at')
-            ->update(['left_at' => now()]);
+        $project->update(['invoice_sent_at' => now()]);
 
-        ProjectStatusLog::create([
-            'project_id' => $project->id,
-            'status'     => 'tugallangan',
-            'entered_at' => now(),
-        ]);
-
-        $project->update(['status' => 'tugallangan', 'invoice_sent_at' => now()]);
-
-        $this->dispatch('notify', type: 'success', message: "«{$project->owner_name}» — shot-faktura yuborildi, Tugallangan bo'limiga qaytdi");
+        $this->dispatch('notify', type: 'success', message: "«{$project->owner_name}» — shot-faktura yuborildi");
     }
 }
