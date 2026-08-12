@@ -1286,6 +1286,11 @@ class KanbanBoard extends Page
         $this->logStatusChange($project, $finalStatus, $this->routeAllocDays, $this->routeAssignedUserId);
 
         $update = ['status' => $finalStatus];
+        if ($finalStatus === 'yangi_didox') {
+            // Doimiy belgi — loyiha keyinroq boshqa bo'limlarga o'tsa ham
+            // "bunga DIDOX shot-faktura kerak" degani yo'qolib qolmasin.
+            $update['is_didox'] = true;
+        }
         if ($this->routeAssignedUserId) {
             $update['assigned_user_id'] = $this->routeAssignedUserId;
             $project->assignedUsers()->syncWithoutDetaching([$this->routeAssignedUserId]);
@@ -1331,7 +1336,11 @@ class KanbanBoard extends Page
         if (!$project) return;
 
         $this->logStatusChange($project, $newStatus);
-        $project->update(['status' => $newStatus]);
+        $update = ['status' => $newStatus];
+        if ($newStatus === 'yangi_didox') {
+            $update['is_didox'] = true;
+        }
+        $project->update($update);
     }
 
     // "Nomi" maydoni yonidagi tezkor teglar (Toposyomka / Eskiz loyiha) —

@@ -14,7 +14,7 @@ class Project extends Model
         'number', 'seq_no', 'owner_name', 'title', 'address', 'oblozhka_address', 'signature_path', 'latitude', 'longitude', 'phones',
         'passport_series', 'passport_issued_by', 'pinfl',
         'applicant_type', 'cadastre_number', 'region', 'district', 'registration_basis', 'ownership_document_path',
-        'description', 'category', 'status', 'work_status', 'assigned_user_id',
+        'description', 'category', 'status', 'is_didox', 'work_status', 'assigned_user_id',
         'total_price', 'paid_amount', 'deadline_date', 'timer_paused_at', 'invoice_sent_at',
         'payment_requested_at', 'payment_requested_by',
         'mygov_login', 'mygov_password', 'mygov_fish',
@@ -41,6 +41,7 @@ class Project extends Model
         'payment_requested_at'  => 'datetime',
         'mygov_password'        => 'encrypted',
         'is_urgent'             => 'boolean',
+        'is_didox'              => 'boolean',
         'urgent_accepted_at'    => 'datetime',
         'ready_sms_sent_at'     => 'datetime',
     ];

@@ -718,7 +718,10 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                         </div>
                     </div>
                     <div style="flex-shrink:0;text-align:right;font-variant-numeric:tabular-nums">
-                        <div style="margin-bottom:6px">
+                        <div style="margin-bottom:6px;display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+                            @if($project->is_didox)
+                            <span style="background:#0891b2;color:#fff;display:inline-block;padding:2px 10px;border-radius:20px;font-size:9px;font-weight:800;letter-spacing:.03em;white-space:nowrap" title="Bu loyiha DIDOX orqali ro'yxatdan o'tgan — oxirida shot-faktura DIDOX orqali yuborilishi kerak">🔷 DIDOX</span>
+                            @endif
                             <span class="kbn-badge" style="background:{{ $wsC['color'] }};display:inline-block;padding:3px 12px;border-radius:20px;font-size:10px;font-weight:800;letter-spacing:.03em;white-space:nowrap">{{ $wsC['label'] }}</span>
                         </div>
                         @if($project->total_price > 0 && !auth()->user()?->isBajaruvchi())
@@ -742,6 +745,9 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                 <div class="p-owner" style="flex:1;min-width:0;margin:0;font-size:12.5px;display:flex;align-items:center;gap:6px;overflow:hidden">
                     <span style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $project->owner_name }}</span>
                     <span style="flex-shrink:0;font-size:9px;font-weight:700;color:#fff;background:{{ $ws['color'] }};border-radius:11px;padding:2px 9px;white-space:nowrap">{{ $ws['label'] }}</span>
+                    @if($project->is_didox)
+                    <span style="flex-shrink:0;font-size:9px;font-weight:700;color:#fff;background:#0891b2;border-radius:11px;padding:2px 9px;white-space:nowrap" title="Bu loyiha DIDOX orqali ro'yxatdan o'tgan — oxirida shot-faktura DIDOX orqali yuborilishi kerak">🔷 DIDOX</span>
+                    @endif
                     @if($project->created_at->diffInHours(now()) < 24)
                     <span style="font-size:9px;font-weight:700;background:#dcfce7;color:#16a34a;border-radius:4px;padding:1px 5px;white-space:nowrap;animation:blink-new 1.5s ease-in-out infinite;flex-shrink:0">Yangi</span>
                     @endif
