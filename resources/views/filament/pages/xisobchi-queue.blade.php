@@ -28,14 +28,12 @@
 
 @php
 $xqTabLabels = [
-    'yangi'       => 'Yangi loyihalar',
     'yangi_didox' => 'Yangi Didox',
     'tugallangan' => 'Shot-faktura kerak',
 ];
 @endphp
 
 <div class="xq-tabs">
-    <button type="button" wire:click="setTab('yangi')" class="xq-tab @if($tab === 'yangi') active @endif">Yangi loyihalar</button>
     <button type="button" wire:click="setTab('yangi_didox')" class="xq-tab @if($tab === 'yangi_didox') active @endif">Yangi Didox</button>
     <button type="button" wire:click="setTab('tugallangan')" class="xq-tab @if($tab === 'tugallangan') active @endif">Shot-faktura kerak</button>
 </div>
@@ -58,7 +56,7 @@ $xqTabLabels = [
                 <a href="{{ route('print.project.didox', $p) }}" target="_blank" class="xq-btn" style="justify-content:center">
                     🔷 DIDOX shartnoma
                 </a>
-                @if($tab === 'yangi')
+                @if($tab === 'yangi_didox')
                 <button type="button"
                         wire:click.stop="markDidoxDone({{ $p->id }})"
                         wire:confirm="Shartnoma tayyor va loyiha Toposyomka navbatiga yuboriladimi?"

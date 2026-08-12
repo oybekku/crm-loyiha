@@ -7,15 +7,16 @@ use App\Models\ProjectStatusLog;
 use Filament\Pages\Page;
 
 // Faqat "hisobchi" (va nazorat uchun admin) ko'radigan, ruxsatnomalar
-// tizimidan mustaqil sahifa — "Yangi loyihalar" bosqichiga tushgan
-// loyihalarni ko'rsatadi (DIDOX shartnoma tuzish uchun). Boshqa hech qanday
-// CRM ma'lumoti (moliya, boshqa loyihalar, xodimlar) shu sahifada ko'rinmaydi.
+// tizimidan mustaqil sahifa — admin/menejer "Yangi Didox"ga TANLAB
+// o'tkazgan loyihalarni (shartnoma tuzish) va shot-faktura kutayotgan
+// tugallangan loyihalarni ko'rsatadi. Boshqa hech qanday CRM ma'lumoti
+// (moliya, boshqa loyihalar, xodimlar) shu sahifada ko'rinmaydi.
 class XisobchiQueue extends Page
 {
     protected static string  $view            = 'filament.pages.xisobchi-queue';
     protected static ?string $navigationIcon  = 'heroicon-o-document-text';
     protected static ?string $navigationLabel = 'Yangi loyihalar (DIDOX)';
-    protected static ?string $title           = 'Yangi loyihalar — shartnoma tuzish';
+    protected static ?string $title           = 'Yangi Didox — shartnoma tuzish';
     protected static ?int    $navigationSort  = 1;
 
     public static function canAccess(): bool
@@ -24,35 +25,32 @@ class XisobchiQueue extends Page
         return $user?->isHisobchi() || $user?->isAdmin();
     }
 
-    // yangi = yangi ochilgan loyihalar (DIDOX shartnoma tuzish),
     // yangi_didox = admin/menejer "O'tkazish → Yangi Didox" orqali TANLAB
-    //   yuborgan loyihalar (barcha "Yangi loyihalar" emas, faqat DIDOX
-    //   kerak bo'lganlari),
+    //   yuborgan loyihalar (DIDOX shartnoma tuzish kerak bo'lganlari),
     // tugallangan = is_didox=true VA holati "tugallangan" bo'lgan, lekin
     //   hali shot-faktura yuborilmagan loyihalar — AVTOMATIK chiqadi,
     //   admin/menejer qo'lda status o'zgartirishi shart emas (loyiha
     //   qachon "Yangi Didox"dan o'tgan bo'lsa, doimiy is_didox belgisi
     //   tufayli — ish qachon va qanday tugatilishidan qat'i nazar shu
     //   yerda ko'rinadi).
-    public string $tab = 'yangi';
+    public string $tab = 'yangi_didox';
 
-    protected const TABS = ['yangi', 'yangi_didox', 'tugallangan'];
+    protected const TABS = ['yangi_didox', 'tugallangan'];
 
     public function setTab(string $tab): void
     {
-        $this->tab = in_array($tab, self::TABS, true) ? $tab : 'yangi';
+        $this->tab = in_array($tab, self::TABS, true) ? $tab : 'yangi_didox';
     }
 
     protected function getViewData(): array
     {
         $projects = match ($this->tab) {
-            'yangi_didox' => Project::where('status', 'yangi_didox')->orderBy('created_at')->get(),
             'tugallangan' => Project::where('is_didox', true)
                 ->where('status', 'tugallangan')
                 ->whereNull('invoice_sent_at')
                 ->orderBy('created_at')
                 ->get(),
-            default => Project::where('status', 'yangi_loyihalar')->orderBy('created_at')->get(),
+            default => Project::where('status', 'yangi_didox')->orderBy('created_at')->get(),
         };
 
         return compact('projects');
@@ -65,7 +63,7 @@ class XisobchiQueue extends Page
         $user = auth()->user();
         if (!$user?->isHisobchi() && !$user?->isAdmin()) return;
 
-        $project = Project::where('status', 'yangi_loyihalar')->find($projectId);
+        $project = Project::where('status', 'yangi_didox')->find($projectId);
         if (!$project) return;
 
         ProjectStatusLog::where('project_id', $project->id)

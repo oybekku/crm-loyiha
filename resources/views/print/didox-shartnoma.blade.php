@@ -6,8 +6,8 @@
     $oyNomi    = $oylar[(int) $sana->format('n')];
     $yil       = $sana->format('Y');
     $raqam     = $project->seq_no ?: $project->id;
-    $narx      = '250 000,00';
-    $narxSozda = "Ikki yuz ellik ming so'm";
+    $narx      = '400 000,00';
+    $narxSozda = "To'rt yuz ming so'm";
     $ism       = $project->owner_name ?? '';
     $manzil    = $project->address ?? '';
 ?>
