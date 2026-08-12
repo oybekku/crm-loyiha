@@ -470,7 +470,7 @@ class KanbanBoard extends Page
     // ── Service complete toggle (faqat admin) ────────────────────────────
     public function toggleServiceComplete(int $serviceId): void
     {
-        if (!auth()->user()?->isAdmin()) return;
+        if (!auth()->user()?->isAdmin() && !auth()->user()?->isMenejer()) return;
 
         $svc = \App\Models\ProjectService::findOrFail($serviceId);
         $svc->completed_at = $svc->completed_at ? null : now();

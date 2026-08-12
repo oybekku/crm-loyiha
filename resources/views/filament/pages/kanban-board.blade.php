@@ -854,7 +854,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                         <span style="font-size:10px;font-weight:600;background:#f0fdf4;color:#16a34a;border-radius:4px;padding:1px 5px;white-space:nowrap">{{ $daysLeft }}k</span>
                         @endif
                     @endif
-                    @if(auth()->user()?->isAdmin())
+                    @if(auth()->user()?->isAdmin() || auth()->user()?->isMenejer())
                     <button onclick="event.stopPropagation()"
                             wire:click.stop="toggleServiceComplete({{ $srv->id }})"
                             title="{{ $srv->completed_at ? 'Tugallanmagan deb belgilash' : 'Tugallangan deb belgilash' }}"
