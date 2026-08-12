@@ -2332,8 +2332,8 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             </div>
             @endif
 
-            {{-- Chegirma (tanlangan xizmat(lar)ga, admin uchun) — tugma bosilsa ochiladi --}}
-            @if(auth()->user()?->isAdmin())
+            {{-- Chegirma (tanlangan xizmat(lar)ga, admin/menejer uchun) — tugma bosilsa ochiladi --}}
+            @if(auth()->user()?->isAdmin() || auth()->user()?->isMenejer())
             <div x-data="{ open: false }">
                 <button type="button" @click="open = !open"
                         style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:1.5px solid #fde68a;background:#fefce8;color:#92400e;font-size:12px;font-weight:700;cursor:pointer">

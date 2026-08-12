@@ -207,9 +207,9 @@ Route::middleware(['auth'])->group(function () {
         ]);
     })->name('print.project.didox');
 
-    // ── PDF ga qo'lda pechat urish (faqat admin) ──
+    // ── PDF ga qo'lda pechat urish (admin/menejer) ──
     Route::get('/pechat/{file}', function (\App\Models\ProjectFile $file) {
-        abort_unless(auth()->user()?->isAdmin(), 403);
+        abort_unless(auth()->user()?->isAdmin() || auth()->user()?->isMenejer(), 403);
         return view('pechat.editor', [
             'file'       => $file,
             'pdfUrl'     => route('pechat.pdf', $file),
@@ -220,7 +220,7 @@ Route::middleware(['auth'])->group(function () {
     })->name('pechat.editor');
 
     Route::get('/pechat/{file}/pdf', function (\App\Models\ProjectFile $file) {
-        abort_unless(auth()->user()?->isAdmin(), 403);
+        abort_unless(auth()->user()?->isAdmin() || auth()->user()?->isMenejer(), 403);
         $disk = \Illuminate\Support\Facades\Storage::disk('public');
         abort_unless($disk->exists($file->file_path), 404);
         return response($disk->get($file->file_path), 200, [
@@ -230,7 +230,7 @@ Route::middleware(['auth'])->group(function () {
     })->name('pechat.pdf');
 
     Route::post('/pechat/{file}/save', function (\Illuminate\Http\Request $request, \App\Models\ProjectFile $file) {
-        abort_unless(auth()->user()?->isAdmin(), 403);
+        abort_unless(auth()->user()?->isAdmin() || auth()->user()?->isMenejer(), 403);
 
         $b64 = $request->input('pdf');
         if (!$b64) return response()->json(['ok' => false, 'message' => "Bo'sh ma'lumot"]);
@@ -261,7 +261,7 @@ Route::middleware(['auth'])->group(function () {
 
     // ── Loyiha imzosi (mijoz qo'l qo'yadi — shaffof PNG, loyihaga saqlanadi) ──
     Route::post('/pechat/{file}/signature', function (\Illuminate\Http\Request $request, \App\Models\ProjectFile $file) {
-        abort_unless(auth()->user()?->isAdmin(), 403);
+        abort_unless(auth()->user()?->isAdmin() || auth()->user()?->isMenejer(), 403);
         $data = (string) $request->input('img');
         $data = preg_replace('#^data:image/\w+;base64,#', '', $data);
         $bytes = base64_decode($data, true);
@@ -280,7 +280,7 @@ Route::middleware(['auth'])->group(function () {
     })->name('pechat.signature.save');
 
     Route::get('/pechat/{file}/signature', function (\App\Models\ProjectFile $file) {
-        abort_unless(auth()->user()?->isAdmin(), 403);
+        abort_unless(auth()->user()?->isAdmin() || auth()->user()?->isMenejer(), 403);
         $path = $file->project?->signature_path;
         $disk = \Illuminate\Support\Facades\Storage::disk('public');
         abort_unless($path && $disk->exists($path), 404);
@@ -290,9 +290,9 @@ Route::middleware(['auth'])->group(function () {
         ]);
     })->name('pechat.signature');
 
-    // ── Loyihaga imzo qo'yish — PDF fayl yuklanmagan bo'lsa ham (faqat admin) ──
+    // ── Loyihaga imzo qo'yish — PDF fayl yuklanmagan bo'lsa ham (admin/menejer) ──
     Route::get('/imzo/{project}', function (\App\Models\Project $project) {
-        abort_unless(auth()->user()?->isAdmin(), 403);
+        abort_unless(auth()->user()?->isAdmin() || auth()->user()?->isMenejer(), 403);
         return view('pechat.sign', [
             'project'    => $project,
             'sigSaveUrl' => route('signature.save', $project),
@@ -302,7 +302,7 @@ Route::middleware(['auth'])->group(function () {
     })->name('signature.editor');
 
     Route::post('/imzo/{project}/save', function (\Illuminate\Http\Request $request, \App\Models\Project $project) {
-        abort_unless(auth()->user()?->isAdmin(), 403);
+        abort_unless(auth()->user()?->isAdmin() || auth()->user()?->isMenejer(), 403);
         $data = (string) $request->input('img');
         $data = preg_replace('#^data:image/\w+;base64,#', '', $data);
         $bytes = base64_decode($data, true);
@@ -317,7 +317,7 @@ Route::middleware(['auth'])->group(function () {
     })->name('signature.save');
 
     Route::delete('/imzo/{project}', function (\App\Models\Project $project) {
-        abort_unless(auth()->user()?->isAdmin(), 403);
+        abort_unless(auth()->user()?->isAdmin() || auth()->user()?->isMenejer(), 403);
         $disk = \Illuminate\Support\Facades\Storage::disk('public');
         if ($project->signature_path) $disk->delete($project->signature_path);
         $project->update(['signature_path' => null]);
@@ -325,7 +325,7 @@ Route::middleware(['auth'])->group(function () {
     })->name('signature.delete');
 
     Route::get('/imzo/{project}/view', function (\App\Models\Project $project) {
-        abort_unless(auth()->user()?->isAdmin(), 403);
+        abort_unless(auth()->user()?->isAdmin() || auth()->user()?->isMenejer(), 403);
         $path = $project->signature_path;
         $disk = \Illuminate\Support\Facades\Storage::disk('public');
         abort_unless($path && $disk->exists($path), 404);

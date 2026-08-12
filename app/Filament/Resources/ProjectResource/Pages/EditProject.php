@@ -32,7 +32,7 @@ class EditProject extends EditRecord
                 ->label("Ma'lumotlar")
                 ->icon('heroicon-o-document-text')
                 ->color('gray')
-                ->visible(fn() => auth()->user()?->isAdmin())
+                ->visible(fn() => auth()->user()?->isAdmin() || auth()->user()?->isMenejer())
                 ->modalHeading(fn() => "To'lov tarixi — " . $this->record->owner_name)
                 ->modalContent(fn() => view('filament.modals.payment-logs', ['project' => $this->record->load('paymentLogs.user', 'payments')]))
                 ->modalFooterActions([])

@@ -809,7 +809,7 @@ class KanbanBoard extends Page
     // yozib saqlash kifoya. Oyna yopilmaydi — foydalanuvchi davom etadi.
     public function applyPaymentDiscount(): void
     {
-        if (!auth()->user()?->isAdmin()) return;
+        if (!auth()->user()?->isAdmin() && !auth()->user()?->isMenejer()) return;
 
         $rates = ['nogiron' => 15, 'pensioner' => 10, 'ijtimoiy' => 10];
         $pct = match ($this->payDiscountCategory) {
@@ -1611,8 +1611,8 @@ class KanbanBoard extends Page
             }
 
             // Faol ustunlar (is_archive=false) — barcha hodimlar ko'radi;
-            // Arxiv ustunlar — faqat admin yoki maxsus ruxsat bo'lsa ko'rinadi
-            if (!$ps->is_archive || $authUser?->isAdmin() || $authUser?->hasPermission('kanban_' . $ps->key)) {
+            // Arxiv ustunlar — admin/menejer yoki maxsus ruxsat bo'lsa ko'rinadi
+            if (!$ps->is_archive || $authUser?->isAdmin() || $authUser?->isMenejer() || $authUser?->hasPermission('kanban_' . $ps->key)) {
                 $statuses[$ps->key] = $data;
             }
         }
