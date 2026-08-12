@@ -349,7 +349,7 @@
                         @else
                         <div style="font-size:11px;color:#9ca3af;margin-top:2px">👤 mas'ul biriktirilmagan</div>
                         @endif
-                        @if(auth()->user()?->isAdmin())
+                        @if(auth()->user()?->isAdmin() || auth()->user()?->isMenejer())
                         <button type="button" wire:click="eiToggleService({{ $svc['id'] }})"
                                 title="{{ $svc['completed'] ? 'Tugallanmagan deb belgilash' : 'Tugallangan deb belgilash' }}"
                                 style="margin-top:6px;display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:6px;border:1px solid {{ $svc['completed'] ? '#86efac' : '#d1d5db' }};background:{{ $svc['completed'] ? '#f0fdf4' : '#f9fafb' }};color:{{ $svc['completed'] ? '#16a34a' : '#9ca3af' }};font-size:11px;font-weight:600;cursor:pointer">

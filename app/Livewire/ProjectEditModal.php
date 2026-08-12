@@ -143,7 +143,7 @@ class ProjectEditModal extends Component
     // Per-xizmat "Tugallandi/Tugalmagan" toggle — modal ochiq qoladi, ro'yxat va karta yangilanadi
     public function eiToggleService(int $serviceId): void
     {
-        if (!auth()->user()?->isAdmin()) return;
+        if (!auth()->user()?->isAdmin() && !auth()->user()?->isMenejer()) return;
         $svc = ProjectService::find($serviceId);
         if (!$svc || $svc->project_id !== $this->editInfoId) return;
 
