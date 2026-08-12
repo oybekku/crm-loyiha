@@ -1169,6 +1169,8 @@ class KanbanBoard extends Page
     // ── Xizmat narxini tahrirlash (Joriy narx — Telegram tasdiqlash kodi bilan) ──
     public function openServicePrice(int $serviceId): void
     {
+        if (!auth()->user()?->isAdmin() && !auth()->user()?->isMenejer()) return;
+
         $svc = \App\Models\ProjectService::find($serviceId);
         if (!$svc) return;
         $this->servicePriceId       = $serviceId;
@@ -1194,6 +1196,8 @@ class KanbanBoard extends Page
 
     public function saveServicePrice(): void
     {
+        if (!auth()->user()?->isAdmin() && !auth()->user()?->isMenejer()) return;
+
         if (!\App\Services\TelegramOtpService::verifyOtp(auth()->user(), $this->servicePricePin, 'service_price')) {
             $this->servicePricePinError = true;
             return;

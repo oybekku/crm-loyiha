@@ -2310,7 +2310,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                                 {{ number_format($svcPaid, 0, '.', ' ') }} so'm ({{ $svcPct }}%)
                             </span>
                         </label>
-                        @if(auth()->user()?->isAdmin())
+                        @if(auth()->user()?->isAdmin() || auth()->user()?->isMenejer())
                         <div style="margin-top:6px">
                             <button type="button"
                                     wire:click.stop="openServicePrice({{ $svc->id }})"
