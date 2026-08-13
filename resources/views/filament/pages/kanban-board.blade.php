@@ -22,6 +22,18 @@
 .dark .kb-side-arrow{background:rgba(31,41,55,.92);border-color:rgba(255,255,255,.08);color:#e5e7eb}
 .dark .kb-side-arrow:hover{background:#1f2937}
 @media(max-width:1023px){.kb-side-arrow{display:none !important}}
+
+/* Skroll chizig'iga "yopishib" o'ngga siljib boradigan, oxirida sochilib
+   ketadigan yorliq. Haqiqiy scrollbar thumb'i brauzerning o'zi chizadigan
+   native element bo'lgani uchun uni to'g'ridan-to'g'ri drag qilib bo'lmaydi —
+   shuning uchun scrollLeft/scrollWidth nisbatidan thumb'ning "virtual"
+   chap/o'ng chetini har safar updateArrows() chaqirilganda hisoblab, shu
+   koordinataga moslab qo'yamiz (xuddi kb-side-arrow kabi position:fixed). */
+.kb-flyaway{position:fixed;top:0;z-index:44;height:16px;display:flex;align-items:center;pointer-events:none;font-weight:700;font-size:12px;letter-spacing:.04em;color:#6b7280;white-space:nowrap}
+.dark .kb-flyaway{color:#9ca3af}
+.kb-flyaway span{display:inline-block;transition:transform .85s cubic-bezier(.22,.7,.32,1),opacity .85s ease}
+@media(max-width:1023px){.kb-flyaway{display:none !important}}
+
 .kanban-col{min-width:500px;max-width:500px;flex-shrink:0;border-radius:10px;overflow:hidden}
 .col-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;font-weight:700;font-size:13px;letter-spacing:0.01em}
 .col-count{background:rgba(255,255,255,.15);border-radius:12px;padding:2px 9px;font-size:11px;font-weight:600;color:#cbd5e1}
@@ -588,6 +600,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 <button type="button" id="kb-scroll-right" class="kb-side-arrow kb-side-arrow-right" title="O'ngga" aria-label="O'ngga">
     <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
 </button>
+<div class="kb-flyaway" id="kb-flyaway" wire:ignore style="{{ $search ? 'display:none' : '' }}"><span>M</span><span>P</span><span>H</span><span>&nbsp;</span><span>A</span><span>R</span><span>C</span><span>H</span><span>I</span><span>T</span><span>E</span><span>C</span><span>T</span><span>U</span><span>R</span><span>E</span></div>
 @endif
 <div class="kanban-wrap" id="kanban-wrap" style="{{ $search ? 'display:none' : '' }}">
 @foreach($statuses as $statusKey => $status)
@@ -1195,6 +1208,52 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
         var rect = wrap.getBoundingClientRect();
         L.style.left  = Math.max(8, rect.left + 8) + 'px';
         R.style.right = Math.max(8, window.innerWidth - rect.right + 8) + 'px';
+
+        updateFlyaway(wrap, scrollable);
+    }
+
+    // ── "MPH ARCHITECTURE" yorlig'i — skroll tepasidagi (native) chiziq
+    //    o'ngga siljib, yo'lidagi yorliqqa yetganda uni ilib, o'zi bilan
+    //    olib ketadi; skroll oxiriga yetganda yorliq harflarga bo'linib
+    //    sochilib ketadi. Bir marta portlagach — sahifa yangilanmaguncha
+    //    boshqa qaytib chiqmaydi. ──
+    var kbFly = { attached:false, exploded:false, restRatio:0.62 };
+    function updateFlyaway(wrap, scrollable){
+        if(kbFly.exploded) return;
+        var top = document.getElementById('kanban-scroll-top');
+        var fly = document.getElementById('kb-flyaway');
+        if(!wrap || !top || !fly) return;
+        if(!scrollable){ fly.style.display = 'none'; return; }
+        fly.style.display = 'flex';
+
+        var rect = top.getBoundingClientRect();
+        var trackWidth = rect.width;
+        if(trackWidth <= 0) return;
+        var thumbWidth = Math.max(24, trackWidth * (wrap.clientWidth / wrap.scrollWidth));
+        var maxScroll = wrap.scrollWidth - wrap.clientWidth;
+        var progress = maxScroll > 0 ? wrap.scrollLeft / maxScroll : 0;
+        var thumbRightAbs = rect.left + (trackWidth - thumbWidth) * progress + thumbWidth;
+
+        fly.style.top = rect.top + 'px';
+
+        var restLeftAbs = rect.left + trackWidth * kbFly.restRatio;
+        if(!kbFly.attached && thumbRightAbs >= restLeftAbs) kbFly.attached = true;
+        fly.style.left = (kbFly.attached ? (thumbRightAbs + 8) : restLeftAbs) + 'px';
+
+        if(kbFly.attached && progress >= 0.995) explodeFlyaway(fly);
+    }
+    function explodeFlyaway(fly){
+        kbFly.exploded = true;
+        var letters = fly.querySelectorAll('span');
+        letters.forEach(function(el, i){
+            var dx = (Math.random() * 2 - 1) * 90;
+            var dy = Math.random() * 90 + 40;
+            var rot = (Math.random() * 2 - 1) * 300;
+            el.style.transitionDelay = (i * 16) + 'ms';
+            el.style.transform = 'translate(' + dx + 'px,' + dy + 'px) rotate(' + rot + 'deg)';
+            el.style.opacity = '0';
+        });
+        setTimeout(function(){ fly.style.display = 'none'; }, 1400);
     }
     function scrollByColumn(direction){
         var wrap = document.getElementById('kanban-wrap');
