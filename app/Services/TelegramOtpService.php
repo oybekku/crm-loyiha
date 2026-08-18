@@ -63,13 +63,19 @@ class TelegramOtpService
     /**
      * Webhookdan keladigan /start <token> ni shu tokenga tegishli
      * foydalanuvchiga bog'laydi (chat_id'ni saqlaydi).
+     *
+     * Token BIR MARTALIK — bog'lash muvaffaqiyatli bo'lgach darhol o'chiriladi.
+     * Aks holda havola/QR boshqa birovga (masalan bir nechta xodimga) yuborilib
+     * qolsa, keyin kim bossa ham o'sha token orqali ushbu foydalanuvchining
+     * (masalan adminning) telegram_chat_id'ini o'ziga qayta yozib, uning
+     * tasdiqlash/login kodlarini o'g'irlab olishi mumkin edi.
      */
     public static function linkByToken(string $token, string $chatId): ?User
     {
         $user = User::where('telegram_link_token', $token)->first();
         if (!$user) return null;
 
-        $user->update(['telegram_chat_id' => $chatId]);
+        $user->update(['telegram_chat_id' => $chatId, 'telegram_link_token' => null]);
         return $user;
     }
 

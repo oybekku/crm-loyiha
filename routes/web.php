@@ -106,17 +106,24 @@ Route::post('/telegram/webhook', function (\Illuminate\Http\Request $request) {
         abort(403);
     }
 
-    $message = $request->input('message');
-    $text    = trim((string) ($message['text'] ?? ''));
-    $chatId  = $message['chat']['id'] ?? null;
+    $message  = $request->input('message');
+    $text     = trim((string) ($message['text'] ?? ''));
+    $chatId   = $message['chat']['id'] ?? null;
+    $chatType = $message['chat']['type'] ?? null;
 
     if ($chatId && str_starts_with($text, '/start ')) {
         $token = trim(substr($text, 7));
-        $user  = \App\Services\TelegramOtpService::linkByToken($token, (string) $chatId);
 
-        $reply = $user
-            ? "✅ Bog'landi! Endi tasdiqlash kodlari shu yerga keladi, {$user->name}."
-            : "❌ Havola noto'g'ri yoki eskirgan. Saytdan qaytadan urinib ko'ring.";
+        // Guruh/kanal chatlarida bog'lashga yo'l qo'yilmaydi — aks holda o'sha
+        // guruhdagi HAMMA a'zo bir xil chatga yuborilgan kodni ko'rib qolardi.
+        if ($chatType !== 'private') {
+            $reply = "❌ Bog'lash faqat botning shaxsiy (private) chatida ishlaydi, guruhda emas.";
+        } else {
+            $user  = \App\Services\TelegramOtpService::linkByToken($token, (string) $chatId);
+            $reply = $user
+                ? "✅ Bog'landi! Endi tasdiqlash kodlari shu yerga keladi, {$user->name}."
+                : "❌ Havola noto'g'ri yoki eskirgan. Saytdan qaytadan urinib ko'ring.";
+        }
 
         \Illuminate\Support\Facades\Http::post(
             "https://api.telegram.org/bot" . config('services.telegram.bot_token') . "/sendMessage",
