@@ -335,9 +335,9 @@ Route::middleware(['auth'])->group(function () {
         ]);
     })->name('signature.view');
 
-    // ── GENPLAN: tanlangan PDFlarni muqova + sertifikat bilan yig'ish (faqat admin) ──
+    // ── GENPLAN: tanlangan PDFlarni muqova + sertifikat bilan yig'ish ──
     Route::get('/genplan/{project}/merge', function (\App\Models\Project $project) {
-        abort_unless(auth()->user()?->isAdmin(), 403);
+        abort_unless(auth()->user()?->isAdmin() || auth()->user()?->isMenejer(), 403);
         $ids   = array_filter(array_map('intval', explode(',', (string) request('files'))));
         $files = \App\Models\ProjectFile::whereIn('id', $ids)
             ->where('project_id', $project->id)
@@ -352,7 +352,7 @@ Route::middleware(['auth'])->group(function () {
     })->name('genplan.merge');
 
     Route::post('/genplan/{project}/merge/save', function (\Illuminate\Http\Request $request, \App\Models\Project $project) {
-        abort_unless(auth()->user()?->isAdmin(), 403);
+        abort_unless(auth()->user()?->isAdmin() || auth()->user()?->isMenejer(), 403);
         $bytes = base64_decode((string) $request->input('pdf'), true);
         if ($bytes === false || strlen($bytes) < 100) {
             return response()->json(['ok' => false, 'message' => "Noto'g'ri PDF"]);
