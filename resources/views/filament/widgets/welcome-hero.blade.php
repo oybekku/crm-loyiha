@@ -606,16 +606,40 @@
 .dark .ctp-item-fish{color:#e2e8f0}
 .ctp-item-sub{font-size:11.5px;color:#9ca3af;margin-top:2px}
 .ctp-item-summa{font-size:14px;font-weight:800;color:#16a34a;white-space:nowrap}
+
+.ctp-warn{font-size:11px;color:#dc2626;font-weight:700;background:#fef2f2;border:1px solid #fecaca;border-radius:20px;padding:3px 12px}
+.dark .ctp-warn{background:#3f0d16;border-color:#7f1d1d;color:#f87171}
+.ctp-row-unlinked{border-color:#fecaca;background:#fef2f2}
+.dark .ctp-row-unlinked{background:#3f0d16;border-color:#7f1d1d}
+.ctp-row-unlinked:hover{border-color:#fca5a5}
+.ctp-row-warn{font-size:10.5px;color:#dc2626;font-weight:700;margin-left:8px}
+.dark .ctp-row-warn{color:#f87171}
+.ctp-item-unlinked{background:#fef2f2;border-radius:8px;padding-left:10px;padding-right:10px;margin:0 -10px}
+.dark .ctp-item-unlinked{background:#3f0d16}
+.ctp-item-fish-warn{color:#dc2626 !important}
+.ctp-item-summa-warn{color:#dc2626 !important}
+.ctp-item-warn-tag{font-size:10.5px;color:#dc2626;font-weight:700;display:block;margin-top:2px}
+.dark .ctp-item-warn-tag{color:#f87171}
 </style>
 
 <div class="ctp-panel">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
         <span class="ctp-title">💵 Bugungi naqd tushum</span>
-        <span class="ctp-total">{{ number_format($cashTodayTotal, 0, '.', ' ') }} so'm</span>
+        <div style="display:flex;align-items:center;gap:8px">
+            @if($cashTodayUnlinked > 0)
+            <span class="ctp-warn">⚠ {{ number_format($cashTodayUnlinked, 0, '.', ' ') }} so'm bog'lanmagan</span>
+            @endif
+            <span class="ctp-total">{{ number_format($cashTodayTotal, 0, '.', ' ') }} so'm</span>
+        </div>
     </div>
     @foreach($cashTodayGroups as $i => $g)
-    <div class="ctp-row" @click="cashModalOpen = true; cashModalMonth = {{ $i }}">
-        <span class="ctp-month">{{ $g['label'] }} <span class="ctp-count">{{ count($g['items']) }} ta to'lov</span></span>
+    <div class="ctp-row {{ $g['unlinkedSum'] > 0 ? 'ctp-row-unlinked' : '' }}" @click="cashModalOpen = true; cashModalMonth = {{ $i }}">
+        <span class="ctp-month">
+            {{ $g['label'] }} <span class="ctp-count">{{ count($g['items']) }} ta to'lov</span>
+            @if($g['unlinkedSum'] > 0)
+            <span class="ctp-row-warn">⚠ {{ number_format($g['unlinkedSum'], 0, '.', ' ') }} bog'lanmagan</span>
+            @endif
+        </span>
         <span class="ctp-sum">{{ number_format($g['sum'], 0, '.', ' ') }} so'm</span>
     </div>
     @endforeach
@@ -632,16 +656,19 @@
         </div>
         <div class="ctp-modal-body">
             @foreach($g['items'] as $it)
-            <div class="ctp-item">
+            <div class="ctp-item {{ $it['unlinked'] ? 'ctp-item-unlinked' : '' }}">
                 <div style="min-width:0">
-                    <div class="ctp-item-fish">{{ $it['fish'] }}</div>
+                    <div class="ctp-item-fish {{ $it['unlinked'] ? 'ctp-item-fish-warn' : '' }}">{{ $it['fish'] }}</div>
                     <div class="ctp-item-sub">
                         {{ $it['sana'] }} &middot; {{ $it['vaqt'] }}
                         @if($it['manager']) &middot; 👤 {{ $it['manager'] }} @endif
                         @if($it['note']) &middot; {{ $it['note'] }} @endif
                     </div>
+                    @if($it['unlinked'])
+                    <span class="ctp-item-warn-tag">⚠ Summa hisobga bog'lanmagan — Buxgalteriyada ko'rinmaydi</span>
+                    @endif
                 </div>
-                <div class="ctp-item-summa">{{ number_format($it['summa'], 0, '.', ' ') }}</div>
+                <div class="ctp-item-summa {{ $it['unlinked'] ? 'ctp-item-summa-warn' : '' }}">{{ number_format($it['summa'], 0, '.', ' ') }}</div>
             </div>
             @endforeach
         </div>

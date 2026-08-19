@@ -235,8 +235,9 @@ class WelcomeHeroWidget extends Widget
         // o'zgartirib kiritishi mumkin — shu sababli "bugun" filtri
         // created_at bo'yicha (bugun tizimga yozilgan), guruhlash esa
         // payment_date oyiga qarab (qaysi oy qarzi yopilgani).
-        $cashTodayGroups = [];
-        $cashTodayTotal  = 0.0;
+        $cashTodayGroups   = [];
+        $cashTodayTotal    = 0.0;
+        $cashTodayUnlinked = 0.0;
         if (!$isEmployee) {
             $cashQ = \App\Models\Payment::query()
                 ->with('project:id,owner_name')
@@ -254,29 +255,34 @@ class WelcomeHeroWidget extends Widget
                 $key = $p->payment_date->format('Y-m');
                 if (!isset($byMonth[$key])) {
                     $byMonth[$key] = [
-                        'label' => ucfirst($p->payment_date->translatedFormat('F Y')),
-                        'sum'   => 0.0,
-                        'items' => [],
+                        'label'       => ucfirst($p->payment_date->translatedFormat('F Y')),
+                        'sum'         => 0.0,
+                        'unlinkedSum' => 0.0,
+                        'items'       => [],
                     ];
                 }
                 $byMonth[$key]['sum'] += (float) $p->amount;
+                if (!$p->account_id) $byMonth[$key]['unlinkedSum'] += (float) $p->amount;
                 $byMonth[$key]['items'][] = [
-                    'fish'    => $p->project?->owner_name ?? '—',
-                    'summa'   => (float) $p->amount,
-                    'sana'    => $p->payment_date->format('d.m.Y'),
-                    'vaqt'    => $p->created_at->format('H:i'),
-                    'note'    => $p->note,
-                    'manager' => $user->isAdmin() ? ($p->createdBy?->name ?? '—') : null,
+                    'fish'     => $p->project?->owner_name ?? '—',
+                    'summa'    => (float) $p->amount,
+                    'sana'     => $p->payment_date->format('d.m.Y'),
+                    'vaqt'     => $p->created_at->format('H:i'),
+                    'note'     => $p->note,
+                    'manager'  => $user->isAdmin() ? ($p->createdBy?->name ?? '—') : null,
+                    'unlinked' => !$p->account_id,
                 ];
             }
             krsort($byMonth);
             $cashTodayGroups = array_values($byMonth);
             $cashTodayTotal  = (float) $todayPayments->sum('amount');
+            $cashTodayUnlinked = (float) $todayPayments->whereNull('account_id')->sum('amount');
         }
 
         return [
-            'cashTodayGroups' => $cashTodayGroups,
-            'cashTodayTotal'  => $cashTodayTotal,
+            'cashTodayGroups'   => $cashTodayGroups,
+            'cashTodayTotal'    => $cashTodayTotal,
+            'cashTodayUnlinked' => $cashTodayUnlinked,
             'userName'      => $user?->name ?? 'Foydalanuvchi',
             'userRole'      => $user?->role_name ?? ucfirst($user?->role ?? ''),
             'isEmployee'    => $isEmployee,
