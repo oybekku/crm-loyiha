@@ -230,7 +230,53 @@ class WelcomeHeroWidget extends Widget
             ])
             ->toArray();
 
+        // ── Bugungi naqd tushum — oylarga ajratilgan (menejer/admin uchun) ──
+        // Menejer eski oy qarzini yopayotganda to'lov sanasini orqaga
+        // o'zgartirib kiritishi mumkin — shu sababli "bugun" filtri
+        // created_at bo'yicha (bugun tizimga yozilgan), guruhlash esa
+        // payment_date oyiga qarab (qaysi oy qarzi yopilgani).
+        $cashTodayGroups = [];
+        $cashTodayTotal  = 0.0;
+        if (!$isEmployee) {
+            $cashQ = \App\Models\Payment::query()
+                ->with('project:id,owner_name')
+                ->where('method', 'naqd')
+                ->whereDate('created_at', now());
+            if ($user->isAdmin()) {
+                $cashQ->with('createdBy:id,name');
+            } else {
+                $cashQ->where('created_by', $user->id);
+            }
+            $todayPayments = $cashQ->orderBy('payment_date')->orderBy('created_at')->get();
+
+            $byMonth = [];
+            foreach ($todayPayments as $p) {
+                $key = $p->payment_date->format('Y-m');
+                if (!isset($byMonth[$key])) {
+                    $byMonth[$key] = [
+                        'label' => ucfirst($p->payment_date->translatedFormat('F Y')),
+                        'sum'   => 0.0,
+                        'items' => [],
+                    ];
+                }
+                $byMonth[$key]['sum'] += (float) $p->amount;
+                $byMonth[$key]['items'][] = [
+                    'fish'    => $p->project?->owner_name ?? '—',
+                    'summa'   => (float) $p->amount,
+                    'sana'    => $p->payment_date->format('d.m.Y'),
+                    'vaqt'    => $p->created_at->format('H:i'),
+                    'note'    => $p->note,
+                    'manager' => $user->isAdmin() ? ($p->createdBy?->name ?? '—') : null,
+                ];
+            }
+            krsort($byMonth);
+            $cashTodayGroups = array_values($byMonth);
+            $cashTodayTotal  = (float) $todayPayments->sum('amount');
+        }
+
         return [
+            'cashTodayGroups' => $cashTodayGroups,
+            'cashTodayTotal'  => $cashTodayTotal,
             'userName'      => $user?->name ?? 'Foydalanuvchi',
             'userRole'      => $user?->role_name ?? ucfirst($user?->role ?? ''),
             'isEmployee'    => $isEmployee,

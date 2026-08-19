@@ -569,6 +569,89 @@
 </div>
 @endif {{-- /isEmployee --}}
 
+{{-- 💵 BUGUNGI NAQD TUSHUM — oylarga ajratilgan (menejer/admin uchun) --}}
+@if(!$isEmployee && count($cashTodayGroups) > 0)
+<div x-data="{ cashModalOpen: false, cashModalMonth: null }" style="position:relative;z-index:1;margin-top:16px">
+<style>
+.ctp-panel{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.dark .ctp-panel{background:transparent;border-color:#334155;box-shadow:none}
+.ctp-title{color:#111827;font-size:14px;font-weight:700}
+.dark .ctp-title{color:#f1f5f9}
+.ctp-total{font-size:12px;color:#16a34a;font-weight:700;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:20px;padding:3px 12px}
+.dark .ctp-total{background:#052e1a;border-color:#14532d;color:#4ade80}
+.ctp-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:10px;background:#f8fafc;border:1px solid #f1f5f9;cursor:pointer;margin-bottom:8px;transition:background .15s,border-color .15s}
+.ctp-row:hover{background:#eff6ff;border-color:#bfdbfe}
+.dark .ctp-row{background:#1e293b;border-color:#334155}
+.dark .ctp-row:hover{background:#1e3a5f;border-color:#3b82f6}
+.ctp-row:last-child{margin-bottom:0}
+.ctp-month{font-size:13.5px;font-weight:700;color:#374151}
+.dark .ctp-month{color:#e2e8f0}
+.ctp-sum{font-size:14px;font-weight:800;color:#2563eb}
+.ctp-count{font-size:11px;color:#9ca3af;margin-left:8px;font-weight:600}
+
+.ctp-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
+.ctp-modal{background:#fff;border-radius:16px;max-width:560px;width:100%;max-height:80vh;overflow:auto;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.dark .ctp-modal{background:#0f172a;border:1px solid #334155}
+.ctp-modal-head{position:sticky;top:0;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid #f1f5f9}
+.dark .ctp-modal-head{background:#0f172a;border-color:#334155}
+.ctp-modal-title{font-size:16px;font-weight:800;color:#111827}
+.dark .ctp-modal-title{color:#f1f5f9}
+.ctp-close{background:#f3f4f6;border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;color:#6b7280;font-size:16px;line-height:1}
+.dark .ctp-close{background:#1e293b;color:#94a3b8}
+.ctp-modal-body{padding:10px 22px 22px}
+.ctp-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid #f8fafc}
+.dark .ctp-item{border-color:#1e293b}
+.ctp-item:last-child{border-bottom:none}
+.ctp-item-fish{font-size:13.5px;font-weight:700;color:#111827}
+.dark .ctp-item-fish{color:#e2e8f0}
+.ctp-item-sub{font-size:11.5px;color:#9ca3af;margin-top:2px}
+.ctp-item-summa{font-size:14px;font-weight:800;color:#16a34a;white-space:nowrap}
+</style>
+
+<div class="ctp-panel">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <span class="ctp-title">💵 Bugungi naqd tushum</span>
+        <span class="ctp-total">{{ number_format($cashTodayTotal, 0, '.', ' ') }} so'm</span>
+    </div>
+    @foreach($cashTodayGroups as $i => $g)
+    <div class="ctp-row" @click="cashModalOpen = true; cashModalMonth = {{ $i }}">
+        <span class="ctp-month">{{ $g['label'] }} <span class="ctp-count">{{ count($g['items']) }} ta to'lov</span></span>
+        <span class="ctp-sum">{{ number_format($g['sum'], 0, '.', ' ') }} so'm</span>
+    </div>
+    @endforeach
+</div>
+
+{{-- Modal: oy bo'yicha to'liq ro'yxat --}}
+<template x-if="cashModalOpen">
+<div class="ctp-overlay" @click.self="cashModalOpen = false">
+    @foreach($cashTodayGroups as $i => $g)
+    <div class="ctp-modal" x-show="cashModalMonth === {{ $i }}" x-cloak>
+        <div class="ctp-modal-head">
+            <span class="ctp-modal-title">{{ $g['label'] }} — {{ number_format($g['sum'], 0, '.', ' ') }} so'm</span>
+            <button class="ctp-close" @click="cashModalOpen = false">✕</button>
+        </div>
+        <div class="ctp-modal-body">
+            @foreach($g['items'] as $it)
+            <div class="ctp-item">
+                <div style="min-width:0">
+                    <div class="ctp-item-fish">{{ $it['fish'] }}</div>
+                    <div class="ctp-item-sub">
+                        {{ $it['sana'] }} &middot; {{ $it['vaqt'] }}
+                        @if($it['manager']) &middot; 👤 {{ $it['manager'] }} @endif
+                        @if($it['note']) &middot; {{ $it['note'] }} @endif
+                    </div>
+                </div>
+                <div class="ctp-item-summa">{{ number_format($it['summa'], 0, '.', ' ') }}</div>
+            </div>
+            @endforeach
+        </div>
+    </div>
+    @endforeach
+</div>
+</template>
+</div>
+@endif
+
 {{-- ⏰ DIQQAT TALAB ISHLAR: Kechikkan + Muddati yaqin (xizmat-asosli) --}}
 @if($statOverdue > 0 || $statSoon > 0)
 <style>

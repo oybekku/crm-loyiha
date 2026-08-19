@@ -54,7 +54,6 @@ class AdminPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 \App\Filament\Widgets\WelcomeHeroWidget::class,
-                \App\Filament\Widgets\TodayCashPaymentsWidget::class,
             ])
             // Brauzer avtomat tarjimasi (Google/Yandex) Livewire DOM'ini buzmasin — o'chiramiz
             ->renderHook(
