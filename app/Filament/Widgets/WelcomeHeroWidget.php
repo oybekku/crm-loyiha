@@ -51,6 +51,16 @@ class WelcomeHeroWidget extends Widget
         $this->workloadModalOpen = false;
     }
 
+    // Ro'yxatdagi (Xodimlar yuklamasi / Diqqat talab ishlar) loyihaga bosilganda —
+    // sahifadan chiqmasdan, shu yerning o'zida to'liq tahrirlash modalini ochamiz
+    // (Kanban doskasidagi bilan bir xil komponent — resources/views/filament/pages/dashboard.blade.php
+    // ichida @livewire('project-edit-modal') qo'shilgan).
+    public function openProjectEdit(int $projectId): void
+    {
+        $this->workloadModalOpen = false;
+        $this->dispatch('open-edit-modal', id: $projectId);
+    }
+
     public function showWorkloadItems(int $userId, string $bucket, ?int $month = null): void
     {
         $user = \App\Models\User::find($userId);

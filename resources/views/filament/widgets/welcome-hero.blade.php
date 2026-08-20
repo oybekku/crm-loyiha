@@ -592,7 +592,7 @@
 .ctp-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
 .ctp-modal{background:#fff;border-radius:16px;max-width:560px;width:100%;max-height:80vh;overflow:auto;box-shadow:0 20px 50px rgba(0,0,0,.3)}
 .dark .ctp-modal{background:#0f172a;border:1px solid #334155}
-.ctp-modal-head{position:sticky;top:0;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid #f1f5f9}
+.ctp-modal-head{position:sticky;top:0;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid #f1f5f9;border-radius:16px 16px 0 0}
 .dark .ctp-modal-head{background:#0f172a;border-color:#334155}
 .ctp-modal-title{font-size:16px;font-weight:800;color:#111827}
 .dark .ctp-modal-title{color:#f1f5f9}
@@ -736,7 +736,7 @@
                     <div class="dtj-emp" style="font-size:12px;font-weight:700;margin:6px 0 4px">👷 {{ $emp['name'] }} <span class="dtj-count-red dtj-red-txt" style="font-size:10px;font-weight:700;border-radius:10px;padding:1px 7px">{{ $emp['count'] }} ta</span></div>
                     @endif
                     @foreach($vis as $it)
-                    <a href="{{ \App\Filament\Pages\KanbanBoard::getUrl(['open' => $it['project_id']]) }}" class="dtj-item-red" style="display:flex;justify-content:space-between;align-items:center;gap:8px;border-radius:8px;padding:6px 10px;text-decoration:none;margin-bottom:5px">
+                    <a href="#" wire:click.prevent="openProjectEdit({{ $it['project_id'] }})" class="dtj-item-red" style="display:flex;justify-content:space-between;align-items:center;gap:8px;border-radius:8px;padding:6px 10px;text-decoration:none;margin-bottom:5px">
                         <div style="min-width:0">
                             <div class="dtj-red-txt" style="font-size:12px;font-weight:700;font-family:monospace">{{ $it['number'] }}</div>
                             <div class="dtj-item-sub" style="font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $it['owner'] }} · {{ $it['service'] }}</div>
@@ -747,7 +747,7 @@
                     @if(count($hid) > 0)
                     <div x-show="showAll" x-cloak>
                         @foreach($hid as $it)
-                        <a href="{{ \App\Filament\Pages\KanbanBoard::getUrl(['open' => $it['project_id']]) }}" class="dtj-item-red" style="display:flex;justify-content:space-between;align-items:center;gap:8px;border-radius:8px;padding:6px 10px;text-decoration:none;margin-bottom:5px">
+                        <a href="#" wire:click.prevent="openProjectEdit({{ $it['project_id'] }})" class="dtj-item-red" style="display:flex;justify-content:space-between;align-items:center;gap:8px;border-radius:8px;padding:6px 10px;text-decoration:none;margin-bottom:5px">
                             <div style="min-width:0">
                                 <div class="dtj-red-txt" style="font-size:12px;font-weight:700;font-family:monospace">{{ $it['number'] }}</div>
                                 <div class="dtj-item-sub" style="font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $it['owner'] }} · {{ $it['service'] }}</div>
@@ -778,7 +778,7 @@
                     <div class="dtj-emp" style="font-size:12px;font-weight:700;margin:6px 0 4px">👷 {{ $emp['name'] }} <span class="dtj-count-yellow dtj-amber-txt" style="font-size:10px;font-weight:700;border-radius:10px;padding:1px 7px">{{ $emp['count'] }} ta</span></div>
                     @endif
                     @foreach($vis as $it)
-                    <a href="{{ \App\Filament\Pages\KanbanBoard::getUrl(['open' => $it['project_id']]) }}" class="dtj-item-yellow" style="display:flex;justify-content:space-between;align-items:center;gap:8px;border-radius:8px;padding:6px 10px;text-decoration:none;margin-bottom:5px">
+                    <a href="#" wire:click.prevent="openProjectEdit({{ $it['project_id'] }})" class="dtj-item-yellow" style="display:flex;justify-content:space-between;align-items:center;gap:8px;border-radius:8px;padding:6px 10px;text-decoration:none;margin-bottom:5px">
                         <div style="min-width:0">
                             <div class="dtj-amber-txt" style="font-size:12px;font-weight:700;font-family:monospace">{{ $it['number'] }}</div>
                             <div class="dtj-item-sub" style="font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $it['owner'] }} · {{ $it['service'] }}</div>
@@ -789,7 +789,7 @@
                     @if(count($hid) > 0)
                     <div x-show="showAll" x-cloak>
                         @foreach($hid as $it)
-                        <a href="{{ \App\Filament\Pages\KanbanBoard::getUrl(['open' => $it['project_id']]) }}" class="dtj-item-yellow" style="display:flex;justify-content:space-between;align-items:center;gap:8px;border-radius:8px;padding:6px 10px;text-decoration:none;margin-bottom:5px">
+                        <a href="#" wire:click.prevent="openProjectEdit({{ $it['project_id'] }})" class="dtj-item-yellow" style="display:flex;justify-content:space-between;align-items:center;gap:8px;border-radius:8px;padding:6px 10px;text-decoration:none;margin-bottom:5px">
                             <div style="min-width:0">
                                 <div class="dtj-amber-txt" style="font-size:12px;font-weight:700;font-family:monospace">{{ $it['number'] }}</div>
                                 <div class="dtj-item-sub" style="font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $it['owner'] }} · {{ $it['service'] }}</div>
@@ -843,7 +843,7 @@
 .ewl-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
 .ewl-modal{background:#fff;border-radius:16px;max-width:520px;width:100%;max-height:80vh;overflow:auto;box-shadow:0 20px 50px rgba(0,0,0,.3)}
 .dark .ewl-modal{background:#0f172a;border:1px solid #334155}
-.ewl-modal-head{position:sticky;top:0;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #f1f5f9;gap:10px}
+.ewl-modal-head{position:sticky;top:0;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #f1f5f9;gap:10px;border-radius:16px 16px 0 0}
 .dark .ewl-modal-head{background:#0f172a;border-color:#334155}
 .ewl-modal-title{font-size:15px;font-weight:800;color:#111827}
 .dark .ewl-modal-title{color:#f1f5f9}
@@ -924,7 +924,7 @@
         </div>
         <div class="ewl-modal-body">
             @forelse($workloadModalItems as $it)
-            <a href="{{ \App\Filament\Pages\KanbanBoard::getUrl(['open' => $it['projectId']]) }}" class="ewl-item">
+            <a href="#" wire:click.prevent="openProjectEdit({{ $it['projectId'] }})" class="ewl-item">
                 <div style="min-width:0">
                     <span class="ewl-item-seq">№{{ $it['seq'] }}</span>
                     <div class="ewl-item-owner">{{ $it['owner'] }}</div>
