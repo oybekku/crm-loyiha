@@ -889,6 +889,7 @@
                     <th style="text-align:center">Jami</th>
                     <th style="text-align:center">Yakunlangan</th>
                     <th style="text-align:center">Jarayonda</th>
+                    <th style="text-align:center">Kechikayotgan</th>
                     <th style="text-align:center">Muzlatilgan</th>
                     <template x-if="ewlOpen">
                         <template x-for="m in ['Yan','Fev','Mar','Apr','May','Iyun','Iyul','Avg','Sen','Okt','Noy','Dek']" :key="m">
@@ -904,6 +905,7 @@
                     <td class="ewl-num" wire:click="showWorkloadItems({{ $emp['id'] }}, 'total')">{{ $emp['total'] }}</td>
                     <td class="ewl-num" style="color:#16a34a" wire:click="showWorkloadItems({{ $emp['id'] }}, 'completed')">{{ $emp['completed'] }}</td>
                     <td class="ewl-num" style="color:#d97706" wire:click="showWorkloadItems({{ $emp['id'] }}, 'inprogress')">{{ $emp['inProgress'] }}</td>
+                    <td class="ewl-num" style="color:#dc2626" wire:click="showWorkloadItems({{ $emp['id'] }}, 'overdue')">{{ $emp['overdue'] }}</td>
                     <td class="ewl-num" style="color:#6b7280" wire:click="showWorkloadItems({{ $emp['id'] }}, 'paused')">{{ $emp['paused'] }}</td>
                     <template x-if="ewlOpen">
                         <template x-for="(m, idx) in {{ json_encode($emp['monthly']) }}" :key="idx">

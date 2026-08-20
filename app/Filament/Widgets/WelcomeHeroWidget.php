@@ -114,10 +114,20 @@ class WelcomeHeroWidget extends Widget
                     ->whereHas('project', fn ($p) => $p->whereNotNull('timer_paused_at'));
                 $titleSuffix = 'Muzlatilgan — ' . \Carbon\Carbon::create($this->selYear, $month, 1)->translatedFormat('F');
                 break;
+            case 'overdue':
+                $q->whereNotNull('work_started_at')->whereNull('completed_at')
+                    ->where('deadline_days', '>', 0)
+                    ->whereHas('project', fn ($p) => $p->whereNull('timer_paused_at'));
+                $titleSuffix = 'Kechikayotgan';
+                break;
         }
 
         $svcLabels = Project::serviceOptions();
-        $items = $q->orderByDesc('work_started_at')->get()->map(function ($s) use ($svcLabels) {
+        $collection = $q->orderByDesc('work_started_at')->get();
+        if ($bucket === 'overdue') {
+            $collection = $collection->filter(fn ($s) => $s->is_late)->values();
+        }
+        $items = $collection->map(function ($s) use ($svcLabels) {
             $status = 'Boshlanmagan';
             if ($s->completed_at) {
                 $status = 'Tugallangan';
@@ -400,6 +410,14 @@ class WelcomeHeroWidget extends Widget
                 $paused     = (clone $svcQ)->whereNotNull('work_started_at')->whereNull('completed_at')
                     ->whereHas('project', fn ($p) => $p->whereNotNull('timer_paused_at'))->count();
 
+                // Kechikayotgan — jarayondagilarning ichidan muddati o'tganlari
+                // (is_late — accessor, SQL'da hisoblab bo'lmaydi, shu sabab PHP'da filtrlanadi).
+                $overdue = (clone $svcQ)->whereNotNull('work_started_at')->whereNull('completed_at')
+                    ->where('deadline_days', '>', 0)
+                    ->whereHas('project', fn ($p) => $p->whereNull('timer_paused_at'))
+                    ->get(['id', 'work_started_at', 'submitted_at', 'deadline_days'])
+                    ->filter(fn ($s) => $s->is_late)->count();
+
                 // Har oy uchun uchta son: shu oyda boshlangan ishlardan qanchasi
                 // hozir tugallangan, qanchasi jarayonda va qanchasi muzlatilgan.
                 $monthlyDone   = array_fill(1, 12, 0);
@@ -431,6 +449,7 @@ class WelcomeHeroWidget extends Widget
                     'total'      => $total,
                     'completed'  => $completed,
                     'inProgress' => $inProgress,
+                    'overdue'    => $overdue,
                     'paused'     => $paused,
                     'monthly'    => $monthly,
                 ];
