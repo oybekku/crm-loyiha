@@ -208,6 +208,13 @@ class KanbanBoard extends Page
         $this->kbYear  ??= (int) now()->year;
         $this->kbMonth ??= (int) now()->month;
         $this->initServices();
+
+        // Boshqa sahifalardan (masalan Dashboard'dagi "Xodimlar yuklamasi"
+        // ro'yxatidan) ?open={id} bilan kelinsa — o'sha loyihaning tahrirlash
+        // modalini avtomatik ochamiz.
+        if ($openId = (int) request()->get('open')) {
+            $this->dispatch('open-edit-modal', id: $openId);
+        }
     }
 
     /**
