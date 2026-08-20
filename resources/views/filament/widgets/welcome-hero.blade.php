@@ -876,6 +876,8 @@
 .dark .ewl-item-status.prog{background:#3a2a06;border-color:#78350f;color:#fbbf24}
 .ewl-item-status.paused{background:#f3f4f6;color:#6b7280;border:1px solid #e5e7eb}
 .dark .ewl-item-status.paused{background:#1e293b;border-color:#334155;color:#94a3b8}
+.ewl-item-status.late{background:#dc2626;color:#fff;border:1px solid #dc2626}
+.dark .ewl-item-status.late{background:#dc2626;border-color:#dc2626;color:#fff}
 </style>
 
 <div class="ewl-panel">
@@ -954,7 +956,11 @@
                     <div class="ewl-item-owner">{{ $it['owner'] }}</div>
                     <div class="ewl-item-sub">{{ $it['service'] }} &middot; {{ $it['date'] }}</div>
                 </div>
+                @if($it['lateDays'] > 0)
+                <span class="ewl-item-status late">{{ $it['lateDays'] }} kun kech</span>
+                @else
                 <span class="ewl-item-status {{ $it['status'] === 'Tugallangan' ? 'done' : ($it['status'] === 'Muzlatilgan' ? 'paused' : 'prog') }}">{{ $it['status'] }}</span>
+                @endif
             </a>
             @empty
             <div style="padding:20px 0;text-align:center;color:#9ca3af;font-size:13px">Ish topilmadi</div>

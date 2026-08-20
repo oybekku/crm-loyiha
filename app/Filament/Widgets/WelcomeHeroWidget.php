@@ -150,6 +150,7 @@ class WelcomeHeroWidget extends Widget
                 'service'   => $svcLabels[$s->service_name] ?? $s->service_name,
                 'date'      => $s->work_started_at?->format('d.m.Y') ?? '—',
                 'status'    => $status,
+                'lateDays'  => $s->deadline_days > 0 ? (int) $s->late_days : 0,
             ];
         })->toArray();
 
