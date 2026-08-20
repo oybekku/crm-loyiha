@@ -29,7 +29,8 @@
 </head>
 <body>
 <div class="chek">
-    <div class="center firm">MAKONN.UZ</div>
+    <div class="center firm">MY PERFECT HOME</div>
+    <div class="center sub">MFO 01125 &middot; INN 308515451</div>
     <div class="center sub">To'lov cheki</div>
     <div class="center sub">{{ $payment->created_at->format('d.m.Y H:i') }}</div>
 
@@ -53,11 +54,15 @@
     @endif
     <div class="row"><span class="label">Qabul qildi</span><span class="value">{{ $payment->createdBy?->name ?? '—' }}</span></div>
 
+    @if($project->services->count() > 0)
     <div class="divider"></div>
 
-    <div class="row"><span class="label">Umumiy summa</span><span class="value">{{ number_format($project->total_price, 0, '.', ' ') }}</span></div>
-    <div class="row"><span class="label">Jami to'langan</span><span class="value">{{ number_format($project->paid_amount, 0, '.', ' ') }}</span></div>
-    <div class="row big"><span class="label">Qoldiq</span><span class="value">{{ number_format(max(0, $project->total_price - $project->paid_amount), 0, '.', ' ') }}</span></div>
+    <div class="sub" style="font-weight:700;margin-bottom:1.5mm">ISHLAR</div>
+    @php $svcLabels = \App\Models\Project::serviceOptions(); @endphp
+    @foreach($project->services as $svc)
+    <div class="row"><span class="label">{{ \Illuminate\Support\Str::upper($svcLabels[$svc->service_name] ?? $svc->service_name) }}</span><span class="value">{{ number_format($svc->final_price, 0, '.', ' ') }}</span></div>
+    @endforeach
+    @endif
 
     @if(!$payment->account_id)
     <div class="warn">⚠ SUMMA HISOBGA BOG'LANMAGAN</div>
