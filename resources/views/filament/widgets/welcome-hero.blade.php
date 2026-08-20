@@ -830,8 +830,10 @@
 .ewl-name{font-weight:700;color:#111827}
 .dark .ewl-name{color:#e2e8f0}
 .ewl-num{text-align:center;font-weight:700}
-.ewl-month{text-align:center;color:#9ca3af;font-variant-numeric:tabular-nums}
-.ewl-month.has{color:#2563eb;font-weight:700}
+.ewl-month{text-align:center;font-variant-numeric:tabular-nums;color:#d1d5db}
+.ewl-month .d{color:#2563eb;font-weight:700}
+.ewl-month .p{color:#dc2626;font-weight:700}
+.ewl-month .sep{color:#d1d5db;margin:0 1px}
 </style>
 
 <div class="ewl-panel">
@@ -860,10 +862,15 @@
                     <td class="ewl-name">{{ $emp['name'] }}</td>
                     <td class="ewl-num">{{ $emp['total'] }}</td>
                     <td class="ewl-num" style="color:#16a34a">{{ $emp['completed'] }}</td>
-                    <td class="ewl-num" style="color:#d97706">{{ $emp['inProgress'] }}</td>
+                    <td class="ewl-num" style="color:#dc2626">{{ $emp['inProgress'] }}</td>
                     <template x-if="ewlOpen">
-                        <template x-for="(cnt, idx) in {{ json_encode($emp['monthly']) }}" :key="idx">
-                            <td class="ewl-month" :class="{ has: cnt > 0 }" x-text="cnt > 0 ? cnt : '—'"></td>
+                        <template x-for="(m, idx) in {{ json_encode($emp['monthly']) }}" :key="idx">
+                            <td class="ewl-month">
+                                <template x-if="m.done === 0 && m.prog === 0">—</template>
+                                <template x-if="m.done > 0 || m.prog > 0">
+                                    <span><span class="d" x-text="m.done"></span><span class="sep">/</span><span class="p" x-text="m.prog"></span></span>
+                                </template>
+                            </td>
                         </template>
                     </template>
                 </tr>

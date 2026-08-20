@@ -292,20 +292,29 @@ class WelcomeHeroWidget extends Widget
                 $completed  = (clone $svcQ)->whereNotNull('completed_at')->count();
                 $inProgress = (clone $svcQ)->whereNotNull('work_started_at')->whereNull('completed_at')->count();
 
-                $monthly = array_fill(1, 12, 0);
+                // Har oy uchun ikkita son: shu oyda boshlangan ishlardan qanchasi
+                // hozir tugallangan (kok) va qanchasi hali jarayonda (qizil).
+                $monthlyDone = array_fill(1, 12, 0);
+                $monthlyProg = array_fill(1, 12, 0);
                 (clone $svcQ)->whereNotNull('work_started_at')
                     ->whereYear('work_started_at', $this->selYear)
-                    ->get(['work_started_at'])
-                    ->each(function ($s) use (&$monthly) {
-                        $monthly[(int) $s->work_started_at->format('n')]++;
+                    ->get(['work_started_at', 'completed_at'])
+                    ->each(function ($s) use (&$monthlyDone, &$monthlyProg) {
+                        $m = (int) $s->work_started_at->format('n');
+                        if ($s->completed_at) { $monthlyDone[$m]++; } else { $monthlyProg[$m]++; }
                     });
+
+                $monthly = [];
+                for ($m = 1; $m <= 12; $m++) {
+                    $monthly[] = ['done' => $monthlyDone[$m], 'prog' => $monthlyProg[$m]];
+                }
 
                 $employeeWorkload[] = [
                     'name'       => $emp->name,
                     'total'      => $total,
                     'completed'  => $completed,
                     'inProgress' => $inProgress,
-                    'monthly'    => array_values($monthly),
+                    'monthly'    => $monthly,
                 ];
             }
         }
