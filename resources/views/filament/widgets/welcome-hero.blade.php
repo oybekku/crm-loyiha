@@ -829,10 +829,15 @@
 .ewl-table tr:last-child td{border-bottom:none}
 .ewl-name{font-weight:700;color:#111827}
 .dark .ewl-name{color:#e2e8f0}
-.ewl-num{text-align:center;font-weight:700}
+.ewl-num{text-align:center;font-weight:700;cursor:pointer;border-radius:6px;transition:background .12s}
+.ewl-num:hover{background:#f3f4f6}
+.dark .ewl-num:hover{background:#1e293b}
 .ewl-month{text-align:center;font-variant-numeric:tabular-nums;color:#d1d5db}
+.ewl-month .d, .ewl-month .p{cursor:pointer;border-radius:4px;padding:1px 3px}
 .ewl-month .d{color:#2563eb;font-weight:700}
+.ewl-month .d:hover{background:#dbeafe}
 .ewl-month .p{color:#dc2626;font-weight:700}
+.ewl-month .p:hover{background:#fee2e2}
 .ewl-month .sep{color:#d1d5db;margin:0 1px}
 </style>
 
@@ -860,15 +865,17 @@
                 @foreach($employeeWorkload as $emp)
                 <tr>
                     <td class="ewl-name">{{ $emp['name'] }}</td>
-                    <td class="ewl-num">{{ $emp['total'] }}</td>
-                    <td class="ewl-num" style="color:#16a34a">{{ $emp['completed'] }}</td>
-                    <td class="ewl-num" style="color:#dc2626">{{ $emp['inProgress'] }}</td>
+                    <td class="ewl-num" wire:click="showWorkloadItems({{ $emp['id'] }}, 'total')">{{ $emp['total'] }}</td>
+                    <td class="ewl-num" style="color:#16a34a" wire:click="showWorkloadItems({{ $emp['id'] }}, 'completed')">{{ $emp['completed'] }}</td>
+                    <td class="ewl-num" style="color:#dc2626" wire:click="showWorkloadItems({{ $emp['id'] }}, 'inprogress')">{{ $emp['inProgress'] }}</td>
                     <template x-if="ewlOpen">
                         <template x-for="(m, idx) in {{ json_encode($emp['monthly']) }}" :key="idx">
                             <td class="ewl-month">
                                 <template x-if="m.done === 0 && m.prog === 0">—</template>
                                 <template x-if="m.done > 0 || m.prog > 0">
-                                    <span><span class="d" x-text="m.done"></span><span class="sep">/</span><span class="p" x-text="m.prog"></span></span>
+                                    <span>
+                                        <span class="d" x-text="m.done" @click="$wire.showWorkloadItems({{ $emp['id'] }}, 'month_done', idx + 1)"></span><span class="sep">/</span><span class="p" x-text="m.prog" @click="$wire.showWorkloadItems({{ $emp['id'] }}, 'month_prog', idx + 1)"></span>
+                                    </span>
                                 </template>
                             </td>
                         </template>
@@ -880,6 +887,30 @@
     </div>
 </div>
 </div>
+
+{{-- Raqamga bosilganda — aynan qaysi ishlar ekanini ko'rsatuvchi ro'yxat modali --}}
+@if($workloadModalOpen)
+<div class="ctp-overlay" wire:click.self="closeWorkloadModal" style="z-index:200">
+    <div class="ctp-modal">
+        <div class="ctp-modal-head">
+            <span class="ctp-modal-title">{{ $workloadModalTitle }}</span>
+            <button class="ctp-close" wire:click="closeWorkloadModal">✕</button>
+        </div>
+        <div class="ctp-modal-body">
+            @forelse($workloadModalItems as $it)
+            <div class="ctp-item">
+                <div style="min-width:0">
+                    <div class="ctp-item-fish">№{{ $it['seq'] }} — {{ $it['owner'] }}</div>
+                    <div class="ctp-item-sub">{{ $it['service'] }} &middot; {{ $it['date'] }} &middot; {{ $it['status'] }}</div>
+                </div>
+            </div>
+            @empty
+            <div style="padding:20px 0;text-align:center;color:#9ca3af;font-size:13px">Ish topilmadi</div>
+            @endforelse
+        </div>
+    </div>
+</div>
+@endif
 @endif
 
 {{-- ROW 3 (4 mini karta + So'nggi loyihalar) olib tashlandi.

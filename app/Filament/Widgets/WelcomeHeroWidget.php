@@ -40,6 +40,67 @@ class WelcomeHeroWidget extends Widget
         $this->selYear += $delta;
     }
 
+    // Xodimlar yuklamasi — raqamga bosilganda aynan qaysi ishlar ekanini
+    // ro'yxat qilib ko'rsatuvchi modal.
+    public bool   $workloadModalOpen  = false;
+    public string $workloadModalTitle = '';
+    public array  $workloadModalItems = [];
+
+    public function closeWorkloadModal(): void
+    {
+        $this->workloadModalOpen = false;
+    }
+
+    public function showWorkloadItems(int $userId, string $bucket, ?int $month = null): void
+    {
+        $user = \App\Models\User::find($userId);
+        if (!$user) return;
+
+        $q = \App\Models\ProjectService::where('assigned_user_id', $userId)
+            ->with('project:id,seq_no,number,owner_name');
+
+        $titleSuffix = 'Jami';
+        switch ($bucket) {
+            case 'completed':
+                $q->whereNotNull('completed_at');
+                $titleSuffix = 'Yakunlangan';
+                break;
+            case 'inprogress':
+                $q->whereNotNull('work_started_at')->whereNull('completed_at');
+                $titleSuffix = 'Jarayonda';
+                break;
+            case 'month_done':
+                $q->whereNotNull('work_started_at')
+                    ->whereYear('work_started_at', $this->selYear)
+                    ->whereMonth('work_started_at', $month)
+                    ->whereNotNull('completed_at');
+                $titleSuffix = 'Tugallangan — ' . \Carbon\Carbon::create($this->selYear, $month, 1)->translatedFormat('F');
+                break;
+            case 'month_prog':
+                $q->whereNotNull('work_started_at')
+                    ->whereYear('work_started_at', $this->selYear)
+                    ->whereMonth('work_started_at', $month)
+                    ->whereNull('completed_at');
+                $titleSuffix = 'Jarayonda — ' . \Carbon\Carbon::create($this->selYear, $month, 1)->translatedFormat('F');
+                break;
+        }
+
+        $svcLabels = Project::serviceOptions();
+        $items = $q->orderByDesc('work_started_at')->get()->map(function ($s) use ($svcLabels) {
+            return [
+                'seq'     => $s->project?->seq_no ?? $s->project?->number ?? '—',
+                'owner'   => $s->project?->owner_name ?? '—',
+                'service' => $svcLabels[$s->service_name] ?? $s->service_name,
+                'date'    => $s->work_started_at?->format('d.m.Y') ?? '—',
+                'status'  => $s->completed_at ? 'Tugallangan' : ($s->work_started_at ? 'Jarayonda' : 'Boshlanmagan'),
+            ];
+        })->toArray();
+
+        $this->workloadModalTitle = $user->name . ' — ' . $titleSuffix . ' (' . count($items) . ' ta)';
+        $this->workloadModalItems = $items;
+        $this->workloadModalOpen  = true;
+    }
+
     public function getViewData(): array
     {
         $user = auth()->user();
@@ -310,6 +371,7 @@ class WelcomeHeroWidget extends Widget
                 }
 
                 $employeeWorkload[] = [
+                    'id'         => $emp->id,
                     'name'       => $emp->name,
                     'total'      => $total,
                     'completed'  => $completed,
