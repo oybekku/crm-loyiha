@@ -3328,6 +3328,14 @@ document.addEventListener('livewire:initialized', function () {
     Livewire.on('project-created', function () {
         setTimeout(function() { window.location.reload(); }, 2000);
     });
+
+    // To'lov saqlangach — chek avtomatik oynada ochilib, o'zi chop etiladi
+    // (chek sahifasining o'zidagi window.print() orqali).
+    Livewire.on('print-receipt', function (data) {
+        var d = Array.isArray(data) ? data[0] : data;
+        if (!d || !d.paymentId) return;
+        window.open('/print/payment/' + d.paymentId + '/chek', '_blank', 'width=380,height=600');
+    });
 });
 
 // ── Kanban Drag & Drop ────────────────────────────────────────────────

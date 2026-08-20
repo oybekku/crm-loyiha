@@ -860,7 +860,8 @@ class KanbanBoard extends Page
         $project = Project::find($this->paymentProjectId);
         if (!$project) return;
 
-        $hasAmount = filled($this->paymentAmount) && (float)$this->paymentAmount > 0;
+        $hasAmount    = filled($this->paymentAmount) && (float)$this->paymentAmount > 0;
+        $newPaymentId = null;
 
         // Summa kiritilmagan — tasdiq so'rash
         if (!$hasAmount && !$this->paymentAmountConfirm) {
@@ -918,6 +919,8 @@ class KanbanBoard extends Page
                 'description'=> number_format($payment->amount, 0, '.', ' ') . " so'm qo'shildi",
             ]);
 
+            $newPaymentId = $payment->id;
+
             $project->updateTotals();
         }
 
@@ -952,11 +955,13 @@ class KanbanBoard extends Page
             $this->paymentNote         = '';
             $this->paymentAmountConfirm = false;
             $this->dispatch('notify', type: 'success', message: $hasAmount ? "To'lov saqlandi!" : 'Hodimlar biriktirildi!');
+            if (!empty($newPaymentId)) $this->dispatch('print-receipt', paymentId: $newPaymentId);
             return;
         }
 
         $this->closePaymentModal();
         $this->dispatch('notify', type: 'success', message: $hasAmount ? "To'lov saqlandi!" : 'Hodimlar biriktirildi!');
+        if (!empty($newPaymentId)) $this->dispatch('print-receipt', paymentId: $newPaymentId);
     }
 
     public function cancelPaymentAmountConfirm(): void

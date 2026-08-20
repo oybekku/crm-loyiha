@@ -139,6 +139,13 @@ Route::middleware(['auth'])->group(function () {
         return view('print.ariza', compact('project'));
     })->name('print.project.ariza');
 
+    // To'lov cheki (80mm) — "To'lash" bosilgach avtomatik ochilib, o'zi chop etiladi
+    Route::get('/print/payment/{payment}/chek', function (\App\Models\Payment $payment) {
+        $project = $payment->project;
+        abort_unless($project, 404);
+        return view('print.chek', compact('payment', 'project'));
+    })->name('print.payment.chek');
+
     // Pechat/imzo o'lchami va joylashuvi (admin, barcha arizalarga umumiy) —
     // Ariza sahifasidagi slayder orqali sozlanadi.
     Route::post('/print/stamp-settings', function (\Illuminate\Http\Request $request) {
