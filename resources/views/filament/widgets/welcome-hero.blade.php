@@ -809,6 +809,72 @@
 </div>
 @endif
 
+{{-- 👷 XODIMLAR YUKLAMASI — mutaxassis bo'yicha jami/yakunlangan/jarayonda,
+     oylar bo'yicha yig'ma holda, tugma orqali to'liq oylik jadval ochiladi --}}
+@if(!$isEmployee && count($employeeWorkload) > 0)
+<div x-data="{ ewlOpen: false }" style="position:relative;z-index:1;margin-top:16px">
+<style>
+.ewl-panel{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.dark .ewl-panel{background:transparent;border-color:#334155;box-shadow:none}
+.ewl-title{color:#111827;font-size:14px;font-weight:700}
+.dark .ewl-title{color:#f1f5f9}
+.ewl-toggle{font-size:12px;font-weight:700;color:#2563eb;background:#eff6ff;border:1px solid #bfdbfe;border-radius:20px;padding:5px 14px;cursor:pointer}
+.dark .ewl-toggle{background:#0c2b52;border-color:#1e40af;color:#93c5fd}
+.ewl-table-wrap{overflow-x:auto;margin-top:12px}
+.ewl-table{width:100%;border-collapse:collapse;font-size:12.5px;white-space:nowrap}
+.ewl-table th{text-align:left;padding:7px 10px;color:#9ca3af;font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid #f1f5f9}
+.dark .ewl-table th{color:#64748b;border-color:#1e293b}
+.ewl-table td{padding:8px 10px;border-bottom:1px solid #f8fafc;color:#374151}
+.dark .ewl-table td{border-color:#1e293b;color:#cbd5e1}
+.ewl-table tr:last-child td{border-bottom:none}
+.ewl-name{font-weight:700;color:#111827}
+.dark .ewl-name{color:#e2e8f0}
+.ewl-num{text-align:center;font-weight:700}
+.ewl-month{text-align:center;color:#9ca3af;font-variant-numeric:tabular-nums}
+.ewl-month.has{color:#2563eb;font-weight:700}
+</style>
+
+<div class="ewl-panel">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <span class="ewl-title">👷 Xodimlar yuklamasi</span>
+        <button type="button" class="ewl-toggle" @click="ewlOpen = !ewlOpen" x-text="ewlOpen ? '▲ Oylarni yashirish' : '▾ Oylar bo\'yicha ko\'rsatish'"></button>
+    </div>
+    <div class="ewl-table-wrap">
+        <table class="ewl-table">
+            <thead>
+                <tr>
+                    <th>Mutaxassis</th>
+                    <th style="text-align:center">Jami</th>
+                    <th style="text-align:center">Yakunlangan</th>
+                    <th style="text-align:center">Jarayonda</th>
+                    <template x-if="ewlOpen">
+                        <template x-for="m in ['Yan','Fev','Mar','Apr','May','Iyun','Iyul','Avg','Sen','Okt','Noy','Dek']" :key="m">
+                            <th style="text-align:center" x-text="m"></th>
+                        </template>
+                    </template>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($employeeWorkload as $emp)
+                <tr>
+                    <td class="ewl-name">{{ $emp['name'] }}</td>
+                    <td class="ewl-num">{{ $emp['total'] }}</td>
+                    <td class="ewl-num" style="color:#16a34a">{{ $emp['completed'] }}</td>
+                    <td class="ewl-num" style="color:#d97706">{{ $emp['inProgress'] }}</td>
+                    <template x-if="ewlOpen">
+                        <template x-for="(cnt, idx) in {{ json_encode($emp['monthly']) }}" :key="idx">
+                            <td class="ewl-month" :class="{ has: cnt > 0 }" x-text="cnt > 0 ? cnt : '—'"></td>
+                        </template>
+                    </template>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
+</div>
+@endif
+
 {{-- ROW 3 (4 mini karta + So'nggi loyihalar) olib tashlandi.
      Stil/markup saqlangan: resources/views/partials/_dashboard-row3-reference.blade.php --}}
 </div>

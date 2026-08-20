@@ -279,7 +279,39 @@ class WelcomeHeroWidget extends Widget
             $cashTodayUnlinked = (float) $todayPayments->whereNull('account_id')->sum('amount');
         }
 
+        // ── Xodimlar yuklamasi — mutaxassis bo'yicha jami/yakunlangan/jarayonda
+        // va tanlangan yilda oylar kesimida ish boshlangan sonlar (admin/menejer) ──
+        $employeeWorkload = [];
+        if (!$isEmployee) {
+            $employees = \App\Models\User::where('role', 'bajaruvchi')->orderBy('name')->get();
+            foreach ($employees as $emp) {
+                $svcQ  = \App\Models\ProjectService::where('assigned_user_id', $emp->id);
+                $total = (clone $svcQ)->count();
+                if ($total === 0) continue;
+
+                $completed  = (clone $svcQ)->whereNotNull('completed_at')->count();
+                $inProgress = (clone $svcQ)->whereNotNull('work_started_at')->whereNull('completed_at')->count();
+
+                $monthly = array_fill(1, 12, 0);
+                (clone $svcQ)->whereNotNull('work_started_at')
+                    ->whereYear('work_started_at', $this->selYear)
+                    ->get(['work_started_at'])
+                    ->each(function ($s) use (&$monthly) {
+                        $monthly[(int) $s->work_started_at->format('n')]++;
+                    });
+
+                $employeeWorkload[] = [
+                    'name'       => $emp->name,
+                    'total'      => $total,
+                    'completed'  => $completed,
+                    'inProgress' => $inProgress,
+                    'monthly'    => array_values($monthly),
+                ];
+            }
+        }
+
         return [
+            'employeeWorkload' => $employeeWorkload,
             'cashTodayGroups'   => $cashTodayGroups,
             'cashTodayTotal'    => $cashTodayTotal,
             'cashTodayUnlinked' => $cashTodayUnlinked,
