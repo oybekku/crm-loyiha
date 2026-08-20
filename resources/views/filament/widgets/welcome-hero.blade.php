@@ -833,11 +833,13 @@
 .ewl-num:hover{background:#f3f4f6}
 .dark .ewl-num:hover{background:#1e293b}
 .ewl-month{text-align:center;font-variant-numeric:tabular-nums;color:#d1d5db;white-space:nowrap}
-.ewl-month .d, .ewl-month .p, .ewl-month .f{cursor:pointer;border-radius:4px;padding:1px 3px}
+.ewl-month .d, .ewl-month .p, .ewl-month .o, .ewl-month .f{cursor:pointer;border-radius:4px;padding:1px 3px}
 .ewl-month .d{color:#16a34a;font-weight:700}
 .ewl-month .d:hover{background:#dcfce7}
 .ewl-month .p{color:#d97706;font-weight:700}
 .ewl-month .p:hover{background:#fef3c7}
+.ewl-month .o{color:#dc2626;font-weight:700}
+.ewl-month .o:hover{background:#fee2e2}
 .ewl-month .f{color:#6b7280;font-weight:700}
 .ewl-month .f:hover{background:#f3f4f6}
 .ewl-month .sep{color:#d1d5db;margin:0 1px}
@@ -910,10 +912,10 @@
                     <template x-if="ewlOpen">
                         <template x-for="(m, idx) in {{ json_encode($emp['monthly']) }}" :key="idx">
                             <td class="ewl-month">
-                                <template x-if="m.done === 0 && m.prog === 0 && m.paused === 0">—</template>
-                                <template x-if="m.done > 0 || m.prog > 0 || m.paused > 0">
+                                <template x-if="m.done === 0 && m.prog === 0 && m.overdue === 0 && m.paused === 0">—</template>
+                                <template x-if="m.done > 0 || m.prog > 0 || m.overdue > 0 || m.paused > 0">
                                     <span>
-                                        <span class="d" x-text="m.done" @click="$wire.showWorkloadItems({{ $emp['id'] }}, 'month_done', idx + 1)"></span><span class="sep">/</span><span class="p" x-text="m.prog" @click="$wire.showWorkloadItems({{ $emp['id'] }}, 'month_prog', idx + 1)"></span><span class="sep">/</span><span class="f" x-text="m.paused" @click="$wire.showWorkloadItems({{ $emp['id'] }}, 'month_paused', idx + 1)"></span>
+                                        <span class="d" x-text="m.done" @click="$wire.showWorkloadItems({{ $emp['id'] }}, 'month_done', idx + 1)"></span><span class="sep">/</span><span class="p" x-text="m.prog" @click="$wire.showWorkloadItems({{ $emp['id'] }}, 'month_prog', idx + 1)"></span><span class="sep">/</span><span class="o" x-text="m.overdue" @click="$wire.showWorkloadItems({{ $emp['id'] }}, 'month_overdue', idx + 1)"></span><span class="sep">/</span><span class="f" x-text="m.paused" @click="$wire.showWorkloadItems({{ $emp['id'] }}, 'month_paused', idx + 1)"></span>
                                     </span>
                                 </template>
                             </td>

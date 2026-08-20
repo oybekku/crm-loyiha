@@ -120,11 +120,20 @@ class WelcomeHeroWidget extends Widget
                     ->whereHas('project', fn ($p) => $p->whereNull('timer_paused_at'));
                 $titleSuffix = 'Kechikayotgan';
                 break;
+            case 'month_overdue':
+                $q->whereNotNull('work_started_at')
+                    ->whereYear('work_started_at', $this->selYear)
+                    ->whereMonth('work_started_at', $month)
+                    ->whereNull('completed_at')
+                    ->where('deadline_days', '>', 0)
+                    ->whereHas('project', fn ($p) => $p->whereNull('timer_paused_at'));
+                $titleSuffix = 'Kechikayotgan — ' . \Carbon\Carbon::create($this->selYear, $month, 1)->translatedFormat('F');
+                break;
         }
 
         $svcLabels = Project::serviceOptions();
         $collection = $q->orderByDesc('work_started_at')->get();
-        if ($bucket === 'overdue') {
+        if (in_array($bucket, ['overdue', 'month_overdue'], true)) {
             $collection = $collection->filter(fn ($s) => $s->is_late)->values();
         }
         $items = $collection->map(function ($s) use ($svcLabels) {
@@ -418,16 +427,18 @@ class WelcomeHeroWidget extends Widget
                     ->get(['id', 'work_started_at', 'submitted_at', 'deadline_days'])
                     ->filter(fn ($s) => $s->is_late)->count();
 
-                // Har oy uchun uchta son: shu oyda boshlangan ishlardan qanchasi
-                // hozir tugallangan, qanchasi jarayonda va qanchasi muzlatilgan.
-                $monthlyDone   = array_fill(1, 12, 0);
-                $monthlyProg   = array_fill(1, 12, 0);
-                $monthlyPaused = array_fill(1, 12, 0);
+                // Har oy uchun to'rtta son: shu oyda boshlangan ishlardan qanchasi
+                // hozir tugallangan, qanchasi jarayonda (shundan qanchasi kechikayotgan)
+                // va qanchasi muzlatilgan.
+                $monthlyDone    = array_fill(1, 12, 0);
+                $monthlyProg    = array_fill(1, 12, 0);
+                $monthlyOverdue = array_fill(1, 12, 0);
+                $monthlyPaused  = array_fill(1, 12, 0);
                 (clone $svcQ)->whereNotNull('work_started_at')
                     ->whereYear('work_started_at', $this->selYear)
                     ->with('project:id,timer_paused_at')
-                    ->get(['id', 'project_id', 'work_started_at', 'completed_at'])
-                    ->each(function ($s) use (&$monthlyDone, &$monthlyProg, &$monthlyPaused) {
+                    ->get(['id', 'project_id', 'work_started_at', 'completed_at', 'submitted_at', 'deadline_days'])
+                    ->each(function ($s) use (&$monthlyDone, &$monthlyProg, &$monthlyOverdue, &$monthlyPaused) {
                         $m = (int) $s->work_started_at->format('n');
                         if ($s->completed_at) {
                             $monthlyDone[$m]++;
@@ -435,12 +446,18 @@ class WelcomeHeroWidget extends Widget
                             $monthlyPaused[$m]++;
                         } else {
                             $monthlyProg[$m]++;
+                            if ($s->is_late) $monthlyOverdue[$m]++;
                         }
                     });
 
                 $monthly = [];
                 for ($m = 1; $m <= 12; $m++) {
-                    $monthly[] = ['done' => $monthlyDone[$m], 'prog' => $monthlyProg[$m], 'paused' => $monthlyPaused[$m]];
+                    $monthly[] = [
+                        'done'    => $monthlyDone[$m],
+                        'prog'    => $monthlyProg[$m],
+                        'overdue' => $monthlyOverdue[$m],
+                        'paused'  => $monthlyPaused[$m],
+                    ];
                 }
 
                 $employeeWorkload[] = [
