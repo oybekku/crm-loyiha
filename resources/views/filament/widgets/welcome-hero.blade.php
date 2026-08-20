@@ -832,13 +832,22 @@
 .ewl-num{text-align:center;font-weight:700;cursor:pointer;border-radius:6px;transition:background .12s}
 .ewl-num:hover{background:#f3f4f6}
 .dark .ewl-num:hover{background:#1e293b}
-.ewl-month{text-align:center;font-variant-numeric:tabular-nums;color:#d1d5db}
-.ewl-month .d, .ewl-month .p{cursor:pointer;border-radius:4px;padding:1px 3px}
-.ewl-month .d{color:#2563eb;font-weight:700}
-.ewl-month .d:hover{background:#dbeafe}
-.ewl-month .p{color:#dc2626;font-weight:700}
-.ewl-month .p:hover{background:#fee2e2}
+.ewl-month{text-align:center;font-variant-numeric:tabular-nums;color:#d1d5db;white-space:nowrap}
+.ewl-month .d, .ewl-month .p, .ewl-month .f{cursor:pointer;border-radius:4px;padding:1px 3px}
+.ewl-month .d{color:#16a34a;font-weight:700}
+.ewl-month .d:hover{background:#dcfce7}
+.ewl-month .p{color:#d97706;font-weight:700}
+.ewl-month .p:hover{background:#fef3c7}
+.ewl-month .f{color:#6b7280;font-weight:700}
+.ewl-month .f:hover{background:#f3f4f6}
 .ewl-month .sep{color:#d1d5db;margin:0 1px}
+
+.ewl-unassigned{margin-top:10px;padding:9px 14px;border-radius:10px;background:#f8fafc;border:1px dashed #e5e7eb;font-size:12.5px;color:#6b7280;cursor:pointer;display:flex;align-items:center;justify-content:space-between}
+.dark .ewl-unassigned{background:#1e293b;border-color:#334155;color:#94a3b8}
+.ewl-unassigned:hover{background:#f1f5f9}
+.dark .ewl-unassigned:hover{background:#243244}
+.ewl-unassigned b{color:#374151;font-size:13px}
+.dark .ewl-unassigned b{color:#e2e8f0}
 
 .ewl-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
 .ewl-modal{background:#fff;border-radius:16px;max-width:520px;width:100%;max-height:80vh;overflow:auto;box-shadow:0 20px 50px rgba(0,0,0,.3)}
@@ -861,8 +870,10 @@
 .ewl-item-status{font-size:10.5px;font-weight:700;border-radius:20px;padding:3px 10px;white-space:nowrap;flex-shrink:0}
 .ewl-item-status.done{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
 .dark .ewl-item-status.done{background:#052e1a;border-color:#14532d;color:#4ade80}
-.ewl-item-status.prog{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
-.dark .ewl-item-status.prog{background:#3f0d16;border-color:#7f1d1d;color:#f87171}
+.ewl-item-status.prog{background:#fffbeb;color:#d97706;border:1px solid #fde68a}
+.dark .ewl-item-status.prog{background:#3a2a06;border-color:#78350f;color:#fbbf24}
+.ewl-item-status.paused{background:#f3f4f6;color:#6b7280;border:1px solid #e5e7eb}
+.dark .ewl-item-status.paused{background:#1e293b;border-color:#334155;color:#94a3b8}
 </style>
 
 <div class="ewl-panel">
@@ -878,6 +889,7 @@
                     <th style="text-align:center">Jami</th>
                     <th style="text-align:center">Yakunlangan</th>
                     <th style="text-align:center">Jarayonda</th>
+                    <th style="text-align:center">Muzlatilgan</th>
                     <template x-if="ewlOpen">
                         <template x-for="m in ['Yan','Fev','Mar','Apr','May','Iyun','Iyul','Avg','Sen','Okt','Noy','Dek']" :key="m">
                             <th style="text-align:center" x-text="m"></th>
@@ -891,14 +903,15 @@
                     <td class="ewl-name">{{ $emp['name'] }}</td>
                     <td class="ewl-num" wire:click="showWorkloadItems({{ $emp['id'] }}, 'total')">{{ $emp['total'] }}</td>
                     <td class="ewl-num" style="color:#16a34a" wire:click="showWorkloadItems({{ $emp['id'] }}, 'completed')">{{ $emp['completed'] }}</td>
-                    <td class="ewl-num" style="color:#dc2626" wire:click="showWorkloadItems({{ $emp['id'] }}, 'inprogress')">{{ $emp['inProgress'] }}</td>
+                    <td class="ewl-num" style="color:#d97706" wire:click="showWorkloadItems({{ $emp['id'] }}, 'inprogress')">{{ $emp['inProgress'] }}</td>
+                    <td class="ewl-num" style="color:#6b7280" wire:click="showWorkloadItems({{ $emp['id'] }}, 'paused')">{{ $emp['paused'] }}</td>
                     <template x-if="ewlOpen">
                         <template x-for="(m, idx) in {{ json_encode($emp['monthly']) }}" :key="idx">
                             <td class="ewl-month">
-                                <template x-if="m.done === 0 && m.prog === 0">—</template>
-                                <template x-if="m.done > 0 || m.prog > 0">
+                                <template x-if="m.done === 0 && m.prog === 0 && m.paused === 0">—</template>
+                                <template x-if="m.done > 0 || m.prog > 0 || m.paused > 0">
                                     <span>
-                                        <span class="d" x-text="m.done" @click="$wire.showWorkloadItems({{ $emp['id'] }}, 'month_done', idx + 1)"></span><span class="sep">/</span><span class="p" x-text="m.prog" @click="$wire.showWorkloadItems({{ $emp['id'] }}, 'month_prog', idx + 1)"></span>
+                                        <span class="d" x-text="m.done" @click="$wire.showWorkloadItems({{ $emp['id'] }}, 'month_done', idx + 1)"></span><span class="sep">/</span><span class="p" x-text="m.prog" @click="$wire.showWorkloadItems({{ $emp['id'] }}, 'month_prog', idx + 1)"></span><span class="sep">/</span><span class="f" x-text="m.paused" @click="$wire.showWorkloadItems({{ $emp['id'] }}, 'month_paused', idx + 1)"></span>
                                     </span>
                                 </template>
                             </td>
@@ -909,6 +922,13 @@
             </tbody>
         </table>
     </div>
+
+    @if($unassignedCount > 0)
+    <div class="ewl-unassigned" wire:click="showWorkloadItems(0, 'unassigned')">
+        <span>⚠️ Biriktirilmagan ishlar</span>
+        <b>{{ $unassignedCount }} ta</b>
+    </div>
+    @endif
 </div>
 </div>
 
@@ -930,7 +950,7 @@
                     <div class="ewl-item-owner">{{ $it['owner'] }}</div>
                     <div class="ewl-item-sub">{{ $it['service'] }} &middot; {{ $it['date'] }}</div>
                 </div>
-                <span class="ewl-item-status {{ $it['status'] === 'Tugallangan' ? 'done' : 'prog' }}">{{ $it['status'] }}</span>
+                <span class="ewl-item-status {{ $it['status'] === 'Tugallangan' ? 'done' : ($it['status'] === 'Muzlatilgan' ? 'paused' : 'prog') }}">{{ $it['status'] }}</span>
             </a>
             @empty
             <div style="padding:20px 0;text-align:center;color:#9ca3af;font-size:13px">Ish topilmadi</div>

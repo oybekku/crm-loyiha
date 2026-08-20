@@ -63,11 +63,17 @@ class WelcomeHeroWidget extends Widget
 
     public function showWorkloadItems(int $userId, string $bucket, ?int $month = null): void
     {
-        $user = \App\Models\User::find($userId);
-        if (!$user) return;
-
-        $q = \App\Models\ProjectService::where('assigned_user_id', $userId)
-            ->with('project:id,seq_no,number,owner_name');
+        if ($bucket === 'unassigned') {
+            $q = \App\Models\ProjectService::whereNull('assigned_user_id')
+                ->with('project:id,seq_no,number,owner_name');
+            $titleName = 'Biriktirilmagan ishlar';
+        } else {
+            $user = \App\Models\User::find($userId);
+            if (!$user) return;
+            $q = \App\Models\ProjectService::where('assigned_user_id', $userId)
+                ->with('project:id,seq_no,number,owner_name');
+            $titleName = $user->name;
+        }
 
         $titleSuffix = 'Jami';
         switch ($bucket) {
@@ -76,8 +82,14 @@ class WelcomeHeroWidget extends Widget
                 $titleSuffix = 'Yakunlangan';
                 break;
             case 'inprogress':
-                $q->whereNotNull('work_started_at')->whereNull('completed_at');
+                $q->whereNotNull('work_started_at')->whereNull('completed_at')
+                    ->whereHas('project', fn ($p) => $p->whereNull('timer_paused_at'));
                 $titleSuffix = 'Jarayonda';
+                break;
+            case 'paused':
+                $q->whereNotNull('work_started_at')->whereNull('completed_at')
+                    ->whereHas('project', fn ($p) => $p->whereNotNull('timer_paused_at'));
+                $titleSuffix = 'Muzlatilgan';
                 break;
             case 'month_done':
                 $q->whereNotNull('work_started_at')
@@ -90,24 +102,39 @@ class WelcomeHeroWidget extends Widget
                 $q->whereNotNull('work_started_at')
                     ->whereYear('work_started_at', $this->selYear)
                     ->whereMonth('work_started_at', $month)
-                    ->whereNull('completed_at');
+                    ->whereNull('completed_at')
+                    ->whereHas('project', fn ($p) => $p->whereNull('timer_paused_at'));
                 $titleSuffix = 'Jarayonda — ' . \Carbon\Carbon::create($this->selYear, $month, 1)->translatedFormat('F');
+                break;
+            case 'month_paused':
+                $q->whereNotNull('work_started_at')
+                    ->whereYear('work_started_at', $this->selYear)
+                    ->whereMonth('work_started_at', $month)
+                    ->whereNull('completed_at')
+                    ->whereHas('project', fn ($p) => $p->whereNotNull('timer_paused_at'));
+                $titleSuffix = 'Muzlatilgan — ' . \Carbon\Carbon::create($this->selYear, $month, 1)->translatedFormat('F');
                 break;
         }
 
         $svcLabels = Project::serviceOptions();
         $items = $q->orderByDesc('work_started_at')->get()->map(function ($s) use ($svcLabels) {
+            $status = 'Boshlanmagan';
+            if ($s->completed_at) {
+                $status = 'Tugallangan';
+            } elseif ($s->work_started_at) {
+                $status = $s->project?->timer_paused_at ? 'Muzlatilgan' : 'Jarayonda';
+            }
             return [
                 'projectId' => $s->project_id,
                 'seq'       => $s->project?->seq_no ?? $s->project?->number ?? '—',
                 'owner'     => $s->project?->owner_name ?? '—',
                 'service'   => $svcLabels[$s->service_name] ?? $s->service_name,
                 'date'      => $s->work_started_at?->format('d.m.Y') ?? '—',
-                'status'    => $s->completed_at ? 'Tugallangan' : ($s->work_started_at ? 'Jarayonda' : 'Boshlanmagan'),
+                'status'    => $status,
             ];
         })->toArray();
 
-        $this->workloadModalTitle = $user->name . ' — ' . $titleSuffix . ' (' . count($items) . ' ta)';
+        $this->workloadModalTitle = $titleName . ' — ' . $titleSuffix . ' (' . count($items) . ' ta)';
         $this->workloadModalItems = $items;
         $this->workloadModalOpen  = true;
     }
@@ -351,34 +378,51 @@ class WelcomeHeroWidget extends Widget
             $cashTodayUnlinked = (float) $todayPayments->whereNull('account_id')->sum('amount');
         }
 
-        // ── Xodimlar yuklamasi — mutaxassis bo'yicha jami/yakunlangan/jarayonda
-        // va tanlangan yilda oylar kesimida ish boshlangan sonlar (admin/menejer) ──
-        $employeeWorkload = [];
+        // ── Xodimlar yuklamasi — mutaxassis bo'yicha jami/yakunlangan/jarayonda/
+        // muzlatilgan va tanlangan yilda oylar kesimida ish boshlangan sonlar
+        // (admin/menejer). Rolga qaramasdan — kimga bironta ish biriktirilgan
+        // bo'lsa (admin ham) shu ro'yxatga tushadi. ──
+        $employeeWorkload   = [];
+        $unassignedCount    = 0;
         if (!$isEmployee) {
-            $employees = \App\Models\User::where('role', 'bajaruvchi')->orderBy('name')->get();
+            $assignedIds = \App\Models\ProjectService::whereNotNull('assigned_user_id')
+                ->distinct()->pluck('assigned_user_id');
+            $employees = \App\Models\User::whereIn('id', $assignedIds)->orderBy('name')->get();
+
             foreach ($employees as $emp) {
                 $svcQ  = \App\Models\ProjectService::where('assigned_user_id', $emp->id);
                 $total = (clone $svcQ)->count();
                 if ($total === 0) continue;
 
                 $completed  = (clone $svcQ)->whereNotNull('completed_at')->count();
-                $inProgress = (clone $svcQ)->whereNotNull('work_started_at')->whereNull('completed_at')->count();
+                $inProgress = (clone $svcQ)->whereNotNull('work_started_at')->whereNull('completed_at')
+                    ->whereHas('project', fn ($p) => $p->whereNull('timer_paused_at'))->count();
+                $paused     = (clone $svcQ)->whereNotNull('work_started_at')->whereNull('completed_at')
+                    ->whereHas('project', fn ($p) => $p->whereNotNull('timer_paused_at'))->count();
 
-                // Har oy uchun ikkita son: shu oyda boshlangan ishlardan qanchasi
-                // hozir tugallangan (kok) va qanchasi hali jarayonda (qizil).
-                $monthlyDone = array_fill(1, 12, 0);
-                $monthlyProg = array_fill(1, 12, 0);
+                // Har oy uchun uchta son: shu oyda boshlangan ishlardan qanchasi
+                // hozir tugallangan, qanchasi jarayonda va qanchasi muzlatilgan.
+                $monthlyDone   = array_fill(1, 12, 0);
+                $monthlyProg   = array_fill(1, 12, 0);
+                $monthlyPaused = array_fill(1, 12, 0);
                 (clone $svcQ)->whereNotNull('work_started_at')
                     ->whereYear('work_started_at', $this->selYear)
-                    ->get(['work_started_at', 'completed_at'])
-                    ->each(function ($s) use (&$monthlyDone, &$monthlyProg) {
+                    ->with('project:id,timer_paused_at')
+                    ->get(['id', 'project_id', 'work_started_at', 'completed_at'])
+                    ->each(function ($s) use (&$monthlyDone, &$monthlyProg, &$monthlyPaused) {
                         $m = (int) $s->work_started_at->format('n');
-                        if ($s->completed_at) { $monthlyDone[$m]++; } else { $monthlyProg[$m]++; }
+                        if ($s->completed_at) {
+                            $monthlyDone[$m]++;
+                        } elseif ($s->project?->timer_paused_at) {
+                            $monthlyPaused[$m]++;
+                        } else {
+                            $monthlyProg[$m]++;
+                        }
                     });
 
                 $monthly = [];
                 for ($m = 1; $m <= 12; $m++) {
-                    $monthly[] = ['done' => $monthlyDone[$m], 'prog' => $monthlyProg[$m]];
+                    $monthly[] = ['done' => $monthlyDone[$m], 'prog' => $monthlyProg[$m], 'paused' => $monthlyPaused[$m]];
                 }
 
                 $employeeWorkload[] = [
@@ -387,13 +431,17 @@ class WelcomeHeroWidget extends Widget
                     'total'      => $total,
                     'completed'  => $completed,
                     'inProgress' => $inProgress,
+                    'paused'     => $paused,
                     'monthly'    => $monthly,
                 ];
             }
+
+            $unassignedCount = \App\Models\ProjectService::whereNull('assigned_user_id')->count();
         }
 
         return [
             'employeeWorkload' => $employeeWorkload,
+            'unassignedCount'  => $unassignedCount,
             'cashTodayGroups'   => $cashTodayGroups,
             'cashTodayTotal'    => $cashTodayTotal,
             'cashTodayUnlinked' => $cashTodayUnlinked,
