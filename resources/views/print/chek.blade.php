@@ -25,6 +25,9 @@
     .big { font-size: 16px; font-weight: 800; }
     .warn { border: 1px solid #000; padding: 1.5mm; margin-top: 2mm; font-weight: 700; text-align: center; }
     .footer { margin-top: 4mm; font-size: 10px; text-align: center; color: #333; }
+    .qr { margin-top: 3mm; text-align: center; }
+    .qr img { width: 22mm; height: 22mm; }
+    .qr .qr-label { font-size: 9px; color: #333; margin-top: 1mm; }
 </style>
 </head>
 <body>
@@ -67,6 +70,18 @@
     @if(!$payment->account_id)
     <div class="warn">⚠ SUMMA HISOBGA BOG'LANMAGAN</div>
     @endif
+
+    @php
+        $checkUrl = route('print.payment.chek.check', [
+            'number'    => ltrim($project->number, '#'),
+            'paymentId' => $payment->id,
+        ]);
+        $qrSrc = 'https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=0&data=' . urlencode($checkUrl);
+    @endphp
+    <div class="qr">
+        <img src="{{ $qrSrc }}" alt="QR">
+        <div class="qr-label">Chekni tekshirish</div>
+    </div>
 
     <div class="footer">Xaridingiz uchun rahmat!</div>
 </div>

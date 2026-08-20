@@ -75,6 +75,19 @@ Route::get('/chegirma/{number}', function (string $number) {
     ]);
 })->name('chegirma.check');
 
+// Ommaviy chek tekshirish sahifasi (chekdagi QR shu yerga ulanadi — login shart emas)
+Route::get('/chek-tekshirish/{number}/{paymentId}', function (string $number, int $paymentId) {
+    $project = \App\Models\Project::where('number', '#' . ltrim($number, '#'))
+        ->orWhere('number', $number)
+        ->firstOrFail();
+
+    $payment = \App\Models\Payment::where('id', $paymentId)
+        ->where('project_id', $project->id)
+        ->firstOrFail();
+
+    return view('print.chek-tekshirish', compact('project', 'payment'));
+})->name('print.payment.chek.check');
+
 // Pechat muharriri uchun kutubxonalar (CDN o'rniga o'z serverdan — tez, kesh bilan).
 // public/ papkadan o'qiladi (public_html'dan mustaqil), brauzer keshlaydi.
 Route::get('/pechat-asset/{name}', function (string $name) {
