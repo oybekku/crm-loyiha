@@ -88,11 +88,12 @@ class WelcomeHeroWidget extends Widget
         $svcLabels = Project::serviceOptions();
         $items = $q->orderByDesc('work_started_at')->get()->map(function ($s) use ($svcLabels) {
             return [
-                'seq'     => $s->project?->seq_no ?? $s->project?->number ?? '—',
-                'owner'   => $s->project?->owner_name ?? '—',
-                'service' => $svcLabels[$s->service_name] ?? $s->service_name,
-                'date'    => $s->work_started_at?->format('d.m.Y') ?? '—',
-                'status'  => $s->completed_at ? 'Tugallangan' : ($s->work_started_at ? 'Jarayonda' : 'Boshlanmagan'),
+                'projectId' => $s->project_id,
+                'seq'       => $s->project?->seq_no ?? $s->project?->number ?? '—',
+                'owner'     => $s->project?->owner_name ?? '—',
+                'service'   => $svcLabels[$s->service_name] ?? $s->service_name,
+                'date'      => $s->work_started_at?->format('d.m.Y') ?? '—',
+                'status'    => $s->completed_at ? 'Tugallangan' : ($s->work_started_at ? 'Jarayonda' : 'Boshlanmagan'),
             ];
         })->toArray();
 

@@ -839,6 +839,30 @@
 .ewl-month .p{color:#dc2626;font-weight:700}
 .ewl-month .p:hover{background:#fee2e2}
 .ewl-month .sep{color:#d1d5db;margin:0 1px}
+
+.ewl-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+.ewl-modal{background:#fff;border-radius:16px;max-width:520px;width:100%;max-height:80vh;overflow:auto;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.dark .ewl-modal{background:#0f172a;border:1px solid #334155}
+.ewl-modal-head{position:sticky;top:0;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #f1f5f9;gap:10px}
+.dark .ewl-modal-head{background:#0f172a;border-color:#334155}
+.ewl-modal-title{font-size:15px;font-weight:800;color:#111827}
+.dark .ewl-modal-title{color:#f1f5f9}
+.ewl-modal-close{background:#f3f4f6;border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;color:#6b7280;font-size:16px;line-height:1;flex-shrink:0}
+.dark .ewl-modal-close{background:#1e293b;color:#94a3b8}
+.ewl-modal-body{padding:8px 12px 14px}
+.ewl-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 10px;border-radius:10px;text-decoration:none;margin:4px 0}
+.ewl-item:hover{background:#f8fafc}
+.dark .ewl-item:hover{background:#1e293b}
+.ewl-item-seq{font-size:11px;font-weight:800;color:#4338ca;background:#eef2ff;border:1px solid #c7d2fe;border-radius:6px;padding:2px 8px;white-space:nowrap}
+.dark .ewl-item-seq{background:#1e1b4b;border-color:#3730a3;color:#a5b4fc}
+.ewl-item-owner{font-size:13.5px;font-weight:700;color:#111827;margin-top:3px}
+.dark .ewl-item-owner{color:#e2e8f0}
+.ewl-item-sub{font-size:11.5px;color:#9ca3af;margin-top:2px}
+.ewl-item-status{font-size:10.5px;font-weight:700;border-radius:20px;padding:3px 10px;white-space:nowrap;flex-shrink:0}
+.ewl-item-status.done{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
+.dark .ewl-item-status.done{background:#052e1a;border-color:#14532d;color:#4ade80}
+.ewl-item-status.prog{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
+.dark .ewl-item-status.prog{background:#3f0d16;border-color:#7f1d1d;color:#f87171}
 </style>
 
 <div class="ewl-panel">
@@ -888,22 +912,26 @@
 </div>
 </div>
 
-{{-- Raqamga bosilganda — aynan qaysi ishlar ekanini ko'rsatuvchi ro'yxat modali --}}
+{{-- Raqamga bosilganda — aynan qaysi ishlar ekanini ko'rsatuvchi ro'yxat modali.
+     Har bir qator loyihaning tahrirlash sahifasiga olib boradi (Loyihalar
+     bo'limidagi kabi) — ID qidirib yurish shart bo'lmasin. --}}
 @if($workloadModalOpen)
-<div class="ctp-overlay" wire:click.self="closeWorkloadModal" style="z-index:200">
-    <div class="ctp-modal">
-        <div class="ctp-modal-head">
-            <span class="ctp-modal-title">{{ $workloadModalTitle }}</span>
-            <button class="ctp-close" wire:click="closeWorkloadModal">✕</button>
+<div class="ewl-overlay" wire:click.self="closeWorkloadModal">
+    <div class="ewl-modal">
+        <div class="ewl-modal-head">
+            <span class="ewl-modal-title">{{ $workloadModalTitle }}</span>
+            <button class="ewl-modal-close" wire:click="closeWorkloadModal">✕</button>
         </div>
-        <div class="ctp-modal-body">
+        <div class="ewl-modal-body">
             @forelse($workloadModalItems as $it)
-            <div class="ctp-item">
+            <a href="/admin/projects/{{ $it['projectId'] }}/edit" class="ewl-item">
                 <div style="min-width:0">
-                    <div class="ctp-item-fish">№{{ $it['seq'] }} — {{ $it['owner'] }}</div>
-                    <div class="ctp-item-sub">{{ $it['service'] }} &middot; {{ $it['date'] }} &middot; {{ $it['status'] }}</div>
+                    <span class="ewl-item-seq">№{{ $it['seq'] }}</span>
+                    <div class="ewl-item-owner">{{ $it['owner'] }}</div>
+                    <div class="ewl-item-sub">{{ $it['service'] }} &middot; {{ $it['date'] }}</div>
                 </div>
-            </div>
+                <span class="ewl-item-status {{ $it['status'] === 'Tugallangan' ? 'done' : 'prog' }}">{{ $it['status'] }}</span>
+            </a>
             @empty
             <div style="padding:20px 0;text-align:center;color:#9ca3af;font-size:13px">Ish topilmadi</div>
             @endforelse
