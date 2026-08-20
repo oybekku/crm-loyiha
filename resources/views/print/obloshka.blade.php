@@ -47,7 +47,21 @@
         object-fit: fill;
         z-index: 0;
     }
-    .manzil, .yil { z-index: 2; }
+    .manzil, .yil, .raqam { z-index: 2; }
+
+    /* ── RAQAM: yuqoridagi metall panelning bo'sh chap qismida ── */
+    .raqam {
+        position: absolute;
+        top: 5.2%;
+        left: 4%;
+        transform: translateY(-50%);
+        font-family: 'Times New Roman', Times, serif;
+        font-size: 18pt;
+        font-weight: 600;
+        color: #ffffff;
+        letter-spacing: 0.03em;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+    }
 
     /* ── MANZIL (chapda, sarlavha ostida) ──
        Joyni sozlash: top / left / width qiymatlarini o'zgartiring */
@@ -120,6 +134,9 @@
 
 <div class="sheet">
     <img class="sheet-bg" src="{{ asset($bgImage) }}?v={{ @filemtime(public_path($bgImage)) ?: 2 }}" alt="">
+    @if($project->seq_no)
+    <div class="raqam">№{{ $project->seq_no }}</div>
+    @endif
     <div class="manzil" style="top:{{ $manzilTop }};left:{{ $manzilLeft }}">
         <div class="manzil-tuman">{{ $tuman }}</div>
         <div class="manzil-text" id="manzilEdit" contenteditable="true" spellcheck="false">{{ $manzil }}</div>
