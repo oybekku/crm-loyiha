@@ -264,10 +264,11 @@
     white-space: nowrap;
 }
 
-/* ── Bottom stats ── */
+/* ── Bottom stats — 2 karta, markazlashtirilgan ── */
 .bh-bottom {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(280px, 460px));
+    justify-content: center;
     gap: 16px;
     margin-top: 16px;
     position: relative;
@@ -341,7 +342,6 @@
 }
 
 @media(max-width:1100px) {
-    .bh-bottom { grid-template-columns: 1fr 1fr 1fr; }
     .bh-row3  { grid-template-columns: 1fr 1fr 1fr; }
     .bh-row3-recent { grid-column: 1 / -1; }
 }
@@ -490,7 +490,7 @@
             <div class="bh-stat-label">Moliyaviy statistika</div>
             <div class="bh-stat-value" style="margin-left:auto;line-height:1">{{ $statProjects }} ta</div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:3px;margin-top:8px;font-size:12.5px">
+        <div style="display:flex;flex-direction:column;gap:5px;margin-top:8px;font-size:16px">
             <div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.4px">Umumiy — {{ $statProjects }} ta</div>
             <div style="display:flex;justify-content:space-between"><span style="color:#6b7280">Jami summa</span><span style="font-weight:700;color:#374151">{{ number_format($statTotalSum, 0, '.', ' ') }} so'm</span></div>
             <div style="display:flex;justify-content:space-between"><span style="color:#6b7280">Jami to'langan</span><span style="font-weight:700;color:#16a34a">{{ number_format($statPaidSum, 0, '.', ' ') }} so'm</span></div>
@@ -519,7 +519,7 @@
         </div>
         @if(!empty($firmReport))
         <div class="bh-stat-value" style="font-size:24px">{{ number_format($firmReport['toLanishiKerakJami'], 0, '.', ' ') }} <span style="font-size:14px;font-weight:600">so'm</span></div>
-        <div class="bh-stat-desc" style="white-space:normal">{{ $firmReport['toLanganCount'] }} ta loyiha bo'yicha hodimlarga hali to'lanmagan qism</div>
+        <div class="bh-stat-desc" style="white-space:normal;font-size:16px">{{ $firmReport['toLanganCount'] }} ta loyiha bo'yicha hodimlarga hali to'lanmagan qism</div>
         <div style="margin-top:12px;font-size:11px">
             <div style="display:grid;grid-template-columns:1.3fr .9fr .9fr .9fr;gap:4px;padding-bottom:4px;border-bottom:1px dashed #e5e7eb;font-size:9.5px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.3px">
                 <span>Hodim</span>
@@ -539,31 +539,11 @@
         </div>
         @else
         <div class="bh-stat-value" style="font-size:26px">{{ number_format($statTotalSum, 0, '.', ' ') }} <span style="font-size:15px;font-weight:600">so'm</span></div>
-        <div class="bh-stat-desc">To'langan: {{ number_format($statPaidSum, 0, '.', ' ') }} so'm</div>
+        <div class="bh-stat-desc" style="font-size:16px">To'langan: {{ number_format($statPaidSum, 0, '.', ' ') }} so'm</div>
         <div class="bh-stat-bar-wrap">
             <div class="bh-stat-bar" style="width:{{ $statPaidPct }}%"></div>
         </div>
         @endif
-    </div>
-
-    {{-- Jami loyihalar (Vaqti o'tgan shu yerda, alohida karta shart emas) --}}
-    <div class="bh-stat bh-stat--blue">
-        <div class="bh-stat-head" style="display:flex;align-items:center;gap:8px">
-            <div class="bh-stat-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-            </div>
-            <div class="bh-stat-label">Jami loyihalar</div>
-            <div class="bh-stat-value" style="margin-left:auto;line-height:1"
-                 x-data="{n:0}"
-                 x-init="setTimeout(()=>{let t={{ $statProjects }},d=900,s=Date.now(),iv=setInterval(()=>{let p=Math.min((Date.now()-s)/d,1);n=Math.floor((1-Math.pow(1-p,3))*t);if(p>=1){n=t;clearInterval(iv);}},16);},300)"
-                 x-text="n">0</div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:3px;margin-top:10px;font-size:13px;color:#6b7280">
-            <div>Yangi: <strong style="color:#374151">{{ $statYangi }}</strong></div>
-            <div>Jarayonda: <strong style="color:#374151">{{ $statJarayon }}</strong></div>
-            <div>Tugallangan: <strong style="color:#374151">{{ $statDone }}</strong></div>
-            <div>Vaqti o'tgan: <strong style="color:{{ $statOverdue > 0 ? '#dc2626' : '#374151' }}">{{ $statOverdue }}</strong></div>
-        </div>
     </div>
 
 </div>
