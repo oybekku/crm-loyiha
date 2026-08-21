@@ -264,63 +264,81 @@
     white-space: nowrap;
 }
 
-/* ── Bottom stats — 2 karta, markazlashtirilgan ── */
+/* ── Bottom stats — 2 karta, markazlashtirilgan, oq fonli professional karta ── */
 .bh-bottom {
     display: grid;
-    grid-template-columns: repeat(2, minmax(280px, 460px));
+    grid-template-columns: repeat(2, minmax(300px, 440px));
     justify-content: center;
-    gap: 16px;
-    margin-top: 16px;
+    gap: 20px;
+    margin-top: 18px;
     position: relative;
     z-index: 1;
 }
 .bh-stat {
-    background: rgba(255,255,255,0.12);
-    border-radius: 12px;
-    border: 1px solid rgba(255,255,255,0.30);
-    padding: 22px 24px 20px;
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid #eef0f3;
+    padding: 24px 26px 22px;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 2px 10px rgba(15,23,42,.05);
+    transition: transform .18s ease, box-shadow .18s ease;
+}
+.bh-stat:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 26px rgba(15,23,42,.09);
 }
 
 .bh-stat-head {
-    display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+    padding-bottom: 14px; border-bottom: 1px solid #f1f5f9;
 }
 .bh-stat-icon {
-    width: 36px; height: 36px; border-radius: 10px;
+    width: 40px; height: 40px; border-radius: 12px;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
 }
-.bh-stat--blue   .bh-stat-icon,
-.bh-stat--green  .bh-stat-icon,
-.bh-stat--red    .bh-stat-icon,
-.bh-stat--purple .bh-stat-icon { background: rgba(0,0,0,0.05); color: #374151; }
+.bh-stat--red    .bh-stat-icon { background: #fef2f2; color: #dc2626; }
+.bh-stat--green  .bh-stat-icon { background: #f0fdf4; color: #16a34a; }
+.bh-stat--blue   .bh-stat-icon { background: #eff6ff; color: #2563eb; }
+.bh-stat--purple .bh-stat-icon { background: #f5f3ff; color: #7c3aed; }
 
 .bh-stat-label {
-    font-size: 13px; font-weight: 700; color: #6b7280;
-    text-transform: uppercase; letter-spacing: .4px;
+    font-size: 12.5px; font-weight: 800; color: #6b7280;
+    text-transform: uppercase; letter-spacing: .5px;
 }
 .bh-stat-value {
-    font-size: 32px; font-weight: 900; line-height: 1.1;
+    font-size: 30px; font-weight: 900; line-height: 1.1;
     white-space: nowrap; font-variant-numeric: tabular-nums;
+    color: #111827;
 }
-.bh-stat--blue   .bh-stat-value,
-.bh-stat--green  .bh-stat-value,
-.bh-stat--red    .bh-stat-value,
-.bh-stat--purple .bh-stat-value { color: #111827; }
 
 .bh-stat-desc {
-    font-size: 13px; color: #9ca3af; margin-top: 6px;
+    font-size: 16px; font-weight: 600; color: #16a34a; margin-top: 8px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .bh-stat-bar-wrap {
-    margin-top: 10px; background: #f3f4f6;
-    border-radius: 4px; height: 4px; overflow: hidden;
+    margin-top: 12px; background: #f1f5f9;
+    border-radius: 6px; height: 7px; overflow: hidden;
 }
 .bh-stat-bar {
-    height: 100%; border-radius: 4px;
-    background: linear-gradient(90deg,#9ca3af,#d1d5db);
+    height: 100%; border-radius: 6px;
+    background: linear-gradient(90deg,#16a34a,#22c55e);
     transition: width 1s ease;
+}
+
+/* ── Moliyaviy statistika ichidagi qatorlar ── */
+.bh-fin-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 7px 0;
+}
+.bh-fin-row + .bh-fin-row { border-top: 1px solid #f8fafc; }
+.bh-fin-k { color: #6b7280; font-size: 16px; }
+.bh-fin-v { font-weight: 700; color: #111827; font-size: 16px; font-variant-numeric: tabular-nums; }
+.bh-fin-section {
+    font-size: 11px; font-weight: 800; color: #9ca3af; text-transform: uppercase;
+    letter-spacing: .5px; margin-top: 14px; padding-top: 12px; border-top: 1px dashed #e5e7eb;
+    margin-bottom: 2px;
 }
 
 /* ── Row 3: mini kartalar + so'nggi loyihalar ── */
@@ -483,23 +501,24 @@
 
     {{-- Moliyaviy statistika — 58 tani ham, 52 tani ham, 6 tani ham alohida-alohida ko'rsatadi --}}
     <div class="bh-stat bh-stat--red">
-        <div class="bh-stat-head" style="display:flex;align-items:center;gap:8px">
+        <div class="bh-stat-head">
             <div class="bh-stat-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             </div>
-            <div class="bh-stat-label">Moliyaviy statistika</div>
-            <div class="bh-stat-value" style="margin-left:auto;line-height:1">{{ $statProjects }} ta</div>
+            <div>
+                <div class="bh-stat-label">Moliyaviy statistika</div>
+                <div class="bh-stat-value" style="font-size:22px;margin-top:2px">{{ $statProjects }} ta loyiha</div>
+            </div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:5px;margin-top:8px;font-size:16px">
-            <div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.4px">Umumiy — {{ $statProjects }} ta</div>
-            <div style="display:flex;justify-content:space-between"><span style="color:#6b7280">Jami summa</span><span style="font-weight:700;color:#374151">{{ number_format($statTotalSum, 0, '.', ' ') }} so'm</span></div>
-            <div style="display:flex;justify-content:space-between"><span style="color:#6b7280">Jami to'langan</span><span style="font-weight:700;color:#16a34a">{{ number_format($statPaidSum, 0, '.', ' ') }} so'm</span></div>
-            <div style="display:flex;justify-content:space-between"><span style="color:#6b7280">Jami qarz</span><span style="font-weight:700;color:#dc2626">{{ number_format($statDebt, 0, '.', ' ') }} so'm</span></div>
+        <div>
+            <div class="bh-fin-row"><span class="bh-fin-k">Jami summa</span><span class="bh-fin-v">{{ number_format($statTotalSum, 0, '.', ' ') }} so'm</span></div>
+            <div class="bh-fin-row"><span class="bh-fin-k">Jami to'langan</span><span class="bh-fin-v" style="color:#16a34a">{{ number_format($statPaidSum, 0, '.', ' ') }} so'm</span></div>
+            <div class="bh-fin-row"><span class="bh-fin-k">Jami qarz</span><span class="bh-fin-v" style="color:#dc2626">{{ number_format($statDebt, 0, '.', ' ') }} so'm</span></div>
 
             @if(count($byServiceType) > 0)
-            <div style="font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.4px;margin-top:7px;border-top:1px dashed #e5e7eb;padding-top:6px">Ishlar turlari bo'yicha</div>
+            <div class="bh-fin-section">Ishlar turlari bo'yicha</div>
             @foreach($byServiceType as $svc)
-            <div style="display:flex;justify-content:space-between"><span style="color:#6b7280">{{ $svc['label'] }} <span style="color:#9ca3af">({{ $svc['count'] }} ta)</span></span><span style="font-weight:700;color:#374151">{{ number_format($svc['total'], 0, '.', ' ') }} so'm</span></div>
+            <div class="bh-fin-row"><span class="bh-fin-k">{{ $svc['label'] }} <span style="color:#c1c7d0;font-weight:600">({{ $svc['count'] }} ta)</span></span><span class="bh-fin-v">{{ number_format($svc['total'], 0, '.', ' ') }} so'm</span></div>
             @endforeach
             @endif
         </div>
@@ -507,9 +526,9 @@
 
     {{-- Jami summa --}}
     <div class="bh-stat bh-stat--green">
-        <div class="bh-stat-head" style="display:flex;align-items:center;gap:8px">
+        <div class="bh-stat-head">
             <div class="bh-stat-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
             </div>
             @if(!empty($firmReport))
             <div class="bh-stat-label">To'lanishi kerak</div>
@@ -519,7 +538,7 @@
         </div>
         @if(!empty($firmReport))
         <div class="bh-stat-value" style="font-size:24px">{{ number_format($firmReport['toLanishiKerakJami'], 0, '.', ' ') }} <span style="font-size:14px;font-weight:600">so'm</span></div>
-        <div class="bh-stat-desc" style="white-space:normal;font-size:16px">{{ $firmReport['toLanganCount'] }} ta loyiha bo'yicha hodimlarga hali to'lanmagan qism</div>
+        <div class="bh-stat-desc" style="white-space:normal;color:#6b7280">{{ $firmReport['toLanganCount'] }} ta loyiha bo'yicha hodimlarga hali to'lanmagan qism</div>
         <div style="margin-top:12px;font-size:11px">
             <div style="display:grid;grid-template-columns:1.3fr .9fr .9fr .9fr;gap:4px;padding-bottom:4px;border-bottom:1px dashed #e5e7eb;font-size:9.5px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.3px">
                 <span>Hodim</span>
