@@ -87,6 +87,10 @@ class WelcomeHeroWidget extends Widget
                     ->whereHas('project', fn ($p) => $p->whereNull('timer_paused_at'));
                 $titleSuffix = 'Jarayonda';
                 break;
+            case 'notstarted':
+                $q->whereNull('work_started_at')->whereNull('completed_at');
+                $titleSuffix = 'Boshlanmagan';
+                break;
             case 'paused':
                 $q->whereNotNull('work_started_at')->whereNull('completed_at')
                     ->whereHas('project', fn ($p) => $p->whereNotNull('timer_paused_at'));
@@ -421,6 +425,11 @@ class WelcomeHeroWidget extends Widget
                 $paused     = (clone $svcQ)->whereNotNull('work_started_at')->whereNull('completed_at')
                     ->whereHas('project', fn ($p) => $p->whereNotNull('timer_paused_at'))->count();
 
+                // Boshlanmagan — biriktirilgan, lekin hali ish boshlanmagan
+                // (work_started_at yo'q). Jami = Yakunlangan+Jarayonda+
+                // Muzlatilgan+Boshlanmagan bo'lishi uchun.
+                $notStarted = max(0, $total - $completed - $inProgress - $paused);
+
                 // Kechikayotgan — jarayondagilarning ichidan muddati o'tganlari
                 // (is_late — accessor, SQL'da hisoblab bo'lmaydi, shu sabab PHP'da filtrlanadi).
                 $overdue = (clone $svcQ)->whereNotNull('work_started_at')->whereNull('completed_at')
@@ -470,6 +479,7 @@ class WelcomeHeroWidget extends Widget
                     'inProgress' => $inProgress,
                     'overdue'    => $overdue,
                     'paused'     => $paused,
+                    'notStarted' => $notStarted,
                     'monthly'    => $monthly,
                 ];
             }

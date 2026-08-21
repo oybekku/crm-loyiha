@@ -871,6 +871,7 @@
                 <tr>
                     <th>Mutaxassis</th>
                     <th style="text-align:center">Jami</th>
+                    <th style="text-align:center">Boshlanmagan</th>
                     <th style="text-align:center">Yakunlangan</th>
                     <th style="text-align:center">Jarayonda</th>
                     <th style="text-align:center">Kechikayotgan</th>
@@ -887,6 +888,7 @@
                 <tr>
                     <td class="ewl-name">{{ $emp['name'] }}</td>
                     <td class="ewl-num" wire:click="showWorkloadItems({{ $emp['id'] }}, 'total')">{{ $emp['total'] }}</td>
+                    <td class="ewl-num" style="color:#9ca3af" wire:click="showWorkloadItems({{ $emp['id'] }}, 'notstarted')">{{ $emp['notStarted'] }}</td>
                     <td class="ewl-num" style="color:#16a34a" wire:click="showWorkloadItems({{ $emp['id'] }}, 'completed')">{{ $emp['completed'] }}</td>
                     <td class="ewl-num" style="color:#d97706" wire:click="showWorkloadItems({{ $emp['id'] }}, 'inprogress')">{{ $emp['inProgress'] }}</td>
                     <td class="ewl-num" style="color:#dc2626" wire:click="showWorkloadItems({{ $emp['id'] }}, 'overdue')">{{ $emp['overdue'] }}</td>
@@ -939,7 +941,15 @@
                 @if($it['lateDays'] > 0)
                 <span class="ewl-item-status late">{{ $it['lateDays'] }} kun kech</span>
                 @else
-                <span class="ewl-item-status {{ $it['status'] === 'Tugallangan' ? 'done' : ($it['status'] === 'Muzlatilgan' ? 'paused' : 'prog') }}">{{ $it['status'] }}</span>
+                @php
+                    $statusClass = match($it['status']) {
+                        'Tugallangan' => 'done',
+                        'Muzlatilgan' => 'paused',
+                        'Boshlanmagan' => 'paused',
+                        default => 'prog',
+                    };
+                @endphp
+                <span class="ewl-item-status {{ $statusClass }}">{{ $it['status'] }}</span>
                 @endif
             </a>
             @empty
