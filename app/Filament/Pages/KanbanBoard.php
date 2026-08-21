@@ -895,6 +895,15 @@ class KanbanBoard extends Page
                 'paymentAccountId.required' => "Qaysi hisobga tushganini tanlang — aks holda pul Buxgalteriyada ko'rinmaydi",
             ]);
 
+            // Kamida bitta xizmat tanlanishi shart — aks holda summa hech
+            // qaysi xizmatga (demak hech qaysi hodimga) bog'lanmay qoladi va
+            // komissiya hisobida "yo'qolib" ketadi.
+            if (empty($this->paymentSelectedServices)) {
+                $this->addError('paymentSelectedServices',
+                    "Qaysi xizmat uchun to'lov ekanini belgilang — aks holda summa hech qaysi hodimga bog'lanmaydi");
+                return;
+            }
+
             // Ortiqcha to'lovni bloklash — to'lov ish summasidan oshmasligi kerak
             $ishSummasi = (float) $project->services()->sum('final_price');
             $tolangan   = (float) $project->payments()->sum('amount');

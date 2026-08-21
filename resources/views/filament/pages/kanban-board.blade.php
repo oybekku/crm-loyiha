@@ -2388,6 +2388,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                     </div>
                     @endforeach
                 </div>
+                @error('paymentSelectedServices')<div style="font-size:11px;color:#dc2626 !important;margin-top:6px">{{ $message }}</div>@enderror
             </div>
             @endif
 
