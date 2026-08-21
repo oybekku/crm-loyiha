@@ -91,6 +91,15 @@ class EmployeePayableService
 
         $paid = 0.0;
         foreach ($project->payments as $pay) {
+            // Aniq taqsimot mavjud bo'lsa (yangi to'lovlar — ketma-ket/waterfall
+            // usulida saqlangan) — o'sha aniq summani ishlatamiz, taxminiy
+            // (narx nisbati bo'yicha proporsional) hisoblash shart emas.
+            $split = $pay->service_split ?? null;
+            if (is_array($split) && array_key_exists($service->service_name, $split)) {
+                $paid += (float) $split[$service->service_name];
+                continue;
+            }
+
             $svcs = $pay->services ?? [];
             if (empty($svcs) || !in_array($service->service_name, $svcs, true)) {
                 continue;

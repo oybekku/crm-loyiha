@@ -915,15 +915,43 @@ class KanbanBoard extends Page
                 return;
             }
 
+            // Bir nechta xizmat tanlangan bo'lsa — summani ketma-ket (waterfall)
+            // taqsimlaymiz: birinchi xizmat (Toposyomka -> Eskiz loyiha -> Ariza
+            // tartibida) to'liq qoplangunча, keyin qolgan summa navbatdagiga
+            // o'tadi. Eski (narx nisbati bo'yicha proporsional) usul o'rniga.
+            $serviceSplit = null;
+            if (count($this->paymentSelectedServices) > 1) {
+                $priorityOrder   = array_keys(Project::serviceOptions());
+                $orderedServices = array_values(array_filter(
+                    $priorityOrder,
+                    fn ($sn) => in_array($sn, $this->paymentSelectedServices, true)
+                ));
+                $servicesByName = $project->services->keyBy('service_name');
+                $remaining      = (float) $this->paymentAmount;
+                $serviceSplit   = [];
+                foreach ($orderedServices as $i => $sn) {
+                    $svc = $servicesByName->get($sn);
+                    if (!$svc) continue;
+                    $already = \App\Services\EmployeePayableService::paidAmountForService($svc, $project);
+                    $left    = max(0, (float) $svc->final_price - $already);
+                    $isLast  = $i === count($orderedServices) - 1;
+                    $take    = $isLast ? $remaining : min($remaining, $left);
+                    if ($take <= 0 && !$isLast) continue;
+                    $serviceSplit[$sn] = round($take, 2);
+                    $remaining -= $take;
+                }
+            }
+
             $payment = Payment::create([
-                'project_id'   => $project->id,
-                'amount'       => (float) $this->paymentAmount,
-                'payment_date' => $this->paymentDate,
-                'method'       => $this->paymentMethod,
-                'account_id'   => $this->paymentAccountId ?: null,
-                'note'         => trim($this->paymentNote) ?: null,
-                'created_by'   => auth()->id(),
-                'services'     => !empty($this->paymentSelectedServices) ? $this->paymentSelectedServices : null,
+                'project_id'    => $project->id,
+                'amount'        => (float) $this->paymentAmount,
+                'payment_date'  => $this->paymentDate,
+                'method'        => $this->paymentMethod,
+                'account_id'    => $this->paymentAccountId ?: null,
+                'note'          => trim($this->paymentNote) ?: null,
+                'created_by'    => auth()->id(),
+                'services'      => !empty($this->paymentSelectedServices) ? $this->paymentSelectedServices : null,
+                'service_split' => $serviceSplit,
             ]);
 
             PaymentLog::create([
@@ -1096,11 +1124,15 @@ class KanbanBoard extends Page
         }
 
         $payment->update([
-            'amount'       => $newAmount,
-            'payment_date' => $this->editPaymentDate,
-            'method'       => $this->editPaymentMethod,
-            'account_id'   => $this->editPaymentAccountId,
-            'services'     => $newServices,
+            'amount'        => $newAmount,
+            'payment_date'  => $this->editPaymentDate,
+            'method'        => $this->editPaymentMethod,
+            'account_id'    => $this->editPaymentAccountId,
+            'services'      => $newServices,
+            // Summa yoki xizmatlar o'zgargan bo'lsa, avval saqlangan aniq
+            // taqsimot (agar bo'lsa) endi haqiqatga mos kelmaydi — tozalab,
+            // eski (narx nisbati bo'yicha proporsional) formulaga qaytariladi.
+            'service_split' => ($servicesChanged || $oldAmount !== $newAmount) ? null : $payment->service_split,
         ]);
 
         PaymentLog::create([

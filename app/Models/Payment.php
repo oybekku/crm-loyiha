@@ -7,13 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 class Payment extends Model
 {
     protected $fillable = [
-        'project_id', 'amount', 'payment_date', 'method', 'account_id', 'note', 'created_by', 'services',
+        'project_id', 'amount', 'payment_date', 'method', 'account_id', 'note', 'created_by', 'services', 'service_split',
     ];
 
     protected $casts = [
-        'amount'       => 'decimal:2',
-        'payment_date' => 'date',
-        'services'     => 'array',
+        'amount'        => 'decimal:2',
+        'payment_date'  => 'date',
+        'services'      => 'array',
+        'service_split' => 'array',
     ];
 
     protected static function booted(): void
