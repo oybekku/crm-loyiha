@@ -384,6 +384,12 @@
 .dark .bh-hodim-kerak--zero { color: #64748b; }
 .bh-hodim-paid { text-align: right; font-weight: 600; color: #16a34a; }
 .dark .bh-hodim-paid { color: #4ade80; }
+.bh-hodim-total { border-top: 1px dashed #e5e7eb; border-bottom: none; margin-top: 4px; padding-top: 8px; }
+.dark .bh-hodim-total { border-color: #334155; }
+.bh-hodim-total .bh-hodim-name { font-weight: 800; color: #111827; }
+.dark .bh-hodim-total .bh-hodim-name { color: #f1f5f9; }
+.bh-hodim-total .bh-hodim-hisob { font-weight: 800; }
+.bh-hodim-total .bh-hodim-paid { font-weight: 800; }
 
 /* ── Tanlangan davr belgisi ── */
 .bh-period-badge {
@@ -636,6 +642,17 @@
                 <span class="bh-hodim-paid">{{ number_format($emp['paid'], 0, '.', ' ') }}</span>
             </div>
             @endforeach
+            @php
+                $hodimTotalHisob = array_sum(array_column($firmReport['employeeComm'], 'commission'));
+                $hodimTotalKerak = array_sum(array_column($firmReport['employeeComm'], 'kerak'));
+                $hodimTotalPaid  = array_sum(array_column($firmReport['employeeComm'], 'paid'));
+            @endphp
+            <div class="bh-hodim-row bh-hodim-total">
+                <span class="bh-hodim-name">Jami</span>
+                <span class="bh-hodim-hisob">{{ number_format($hodimTotalHisob, 0, '.', ' ') }}</span>
+                <span class="bh-hodim-kerak {{ $hodimTotalKerak > 0 ? 'bh-hodim-kerak--due' : 'bh-hodim-kerak--zero' }}">{{ number_format($hodimTotalKerak, 0, '.', ' ') }}</span>
+                <span class="bh-hodim-paid">{{ number_format($hodimTotalPaid, 0, '.', ' ') }}</span>
+            </div>
         </div>
     </div>
     @endif
