@@ -264,35 +264,36 @@
     white-space: nowrap;
 }
 
-/* ── Bottom stats — 2 karta, markazlashtirilgan, oq fonli professional karta ── */
+/* ── Bottom stats — 4 ta alohida, shaffof (faqat ramkali) karta ── */
 .bh-bottom {
     display: grid;
-    grid-template-columns: repeat(2, minmax(300px, 440px));
-    justify-content: center;
-    gap: 20px;
+    grid-template-columns: repeat(4, minmax(230px, 1fr));
+    gap: 18px;
     margin-top: 18px;
     position: relative;
     z-index: 1;
 }
 .bh-stat {
-    background: #fff;
+    background: transparent;
     border-radius: 16px;
-    border: 1px solid #eef0f3;
+    border: 1px solid rgba(15,23,42,.12);
     padding: 24px 26px 22px;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 2px 10px rgba(15,23,42,.05);
-    transition: transform .18s ease, box-shadow .18s ease;
+    transition: transform .18s ease, border-color .18s ease;
 }
 .bh-stat:hover {
     transform: translateY(-2px);
-    box-shadow: 0 12px 26px rgba(15,23,42,.09);
+    border-color: rgba(15,23,42,.22);
 }
+.dark .bh-stat { border-color: rgba(255,255,255,.16); }
+.dark .bh-stat:hover { border-color: rgba(255,255,255,.28); }
 
 .bh-stat-head {
     display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
     padding-bottom: 14px; border-bottom: 1px solid #f1f5f9;
 }
+.dark .bh-stat-head { border-color: #334155; }
 .bh-stat-icon {
     width: 40px; height: 40px; border-radius: 12px;
     display: flex; align-items: center; justify-content: center;
@@ -302,25 +303,35 @@
 .bh-stat--green  .bh-stat-icon { background: #f0fdf4; color: #16a34a; }
 .bh-stat--blue   .bh-stat-icon { background: #eff6ff; color: #2563eb; }
 .bh-stat--purple .bh-stat-icon { background: #f5f3ff; color: #7c3aed; }
+.dark .bh-stat--red    .bh-stat-icon { background: #4c0519; color: #f87171; }
+.dark .bh-stat--green  .bh-stat-icon { background: #052e1a; color: #4ade80; }
+.dark .bh-stat--blue   .bh-stat-icon { background: #0c2b52; color: #93c5fd; }
+.dark .bh-stat--purple .bh-stat-icon { background: #2e1065; color: #c4b5fd; }
 
 .bh-stat-label {
     font-size: 12.5px; font-weight: 800; color: #6b7280;
     text-transform: uppercase; letter-spacing: .5px;
 }
+.dark .bh-stat-label { color: #94a3b8; }
 .bh-stat-value {
     font-size: 30px; font-weight: 900; line-height: 1.1;
     white-space: nowrap; font-variant-numeric: tabular-nums;
     color: #111827;
 }
+.dark .bh-stat-value { color: #f1f5f9; }
 
 .bh-stat-desc {
     font-size: 16px; font-weight: 600; color: #16a34a; margin-top: 8px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+.dark .bh-stat-desc { color: #4ade80; }
+.bh-stat-desc-muted { color: #6b7280; }
+.dark .bh-stat-desc-muted { color: #94a3b8; }
 .bh-stat-bar-wrap {
     margin-top: 12px; background: #f1f5f9;
     border-radius: 6px; height: 7px; overflow: hidden;
 }
+.dark .bh-stat-bar-wrap { background: #1e293b; }
 .bh-stat-bar {
     height: 100%; border-radius: 6px;
     background: linear-gradient(90deg,#16a34a,#22c55e);
@@ -333,13 +344,55 @@
     padding: 7px 0;
 }
 .bh-fin-row + .bh-fin-row { border-top: 1px solid #f8fafc; }
+.dark .bh-fin-row + .bh-fin-row { border-color: #1e293b; }
 .bh-fin-k { color: #6b7280; font-size: 16px; }
+.dark .bh-fin-k { color: #94a3b8; }
 .bh-fin-v { font-weight: 700; color: #111827; font-size: 16px; font-variant-numeric: tabular-nums; }
+.dark .bh-fin-v { color: #f1f5f9; }
+.bh-fin-v--green { color: #16a34a; }
+.dark .bh-fin-v--green { color: #4ade80; }
+.bh-fin-v--red { color: #dc2626; }
+.dark .bh-fin-v--red { color: #f87171; }
 .bh-fin-section {
     font-size: 11px; font-weight: 800; color: #9ca3af; text-transform: uppercase;
     letter-spacing: .5px; margin-top: 14px; padding-top: 12px; border-top: 1px dashed #e5e7eb;
     margin-bottom: 2px;
 }
+.dark .bh-fin-section { color: #64748b; border-color: #334155; }
+
+/* ── "Hodim" kartasi jadvali ── */
+.bh-hodim-head {
+    display: grid; grid-template-columns: 1.3fr .9fr .9fr .9fr; gap: 4px;
+    padding-bottom: 4px; border-bottom: 1px dashed #e5e7eb;
+    font-size: 9.5px; font-weight: 700; color: #9ca3af;
+    text-transform: uppercase; letter-spacing: .3px;
+}
+.dark .bh-hodim-head { border-color: #334155; color: #64748b; }
+.bh-hodim-row {
+    display: grid; grid-template-columns: 1.3fr .9fr .9fr .9fr; gap: 4px;
+    padding: 4px 0; border-bottom: 1px dashed #f3f4f6; font-size: 11px;
+}
+.dark .bh-hodim-row { border-color: #1e293b; }
+.bh-hodim-name { color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dark .bh-hodim-name { color: #94a3b8; }
+.bh-hodim-hisob { text-align: right; font-weight: 600; color: #374151; }
+.dark .bh-hodim-hisob { color: #cbd5e1; }
+.bh-hodim-kerak { text-align: right; font-weight: 700; }
+.bh-hodim-kerak--due { color: #d97706; }
+.dark .bh-hodim-kerak--due { color: #fbbf24; }
+.bh-hodim-kerak--zero { color: #9ca3af; }
+.dark .bh-hodim-kerak--zero { color: #64748b; }
+.bh-hodim-paid { text-align: right; font-weight: 600; color: #16a34a; }
+.dark .bh-hodim-paid { color: #4ade80; }
+
+/* ── Tanlangan davr belgisi ── */
+.bh-period-badge {
+    font-size: 13px; font-weight: 700; color: #2563eb;
+    background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 5px 14px;
+}
+.dark .bh-period-badge { background: #0c2b52; border-color: #1e40af; color: #93c5fd; }
+.bh-period-sub { font-size: 11px; color: #9ca3af; }
+.dark .bh-period-sub { color: #64748b; }
 
 /* ── Row 3: mini kartalar + so'nggi loyihalar ── */
 .bh-row3 {
@@ -360,6 +413,7 @@
 }
 
 @media(max-width:1100px) {
+    .bh-bottom { grid-template-columns: repeat(2, 1fr); }
     .bh-row3  { grid-template-columns: 1fr 1fr 1fr; }
     .bh-row3-recent { grid-column: 1 / -1; }
 }
@@ -490,16 +544,16 @@
 {{-- ── Tanlangan davr yorlig'i ── --}}
 @if(!$isEmployee)
 <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;position:relative;z-index:1">
-    <span style="font-size:13px;font-weight:700;color:#2563eb;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:5px 14px">📅 {{ $monthLabel }}</span>
-    <span style="font-size:11px;color:#9ca3af">— shu oyda ochilgan loyihalar hisoboti</span>
+    <span class="bh-period-badge">📅 {{ $monthLabel }}</span>
+    <span class="bh-period-sub">— shu oyda ochilgan loyihalar hisoboti</span>
 </div>
 @endif
 
-{{-- ── BOTTOM: 3 alohida stat karta (faqat admin/menejer) ── --}}
+{{-- ── BOTTOM: 4 alohida stat karta (faqat admin/menejer) ── --}}
 @if(!$isEmployee)
 <div class="bh-bottom bh-secret" :class="{ 'bh-locked': !statShown }">
 
-    {{-- Moliyaviy statistika — 58 tani ham, 52 tani ham, 6 tani ham alohida-alohida ko'rsatadi --}}
+    {{-- 1. Moliyaviy statistika --}}
     <div class="bh-stat bh-stat--red">
         <div class="bh-stat-head">
             <div class="bh-stat-icon">
@@ -512,19 +566,29 @@
         </div>
         <div>
             <div class="bh-fin-row"><span class="bh-fin-k">Jami summa</span><span class="bh-fin-v">{{ number_format($statTotalSum, 0, '.', ' ') }} so'm</span></div>
-            <div class="bh-fin-row"><span class="bh-fin-k">Jami to'langan</span><span class="bh-fin-v" style="color:#16a34a">{{ number_format($statPaidSum, 0, '.', ' ') }} so'm</span></div>
-            <div class="bh-fin-row"><span class="bh-fin-k">Jami qarz</span><span class="bh-fin-v" style="color:#dc2626">{{ number_format($statDebt, 0, '.', ' ') }} so'm</span></div>
-
-            @if(count($byServiceType) > 0)
-            <div class="bh-fin-section">Ishlar turlari bo'yicha</div>
-            @foreach($byServiceType as $svc)
-            <div class="bh-fin-row"><span class="bh-fin-k">{{ $svc['label'] }} <span style="color:#c1c7d0;font-weight:600">({{ $svc['count'] }} ta)</span></span><span class="bh-fin-v">{{ number_format($svc['total'], 0, '.', ' ') }} so'm</span></div>
-            @endforeach
-            @endif
+            <div class="bh-fin-row"><span class="bh-fin-k">Jami to'langan</span><span class="bh-fin-v bh-fin-v--green">{{ number_format($statPaidSum, 0, '.', ' ') }} so'm</span></div>
+            <div class="bh-fin-row"><span class="bh-fin-k">Jami qarz</span><span class="bh-fin-v bh-fin-v--red">{{ number_format($statDebt, 0, '.', ' ') }} so'm</span></div>
         </div>
     </div>
 
-    {{-- Jami summa --}}
+    {{-- 2. Ishlar turlari bo'yicha --}}
+    @if(count($byServiceType) > 0)
+    <div class="bh-stat bh-stat--blue">
+        <div class="bh-stat-head">
+            <div class="bh-stat-icon">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            </div>
+            <div class="bh-stat-label">Ishlar turlari bo'yicha</div>
+        </div>
+        <div>
+            @foreach($byServiceType as $svc)
+            <div class="bh-fin-row"><span class="bh-fin-k">{{ $svc['label'] }} <span style="color:#c1c7d0;font-weight:600">({{ $svc['count'] }} ta)</span></span><span class="bh-fin-v">{{ number_format($svc['total'], 0, '.', ' ') }} so'm</span></div>
+            @endforeach
+        </div>
+    </div>
+    @endif
+
+    {{-- 3. To'lanishi kerak / Jami summa --}}
     <div class="bh-stat bh-stat--green">
         <div class="bh-stat-head">
             <div class="bh-stat-icon">
@@ -538,24 +602,7 @@
         </div>
         @if(!empty($firmReport))
         <div class="bh-stat-value" style="font-size:24px">{{ number_format($firmReport['toLanishiKerakJami'], 0, '.', ' ') }} <span style="font-size:14px;font-weight:600">so'm</span></div>
-        <div class="bh-stat-desc" style="white-space:normal;color:#6b7280">{{ $firmReport['toLanganCount'] }} ta loyiha bo'yicha hodimlarga hali to'lanmagan qism</div>
-        <div style="margin-top:12px;font-size:11px">
-            <div style="display:grid;grid-template-columns:1.3fr .9fr .9fr .9fr;gap:4px;padding-bottom:4px;border-bottom:1px dashed #e5e7eb;font-size:9.5px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.3px">
-                <span>Hodim</span>
-                <span style="text-align:right">Hisob.</span>
-                <span style="text-align:right">Kerak</span>
-                <span style="text-align:right">To'landi</span>
-            </div>
-            @foreach($firmReport['employeeComm'] as $emp)
-            <div style="display:grid;grid-template-columns:1.3fr .9fr .9fr .9fr;gap:4px;padding:4px 0;border-bottom:1px dashed #f3f4f6">
-                <span style="color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">👷 {{ $emp['name'] }}</span>
-                <span style="text-align:right;font-weight:600;color:#374151">{{ number_format($emp['commission'], 0, '.', ' ') }}</span>
-                <span style="text-align:right;font-weight:700;color:{{ $emp['kerak'] > 0 ? '#d97706' : '#9ca3af' }}">{{ number_format($emp['kerak'], 0, '.', ' ') }}</span>
-                <span style="text-align:right;font-weight:600;color:#16a34a">{{ number_format($emp['paid'], 0, '.', ' ') }}</span>
-            </div>
-            @endforeach
-            <div style="display:flex;justify-content:space-between;margin-top:5px;padding-top:5px;border-top:1px dashed #e5e7eb"><span style="color:#065f46;font-weight:600">🏢 Firma</span><span style="font-weight:800;color:#059669">{{ number_format($firmReport['firmaDaromadi'], 0, '.', ' ') }}</span></div>
-        </div>
+        <div class="bh-stat-desc bh-stat-desc-muted" style="white-space:normal">{{ $firmReport['toLanganCount'] }} ta loyiha bo'yicha hodimlarga hali to'lanmagan qism</div>
         @else
         <div class="bh-stat-value" style="font-size:26px">{{ number_format($statTotalSum, 0, '.', ' ') }} <span style="font-size:15px;font-weight:600">so'm</span></div>
         <div class="bh-stat-desc" style="font-size:16px">To'langan: {{ number_format($statPaidSum, 0, '.', ' ') }} so'm</div>
@@ -564,6 +611,34 @@
         </div>
         @endif
     </div>
+
+    {{-- 4. Hodim --}}
+    @if(!empty($firmReport))
+    <div class="bh-stat bh-stat--purple">
+        <div class="bh-stat-head">
+            <div class="bh-stat-icon">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div class="bh-stat-label">Hodim</div>
+        </div>
+        <div>
+            <div class="bh-hodim-head">
+                <span>Hodim</span>
+                <span style="text-align:right">Hisob.</span>
+                <span style="text-align:right">Kerak</span>
+                <span style="text-align:right">To'landi</span>
+            </div>
+            @foreach($firmReport['employeeComm'] as $emp)
+            <div class="bh-hodim-row">
+                <span class="bh-hodim-name">👷 {{ $emp['name'] }}</span>
+                <span class="bh-hodim-hisob">{{ number_format($emp['commission'], 0, '.', ' ') }}</span>
+                <span class="bh-hodim-kerak {{ $emp['kerak'] > 0 ? 'bh-hodim-kerak--due' : 'bh-hodim-kerak--zero' }}">{{ number_format($emp['kerak'], 0, '.', ' ') }}</span>
+                <span class="bh-hodim-paid">{{ number_format($emp['paid'], 0, '.', ' ') }}</span>
+            </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
 
 </div>
 @endif {{-- /isEmployee --}}
