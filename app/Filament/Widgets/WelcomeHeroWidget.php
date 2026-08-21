@@ -65,6 +65,7 @@ class WelcomeHeroWidget extends Widget
     {
         if ($bucket === 'unassigned') {
             $q = \App\Models\ProjectService::whereNull('assigned_user_id')
+                ->whereHas('project', fn ($p) => $p->whereNull('timer_paused_at'))
                 ->with('project:id,seq_no,number,owner_name');
             $titleName = 'Biriktirilmagan ishlar';
         } else {
@@ -473,7 +474,9 @@ class WelcomeHeroWidget extends Widget
                 ];
             }
 
-            $unassignedCount = \App\Models\ProjectService::whereNull('assigned_user_id')->count();
+            $unassignedCount = \App\Models\ProjectService::whereNull('assigned_user_id')
+                ->whereHas('project', fn ($p) => $p->whereNull('timer_paused_at'))
+                ->count();
         }
 
         return [
