@@ -50,6 +50,7 @@
         color: #111;
     }
     .main-table .value { font-size: 14px; color: #333; }
+    .client-phone { font-size: 1.5em; font-weight: 800; color: #111; letter-spacing: 0.02em; }
     .main-table tr:nth-child(even) td { background: #f3f4f6; }
     .section-title {
         font-size: 12px;
@@ -550,6 +551,15 @@
     </table>
 
     <!-- MAIN DATA TABLE -->
+    @php
+        $formatPhoneSpaced = function ($raw) {
+            $digits = preg_replace('/\D/', '', (string) $raw);
+            if (strlen($digits) === 12 && str_starts_with($digits, '998')) {
+                return '+'.substr($digits, 0, 3).' '.substr($digits, 3, 2).' '.substr($digits, 5, 3).' '.substr($digits, 8, 2).' '.substr($digits, 10, 2);
+            }
+            return $raw;
+        };
+    @endphp
     <table class="main-table">
         <tr>
             <td class="label" id="lbl-client">Mijoz (F.I.Sh)</td>
@@ -557,7 +567,7 @@
                 <strong>{{ $project->owner_name }}</strong>
                 @if($project->phones)
                     @foreach($project->phones as $phone)
-                        &nbsp;&nbsp;{{ is_array($phone) ? ($phone['phone'] ?? '') : $phone }}@if(!$loop->last),@endif
+                        &nbsp;&nbsp;<span class="client-phone">{{ $formatPhoneSpaced(is_array($phone) ? ($phone['phone'] ?? '') : $phone) }}</span>@if(!$loop->last),@endif
                     @endforeach
                 @endif
             </td>
