@@ -6,7 +6,12 @@
         <div style="flex-shrink:0;padding:18px 26px 14px;border-bottom:1px solid #eef2f7">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
                 <div style="display:flex;flex-direction:column;gap:2px">
-                    <span style="font-size:17px;font-weight:700;color:#111827;display:flex;align-items:center;gap:8px">✏️ Loyiha ma'lumotini tahrirlash</span>
+                    <span style="font-size:17px;font-weight:700;color:#111827;display:flex;align-items:center;gap:8px">
+                        ✏️ Loyiha ma'lumotini tahrirlash
+                        @if(isset($statuses[$ei_status]))
+                        <span style="font-size:11px;font-weight:700;padding:3px 11px;border-radius:20px;background:{{ $statuses[$ei_status]['color'] }}1f;color:{{ $statuses[$ei_status]['color'] }};border:1px solid {{ $statuses[$ei_status]['color'] }}55">{{ $statuses[$ei_status]['label'] }}</span>
+                        @endif
+                    </span>
                     <span style="font-size:12px;color:#6b7280">
                         Ochilgan: {{ $ei_openedAt ?: '—' }}@if($ei_finishedAt) &nbsp;·&nbsp; Tugagan: {{ $ei_finishedAt }}@endif
                     </span>
