@@ -61,8 +61,12 @@
     <div class="divider"></div>
 
     <div class="sub" style="font-weight:700;margin-bottom:1.5mm">ISHLAR</div>
-    @php $svcLabels = \App\Models\Project::serviceOptions(); @endphp
-    @foreach($project->services as $svc)
+    @php
+        $svcLabels = \App\Models\Project::serviceOptions();
+        $svcOrder  = array_flip(array_keys($svcLabels));
+        $sortedServices = $project->services->sortBy(fn ($svc) => $svcOrder[$svc->service_name] ?? 99);
+    @endphp
+    @foreach($sortedServices as $svc)
     <div class="row"><span class="label">{{ \Illuminate\Support\Str::upper($svcLabels[$svc->service_name] ?? $svc->service_name) }}</span><span class="value">{{ number_format($svc->final_price, 0, '.', ' ') }}</span></div>
     @endforeach
     @endif
