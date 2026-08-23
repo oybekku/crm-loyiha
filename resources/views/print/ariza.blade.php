@@ -50,7 +50,7 @@
         color: #111;
     }
     .main-table .value { font-size: 14px; color: #333; }
-    .client-phone { font-size: 1.5em; font-weight: 800; color: #111; letter-spacing: 0.02em; }
+    .client-phone { font-size: 1em; font-weight: inherit; letter-spacing: 0.02em; }
     .main-table tr:nth-child(even) td { background: #f3f4f6; }
     .section-title {
         font-size: 12px;
