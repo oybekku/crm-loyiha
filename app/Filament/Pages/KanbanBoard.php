@@ -1641,10 +1641,12 @@ class KanbanBoard extends Page
             // Yashirilgan bo'limlar — Kanban'da umuman ko'rsatilmaydi (admin uchun ham)
             if ($ps->is_hidden) continue;
 
-            $rawBg   = $ds["kanban_col_{$ps->key}_bg"]      ?? '#1e293b';
+            // Sozlanmagan bo'lsa — bo'limning o'ziga tegishli rangi ishlatiladi
+            // (har bir status uchun allaqachon belgilangan, generik kulrang o'rniga).
+            $rawBg   = $ds["kanban_col_{$ps->key}_bg"]      ?? $ps->color;
             $opacity = max(0, min(100, (int)($ds["kanban_col_{$ps->key}_opacity"] ?? 100))) / 100;
-            $text    = $ds["kanban_col_{$ps->key}_text"]    ?? '#f1f5f9';
-            $headBg  = \App\Services\DesignSettingsService::hexToRgba($rawBg ?: '#1e293b', $opacity);
+            $text    = $ds["kanban_col_{$ps->key}_text"]    ?? '#ffffff';
+            $headBg  = \App\Services\DesignSettingsService::hexToRgba($rawBg ?: $ps->color, $opacity);
 
             $data = ['label' => $ps->label, 'color' => $ps->color, 'is_archive' => $ps->is_archive, 'head_bg' => $headBg, 'head_text' => $text];
 
