@@ -62,9 +62,9 @@
 .kb-pill-decor{position:absolute;inset:0;background:var(--acc);transform:translateX(-100%);transition:transform .3s}
 .kb-pill:hover .kb-pill-decor{transform:translate(0)}
 .kb-pill-content{display:flex;align-items:center;position:relative;z-index:1;width:100%;min-width:0}
-.kb-pill-icon{width:37px;height:35px;background:var(--acc);border-radius:1.5rem 0 0 1.5rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff}
-.kb-pill-icon svg{width:17px;height:17px}
-.kb-pill-name{padding:2px 1rem 2px .72rem;font-size:15.5px;font-weight:700;color:#1e293b!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0;transition:color .2s}
+.kb-pill-icon{width:34px;height:32px;background:var(--acc);border-radius:1.5rem 0 0 1.5rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff}
+.kb-pill-icon svg{width:15px;height:15px}
+.kb-pill-name{padding:2px .9rem 2px .65rem;font-size:14px;font-weight:700;color:#1e293b!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0;transition:color .2s}
 .kb-pill:hover .kb-pill-name{color:#fff!important}
 
 .kb-pill-pop{position:fixed;top:0;left:0;z-index:9999;width:270px;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 16px 40px -8px rgba(15,23,42,.35);padding:12px;opacity:0;transform:translateY(6px);pointer-events:none;transition:opacity .15s ease,transform .15s ease}
