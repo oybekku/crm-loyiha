@@ -62,10 +62,13 @@
 .kb-pill-decor{position:absolute;inset:0;background:var(--acc);transform:translateX(-100%);transition:transform .3s}
 .kb-pill:hover .kb-pill-decor{transform:translate(0)}
 .kb-pill-content{display:flex;align-items:center;position:relative;z-index:1;width:100%;min-width:0}
-.kb-pill-icon{width:37px;height:35px;background:var(--acc);border-radius:1.5rem 0 0 1.5rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff}
-.kb-pill-icon svg{width:17px;height:17px}
-.kb-pill-name{padding:2px 1rem 2px .72rem;font-size:15.5px;font-weight:700;color:#1e293b!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0;transition:color .2s}
+.kb-pill-icon{width:41px;height:39px;background:var(--acc);border-radius:1.5rem 0 0 1.5rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff}
+.kb-pill-icon svg{width:19px;height:19px}
+.kb-pill-name{padding:2px .4rem 2px .8rem;font-size:17px;font-weight:700;color:#1e293b!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0;transition:color .2s}
 .kb-pill:hover .kb-pill-name{color:#fff!important}
+.kb-pill-pct{flex-shrink:0;margin-right:.75rem;font-size:12.5px;font-weight:800;color:#64748b!important;background:#f1f5f9;border-radius:8px;padding:2px 8px;white-space:nowrap;transition:color .2s,background .2s}
+.kb-pill:hover .kb-pill-pct{color:#fff!important;background:rgba(255,255,255,.25)}
+.dark .kb-pill-pct{color:#94a3b8!important;background:rgba(255,255,255,.08)}
 
 .kb-pill-pop{position:fixed;top:0;left:0;z-index:9999;width:270px;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 16px 40px -8px rgba(15,23,42,.35);padding:12px;opacity:0;transform:translateY(6px);pointer-events:none;transition:opacity .15s ease,transform .15s ease}
 .kb-pill-pop.kb-pop-visible{opacity:1;transform:translateY(0);pointer-events:auto}
@@ -779,6 +782,9 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                         </span>
                         <span class="kb-pill-name">{{ $project->owner_name }}</span>
+                        @if($project->total_price > 0 && !auth()->user()?->isBajaruvchi())
+                        <span class="kb-pill-pct">To'l {{ $payPct }}%</span>
+                        @endif
                     </div>
                 </div>
 
