@@ -34,9 +34,9 @@
 .kb-flyaway span{display:inline-block;transition:transform .85s cubic-bezier(.22,.7,.32,1),opacity .85s ease}
 @media(max-width:1023px){.kb-flyaway{display:none !important}}
 
-.kanban-col{min-width:500px;max-width:500px;flex-shrink:0;border-radius:10px;overflow:hidden}
-.col-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;font-weight:700;font-size:13px;letter-spacing:0.01em}
-.col-count{background:rgba(255,255,255,.15);border-radius:12px;padding:2px 9px;font-size:11px;font-weight:600;color:#cbd5e1}
+.kanban-col{min-width:320px;max-width:320px;flex-shrink:0;border-radius:10px;overflow:hidden}
+.col-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 14px;font-weight:700;font-size:14px;letter-spacing:0.01em}
+.col-count{background:rgba(255,255,255,.22);border-radius:12px;padding:2px 10px;font-size:11.5px;font-weight:700;color:#fff}
 .col-body{background:transparent;min-height:80px;padding:8px;display:flex;flex-direction:column;gap:8px;transition:background .15s}
 
 /* ===== GRID REJIM (bitta status filtri) ===== */
@@ -54,48 +54,109 @@
 .kb-wcard{display:flex;align-items:stretch}   /* yig'ilgan keng karta — display:flex klassda (x-show buzmasligi uchun) */
 .kb-frow{display:flex;align-items:center}      /* ochilgan header qatori */
 
-/* ══ NEON yig'ilgan karta ══ */
-@keyframes kbn-pulse{0%,100%{opacity:1}50%{opacity:.72}}
-@keyframes kbn-sweep{0%{transform:translateX(-130%)}100%{transform:translateX(330%)}}
+/* ══ Yig'ilgan karta — ixcham pill, hover'da to'liq ma'lumot ══ */
 .kbn-host{padding:0!important;border:none!important;background:transparent!important;box-shadow:none!important;overflow:visible!important}
-.kbn-card{position:relative;display:flex;align-items:stretch;min-height:82px;background:rgba(255,255,255,.60);-webkit-backdrop-filter:blur(9px);backdrop-filter:blur(9px);border:1.5px solid color-mix(in srgb,var(--acc) 60%,#e2e8f0);border-radius:14px;overflow:visible;box-shadow:0 0 0 1px color-mix(in srgb,var(--acc) 15%,transparent),0 0 20px -6px color-mix(in srgb,var(--acc) 60%,transparent),0 8px 24px -12px rgba(15,23,42,.4)}
-.kbn-vside{position:relative;flex-shrink:0;width:58px;align-self:stretch;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:13px 0 0 13px;background:linear-gradient(180deg,color-mix(in srgb,var(--acc) 90%,#000),color-mix(in srgb,var(--acc) 62%,#000));box-shadow:inset 0 0 18px color-mix(in srgb,var(--acc) 60%,transparent),0 0 22px -3px var(--acc);overflow:hidden}
-.kbn-vside svg{filter:drop-shadow(0 0 6px rgba(255,255,255,.85))}
-.kbn-vside::after{content:"";position:absolute;top:0;bottom:0;width:36%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);animation:kbn-sweep 3.6s ease-in-out infinite}
-.kbn-name{color:#0f172a!important}
-.kbn-emp{color:#64748b!important}
-.kbn-tag{color:var(--acc)!important;border:1px solid color-mix(in srgb,var(--acc) 45%,#e2e8f0)!important;background:color-mix(in srgb,var(--acc) 10%,#fff)!important}
+.kb-pill{position:relative;display:flex;width:100%;line-height:1;border-radius:1.5rem;cursor:pointer;background:#ffffff;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(15,23,42,.1);transition:box-shadow .15s}
+.kb-pill:hover{box-shadow:0 3px 12px rgba(15,23,42,.16)}
+.kb-pill-inner{position:relative;overflow:hidden;border-radius:1.5rem;display:flex;align-items:stretch;width:100%;min-width:0}
+.kb-pill-decor{position:absolute;inset:0;background:var(--acc);transform:translateX(-100%);transition:transform .3s}
+.kb-pill:hover .kb-pill-decor{transform:translate(0)}
+.kb-pill-content{display:flex;align-items:center;position:relative;z-index:1;width:100%;min-width:0}
+.kb-pill-icon{width:34px;height:32px;background:var(--acc);border-radius:1.5rem 0 0 1.5rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff}
+.kb-pill-icon svg{width:15px;height:15px}
+.kb-pill-name{padding:2px .9rem 2px .65rem;font-size:14px;font-weight:700;color:#1e293b!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0;transition:color .2s}
+.kb-pill:hover .kb-pill-name{color:#fff!important}
+
+.kb-pill-pop{position:fixed;top:0;left:0;z-index:9999;width:270px;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 16px 40px -8px rgba(15,23,42,.35);padding:12px;opacity:0;transform:translateY(6px);pointer-events:none;transition:opacity .15s ease,transform .15s ease}
+.kb-pill-pop.kb-pop-visible{opacity:1;transform:translateY(0);pointer-events:auto}
+.kb-pill-pop:after{content:"";position:absolute;top:100%;left:20px;border:6px solid transparent;border-top-color:#ffffff}
+.kb-pill-pop-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+.kb-pill-pop-name{font-size:13px;font-weight:700;color:#0f172a!important}
+.kb-pill-pop-badges{display:flex;gap:5px;flex-shrink:0;align-items:center}
+.kb-pill-pop-emp{font-size:10.5px;color:#64748b!important;margin:-4px 0 8px}
+.kb-pill-pop-tags{display:flex;flex-direction:column;gap:4px;margin-bottom:9px}
+.kb-pill-pop-tagrow{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.kb-pill-pop-divider{height:1px;background:#e5e7eb;margin:8px 0}
+.kb-pill-pop-row{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:2px 0}
+.kb-pill-pop-label{font-size:11px;color:#94a3b8!important}
+.kb-pill-pop-val{font-size:12px;font-weight:700;color:#1e293b!important;font-variant-numeric:tabular-nums}
+.kb-pill-pop-val.paid{color:#16a34a!important}
+.kb-pill-pop-val.debt{color:#dc2626!important}
+
+.kbn-tag{color:var(--acc)!important;border:1px solid color-mix(in srgb,var(--acc) 45%,#e2e8f0)!important;background:color-mix(in srgb,var(--acc) 10%,#fff)!important;font-size:10px;font-weight:600;padding:2px 8px;border-radius:6px;white-space:nowrap}
 .kbn-tag.done{color:#94a3b8!important;border-color:#e2e8f0!important;background:#f8fafc!important}
-.kbn-st{color:#64748b!important;border:1px solid #e2e8f0!important;background:transparent!important}
+.kbn-st{color:#64748b!important;border:1px solid #e2e8f0!important;background:transparent!important;font-size:9px;font-weight:600;padding:2px 7px;border-radius:5px;white-space:nowrap}
 .kbn-st.ok{color:#16a34a!important;border-color:#bbf7d0!important;background:#f0fdf4!important}
-.kbn-badge{color:#0a0e17!important;box-shadow:0 0 14px -1px var(--acc),inset 0 0 8px rgba(255,255,255,.25);animation:kbn-pulse 2.4s ease-in-out infinite}
-.kbn-paid{color:#16a34a!important}
-.kbn-debt{color:#e11d48!important}
-.kbn-muted{color:#94a3b8!important}
-.kbn-total{color:#334155!important}
-@media(prefers-reduced-motion:reduce){.kbn-vside::after,.kbn-badge{animation:none}}
-/* ══ Tungi rejim: NEON karta shaffof-oq fon (rgba white glass) qorong'i sahifada
-   past kontrastga aylanadi — shu sababli qora, xiraroq shaffof fon + och matn
-   ranglari alohida beriladi (kunduzgi dizaynga tegmasdan) ══ */
-.dark .kbn-card{background:rgba(15,23,42,.72)!important;border-color:color-mix(in srgb,var(--acc) 55%,#334155)!important}
-.dark .kbn-name{color:#f1f5f9!important}
-.dark .kbn-emp{color:#94a3b8!important}
-.dark .kbn-tag{background:color-mix(in srgb,var(--acc) 18%,#0f172a)!important;border-color:color-mix(in srgb,var(--acc) 55%,#334155)!important}
-.dark .kbn-tag.done{color:#64748b!important;border-color:#334155!important;background:#1e293b!important}
-.dark .kbn-st{color:#94a3b8!important;border-color:#334155!important}
-.dark .kbn-st.ok{color:#4ade80!important;border-color:#166534!important;background:#052e1b!important}
-.dark .kbn-paid{color:#4ade80!important}
-.dark .kbn-debt{color:#fb7185!important}
-.dark .kbn-muted{color:#94a3b8!important}
-.dark .kbn-total{color:#e2e8f0!important}
+.kbn-badge{color:#fff!important;background:var(--acc)!important;font-size:9.5px;font-weight:800;letter-spacing:.03em;padding:2px 11px;border-radius:20px;white-space:nowrap;display:inline-block}
+
+/* ── Qorong'i rejim ── */
+.dark .kb-pill{background:#181a22;border-color:rgba(255,255,255,.08);box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.dark .kb-pill:hover{box-shadow:0 3px 12px rgba(0,0,0,.4)}
+.dark .kb-pill-name{color:#f1f1f4!important}
+.dark .kb-pill-pop{background:#15171f;border-color:rgba(255,255,255,.1);box-shadow:0 16px 40px -8px rgba(0,0,0,.6)}
+.dark .kb-pill-pop:after{border-top-color:#15171f}
+.dark .kb-pill-pop-name{color:#f1f1f4!important}
+.dark .kb-pill-pop-emp{color:#9a9aa6!important}
+.dark .kb-pill-pop-divider{background:rgba(255,255,255,.08)}
+.dark .kb-pill-pop-label{color:#8a8a94!important}
+.dark .kb-pill-pop-val{color:#d4d4dc!important}
+.dark .kb-pill-pop-val.paid{color:#4ade80!important}
+.dark .kb-pill-pop-val.debt{color:#fb7185!important}
+.dark .kbn-tag{border-color:color-mix(in srgb,var(--acc) 50%,#333)!important;background:color-mix(in srgb,var(--acc) 16%,#181a22)!important}
+.dark .kbn-tag.done{color:#7c7c86!important;border-color:#33333d!important;background:#1f2029!important}
+.dark .kbn-st{color:#9a9aa6!important;border-color:#33333d!important}
+.dark .kbn-st.ok{color:#4ade80!important;border-color:#1e5335!important;background:#0f2318!important}
+
+/* ══ Ochilgan (to'liq) karta — pill bilan bir xil o'lcham darajasi ══ */
+.kb-exp-collapse{flex-shrink:0;width:42px;height:42px;border-radius:11px;border:none;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.15);transition:all .15s}
+.kb-exp-name{font-size:14.5px;font-weight:800;color:#0f172a!important}
+.dark .kb-exp-name{color:#f1f1f4!important}
+.kb-badge2{font-size:11px;font-weight:700;padding:3px 11px;border-radius:20px;white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
+.kb-badge2.status{color:#fff!important}
+.kb-badge2.new{background:#dcfce7;color:#16a34a!important}
+.kb-badge2.warn{background:#fef2f2;color:#dc2626!important;border:1px solid #fecaca}
+.kb-badge2.date{background:#f1f5f9;color:#64748b!important}
+.dark .kb-badge2.date{background:rgba(255,255,255,.06);color:#9a9aa6!important}
+
+.kb-exp-flag{display:flex;align-items:center;gap:7px;border-radius:11px;padding:9px 14px;font-weight:800;font-size:13.5px;margin-bottom:10px}
+.kb-exp-flag.off{border:1.5px solid #fca5a5;background:#fff7ed;color:#b91c1c!important;cursor:pointer}
+.kb-exp-flag.on{border:1.5px solid #b91c1c;background:linear-gradient(180deg,#cd201f,#a01518);color:#fff!important;box-shadow:0 0 12px -2px rgba(205,32,31,.7);cursor:pointer}
+
+.kb-num2{font-size:12.5px;font-weight:700;padding:3px 11px;border-radius:7px}
+.kb-num2.a{color:#fff!important}
+.kb-num2.b{background:#eff6ff;color:#2563eb!important;border:1px solid #c7d2fe}
+.dark .kb-num2.b{background:rgba(37,99,235,.15);border-color:rgba(37,99,235,.4)}
+
+.kb-exp-row{display:flex;align-items:flex-start;gap:7px;margin-bottom:6px}
+.kb-exp-row svg{flex-shrink:0;margin-top:2px}
+.kb-exp-row span{font-size:13.5px;color:#334155!important}
+.dark .kb-exp-row span{color:#c7cae2!important}
+
+.kb-exp-divider{height:1px;background:#e5e7eb;margin:11px 0}
+.dark .kb-exp-divider{background:rgba(255,255,255,.1)}
+
+.kb-exp-money-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.kb-exp-money-label{font-size:12.5px;color:#94a3b8!important}
+.dark .kb-exp-money-label{color:#8a8a94!important}
+.kb-exp-money-val{font-size:13.5px;font-weight:700;color:#0f172a!important}
+.dark .kb-exp-money-val{color:#e2e8f0!important}
+.kb-exp-money-val.paid{color:#16a34a!important}
+.kb-exp-money-val.debt{color:#dc2626!important}
+.kb-exp-money-label.debt{color:#dc2626!important}
+
+/* ── To'liq ko'rinish OYNASI (ustun 200px bo'lgani uchun markazda ochiladi) ── */
+.kb-exp-edit-btn{flex-shrink:0;width:42px;height:42px;border-radius:11px;border:1px solid #e2e8f0;background:#fff;color:#475569;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.kb-exp-edit-btn:hover{background:#f8fafc}
+.dark .kb-exp-edit-btn{border-color:rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#c7cae2}
+.dark .kb-exp-edit-btn:hover{background:rgba(255,255,255,.09)}
+
 /* ══ ZUDLIK (bayroq + qizil neon) ══ */
 @keyframes kbn-redneon{0%,100%{box-shadow:0 0 0 1.5px #cd201f,0 0 16px -2px rgba(205,32,31,.55),0 0 34px -6px rgba(205,32,31,.45)}50%{box-shadow:0 0 0 1.5px #a01518,0 0 28px 0 rgba(205,32,31,.8),0 0 54px -4px rgba(160,20,24,.6)}}
-.kbn-card.kbn-fire{border-color:#cd201f!important;animation:kbn-redneon 1.8s ease-in-out infinite}
-/* Bayroq (zudlik belgisi) — sozlangan joy: right 96, top -28, size 92 */
-.kbn-flag{position:absolute;top:-28px;right:96px;z-index:6;line-height:0;border:none;background:none;padding:0;margin:0}
+.kb-pill.kbn-fire{border-color:#cd201f!important;animation:kbn-redneon 1.8s ease-in-out infinite}
+.kbn-flag{position:absolute;top:-22px;right:6px;z-index:6;line-height:0;border:none;background:none;padding:0;margin:0}
 .kbn-flag.clickable{cursor:pointer}
-.kbn-flag img{display:block;height:92px;width:auto;pointer-events:none;filter:drop-shadow(0 4px 6px rgba(0,0,0,.28))}
-.kbn-card.kbn-fire .kbn-flag img{filter:drop-shadow(0 0 11px rgba(205,32,31,.9))}
+.kbn-flag img{display:block;height:58px;width:auto;pointer-events:none;filter:drop-shadow(0 4px 6px rgba(0,0,0,.28))}
+.kb-pill.kbn-fire .kbn-flag img{filter:drop-shadow(0 0 11px rgba(205,32,31,.9))}
 .dark .p-card{background:#1e2533;border-color:#2d3748}
 .p-card:hover{border-color:#93c5fd;box-shadow:0 3px 10px rgba(0,0,0,.10)}
 .p-card.dragging{opacity:.4;cursor:grabbing}
@@ -414,13 +475,13 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 .dark .p-money-main{color:#60a5fa}
 .p-money-paid-amt{font-size:13px;font-weight:600;color:#16a34a}
 .dark .p-money-paid-amt{color:#4ade80}
-.p-srv-tag-v2{background:#fff4ed;color:#c2410c;font-size:11px;padding:2px 7px;border-radius:4px;font-weight:500;border:1px solid #fed7aa}
+.p-srv-tag-v2{background:#fff4ed;color:#c2410c;font-size:12.5px;padding:3px 9px;border-radius:6px;font-weight:600;border:1px solid #fed7aa}
 .dark .p-srv-tag-v2{background:#431407;color:#fb923c;border-color:#7c2d12}
 .p-card-divider{border-top:1px solid #f1f5f9;margin-bottom:9px}
 @keyframes blink-new{0%,100%{opacity:1;box-shadow:0 0 4px #16a34a}50%{opacity:.6;box-shadow:none}}
 @keyframes blink-warn{0%,100%{opacity:1}50%{opacity:.5}}
 .dark .p-card-divider{border-top-color:#374151}
-.p-status-pill{font-size:11px;font-weight:600;color:#374151;background:#f1f5f9;border-radius:5px;padding:3px 9px;display:inline-block}
+.p-status-pill{font-size:12.5px;font-weight:700;color:#374151;background:#f1f5f9;border-radius:8px;padding:5px 12px;display:inline-block}
 .dark .p-status-pill{color:#d1d5db;background:#1e293b}
 .p-worker-name{font-size:11px;color:#6b7280;font-weight:500}
 .dark .p-worker-name{color:#94a3b8}
@@ -687,7 +748,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
              ondragstart="kbDragStart(event,{{ $project->id }})"
              ondragend="kbDragEnd(event)"
              @click="if(!window._kbDragged && !$event.target.closest('button,a,input,select,label,textarea')) $wire.dispatch('open-edit-modal', { id: {{ $project->id }} })"
-             style="margin-bottom:0;padding:8px 10px">
+             style="margin-bottom:0;padding:6px 8px">
 
             {{-- ══ YIG'ILGAN: keng horizontal karta (mockup) ══ --}}
             @php
@@ -705,64 +766,88 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                         ?? \App\Models\User::find($project->urgent_accepted_by)?->name;
                 }
             @endphp
-            <div x-show="collapsed" class="kb-wcard kbn-card {{ $isUrgent ? 'kbn-fire' : '' }}" style="--acc:{{ $wsC['color'] }}">
-                {{-- Zudlik qizil bayrog'i — faqat zudlik yoqilgan bo'lsa ko'rinadi (yoqish/o'chirish ochilgan kartada) --}}
+            <div x-show="collapsed" class="kb-wcard kb-pill {{ $isUrgent ? 'kbn-fire' : '' }}" style="--acc:{{ $wsC['color'] }}"
+                 @click.stop="collapsed=false" title="To'liq ochish">
+                {{-- Zudlik qizil bayrog'i — faqat zudlik yoqilgan bo'lsa ko'rinadi --}}
                 @if($isUrgent)
                 <span class="kbn-flag"><img src="{{ route('pechat.asset','flag-red.png') }}" alt="Zudlik"></span>
                 @endif
-                {{-- V blok (bosilsa to'liq ochiladi) — neon yonuvchi --}}
-                <div @click.stop="collapsed=false" class="kbn-vside" title="To'liq ochish">
-                    <svg width="30" height="30" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="5 9 12 17 19 9"/></svg>
+                <div class="kb-pill-inner">
+                    <div class="kb-pill-decor"></div>
+                    <div class="kb-pill-content">
+                        <span class="kb-pill-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                        </span>
+                        <span class="kb-pill-name">{{ $project->owner_name }}</span>
+                    </div>
                 </div>
-                {{-- Kontent: info | narxlar --}}
-                <div style="flex:1;min-width:0;padding:9px 13px;display:flex;justify-content:space-between;align-items:center;gap:10px;position:relative;z-index:1">
-                    <div style="min-width:0;flex:1">
-                        <div class="kbn-name" style="font-size:14.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px">{{ $project->owner_name }}</div>
-                        @if($empsC->isNotEmpty())
-                        <div class="kbn-emp" style="font-size:11.5px;font-weight:500;margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $empsC->join(', ') }}</div>
-                        @endif
-                        <div style="display:flex;flex-direction:column;gap:3px">
-                            @foreach($project->services->take(3) as $srv)
-                            <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
-                                <span class="kbn-tag {{ $srv->completed_at ? 'done' : '' }}" style="font-size:10px;font-weight:600;border-radius:6px;padding:2px 8px;white-space:nowrap">{{ $serviceOptions[$srv->service_name] ?? $srv->service_name }}</span>
-                                <span class="kbn-st {{ $srv->completed_at ? 'ok' : '' }}" style="font-size:9px;font-weight:600;border-radius:5px;padding:2px 7px;white-space:nowrap">{{ $srv->completed_at ? '✓ Tugallandi' : '○ Tugalmagan' }}</span>
-                            </div>
-                            @endforeach
-                        </div>
-                    </div>
-                    <div style="flex-shrink:0;text-align:right;font-variant-numeric:tabular-nums">
-                        <div style="margin-bottom:6px;display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+
+                {{-- Hover'da chiqadigan to'liq ma'lumot paneli --}}
+                <div class="kb-pill-pop">
+                    <div class="kb-pill-pop-head">
+                        <span class="kb-pill-pop-name">{{ $project->owner_name }}</span>
+                        <span class="kb-pill-pop-badges">
                             @if($project->is_didox)
-                            <span style="background:#0891b2;color:#fff;display:inline-block;padding:2px 10px;border-radius:20px;font-size:9px;font-weight:800;letter-spacing:.03em;white-space:nowrap" title="Bu loyiha DIDOX orqali ro'yxatdan o'tgan — oxirida shot-faktura DIDOX orqali yuborilishi kerak">🔷 DIDOX</span>
+                            <span style="background:#0891b2;color:#fff;display:inline-block;padding:1px 9px;border-radius:20px;font-size:8.5px;font-weight:800;letter-spacing:.03em;white-space:nowrap">🔷 DIDOX</span>
                             @endif
-                            <span class="kbn-badge" style="background:{{ $wsC['color'] }};display:inline-block;padding:3px 12px;border-radius:20px;font-size:10px;font-weight:800;letter-spacing:.03em;white-space:nowrap">{{ $wsC['label'] }}</span>
-                        </div>
-                        @if($project->total_price > 0 && !auth()->user()?->isBajaruvchi())
-                        <div style="font-size:11px;white-space:nowrap"><span class="kbn-muted">Umumiy</span> <b class="kbn-total">{{ number_format($project->total_price,0,'.',' ') }}</b></div>
-                        <div style="font-size:11px;white-space:nowrap"><span class="kbn-muted">To'langan</span> <b class="kbn-paid">{{ number_format($project->paid_amount,0,'.',' ') }}</b></div>
-                        @if($qcC>0)<div style="font-size:11px;white-space:nowrap"><span class="kbn-muted">Qoldiq</span> <b class="kbn-debt">{{ number_format($qcC,0,'.',' ') }}</b></div>
-                        @else<div style="font-size:11px;white-space:nowrap"><span class="kbn-paid">✓ To'liq to'langan</span></div>@endif
-                        @endif
+                            <span class="kbn-badge">{{ $wsC['label'] }}</span>
+                        </span>
                     </div>
+                    @if($empsC->isNotEmpty())
+                    <div class="kb-pill-pop-emp">{{ $empsC->join(', ') }}</div>
+                    @endif
+                    <div class="kb-pill-pop-tags">
+                        @foreach($project->services->take(3) as $srv)
+                        <div class="kb-pill-pop-tagrow">
+                            <span class="kbn-tag {{ $srv->completed_at ? 'done' : '' }}">{{ $serviceOptions[$srv->service_name] ?? $srv->service_name }}</span>
+                            <span class="kbn-st {{ $srv->completed_at ? 'ok' : '' }}">{{ $srv->completed_at ? '✓ Tugallandi' : '○ Tugalmagan' }}</span>
+                        </div>
+                        @endforeach
+                    </div>
+                    @if($project->total_price > 0 && !auth()->user()?->isBajaruvchi())
+                    <div class="kb-pill-pop-divider"></div>
+                    <div class="kb-pill-pop-row">
+                        <span class="kb-pill-pop-label">Umumiy</span>
+                        <span class="kb-pill-pop-val">{{ number_format($project->total_price,0,'.',' ') }}</span>
+                    </div>
+                    <div class="kb-pill-pop-row">
+                        <span class="kb-pill-pop-label">To'langan</span>
+                        <span class="kb-pill-pop-val paid">{{ number_format($project->paid_amount,0,'.',' ') }}</span>
+                    </div>
+                    @if($qcC>0)
+                    <div class="kb-pill-pop-row">
+                        <span class="kb-pill-pop-label">Qoldiq</span>
+                        <span class="kb-pill-pop-val debt">{{ number_format($qcC,0,'.',' ') }}</span>
+                    </div>
+                    @else
+                    <div class="kb-pill-pop-row">
+                        <span class="kb-pill-pop-val paid">✓ To'liq to'langan</span>
+                    </div>
+                    @endif
+                    @endif
                 </div>
             </div>
 
             {{-- TOP ROW (ochilgan header): barmoq + ism + muddat + sana --}}
             <div x-show="!collapsed" class="kb-frow" style="gap:5px;margin-bottom:5px">
                 @php $ws = \App\Models\Project::workStatusOptions()[$project->work_status ?? 'yangi'] ?? ['label'=>'Yangi','color'=>'#3b82f6']; @endphp
-                <button @click.stop="collapsed=!collapsed"
-                        style="flex-shrink:0;width:44px;align-self:stretch;min-height:40px;border:none;border-radius:9px;cursor:pointer;background:{{ $ws['color'] }};color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.12);transition:all .15s"
+                <button @click.stop="collapsed=!collapsed" class="kb-exp-collapse"
+                        style="background:{{ $ws['color'] }}"
                         :title="collapsed ? 'To\'liq ochish' : 'Yopish'">
-                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" :style="collapsed ? '' : 'transform:rotate(180deg)'" style="transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" :style="collapsed ? '' : 'transform:rotate(180deg)'" style="transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
                 </button>
-                <div class="p-owner" style="flex:1;min-width:0;margin:0;font-size:12.5px;display:flex;align-items:center;gap:6px;overflow:hidden">
-                    <span style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $project->owner_name }}</span>
-                    <span style="flex-shrink:0;font-size:9px;font-weight:700;color:#fff;background:{{ $ws['color'] }};border-radius:11px;padding:2px 9px;white-space:nowrap">{{ $ws['label'] }}</span>
+                <button type="button" @click.stop="$wire.dispatch('open-edit-modal', { id: {{ $project->id }} })"
+                        title="To'liq tahrirlash" class="kb-exp-edit-btn">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <div style="flex:1;min-width:0;display:flex;align-items:center;flex-wrap:wrap;gap:6px;overflow:hidden">
+                    <span class="kb-exp-name" style="flex-basis:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $project->owner_name }}</span>
+                    <span class="kb-badge2 status" style="background:{{ $ws['color'] }}">{{ $ws['label'] }}</span>
                     @if($project->is_didox)
-                    <span style="flex-shrink:0;font-size:9px;font-weight:700;color:#fff;background:#0891b2;border-radius:11px;padding:2px 9px;white-space:nowrap" title="Bu loyiha DIDOX orqali ro'yxatdan o'tgan — oxirida shot-faktura DIDOX orqali yuborilishi kerak">🔷 DIDOX</span>
+                    <span class="kb-badge2 status" style="background:#0891b2" title="Bu loyiha DIDOX orqali ro'yxatdan o'tgan — oxirida shot-faktura DIDOX orqali yuborilishi kerak">🔷 DIDOX</span>
                     @endif
                     @if($project->created_at->diffInHours(now()) < 24)
-                    <span style="font-size:9px;font-weight:700;background:#dcfce7;color:#16a34a;border-radius:4px;padding:1px 5px;white-space:nowrap;animation:blink-new 1.5s ease-in-out infinite;flex-shrink:0">Yangi</span>
+                    <span class="kb-badge2 new" style="animation:blink-new 1.5s ease-in-out infinite">Yangi</span>
                     @endif
                     @if($showUrgent)
                     {{-- Yig'ilgan kartada muddat ogohlantirishi (FISH dan keyin) --}}
@@ -771,30 +856,30 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                 </div>
                 @if($showNoDeadline)
                 {{-- Hech bir ishga muddat qo'yilmagan --}}
-                <span style="font-size:9px;font-weight:700;background:#fee2e2;color:#dc2626;border-radius:4px;padding:1px 6px;white-space:nowrap;animation:blink-warn 1.5s infinite;flex-shrink:0">⏰ Muddat ko'rsatilmagan</span>
+                <span class="kb-badge2 warn" style="animation:blink-warn 1.5s infinite;flex-shrink:0">⏰ Muddat ko'rsatilmagan</span>
                 @endif
-                <div style="flex-shrink:0;display:flex;align-items:center;gap:3px">
+                <div style="flex-shrink:0;display:flex;align-items:center;gap:5px">
                     <button wire:click.stop="toggleTimer({{ $project->id }})"
                             onclick="event.stopPropagation()"
                             title="{{ $isPaused ? 'Vaqt hisobini yoqish' : 'Vaqt hisobini to‘xtatish (kutish)' }}"
                             style="border:none;background:none;padding:0;cursor:pointer;display:flex;align-items:center">
                         @if($isPaused)
                             {{-- Kutishda — soat --}}
-                            <span style="font-size:9px;font-weight:700;background:#f1f5f9;color:#64748b;border-radius:3px;padding:1px 5px;white-space:nowrap;display:inline-flex;align-items:center;gap:2px">🕐 kutish</span>
+                            <span class="kb-badge2" style="background:#f1f5f9;color:#64748b">🕐 kutish</span>
                         @elseif($deptOverdue)
-                            <span style="font-size:9px;font-weight:700;background:#fee2e2;color:#dc2626;border-radius:3px;padding:1px 5px;white-space:nowrap;animation:blink-warn 1s ease-in-out infinite">kechikkan</span>
+                            <span class="kb-badge2 warn" style="animation:blink-warn 1s ease-in-out infinite">kechikkan</span>
                         @elseif($deptOneDay)
-                            <span style="font-size:9px;font-weight:700;background:#fee2e2;color:#dc2626;border-radius:3px;padding:1px 5px;white-space:nowrap;animation:blink-warn 1s ease-in-out infinite">1 kun</span>
+                            <span class="kb-badge2 warn" style="animation:blink-warn 1s ease-in-out infinite">1 kun</span>
                         @elseif($deptDaysLeft !== null && $deptDaysLeft <= 3)
-                            <span style="font-size:9px;font-weight:700;background:#fef3c7;color:#d97706;border-radius:3px;padding:1px 4px;white-space:nowrap">{{ $deptDaysLeft }} kun</span>
+                            <span class="kb-badge2" style="background:#fef3c7;color:#d97706">{{ $deptDaysLeft }} kun</span>
                         @elseif($deptDaysLeft !== null)
-                            <span style="font-size:9px;font-weight:600;background:#ecfdf5;color:#059669;border-radius:3px;padding:1px 4px;white-space:nowrap">{{ $deptDaysLeft }} kun</span>
+                            <span class="kb-badge2" style="background:#ecfdf5;color:#059669">{{ $deptDaysLeft }} kun</span>
                         @else
                             {{-- Muddat belgilanmagan / aktivlashmagan — soat --}}
-                            <span style="font-size:9px;font-weight:600;background:#f1f5f9;color:#94a3b8;border-radius:3px;padding:1px 5px;white-space:nowrap">🕐</span>
+                            <span class="kb-badge2 date">🕐</span>
                         @endif
                     </button>
-                    <span style="font-size:9px;color:#9ca3af;white-space:nowrap">{{ $project->created_at->format('d-M') }}</span>
+                    <span class="kb-badge2 date">{{ $project->created_at->format('d-M') }}</span>
                 </div>
             </div>
 
@@ -803,40 +888,39 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
             {{-- ZUDLIK boshqaruvi (ochilgan kartada) --}}
             @if($canToggleUrgent)
             {{-- Admin/menejer: Zudlik bilan — yoqish/o'chirish --}}
-            <div style="margin-bottom:8px">
-                <button type="button" wire:click="toggleUrgent({{ $project->id }})"
-                        style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;border-radius:9px;padding:7px 14px;cursor:pointer;{{ $isUrgent ? 'border:1.5px solid #b91c1c;background:linear-gradient(180deg,#cd201f,#a01518);color:#fff;box-shadow:0 0 12px -2px rgba(205,32,31,.7)' : 'border:1.5px solid #fca5a5;background:#fff7ed;color:#b91c1c' }}">
+            <div style="margin-bottom:10px">
+                <button type="button" wire:click="toggleUrgent({{ $project->id }})" class="kb-exp-flag {{ $isUrgent ? 'on' : 'off' }}">
                     🚩 {{ $isUrgent ? 'Zudlik yoqilgan — bosib o‘chirish' : 'Zudlik bilan' }}
                 </button>
             </div>
             @elseif($isUrgent && $canAcceptUrgent)
             {{-- Biriktirilgan hodim: Zudlik + Qabul qildim --}}
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px;padding:8px 11px;border:1.5px solid #fca5a5;border-radius:10px;background:linear-gradient(90deg,#fff7ed,#fef2f2)">
-                <span style="font-size:12px;font-weight:800;color:#b91c1c;display:inline-flex;align-items:center;gap:5px">🚩 Zudlik bilan qilinsin!</span>
-                <button type="button" wire:click="acceptUrgent({{ $project->id }})" style="display:inline-flex;align-items:center;gap:5px;background:#16a34a;color:#fff;border:none;border-radius:8px;padding:6px 13px;font-size:12px;font-weight:800;cursor:pointer;box-shadow:0 2px 8px -2px rgba(22,163,74,.6)">✅ Qabul qildim</button>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px;padding:9px 13px;border:1.5px solid #fca5a5;border-radius:11px;background:linear-gradient(90deg,#fff7ed,#fef2f2)">
+                <span style="font-size:13.5px;font-weight:800;color:#b91c1c;display:inline-flex;align-items:center;gap:5px">🚩 Zudlik bilan qilinsin!</span>
+                <button type="button" wire:click="acceptUrgent({{ $project->id }})" style="display:inline-flex;align-items:center;gap:5px;background:#16a34a;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 2px 8px -2px rgba(22,163,74,.6)">✅ Qabul qildim</button>
             </div>
             @endif
 
             {{-- Qabul qilingan — kim/qachon (zudlik o'chgach) --}}
             @if(!$isUrgent && $acceptedName)
-            <div style="margin-bottom:8px;padding:7px 11px;border:1.5px solid #bbf7d0;border-radius:10px;background:#f0fdf4;font-size:12px;font-weight:700;color:#15803d;display:inline-flex;align-items:center;gap:6px">
+            <div style="margin-bottom:10px;padding:8px 13px;border:1.5px solid #bbf7d0;border-radius:11px;background:#f0fdf4;font-size:13px;font-weight:700;color:#15803d;display:inline-flex;align-items:center;gap:6px">
                 ✅ {{ $acceptedName }} ishni qabul qildi — {{ $project->urgent_accepted_at->translatedFormat('d-M, H:i') }}
             </div>
             @endif
 
             {{-- Raqam (katta holatda) + ketma-ket tartib raqami --}}
-            <div style="margin-bottom:6px;display:inline-flex;align-items:center;gap:5px">
-                <span style="background:{{ $status['color'] }};color:#fff;border-radius:6px;font-size:11px;font-weight:800;padding:2px 9px">{{ $project->number }}</span>
+            <div style="margin-bottom:8px;display:inline-flex;align-items:center;gap:6px">
+                <span class="kb-num2 a" style="background:{{ $status['color'] }}">{{ $project->number }}</span>
                 @if($project->seq_no)
-                <span style="background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;border-radius:6px;font-size:11px;font-weight:800;padding:2px 9px">№{{ $project->seq_no }}</span>
+                <span class="kb-num2 b">№{{ $project->seq_no }}</span>
                 @endif
             </div>
 
             {{-- ADDRESS --}}
             @if($project->address)
-            <div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:5px">
-                <svg width="13" height="13" fill="none" stroke="#f97316" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;margin-top:1px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5" fill="#f97316" stroke="none"/></svg>
-                <span class="p-info-text">{{ $project->address }}</span>
+            <div class="kb-exp-row">
+                <svg width="15" height="15" fill="none" stroke="#f97316" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5" fill="#f97316" stroke="none"/></svg>
+                <span>{{ $project->address }}</span>
             </div>
             @endif
 
@@ -895,9 +979,9 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 
             {{-- PHONE --}}
             @if(!empty($project->phones[0]['phone']))
-            <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
-                <svg width="13" height="13" fill="none" stroke="#8b5cf6" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 11.5 19.79 19.79 0 012 2.84 2 2 0 014 2.68h3a2 2 0 012 1.72c.22.83.46 1.63.7 2.81a2 2 0 01-.45 2.11L8.09 10.18a16 16 0 006.29 6.29l1.27-1.27a2 2 0 012.11-.45c1.18.24 1.98.48 2.81.7A2 2 0 0122 16.92z"/></svg>
-                <span class="p-info-text">{{ $project->phones[0]['phone'] }}</span>
+            <div class="kb-exp-row">
+                <svg width="15" height="15" fill="none" stroke="#8b5cf6" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 11.5 19.79 19.79 0 012 2.84 2 2 0 014 2.68h3a2 2 0 012 1.72c.22.83.46 1.63.7 2.81a2 2 0 01-.45 2.11L8.09 10.18a16 16 0 006.29 6.29l1.27-1.27a2 2 0 012.11-.45c1.18.24 1.98.48 2.81.7A2 2 0 0122 16.92z"/></svg>
+                <span>{{ $project->phones[0]['phone'] }}</span>
             </div>
             @endif
 
@@ -917,23 +1001,23 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
 
 
             {{-- DIVIDER --}}
-            <div class="p-card-divider"></div>
+            <div class="kb-exp-divider"></div>
 
             {{-- MONEY (hodim/bajaruvchiga ko'rinmaydi) --}}
             @if($project->total_price > 0 && !auth()->user()?->isBajaruvchi())
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
-                <span style="font-size:11px;color:#9ca3af">Umumiy</span>
-                <span style="font-size:12px;font-weight:600;color:#374151">{{ number_format($project->total_price, 0, '.', ' ') }} so'm</span>
+            <div class="kb-exp-money-row">
+                <span class="kb-exp-money-label">Umumiy</span>
+                <span class="kb-exp-money-val">{{ number_format($project->total_price, 0, '.', ' ') }} so'm</span>
             </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
-                <span style="font-size:11px;color:#9ca3af">To'langan</span>
-                <span style="font-size:12px;font-weight:600;color:#16a34a">{{ number_format($project->paid_amount, 0, '.', ' ') }} so'm</span>
+            <div class="kb-exp-money-row">
+                <span class="kb-exp-money-label">To'langan</span>
+                <span class="kb-exp-money-val paid">{{ number_format($project->paid_amount, 0, '.', ' ') }} so'm</span>
             </div>
             @if($project->paid_amount < $project->total_price)
             @php $qoldiq = $project->total_price - $project->paid_amount; @endphp
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-                <span style="font-size:11px;color:#ef4444">Qoldiq</span>
-                <span style="font-size:12px;font-weight:600;color:#ef4444">{{ number_format($qoldiq, 0, '.', ' ') }} so'm</span>
+            <div class="kb-exp-money-row" style="margin-bottom:8px">
+                <span class="kb-exp-money-label debt">Qoldiq</span>
+                <span class="kb-exp-money-val debt">{{ number_format($qoldiq, 0, '.', ' ') }} so'm</span>
             </div>
             @endif
             <div class="p-bar-wrap" style="margin-bottom:8px">
@@ -1004,7 +1088,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                     <span class="p-status-pill">{{ $status['label'] }}</span>
                     @php $ws = \App\Models\Project::workStatusOptions()[$project->work_status ?? 'yangi'] ?? null; @endphp
                     @if($ws)
-                    <span style="font-size:11px;font-weight:700;color:#fff;background:{{ $ws['color'] }};border-radius:5px;padding:3px 9px;display:inline-block;white-space:nowrap">{{ $ws['label'] }}</span>
+                    <span style="font-size:12.5px;font-weight:700;color:#fff;background:{{ $ws['color'] }};border-radius:8px;padding:5px 12px;display:inline-block;white-space:nowrap">{{ $ws['label'] }}</span>
                     @endif
                 </div>
                 @if($srvWorkers->count() > 0)
@@ -3460,6 +3544,41 @@ function kbDrop(e, status) {
     }, { passive: true });
 
     setTimeout(() => updateActiveTabs(0), 300);
+})();
+</script>
+
+<script>
+{{-- Pill karta hover paneli — position:fixed, shuning uchun ustun/doskaning
+     gorizontal overflow-x:auto qirqib tashlamaydi (avval yuqori qatorda
+     yashirinib qolardi). Joy yetmasa avtomatik pastga ochiladi. --}}
+(function () {
+    function positionPop(pill, pop) {
+        const r = pill.getBoundingClientRect();
+        const gap = 10;
+        pop.style.top = '-9999px';
+        pop.style.left = '-9999px';
+        pop.classList.add('kb-pop-visible');
+        const popH = pop.offsetHeight;
+        const popW = pop.offsetWidth;
+        let top = (r.top - popH - gap > 8) ? (r.top - popH - gap) : (r.bottom + gap);
+        let left = Math.min(Math.max(r.left, 8), window.innerWidth - popW - 8);
+        pop.style.top = top + 'px';
+        pop.style.left = left + 'px';
+    }
+
+    document.addEventListener('mouseover', function (e) {
+        const pill = e.target.closest && e.target.closest('.kb-pill');
+        if (!pill || pill.contains(e.relatedTarget)) return;
+        const pop = pill.querySelector('.kb-pill-pop');
+        if (pop) positionPop(pill, pop);
+    });
+
+    document.addEventListener('mouseout', function (e) {
+        const pill = e.target.closest && e.target.closest('.kb-pill');
+        if (!pill || pill.contains(e.relatedTarget)) return;
+        const pop = pill.querySelector('.kb-pill-pop');
+        if (pop) pop.classList.remove('kb-pop-visible');
+    });
 })();
 </script>
 
