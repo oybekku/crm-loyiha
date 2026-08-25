@@ -11,6 +11,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->prepend(\App\Http\Middleware\SwitchTenantDatabase::class);
         $middleware->trustProxies(at: '*');
         $middleware->redirectGuestsTo(fn () => route('filament.admin.auth.login'));
         // iOS Safari'ning "native" POST /admin/login so'rovi (tana bo'sh, token yo'q)
