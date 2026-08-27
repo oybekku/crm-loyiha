@@ -621,7 +621,22 @@ HTML;
                     $s     = \App\Services\DesignSettingsService::get();
                     $color = $s['header_text_color'];
                     $name  = e(self::tenantBrandName());
-                    return "<a href=\"/admin\" wire:navigate style=\"color:{$color};font-weight:800;font-size:0.95rem;letter-spacing:0.07em;padding:0 1.25rem;white-space:nowrap;flex-shrink:0;text-decoration:none;\">{$name}</a>";
+                    $brand = "<a href=\"/admin\" wire:navigate style=\"color:{$color};font-weight:800;font-size:0.95rem;letter-spacing:0.07em;padding:0 1.25rem;white-space:nowrap;flex-shrink:0;text-decoration:none;\">{$name}</a>";
+
+                    // Boshqa shahar (tenant) saytlariga o'tish tugmalari — joriy
+                    // host o'zi shu ro'yxatda bo'lsa, o'ziga havola ko'rsatilmaydi.
+                    $currentHost = request()->getHost();
+                    $switchLinks = '';
+                    foreach (config('tenants', []) as $host => $tenant) {
+                        if ($host === $currentHost) {
+                            continue;
+                        }
+                        $label = e($tenant['label'] ?? $host);
+                        $url   = e('https://' . $host . '/admin');
+                        $switchLinks .= "<a href=\"{$url}\" style=\"color:{$color};font-weight:700;font-size:0.78rem;letter-spacing:0.03em;padding:4px 12px;margin-right:8px;border:1.5px solid currentColor;border-radius:999px;white-space:nowrap;flex-shrink:0;text-decoration:none;opacity:0.85;\">{$label}</a>";
+                    }
+
+                    return $brand . $switchLinks;
                 }
             )
             ->renderHook(
