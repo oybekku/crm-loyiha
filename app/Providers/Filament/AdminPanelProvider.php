@@ -29,7 +29,7 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login(\App\Filament\Pages\Auth\Login::class)
             ->favicon(asset('favicon.png'))
-            ->brandName('MAKONN.UZ')
+            ->brandName(fn () => self::tenantBrandName())
             ->colors([
                 'primary' => Color::Green,
             ])
@@ -620,7 +620,8 @@ HTML;
                 function () {
                     $s     = \App\Services\DesignSettingsService::get();
                     $color = $s['header_text_color'];
-                    return "<a href=\"/admin\" wire:navigate style=\"color:{$color};font-weight:800;font-size:0.95rem;letter-spacing:0.07em;padding:0 1.25rem;white-space:nowrap;flex-shrink:0;text-decoration:none;\">MAKONN.UZ</a>";
+                    $name  = e(self::tenantBrandName());
+                    return "<a href=\"/admin\" wire:navigate style=\"color:{$color};font-weight:800;font-size:0.95rem;letter-spacing:0.07em;padding:0 1.25rem;white-space:nowrap;flex-shrink:0;text-decoration:none;\">{$name}</a>";
                 }
             )
             ->renderHook(
@@ -648,6 +649,17 @@ HTML;
             ->authMiddleware([
                 Authenticate::class,
             ]);
+    }
+
+    /**
+     * Poddomenga qarab shahar nomi (masalan andijon.makonn.uz -> "Andijon"),
+     * config/tenants.php'dagi 'label' bo'yicha. Topilmasa asosiy brend nomi.
+     */
+    private static function tenantBrandName(): string
+    {
+        $tenant = config('tenants')[request()->getHost()] ?? null;
+
+        return $tenant['label'] ?? 'MAKONN.UZ';
     }
 
     private function buildStatusNavItems(): array

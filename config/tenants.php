@@ -17,6 +17,7 @@ return [
         'database' => env('DB_ANDIJON_DATABASE', 'elkayo0i_andijon'),
         'username' => env('DB_ANDIJON_USERNAME', 'elkayo0i_andijon'),
         'password' => env('DB_ANDIJON_PASSWORD'),
+        'label'    => 'Andijon',
     ],
 
 ];
