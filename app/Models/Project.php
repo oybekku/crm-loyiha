@@ -315,6 +315,8 @@ class Project extends Model
             'rad_qilindi'     => ['label' => 'Rad qilindi',      'color' => '#ef4444'],  // qizil
             'tayyor'          => ['label' => 'Tayyor',           'color' => '#22c55e'],  // yashil
             'tolov_jarayonda' => ['label' => "To'lov jarayonda", 'color' => '#8b5cf6'],  // binafsha
+            'kelishildi'      => ['label' => 'Kelishildi',       'color' => '#14b8a6'],  // moviy-yashil
+            'kelishilmadi'    => ['label' => 'Kelishilmadi',     'color' => '#f97316'],  // to'q sariq
         ];
     }
 
