@@ -54,30 +54,36 @@
 .kb-wcard{display:flex;align-items:stretch}   /* yig'ilgan keng karta — display:flex klassda (x-show buzmasligi uchun) */
 .kb-frow{display:flex;align-items:center}      /* ochilgan header qatori */
 
-/* ══ NEON yig'ilgan karta ══ */
-@keyframes kbn-pulse{0%,100%{opacity:1}50%{opacity:.72}}
-@keyframes kbn-sweep{0%{transform:translateX(-130%)}100%{transform:translateX(330%)}}
+/* ══ Status-rangli bracket karta ══ */
 .kbn-host{padding:0!important;border:none!important;background:transparent!important;box-shadow:none!important;overflow:visible!important}
-.kbn-card{position:relative;display:flex;align-items:stretch;min-height:82px;background:rgba(255,255,255,.60);-webkit-backdrop-filter:blur(9px);backdrop-filter:blur(9px);border:1.5px solid color-mix(in srgb,var(--acc) 60%,#e2e8f0);border-radius:14px;overflow:visible;box-shadow:0 0 0 1px color-mix(in srgb,var(--acc) 15%,transparent),0 0 20px -6px color-mix(in srgb,var(--acc) 60%,transparent),0 8px 24px -12px rgba(15,23,42,.4)}
-.kbn-vside{position:relative;flex-shrink:0;width:58px;align-self:stretch;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:13px 0 0 13px;background:linear-gradient(180deg,color-mix(in srgb,var(--acc) 90%,#000),color-mix(in srgb,var(--acc) 62%,#000));box-shadow:inset 0 0 18px color-mix(in srgb,var(--acc) 60%,transparent),0 0 22px -3px var(--acc);overflow:hidden}
-.kbn-vside svg{filter:drop-shadow(0 0 6px rgba(255,255,255,.85))}
-.kbn-vside::after{content:"";position:absolute;top:0;bottom:0;width:36%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);animation:kbn-sweep 3.6s ease-in-out infinite}
+.kbn-card{position:relative;display:flex;align-items:stretch;gap:12px;min-height:76px;background:#fff;border:2px solid var(--acc);border-radius:12px;padding:11px 14px;overflow:visible;transition:border-color .2s ease-in-out,border-width .15s ease-in-out,box-shadow .2s ease-in-out}
+.kbn-card .kbn-notch{position:absolute;height:2px;background:#fff;transition:width .4s ease-out,left .25s ease-out,right .25s ease-out,background .2s ease-in-out}
+.kbn-card .kbn-notch.tl{top:-2px;left:16px;width:34px}
+.kbn-card .kbn-notch.br1{bottom:-2px;right:38px;width:34px}
+.kbn-card .kbn-notch.br2{bottom:-2px;right:14px;width:16px}
+.kbn-card:hover{border-width:3px;box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 20%,transparent),0 10px 24px -10px var(--acc)}
+.kbn-card:hover .kbn-notch{width:0;background:var(--acc)}
+.kbn-card:hover .kbn-notch.tl{left:-3px}
+.kbn-card:hover .kbn-notch.br1,.kbn-card:hover .kbn-notch.br2{right:-3px}
+.kbn-vside{position:relative;flex-shrink:0;width:44px;align-self:stretch;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid var(--acc);border-radius:9px;background:transparent;transition:background .2s ease-in-out}
+.kbn-vside svg{stroke:var(--acc);transition:stroke .2s ease-in-out}
+.kbn-card:hover .kbn-vside{background:var(--acc)}
+.kbn-card:hover .kbn-vside svg{stroke:#fff}
 .kbn-name{color:#0f172a!important}
 .kbn-emp{color:#64748b!important}
 .kbn-tag{color:var(--acc)!important;border:1px solid color-mix(in srgb,var(--acc) 45%,#e2e8f0)!important;background:color-mix(in srgb,var(--acc) 10%,#fff)!important}
 .kbn-tag.done{color:#94a3b8!important;border-color:#e2e8f0!important;background:#f8fafc!important}
 .kbn-st{color:#64748b!important;border:1px solid #e2e8f0!important;background:transparent!important}
 .kbn-st.ok{color:#16a34a!important;border-color:#bbf7d0!important;background:#f0fdf4!important}
-.kbn-badge{color:#0a0e17!important;box-shadow:0 0 14px -1px var(--acc),inset 0 0 8px rgba(255,255,255,.25);animation:kbn-pulse 2.4s ease-in-out infinite}
+.kbn-badge{color:#fff!important}
 .kbn-paid{color:#16a34a!important}
 .kbn-debt{color:#e11d48!important}
 .kbn-muted{color:#94a3b8!important}
 .kbn-total{color:#334155!important}
-@media(prefers-reduced-motion:reduce){.kbn-vside::after,.kbn-badge{animation:none}}
-/* ══ Tungi rejim: NEON karta shaffof-oq fon (rgba white glass) qorong'i sahifada
-   past kontrastga aylanadi — shu sababli qora, xiraroq shaffof fon + och matn
-   ranglari alohida beriladi (kunduzgi dizaynga tegmasdan) ══ */
-.dark .kbn-card{background:rgba(15,23,42,.72)!important;border-color:color-mix(in srgb,var(--acc) 55%,#334155)!important}
+@media(prefers-reduced-motion:reduce){.kbn-card,.kbn-card *{transition:none}}
+/* ══ Tungi rejim ══ */
+.dark .kbn-card{background:#161b22!important;border-color:var(--acc)!important}
+.dark .kbn-card .kbn-notch{background:#161b22}
 .dark .kbn-name{color:#f1f5f9!important}
 .dark .kbn-emp{color:#94a3b8!important}
 .dark .kbn-tag{background:color-mix(in srgb,var(--acc) 18%,#0f172a)!important;border-color:color-mix(in srgb,var(--acc) 55%,#334155)!important}
@@ -705,16 +711,17 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                 }
             @endphp
             <div x-show="collapsed" class="kb-wcard kbn-card {{ $isUrgent ? 'kbn-fire' : '' }}" style="--acc:{{ $wsC['color'] }}">
+                <span class="kbn-notch tl"></span><span class="kbn-notch br1"></span><span class="kbn-notch br2"></span>
                 {{-- Zudlik qizil bayrog'i — faqat zudlik yoqilgan bo'lsa ko'rinadi (yoqish/o'chirish ochilgan kartada) --}}
                 @if($isUrgent)
                 <span class="kbn-flag"><img src="{{ route('pechat.asset','flag-red.png') }}" alt="Zudlik"></span>
                 @endif
-                {{-- V blok (bosilsa to'liq ochiladi) — neon yonuvchi --}}
+                {{-- V blok (bosilsa to'liq ochiladi) --}}
                 <div @click.stop="collapsed=false" class="kbn-vside" title="To'liq ochish">
-                    <svg width="30" height="30" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="5 9 12 17 19 9"/></svg>
+                    <svg width="22" height="22" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="5 9 12 17 19 9"/></svg>
                 </div>
                 {{-- Kontent: info | narxlar --}}
-                <div style="flex:1;min-width:0;padding:9px 13px;display:flex;justify-content:space-between;align-items:center;gap:10px;position:relative;z-index:1">
+                <div style="flex:1;min-width:0;display:flex;justify-content:space-between;align-items:center;gap:10px;position:relative;z-index:1">
                     <div style="min-width:0;flex:1">
                         <div class="kbn-name" style="font-size:14.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px">{{ $project->owner_name }}</div>
                         @if($empsC->isNotEmpty())
