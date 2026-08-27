@@ -27,15 +27,16 @@ use Illuminate\Support\Collection;
 class EmployeePayableService
 {
     /**
-     * Berilgan oy ('Y-m') uchun hodimning komissiya foizi. Admin/menejer
-     * har doim 0%. Shu oy (yoki undan oldingi eng yaqin) uchun alohida
-     * belgilangan foiz bo'lsa — o'shani, bo'lmasa foydalanuvchining
-     * standart (users.commission_rate) foizini qaytaradi.
+     * Berilgan oy ('Y-m') uchun hodimning komissiya foizi. Shu oy (yoki
+     * undan oldingi eng yaqin) uchun alohida belgilangan foiz bo'lsa —
+     * o'shani, bo'lmasa foydalanuvchining standart (users.commission_rate)
+     * foizini qaytaradi (rol admin/menejer bo'lishidan qat'iy nazar —
+     * ular ham xizmatga mas'ul sifatida biriktirilgan bo'lsa, o'z
+     * stavkasi bo'yicha komissiya oladi).
      */
     public static function rateFor(?User $user, string $month): float
     {
         if (!$user) return 0.0;
-        if (in_array($user->role, ['admin', 'menejer'])) return 0.0;
 
         $override = UserCommissionRate::where('user_id', $user->id)
             ->where('effective_month', '<=', $month)

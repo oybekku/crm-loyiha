@@ -44,13 +44,12 @@ class BalanceService
             return self::empty();
         }
 
-        // Admin/menejer har doim 0% — butun blokni tashlab yuboramiz. Boshqa
-        // hodimlar uchun foiz endi HAR BIR xizmat o'ziga tegishli loyiha
-        // ochilgan oyiga qarab alohida aniqlanadi (EmployeePayableService::
-        // rateFor) — chunki bitta hodimning turli oylardagi ishlari turli
-        // foizga tegishli bo'lishi mumkin (foiz o'zgargan bo'lsa).
-        $isRated = !in_array($user->role, ['admin', 'menejer']);
-
+        // Foiz HAR BIR xizmat o'ziga tegishli loyiha ochilgan oyiga qarab
+        // alohida aniqlanadi (EmployeePayableService::rateFor) — chunki
+        // bitta hodimning turli oylardagi ishlari turli foizga tegishli
+        // bo'lishi mumkin (foiz o'zgargan bo'lsa). Rate 0% bo'lgan hodimlar
+        // (masalan sof admin) uchun quyidagi sikl baribir hech narsa
+        // qo'shmaydi ($commission <= 0 bo'lganda continue qilinadi).
         $monthStr = ($year && $month) ? sprintf('%04d-%02d', $year, $month) : null;
 
         $earned  = 0.0;   // tasdiqlangan kirim (tugatilgan + to'langan)
@@ -58,52 +57,50 @@ class BalanceService
         $txns    = [];
         $rate    = 0.0;   // qaytariladigan "umumiy" foiz — ko'rsatish uchun (pastda)
 
-        if ($isRated) {
-            $services = ProjectService::with('project')
-                ->where('assigned_user_id', $userId)
-                ->whereHas('project', function ($q) use ($year, $month) {
-                    $q->where('status', '!=', 'bekor_qilingan');
-                    if ($year && $month) {
-                        $q->whereYear('created_at', $year)->whereMonth('created_at', $month);
-                    }
-                })
-                ->get();
+        $services = ProjectService::with('project')
+            ->where('assigned_user_id', $userId)
+            ->whereHas('project', function ($q) use ($year, $month) {
+                $q->where('status', '!=', 'bekor_qilingan');
+                if ($year && $month) {
+                    $q->whereYear('created_at', $year)->whereMonth('created_at', $month);
+                }
+            })
+            ->get();
 
-            foreach ($services as $s) {
-                $price = (float) $s->final_price;
-                if ($price <= 0) continue;
+        foreach ($services as $s) {
+            $price = (float) $s->final_price;
+            if ($price <= 0) continue;
 
-                $calc = EmployeePayableService::commissionForService($s, $s->project);
-                $rate = $calc['rate']; // ko'rsatish uchun — oxirgi ko'rilgan xizmat foizi
+            $calc = EmployeePayableService::commissionForService($s, $s->project);
+            $rate = $calc['rate']; // ko'rsatish uchun — oxirgi ko'rilgan xizmat foizi
 
-                $commission = $calc['commission'];
-                if ($commission <= 0) continue;
+            $commission = $calc['commission'];
+            if ($commission <= 0) continue;
 
-                // Faqat tugallangan ish uchun "ochilgan" (comm_paid) qism hisoblanadi —
-                // hali tugallanmagan ish butunlay "jarayonda" hisoblanadi (Oylik
-                // hisobotdagi "kutayotgan" bilan bir xil mantiq).
-                $isCompleted = (bool) $s->completed_at;
-                $commPaid    = $isCompleted ? $calc['comm_paid'] : 0.0;
-                $commLeft    = $commission - $commPaid;
+            // Faqat tugallangan ish uchun "ochilgan" (comm_paid) qism hisoblanadi —
+            // hali tugallanmagan ish butunlay "jarayonda" hisoblanadi (Oylik
+            // hisobotdagi "kutayotgan" bilan bir xil mantiq).
+            $isCompleted = (bool) $s->completed_at;
+            $commPaid    = $isCompleted ? $calc['comm_paid'] : 0.0;
+            $commLeft    = $commission - $commPaid;
 
-                $earned  += $commPaid;
-                $pending += $commLeft;
+            $earned  += $commPaid;
+            $pending += $commLeft;
 
-                $status = !$isCompleted
-                    ? 'jarayonda'
-                    : ($commPaid >= $commission - 0.01 ? 'tasdiqlangan' : "qisman to'langan");
+            $status = !$isCompleted
+                ? 'jarayonda'
+                : ($commPaid >= $commission - 0.01 ? 'tasdiqlangan' : "qisman to'langan");
 
-                $txns[] = [
-                    'type'    => 'ish',
-                    'dir'     => 'in',
-                    'date'    => ($s->completed_at ?? $s->created_at),
-                    'owner'   => $s->project?->owner_name ?? '—',
-                    'number'  => $s->project?->number ?? '',
-                    'service' => Project::serviceOptions()[$s->service_name] ?? $s->service_name,
-                    'amount'  => $commission,
-                    'status'  => $status,
-                ];
-            }
+            $txns[] = [
+                'type'    => 'ish',
+                'dir'     => 'in',
+                'date'    => ($s->completed_at ?? $s->created_at),
+                'owner'   => $s->project?->owner_name ?? '—',
+                'number'  => $s->project?->number ?? '',
+                'service' => Project::serviceOptions()[$s->service_name] ?? $s->service_name,
+                'amount'  => $commission,
+                'status'  => $status,
+            ];
         }
 
         // ── Chiqim: oylik to'lovlar va avanslar (o'zining "month" maydoni bo'yicha) ──
