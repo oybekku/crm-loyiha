@@ -72,7 +72,17 @@ class PaymentModal extends Component
     public bool   $servicePricePinError  = false;
 
     // ── Payment modal ─────────────────────────────────────────────────────
+    // Eslatma: 'kb-open-payment' eventi 'id' kaliti bilan yuboriladi
+    // (ProjectEditModal va kanban-board.blade.php'dagi tugmalar), shu
+    // sababli to'g'ridan-to'g'ri openPaymentModal($projectId)ga bog'lab
+    // bo'lmaydi — Livewire event maydonlarini metod parametr NOMI bo'yicha
+    // moslashtiradi. Shu uchun nomi mos keluvchi tor "ko'prik" metod kerak.
     #[On('kb-open-payment')]
+    public function kbOpenPayment(int $id, bool $fromQueue = false): void
+    {
+        $this->openPaymentModal($id, $fromQueue);
+    }
+
     public function openPaymentModal(int $projectId, bool $fromQueue = false): void
     {
         $this->paymentProjectId = $projectId;

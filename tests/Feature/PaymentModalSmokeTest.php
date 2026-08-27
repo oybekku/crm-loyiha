@@ -74,4 +74,30 @@ class PaymentModalSmokeTest extends TestCase
         $kb->call('kbPaymentSaved');
         $kb->assertOk();
     }
+
+    // ProjectEditModal va kanban-board.blade.php'dagi tugmalar 'kb-open-payment'
+    // eventini {id, fromQueue} shaklida yuboradi (parametr nomi $projectId
+    // emas, $id) — Livewire #[On] atributi metod parametrlarini event
+    // maydonlari NOMI bo'yicha bog'laydi, shu sababli ko'prik metod ($id nomi
+    // bilan) shart. Bu metod nomi/imzosi noto'g'ri o'zgartirilsa aynan shu
+    // test qulaydi (2026-08-27 productionda aynan shu sabab bilan buzilgan edi).
+    public function test_kb_open_payment_bridge_matches_dispatched_event_shape(): void
+    {
+        $user = User::where('role', 'admin')->first() ?? User::first();
+        $this->actingAs($user);
+
+        $project = Project::create([
+            'owner_name' => 'TEST kb-open-payment bridge',
+            'number'     => '#TEST-' . uniqid(),
+            'status'     => 'tolov_jarayonida',
+            'address'    => 'Test address',
+            'phones'     => ['+998900000000'],
+        ]);
+
+        $c = Livewire::test(PaymentModal::class);
+        $c->call('kbOpenPayment', id: $project->id, fromQueue: true);
+        $c->assertSet('showPaymentModal', true);
+        $c->assertSet('paymentProjectId', $project->id);
+        $c->assertSet('paymentFromQueue', true);
+    }
 }
