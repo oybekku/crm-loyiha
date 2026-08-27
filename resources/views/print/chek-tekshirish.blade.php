@@ -31,7 +31,7 @@
         <div class="row"><span class="k">Loyiha raqami</span><span class="v">№{{ $project->seq_no ?? $project->number }}</span></div>
         <div class="row"><span class="k">Mijoz</span><span class="v">{{ $project->owner_name }}</span></div>
         <div class="row"><span class="k">To'lov usuli</span><span class="v">{{ \App\Models\Payment::methodOptions()[$payment->method] ?? $payment->method }}</span></div>
-        <div class="row"><span class="k">Sana / vaqt</span><span class="v">{{ $payment->created_at->format('d.m.Y H:i') }}</span></div>
+        <div class="row"><span class="k">Sana</span><span class="v">{{ $payment->payment_date->format('d.m.Y') }}</span></div>
         <div class="row"><span class="k">Qabul qildi</span><span class="v">{{ $payment->createdBy?->name ?? '—' }}</span></div>
     </div>
     <div class="foot">MY PERFECT HOME — chek tekshirish tizimi</div>

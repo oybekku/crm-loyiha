@@ -237,6 +237,24 @@ class Project extends Model
         $this->saveQuietly();
     }
 
+    // Loyihaning bo'lim tarixiga yozuv qo'shadi (joriy ochiq yozuvni yopib,
+    // yangisini ochadi). KanbanBoard va PaymentModal komponentlari birgalikda
+    // ishlatadi — shu sababli model darajasida (ikkalasida ham qayta yozilmasin).
+    public static function logStatusChange(self $project, string $newStatus, int $allocDays = 0, ?int $assignedUserId = null): void
+    {
+        \App\Models\ProjectStatusLog::where('project_id', $project->id)
+            ->whereNull('left_at')
+            ->update(['left_at' => now()]);
+
+        \App\Models\ProjectStatusLog::create([
+            'project_id'       => $project->id,
+            'status'           => $newStatus,
+            'entered_at'       => now(),
+            'allocated_days'   => $allocDays,
+            'assigned_user_id' => $assignedUserId ?? $project->assigned_user_id,
+        ]);
+    }
+
     /**
      * Egasiga "loyiha tayyor" SMS yuboradi va natijani o'zida saqlaydi.
      * updateQuietly ishlatiladi — "updated" hodisasi qayta yonmasligi uchun.

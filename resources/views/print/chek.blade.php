@@ -35,7 +35,7 @@
     <div class="center firm">MY PERFECT HOME</div>
     <div class="center sub">MFO 01125 &middot; INN 308515451</div>
     <div class="center sub">To'lov cheki</div>
-    <div class="center sub">{{ $payment->created_at->format('d.m.Y H:i') }}</div>
+    <div class="center sub">{{ $payment->payment_date->format('d.m.Y') }}</div>
 
     <div class="divider"></div>
 
