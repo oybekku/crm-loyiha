@@ -644,18 +644,45 @@ HTML;
                 function () {
                     $html = '<script src="' . asset('js/map-picker.js') . '?v=11" defer></script>';
                     // Chekni chop etishdan oldin qog'oz kengligini (58/80mm) bir marta
-                    // so'rab, shu brauzerda eslab qoladi — chek shablonini shu
-                    // kenglikka moslab beradi (resources/views/print/chek.blade.php).
+                    // ikkita aniq tugma bilan so'rab, shu brauzerda eslab qoladi — chek
+                    // shablonini shu kenglikka moslab beradi (print/chek.blade.php).
+                    // Oldin oddiy prompt() ishlatilgan edi, lekin "80" oldindan
+                    // to'ldirilgan bo'lib, o'qimasdan OK bosilsa noto'g'ri saqlanardi —
+                    // shu sabab ikkita katta tugmali oynaga o'zgartirildi.
                     $html .= <<<'HTML'
 <script>
 window.bhOpenChek = function (paymentId) {
     var w = localStorage.getItem('bh_chek_width');
-    if (w !== '58' && w !== '80') {
-        var ans = window.prompt("Chek printeringiz qog'oz kengligi qancha? 58 yoki 80 (mm) kiriting:", '80');
-        w = (ans === '58') ? '58' : '80';
-        localStorage.setItem('bh_chek_width', w);
+    if (w === '58' || w === '80') {
+        window.open('/print/payment/' + paymentId + '/chek?width=' + w, '_blank', 'width=380,height=600');
+        return;
     }
-    window.open('/print/payment/' + paymentId + '/chek?width=' + w, '_blank', 'width=380,height=600');
+    var ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center';
+    ov.innerHTML =
+        '<div style="background:#fff;border-radius:14px;padding:26px 28px;max-width:340px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.3)">' +
+            '<div style="font-size:15px;font-weight:700;color:#111827;margin-bottom:6px">Chek printeringiz qog\'oz kengligi?</div>' +
+            '<div style="font-size:12.5px;color:#6b7280;margin-bottom:18px">Bir marta tanlaysiz, shu kompyuterda eslab qoladi</div>' +
+            '<div style="display:flex;gap:10px;justify-content:center">' +
+                '<button data-w="58" style="flex:1;padding:14px 0;border-radius:10px;border:1.5px solid #d1d5db;background:#fff;font-size:14px;font-weight:700;cursor:pointer;color:#111827">58 mm<br><span style="font-weight:400;font-size:11px;color:#9ca3af">kichik qog\'oz</span></button>' +
+                '<button data-w="80" style="flex:1;padding:14px 0;border-radius:10px;border:1.5px solid #d1d5db;background:#fff;font-size:14px;font-weight:700;cursor:pointer;color:#111827">80 mm<br><span style="font-weight:400;font-size:11px;color:#9ca3af">katta qog\'oz</span></button>' +
+            '</div>' +
+        '</div>';
+    document.body.appendChild(ov);
+    ov.querySelectorAll('button').forEach(function (btn) {
+        btn.onclick = function () {
+            var chosen = btn.getAttribute('data-w');
+            localStorage.setItem('bh_chek_width', chosen);
+            ov.remove();
+            window.open('/print/payment/' + paymentId + '/chek?width=' + chosen, '_blank', 'width=380,height=600');
+        };
+    });
+};
+// "⚙" tugmasi — chek kengligi tanlovini tozalab, darhol qaytadan so'raydi
+// (noto'g'ri tanlangan bo'lsa yoki printer almashtirilganda ishlatiladi).
+window.bhChangeChekWidth = function (paymentId) {
+    localStorage.removeItem('bh_chek_width');
+    window.bhOpenChek(paymentId);
 };
 </script>
 HTML;

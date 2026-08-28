@@ -255,8 +255,13 @@
                 </div>
                 <div style="display:flex;gap:6px;flex-shrink:0">
                     <button onclick="event.stopPropagation();bhOpenChek({{ $pmt->id }})"
-                            style="font-size:10px;padding:3px 8px;border-radius:5px;border:1px solid #e5e7eb;background:#fff;color:#16a34a;cursor:pointer;white-space:nowrap">
+                            style="font-size:10px;padding:3px 8px;border-radius:5px 0 0 5px;border:1px solid #e5e7eb;border-right:none;background:#fff;color:#16a34a;cursor:pointer;white-space:nowrap">
                         🧾 Chek
+                    </button>
+                    <button onclick="event.stopPropagation();bhChangeChekWidth({{ $pmt->id }})"
+                            title="Chek qog'oz kengligini o'zgartirish (58/80mm)"
+                            style="font-size:10px;padding:3px 6px;border-radius:0 5px 5px 0;border:1px solid #e5e7eb;background:#fff;color:#9ca3af;cursor:pointer">
+                        ⚙
                     </button>
                     <button onclick="event.stopPropagation()"
                             wire:click.stop="openEditPayment({{ $pmt->id }})"
