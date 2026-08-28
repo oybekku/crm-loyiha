@@ -254,7 +254,7 @@
                     @endif
                 </div>
                 <div style="display:flex;gap:6px;flex-shrink:0">
-                    <button onclick="event.stopPropagation();window.open('/print/payment/{{ $pmt->id }}/chek','_blank','width=380,height=600')"
+                    <button onclick="event.stopPropagation();bhOpenChek({{ $pmt->id }})"
                             style="font-size:10px;padding:3px 8px;border-radius:5px;border:1px solid #e5e7eb;background:#fff;color:#16a34a;cursor:pointer;white-space:nowrap">
                         🧾 Chek
                     </button>

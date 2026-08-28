@@ -2791,7 +2791,7 @@ document.addEventListener('livewire:initialized', function () {
     Livewire.on('print-receipt', function (data) {
         var d = Array.isArray(data) ? data[0] : data;
         if (!d || !d.paymentId) return;
-        window.open('/print/payment/' + d.paymentId + '/chek', '_blank', 'width=380,height=600');
+        bhOpenChek(d.paymentId);
     });
 });
 

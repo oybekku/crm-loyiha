@@ -3,30 +3,39 @@
 <head>
 <meta charset="UTF-8">
 <title>Chek — {{ $payment->id }}</title>
+@php
+    // Chek qog'ozi kengligi — chop etish tugmasi birinchi marta bosilganda
+    // brauzerda so'raladi va localStorage'da saqlanadi (App\...\payment-modal.blade.php
+    // va kanban-board.blade.php'dagi bhOpenChek() funksiyasi), so'ng shu yerga
+    // ?width= parametri sifatida keladi. Noma'lum/berilmagan bo'lsa 80mm.
+    $width  = (int) request('width', 80);
+    $width  = in_array($width, [58, 80], true) ? $width : 80;
+    $narrow = $width === 58;
+@endphp
 <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    @page { size: 80mm auto; margin: 0; }
+    @page { size: {{ $width }}mm auto; margin: 0; }
     html, body {
-        width: 80mm;
+        width: {{ $width }}mm;
         font-family: 'Consolas', 'Courier New', monospace;
-        font-size: 12px;
+        font-size: {{ $narrow ? 10 : 12 }}px;
         line-height: 1.45;
         color: #000;
         background: #fff;
     }
-    .chek { padding: 4mm 4mm 8mm; }
+    .chek { padding: {{ $narrow ? '3mm 3mm 6mm' : '4mm 4mm 8mm' }}; }
     .center { text-align: center; }
-    .firm { font-size: 15px; font-weight: 700; letter-spacing: 1px; }
-    .sub   { font-size: 10px; color: #333; margin-top: 1mm; }
-    .divider { border-top: 1px dashed #000; margin: 3mm 0; }
+    .firm { font-size: {{ $narrow ? 13 : 15 }}px; font-weight: 700; letter-spacing: 1px; }
+    .sub   { font-size: {{ $narrow ? 9 : 10 }}px; color: #333; margin-top: 1mm; }
+    .divider { border-top: 1px dashed #000; margin: {{ $narrow ? '2mm' : '3mm' }} 0; }
     .row { display: flex; justify-content: space-between; gap: 6px; margin-bottom: 1.5mm; }
     .row .label { color: #333; }
     .row .value { font-weight: 700; text-align: right; }
-    .big { font-size: 16px; font-weight: 800; }
+    .big { font-size: {{ $narrow ? 14 : 16 }}px; font-weight: 800; }
     .warn { border: 1px solid #000; padding: 1.5mm; margin-top: 2mm; font-weight: 700; text-align: center; }
-    .footer { margin-top: 4mm; font-size: 10px; text-align: center; color: #333; }
+    .footer { margin-top: 4mm; font-size: {{ $narrow ? 9 : 10 }}px; text-align: center; color: #333; }
     .qr { margin-top: 3mm; text-align: center; }
-    .qr img { width: 22mm; height: 22mm; }
+    .qr img { width: {{ $narrow ? 18 : 22 }}mm; height: {{ $narrow ? 18 : 22 }}mm; }
     .qr .qr-label { font-size: 9px; color: #333; margin-top: 1mm; }
 </style>
 </head>
@@ -42,7 +51,7 @@
     <div class="row"><span class="label">Loyiha</span><span class="value">№{{ $project->seq_no ?? $project->number }}</span></div>
     <div class="row"><span class="label">Mijoz</span><span class="value">{{ $project->owner_name }}</span></div>
     @if($project->address)
-    <div class="row"><span class="label">Manzil</span><span class="value" style="max-width:48mm">{{ $project->address }}</span></div>
+    <div class="row"><span class="label">Manzil</span><span class="value" style="max-width:{{ $narrow ? 28 : 48 }}mm">{{ $project->address }}</span></div>
     @endif
 
     <div class="divider"></div>

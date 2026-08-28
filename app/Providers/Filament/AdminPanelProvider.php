@@ -643,6 +643,22 @@ HTML;
                 'panels::body.end',
                 function () {
                     $html = '<script src="' . asset('js/map-picker.js') . '?v=11" defer></script>';
+                    // Chekni chop etishdan oldin qog'oz kengligini (58/80mm) bir marta
+                    // so'rab, shu brauzerda eslab qoladi — chek shablonini shu
+                    // kenglikka moslab beradi (resources/views/print/chek.blade.php).
+                    $html .= <<<'HTML'
+<script>
+window.bhOpenChek = function (paymentId) {
+    var w = localStorage.getItem('bh_chek_width');
+    if (w !== '58' && w !== '80') {
+        var ans = window.prompt("Chek printeringiz qog'oz kengligi qancha? 58 yoki 80 (mm) kiriting:", '80');
+        w = (ans === '58') ? '58' : '80';
+        localStorage.setItem('bh_chek_width', w);
+    }
+    window.open('/print/payment/' + paymentId + '/chek?width=' + w, '_blank', 'width=380,height=600');
+};
+</script>
+HTML;
                     if (auth()->check()) {
                         $html .= \Illuminate\Support\Facades\Blade::render('@livewire(\'message-notifier\')');
                         $html .= \Illuminate\Support\Facades\Blade::render('@livewire(\'my-balance\')');
