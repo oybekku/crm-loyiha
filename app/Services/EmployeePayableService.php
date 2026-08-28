@@ -26,6 +26,12 @@ use Illuminate\Support\Collection;
  */
 class EmployeePayableService
 {
+    // Loyiha "arxivlangan" deb hisoblanadigan statuslar — shu statusdagi
+    // loyihalarning hali tugallanmagan xizmatlari "kutayotgan" hisoblanmaydi.
+    // Oylik hisobot va Dashboard'dagi "Xodimlar yuklamasi" bir xil ro'yxatdan
+    // foydalanadi — shu bilan ikkalasida raqamlar doim mos keladi.
+    public const ARCHIVE_STATUSES = ['tugallangan', 'taqdim_etilgan', 'bekor_qilingan'];
+
     /**
      * Berilgan oy ('Y-m') uchun hodimning komissiya foizi. Shu oy (yoki
      * undan oldingi eng yaqin) uchun alohida belgilangan foiz bo'lsa —
@@ -132,7 +138,7 @@ class EmployeePayableService
     public static function statsForUser(User $user, string $month): array
     {
         [$year, $mon] = explode('-', $month);
-        $archiveStatuses = ['tugallangan', 'taqdim_etilgan', 'bekor_qilingan'];
+        $archiveStatuses = self::ARCHIVE_STATUSES;
 
         $completedServices = ProjectService::with('project')
             ->where('assigned_user_id', $user->id)

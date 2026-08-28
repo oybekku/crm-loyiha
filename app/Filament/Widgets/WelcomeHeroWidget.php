@@ -97,26 +97,26 @@ class WelcomeHeroWidget extends Widget
                 $titleSuffix = 'Muzlatilgan';
                 break;
             case 'month_done':
-                $q->whereNotNull('work_started_at')
-                    ->whereYear('work_started_at', $this->selYear)
-                    ->whereMonth('work_started_at', $month)
-                    ->whereNotNull('completed_at');
+                $q->whereNotNull('completed_at')
+                    ->whereHas('project', fn ($p) => $p->whereYear('created_at', $this->selYear)
+                        ->whereMonth('created_at', $month)
+                        ->where('status', '!=', 'bekor_qilingan'));
                 $titleSuffix = 'Tugallangan — ' . \Carbon\Carbon::create($this->selYear, $month, 1)->translatedFormat('F');
                 break;
             case 'month_prog':
-                $q->whereNotNull('work_started_at')
-                    ->whereYear('work_started_at', $this->selYear)
-                    ->whereMonth('work_started_at', $month)
-                    ->whereNull('completed_at')
-                    ->whereHas('project', fn ($p) => $p->whereNull('timer_paused_at'));
+                $q->whereNull('completed_at')
+                    ->whereHas('project', fn ($p) => $p->whereYear('created_at', $this->selYear)
+                        ->whereMonth('created_at', $month)
+                        ->whereNotIn('status', \App\Services\EmployeePayableService::ARCHIVE_STATUSES)
+                        ->whereNull('timer_paused_at'));
                 $titleSuffix = 'Jarayonda — ' . \Carbon\Carbon::create($this->selYear, $month, 1)->translatedFormat('F');
                 break;
             case 'month_paused':
-                $q->whereNotNull('work_started_at')
-                    ->whereYear('work_started_at', $this->selYear)
-                    ->whereMonth('work_started_at', $month)
-                    ->whereNull('completed_at')
-                    ->whereHas('project', fn ($p) => $p->whereNotNull('timer_paused_at'));
+                $q->whereNull('completed_at')
+                    ->whereHas('project', fn ($p) => $p->whereYear('created_at', $this->selYear)
+                        ->whereMonth('created_at', $month)
+                        ->whereNotIn('status', \App\Services\EmployeePayableService::ARCHIVE_STATUSES)
+                        ->whereNotNull('timer_paused_at'));
                 $titleSuffix = 'Muzlatilgan — ' . \Carbon\Carbon::create($this->selYear, $month, 1)->translatedFormat('F');
                 break;
             case 'overdue':
@@ -126,12 +126,12 @@ class WelcomeHeroWidget extends Widget
                 $titleSuffix = 'Kechikayotgan';
                 break;
             case 'month_overdue':
-                $q->whereNotNull('work_started_at')
-                    ->whereYear('work_started_at', $this->selYear)
-                    ->whereMonth('work_started_at', $month)
-                    ->whereNull('completed_at')
+                $q->whereNull('completed_at')
                     ->where('deadline_days', '>', 0)
-                    ->whereHas('project', fn ($p) => $p->whereNull('timer_paused_at'));
+                    ->whereHas('project', fn ($p) => $p->whereYear('created_at', $this->selYear)
+                        ->whereMonth('created_at', $month)
+                        ->whereNotIn('status', \App\Services\EmployeePayableService::ARCHIVE_STATUSES)
+                        ->whereNull('timer_paused_at'));
                 $titleSuffix = 'Kechikayotgan — ' . \Carbon\Carbon::create($this->selYear, $month, 1)->translatedFormat('F');
                 break;
         }
@@ -438,33 +438,42 @@ class WelcomeHeroWidget extends Widget
                     ->get(['id', 'work_started_at', 'submitted_at', 'deadline_days'])
                     ->filter(fn ($s) => $s->is_late)->count();
 
-                // Har oy uchun to'rtta son: shu oyda boshlangan ishlardan qanchasi
-                // hozir tugallangan, qanchasi jarayonda (shundan qanchasi kechikayotgan)
-                // va qanchasi muzlatilgan.
-                $monthlyDone    = array_fill(1, 12, 0);
+                // Har oy uchun to'rtta son: LOYIHA OCHILGAN OYI bo'yicha (Oylik
+                // hisobotdagi mezon bilan bir xil — EmployeePayableService::statsForUser())
+                // qanchasi tugallangan (loyihalar soni, dublikatsiz), qanchasi jarayonda
+                // (shundan qanchasi kechikayotgan) va qanchasi muzlatilgan. Ilgari bu
+                // yerda "ish boshlangan oyi" (work_started_at) ishlatilgan edi — shu
+                // sabab Oylik hisobot bilan mos kelmasdi (avgust: 30/8 vs 25/8).
+                $archiveStatuses = \App\Services\EmployeePayableService::ARCHIVE_STATUSES;
+                $monthlyDoneProjects = array_fill(1, 12, []);
                 $monthlyProg    = array_fill(1, 12, 0);
                 $monthlyOverdue = array_fill(1, 12, 0);
                 $monthlyPaused  = array_fill(1, 12, 0);
-                (clone $svcQ)->whereNotNull('work_started_at')
-                    ->whereYear('work_started_at', $this->selYear)
-                    ->with('project:id,timer_paused_at')
+                (clone $svcQ)
+                    ->whereHas('project', fn ($p) => $p->whereYear('created_at', $this->selYear))
+                    ->with('project:id,created_at,status,timer_paused_at')
                     ->get(['id', 'project_id', 'work_started_at', 'completed_at', 'submitted_at', 'deadline_days'])
-                    ->each(function ($s) use (&$monthlyDone, &$monthlyProg, &$monthlyOverdue, &$monthlyPaused) {
-                        $m = (int) $s->work_started_at->format('n');
+                    ->each(function ($s) use (&$monthlyDoneProjects, &$monthlyProg, &$monthlyOverdue, &$monthlyPaused, $archiveStatuses) {
+                        if (!$s->project) return;
+                        $m = (int) $s->project->created_at->format('n');
                         if ($s->completed_at) {
-                            $monthlyDone[$m]++;
-                        } elseif ($s->project?->timer_paused_at) {
-                            $monthlyPaused[$m]++;
-                        } else {
-                            $monthlyProg[$m]++;
-                            if ($s->is_late) $monthlyOverdue[$m]++;
+                            if ($s->project->status !== 'bekor_qilingan') {
+                                $monthlyDoneProjects[$m][$s->project_id] = true;
+                            }
+                        } elseif (!in_array($s->project->status, $archiveStatuses, true)) {
+                            if ($s->project->timer_paused_at) {
+                                $monthlyPaused[$m]++;
+                            } else {
+                                $monthlyProg[$m]++;
+                                if ($s->is_late) $monthlyOverdue[$m]++;
+                            }
                         }
                     });
 
                 $monthly = [];
                 for ($m = 1; $m <= 12; $m++) {
                     $monthly[] = [
-                        'done'    => $monthlyDone[$m],
+                        'done'    => count($monthlyDoneProjects[$m]),
                         'prog'    => $monthlyProg[$m],
                         'overdue' => $monthlyOverdue[$m],
                         'paused'  => $monthlyPaused[$m],
