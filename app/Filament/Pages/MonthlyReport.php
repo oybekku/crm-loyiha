@@ -65,6 +65,7 @@ class MonthlyReport extends Page
     public int    $roleEditUserId    = 0;
     public string $roleEditValue     = '';
     public string $positionEditValue = '';
+    public string $salaryBaseEditValue = ''; // shu oynada oklad ham birga tahrirlanadi
 
     public function openRoleEditor(int $uid): void
     {
@@ -73,18 +74,20 @@ class MonthlyReport extends Page
         $user = User::find($uid);
         if (!$user) return;
 
-        $this->roleEditUserId    = $uid;
-        $this->roleEditValue     = $user->role;
-        $this->positionEditValue = (string) $user->position;
-        $this->showRoleEditor    = true;
+        $this->roleEditUserId      = $uid;
+        $this->roleEditValue       = $user->role;
+        $this->positionEditValue   = (string) $user->position;
+        $this->salaryBaseEditValue = (string) (float) $user->base_salary;
+        $this->showRoleEditor      = true;
     }
 
     public function closeRoleEditor(): void
     {
-        $this->showRoleEditor    = false;
-        $this->roleEditUserId    = 0;
-        $this->roleEditValue     = '';
-        $this->positionEditValue = '';
+        $this->showRoleEditor      = false;
+        $this->roleEditUserId      = 0;
+        $this->roleEditValue       = '';
+        $this->positionEditValue   = '';
+        $this->salaryBaseEditValue = '';
     }
 
     public function saveRole(): void
@@ -92,8 +95,9 @@ class MonthlyReport extends Page
         if (!auth()->user()?->isAdmin()) return;
 
         $this->validate([
-            'roleEditValue'     => 'required|in:admin,menejer,hisobchi,bajaruvchi',
-            'positionEditValue' => 'nullable|string|max:50',
+            'roleEditValue'       => 'required|in:admin,menejer,hisobchi,bajaruvchi',
+            'positionEditValue'   => 'nullable|string|max:50',
+            'salaryBaseEditValue' => 'nullable|numeric|min:0',
         ]);
 
         $user = User::find($this->roleEditUserId);
@@ -110,53 +114,22 @@ class MonthlyReport extends Page
         }
 
         $user->update([
-            'role'     => $this->roleEditValue,
-            'position' => trim($this->positionEditValue) ?: null,
+            'role'        => $this->roleEditValue,
+            'position'    => trim($this->positionEditValue) ?: null,
+            'base_salary' => max(0, (float) str_replace([' ', ','], '', $this->salaryBaseEditValue ?: '0')),
         ]);
 
         $this->closeRoleEditor();
-        Notification::make()->title("{$user->name} — status yangilandi: {$user->display_title}")->success()->send();
+        Notification::make()->title("{$user->name} — sozlamalari yangilandi")->success()->send();
     }
 
-    // Belgilangan oylik (oklad) tahrirlash
-    public bool   $showSalaryBaseEditor = false;
-    public int    $salaryBaseEditUserId = 0;
-    public string $salaryBaseEditValue  = '';
-
-    public function openSalaryBaseEditor(int $uid): void
+    // Status oynasidan (footer) chaqiriladi — hodimni ishdan bo'shatib,
+    // oynani ham yopadi.
+    public function fireFromRoleEditor(): void
     {
-        if (!auth()->user()?->isAdmin()) return;
-
-        $user = User::find($uid);
-        if (!$user) return;
-
-        $this->salaryBaseEditUserId = $uid;
-        $this->salaryBaseEditValue  = (string) (float) $user->base_salary;
-        $this->showSalaryBaseEditor = true;
-    }
-
-    public function closeSalaryBaseEditor(): void
-    {
-        $this->showSalaryBaseEditor = false;
-        $this->salaryBaseEditUserId = 0;
-        $this->salaryBaseEditValue  = '';
-    }
-
-    public function saveSalaryBase(): void
-    {
-        if (!auth()->user()?->isAdmin()) return;
-
-        $user = User::find($this->salaryBaseEditUserId);
-        if (!$user) {
-            $this->closeSalaryBaseEditor();
-            return;
-        }
-
-        $amount = max(0, (float) str_replace([' ', ','], '', $this->salaryBaseEditValue));
-        $user->update(['base_salary' => $amount]);
-
-        $this->closeSalaryBaseEditor();
-        Notification::make()->title("{$user->name} — oylik (oklad) yangilandi: " . number_format($amount, 0, '.', ' ') . " so'm")->success()->send();
+        $uid = $this->roleEditUserId;
+        $this->closeRoleEditor();
+        $this->toggleActive($uid);
     }
 
     // Ishdan bo'shatish / tiklash — "Bo'shagan xodimlar" oynasi

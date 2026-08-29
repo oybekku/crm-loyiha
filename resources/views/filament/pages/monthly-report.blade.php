@@ -221,9 +221,6 @@
 .dark .pay-clear{background:#0d2818!important;color:#3fb950!important}
 .toggle-months-btn{font-size:12px;font-weight:700;background:#f3f4f6;color:#374151;border:1.5px solid #e5e7eb;border-radius:8px;padding:6px 13px;cursor:pointer;white-space:nowrap}
 .toggle-months-btn:hover{background:#e5e7eb}
-.fire-icon-btn{font-size:11px;background:#fee2e2;color:#dc2626;border:none;border-radius:20px;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;line-height:1}
-.fire-icon-btn:hover{background:#fecaca}
-.dark .fire-icon-btn{background:#2d1515;color:#f87171}
 .role-badge{font-size:10px;font-weight:700;border-radius:20px;padding:2px 8px;cursor:pointer;white-space:nowrap;border:none;letter-spacing:.02em}
 .role-badge:hover{filter:brightness(0.95)}
 .role-admin{background:#ede9fe;color:#6d28d9}
@@ -238,9 +235,6 @@
 .add-employee-btn:hover{background:#1e293b}
 .departed-btn{font-size:12px;font-weight:700;background:#f3f4f6;color:#374151;border:1.5px solid #e5e7eb;border-radius:8px;padding:6px 13px;cursor:pointer;white-space:nowrap}
 .departed-btn:hover{background:#e5e7eb}
-.oklad-badge{font-size:10px;font-weight:700;border-radius:20px;padding:2px 8px;cursor:pointer;white-space:nowrap;border:none;letter-spacing:.02em;background:#fdf4ff;color:#a21caf}
-.oklad-badge:hover{filter:brightness(0.95)}
-.dark .oklad-badge{background:#3b0764;color:#e9d5ff}
 .restore-btn{font-size:11px;font-weight:700;background:#dcfce7;color:#15803d;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;white-space:nowrap}
 .restore-btn:hover{background:#bbf7d0}
 .dark .restore-btn{background:#0d2818;color:#3fb950}
@@ -267,7 +261,6 @@
                     <th class="l">Hodim</th>
                     @foreach($payableVisibleMonths as $m)<th x-show="!hideMonths">{{ $nrmMonths[$m-1] }}</th>@endforeach
                     <th>Jami qoldiq</th>
-                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -276,11 +269,7 @@
                     <td>
                         <div class="nrm-emp" style="min-width:150px;flex-direction:column;align-items:flex-start;gap:3px">
                             <span class="nrm-nm">{{ $row['user']->name }}</span>
-                            <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
-                                <button class="role-badge role-{{ $row['user']->role }}" wire:click="openRoleEditor({{ $row['user']->id }})" title="Statusni o'zgartirish">{{ $row['user']->display_title }}</button>
-                                <button class="oklad-badge" wire:click="openSalaryBaseEditor({{ $row['user']->id }})" title="Belgilangan oylik (oklad)">{{ $row['user']->base_salary > 0 ? number_format($row['user']->base_salary, 0, '.', ' ') . " so'm" : 'Oklad: 0' }}</button>
-                                <button class="fire-icon-btn" wire:click="toggleActive({{ $row['user']->id }})" wire:confirm="{{ $row['user']->name }}ni ishdan bo'shatishni tasdiqlaysizmi? U ro'yxatdan yashiriladi, ma'lumotlari 'Bo'shagan xodimlar' oynasida qoladi." title="Ishdan bo'shatish">🚪</button>
-                            </div>
+                            <button class="role-badge role-{{ $row['user']->role }}" wire:click="openRoleEditor({{ $row['user']->id }})" title="Hodim sozlamalari (status, lavozim, oklad, bo'shatish)">{{ $row['user']->display_title }}</button>
                         </div>
                     </td>
                     @foreach($payableVisibleMonths as $m)
@@ -295,11 +284,13 @@
                             @endif
                         </td>
                     @endforeach
-                    <td><span class="nrm-sum {{ $row['year_remaining']>0 ? 'warn' : 'good' }}">{{ number_format($row['year_remaining'], 0, '.', ' ') }}</span></td>
                     <td style="white-space:nowrap">
-                        @if($row['year_remaining'] > 0)
-                        <button class="pay-all-btn" wire:click="payAllRemainingForUser({{ $row['user']->id }})" wire:confirm="{{ $row['user']->name }} uchun shu yildagi barcha qoldiq oylarni ({{ number_format($row['year_remaining'], 0, '.', ' ') }} so'm) to'lashni tasdiqlaysizmi?">Hammasini to'la</button>
-                        @endif
+                        <div style="display:flex;align-items:center;gap:8px">
+                            <span class="nrm-sum {{ $row['year_remaining']>0 ? 'warn' : 'good' }}">{{ number_format($row['year_remaining'], 0, '.', ' ') }}</span>
+                            @if($row['year_remaining'] > 0)
+                            <button class="pay-all-btn" wire:click="payAllRemainingForUser({{ $row['user']->id }})" wire:confirm="{{ $row['user']->name }} uchun shu yildagi barcha qoldiq oylarni ({{ number_format($row['year_remaining'], 0, '.', ' ') }} so'm) to'lashni tasdiqlaysizmi?">Hammasini to'la</button>
+                            @endif
+                        </div>
                     </td>
                 </tr>
                 @endforeach
@@ -1308,7 +1299,7 @@
 <div style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px" wire:click.self="closeRoleEditor">
 <div style="background:#fff;border-radius:14px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.4)">
     <div style="padding:18px 20px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center">
-        <h3 style="font-size:15px;font-weight:800;color:#111827;margin:0">Status va lavozim</h3>
+        <h3 style="font-size:15px;font-weight:800;color:#111827;margin:0">Hodim sozlamalari</h3>
         <button wire:click="closeRoleEditor" style="background:none;border:none;cursor:pointer;font-size:20px;color:#9ca3af">×</button>
     </div>
     <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
@@ -1336,53 +1327,30 @@
             @error('positionEditValue')<span style="font-size:11px;color:#dc2626">{{ $message }}</span>@enderror
             <div style="font-size:11px;color:#94a3b8;margin-top:4px">Faqat ko'rinish uchun (jadvalda shu chiqadi) — huquqqa ta'sir qilmaydi. Bo'sh qoldirilsa, status nomi ko'rsatiladi.</div>
         </div>
-    </div>
-    <div style="padding:14px 20px;border-top:1px solid #e5e7eb;display:flex;gap:10px">
-        <button wire:click="saveRole"
-                style="flex:1;background:#2563eb;color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">
-            Saqlash
-        </button>
-        <button wire:click="closeRoleEditor"
-                style="flex:1;background:#f3f4f6;color:#374151;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:600;cursor:pointer">
-            Bekor qilish
-        </button>
-    </div>
-</div>
-</div>
-@endif
-
-{{-- BELGILANGAN OYLIK (OKLAD) TAHRIRLASH MODAL --}}
-@if($showSalaryBaseEditor)
-@php $baseEditUser = \App\Models\User::find($salaryBaseEditUserId); @endphp
-<div style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px" wire:click.self="closeSalaryBaseEditor">
-<div style="background:#fff;border-radius:14px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.4)">
-    <div style="padding:18px 20px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center">
-        <h3 style="font-size:15px;font-weight:800;color:#111827;margin:0">Belgilangan oylik (oklad)</h3>
-        <button wire:click="closeSalaryBaseEditor" style="background:none;border:none;cursor:pointer;font-size:20px;color:#9ca3af">×</button>
-    </div>
-    <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
-        <div style="font-size:13px;color:#374151">
-            <strong>{{ $baseEditUser?->name }}</strong> uchun har oy avtomatik qo'shiladigan oylik
-        </div>
         <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px">Oylik (so'm) — ishlamagan oyda ham qo'shiladi</label>
+            <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px">Belgilangan oylik (oklad)</label>
             <input wire:model="salaryBaseEditValue" type="number" min="0"
                    placeholder="Masalan: 2000000 (0 — oklad yo'q)"
                    style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;font-size:14px;font-weight:600;outline:none;box-sizing:border-box"
                    onfocus="this.style.borderColor='#a21caf'" onblur="this.style.borderColor='#e2e8f0'">
-        </div>
-        <div style="font-size:11.5px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:9px 12px">
-            ⚠ Bu summa shu yilning BARCHA oylariga (o'tganlariga ham) avtomatik qo'shiladi — "To'lanishi kerak" jadvalidagi qoldiqlar shunga qarab oshadi.
+            @error('salaryBaseEditValue')<span style="font-size:11px;color:#dc2626">{{ $message }}</span>@enderror
+            <div style="font-size:11px;color:#94a3b8;margin-top:4px">Ishlamagan oyda ham "To'lanishi kerak"ga har oy avtomatik qo'shiladi (o'tgan oylarga ham).</div>
         </div>
     </div>
-    <div style="padding:14px 20px;border-top:1px solid #e5e7eb;display:flex;gap:10px">
-        <button wire:click="saveSalaryBase"
-                style="flex:1;background:#a21caf;color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">
-            Saqlash
-        </button>
-        <button wire:click="closeSalaryBaseEditor"
-                style="flex:1;background:#f3f4f6;color:#374151;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:600;cursor:pointer">
-            Bekor qilish
+    <div style="padding:14px 20px;border-top:1px solid #e5e7eb;display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;gap:10px">
+            <button wire:click="saveRole"
+                    style="flex:1;background:#2563eb;color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">
+                Saqlash
+            </button>
+            <button wire:click="closeRoleEditor"
+                    style="flex:1;background:#f3f4f6;color:#374151;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:600;cursor:pointer">
+                Bekor qilish
+            </button>
+        </div>
+        <button wire:click="fireFromRoleEditor" wire:confirm="{{ $roleEditUser?->name }}ni ishdan bo'shatishni tasdiqlaysizmi? U ro'yxatdan yashiriladi, ma'lumotlari 'Bo'shagan xodimlar' oynasida qoladi."
+                style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:9px;font-size:12.5px;font-weight:700;cursor:pointer">
+            🚪 Ishdan bo'shatish
         </button>
     </div>
 </div>
