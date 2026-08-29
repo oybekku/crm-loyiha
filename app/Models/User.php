@@ -24,10 +24,12 @@ class User extends Authenticatable implements FilamentUser
         'email',
         'password',
         'role',
+        'is_active',
         'phone',
         'permissions',
         'commission_rate',
         'monthly_norm',
+        'base_salary',
         'telegram_chat_id',
         'telegram_link_token',
     ];
@@ -123,7 +125,7 @@ class User extends Authenticatable implements FilamentUser
         };
     }
 
-    public function canAccessPanel(Panel $panel): bool { return true; }
+    public function canAccessPanel(Panel $panel): bool { return (bool) $this->is_active; }
 
     public function isAdmin(): bool      { return $this->role === 'admin'; }
     public function isMenejer(): bool    { return $this->role === 'menejer'; }
@@ -176,6 +178,7 @@ class User extends Authenticatable implements FilamentUser
             'email_verified_at' => 'datetime',
             'password'          => 'hashed',
             'permissions'       => 'array',
+            'is_active'         => 'boolean',
         ];
     }
 }

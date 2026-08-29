@@ -264,7 +264,7 @@ class EmployeePayableService
      *
      * @return array<int, array{user: \App\Models\User, months: array<int, array{calc: float, paid: float, remaining: float, month_str: string}>, year_calc: float, year_paid: float, year_remaining: float}>
      */
-    public static function yearGrid(int $year): array
+    public static function yearGrid(int $year, bool $activeOnly = true): array
     {
         $monthStrings = [];
         for ($m = 1; $m <= 12; $m++) {
@@ -301,17 +301,25 @@ class EmployeePayableService
 
         // Barcha hodimlar ko'rsatiladi (hisoblangan/to'langan summasi bo'lmasa
         // ham) — shu bilan roster to'liq ko'rinadi, hodim statusi (rol)
-        // tahrirlash imkoni bo'lishi uchun.
-        $users = User::orderBy('name')->get()->keyBy('id');
+        // tahrirlash imkoni bo'lishi uchun. $activeOnly=false — ishdan
+        // bo'shagan (is_active=false) hodimlarni ko'rsatish uchun ("Bo'shagan
+        // xodimlar" oynasi).
+        $users = User::where('is_active', $activeOnly)->orderBy('name')->get()->keyBy('id');
 
         $rows = [];
         foreach ($users as $uid => $user) {
+            // Belgilangan oylik (oklad) — loyiha komissiyasidan mustaqil, har
+            // oyga (o'tganlariga ham) avtomatik qo'shiladi. "Ish qilinmasa
+            // ham oylik beriladigan" hodimlar uchun (masalan Eskiz loyihadan
+            // tashqari ishlaydiganlar).
+            $baseSalary = (float) ($user->base_salary ?? 0);
+
             $months        = [];
             $yearCalc      = 0.0;
             $yearPaid      = 0.0;
             $yearRemaining = 0.0;
             for ($m = 1; $m <= 12; $m++) {
-                $calc      = $calcByUserMonth[$uid][$m] ?? 0.0;
+                $calc      = ($calcByUserMonth[$uid][$m] ?? 0.0) + $baseSalary;
                 $paid      = $paidByUserMonth[$uid][$m] ?? 0.0;
                 $remaining = max(0, $calc - $paid);
                 $months[$m] = [

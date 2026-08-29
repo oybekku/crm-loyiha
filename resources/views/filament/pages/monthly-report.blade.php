@@ -230,14 +230,28 @@
 .dark .role-hisobchi{background:#0f2e2a;color:#5eead4}
 .add-employee-btn{font-size:12px;font-weight:700;background:#0f172a;color:#fff;border:none;border-radius:8px;padding:7px 14px;cursor:pointer;white-space:nowrap;text-decoration:none;display:inline-block}
 .add-employee-btn:hover{background:#1e293b}
+.departed-btn{font-size:12px;font-weight:700;background:#f3f4f6;color:#374151;border:1.5px solid #e5e7eb;border-radius:8px;padding:6px 13px;cursor:pointer;white-space:nowrap}
+.departed-btn:hover{background:#e5e7eb}
+.oklad-badge{font-size:10px;font-weight:700;border-radius:20px;padding:2px 8px;cursor:pointer;white-space:nowrap;border:none;letter-spacing:.02em;background:#fdf4ff;color:#a21caf}
+.oklad-badge:hover{filter:brightness(0.95)}
+.dark .oklad-badge{background:#3b0764;color:#e9d5ff}
+.fire-btn{font-size:11px;font-weight:700;background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:5px 10px;cursor:pointer;white-space:nowrap;margin-left:6px}
+.fire-btn:hover{background:#fecaca}
+.restore-btn{font-size:11px;font-weight:700;background:#dcfce7;color:#15803d;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;white-space:nowrap}
+.restore-btn:hover{background:#bbf7d0}
+.dark .fire-btn{background:#2d1515;color:#f87171}
+.dark .restore-btn{background:#0d2818;color:#3fb950}
 </style>
 <div class="mr-card">
     <div style="margin-bottom:12px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
         <div>
             <div style="font-size:16px;font-weight:800;color:#0f172a" class="dark:text-white">💰 To'lanishi kerak</div>
-            <div style="font-size:12px;color:#64748b;margin-top:2px">Har hodim uchun oy-oy qoldiq (mijoz to'lagan ulushga mos komissiya, minus berilgan ish haqi) — {{ $normYear }}-yil. Sariq katakchani bosib, o'sha oy uchun to'lang.</div>
+            <div style="font-size:12px;color:#64748b;margin-top:2px">Har hodim uchun oy-oy qoldiq (mijoz to'lagan ulushga mos komissiya + oklad, minus berilgan ish haqi) — {{ $normYear }}-yil. Sariq katakchani bosib, o'sha oy uchun to'lang.</div>
         </div>
-        <a href="{{ \App\Filament\Resources\UserResource::getUrl('create') }}" wire:navigate class="add-employee-btn">+ Hodim qo'shish</a>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="departed-btn" wire:click="openDeparted">🚪 Bo'shagan xodimlar ({{ count($departedRows) }})</button>
+            <a href="{{ \App\Filament\Resources\UserResource::getUrl('create') }}" wire:navigate class="add-employee-btn">+ Hodim qo'shish</a>
+        </div>
     </div>
     @if(count($payableRows) === 0)
         <div style="text-align:center;color:#94a3b8;padding:24px;font-size:13px">Hodimlar topilmadi.</div>
@@ -258,7 +272,10 @@
                     <td>
                         <div class="nrm-emp" style="min-width:150px;flex-direction:column;align-items:flex-start;gap:3px">
                             <span class="nrm-nm">{{ $row['user']->name }}</span>
-                            <button class="role-badge role-{{ $row['user']->role }}" wire:click="openRoleEditor({{ $row['user']->id }})" title="Statusni o'zgartirish">{{ $row['user']->role_name }}</button>
+                            <div style="display:flex;gap:4px;flex-wrap:wrap">
+                                <button class="role-badge role-{{ $row['user']->role }}" wire:click="openRoleEditor({{ $row['user']->id }})" title="Statusni o'zgartirish">{{ $row['user']->role_name }}</button>
+                                <button class="oklad-badge" wire:click="openSalaryBaseEditor({{ $row['user']->id }})" title="Belgilangan oylik (oklad)">{{ $row['user']->base_salary > 0 ? number_format($row['user']->base_salary, 0, '.', ' ') . " so'm" : 'Oklad: 0' }}</button>
+                            </div>
                         </div>
                     </td>
                     @for($m=1;$m<=12;$m++)
@@ -274,10 +291,11 @@
                         </td>
                     @endfor
                     <td><span class="nrm-sum {{ $row['year_remaining']>0 ? 'warn' : 'good' }}">{{ number_format($row['year_remaining'], 0, '.', ' ') }}</span></td>
-                    <td>
+                    <td style="white-space:nowrap">
                         @if($row['year_remaining'] > 0)
                         <button class="pay-all-btn" wire:click="payAllRemainingForUser({{ $row['user']->id }})" wire:confirm="{{ $row['user']->name }} uchun shu yildagi barcha qoldiq oylarni ({{ number_format($row['year_remaining'], 0, '.', ' ') }} so'm) to'lashni tasdiqlaysizmi?">Hammasini to'la</button>
                         @endif
+                        <button class="fire-btn" wire:click="toggleActive({{ $row['user']->id }})" wire:confirm="{{ $row['user']->name }}ni ishdan bo'shatishni tasdiqlaysizmi? U ro'yxatdan yashiriladi, ma'lumotlari 'Bo'shagan xodimlar' oynasida qoladi.">Bo'shatish</button>
                     </td>
                 </tr>
                 @endforeach
@@ -1308,6 +1326,100 @@
                 style="flex:1;background:#f3f4f6;color:#374151;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:600;cursor:pointer">
             Bekor qilish
         </button>
+    </div>
+</div>
+</div>
+@endif
+
+{{-- BELGILANGAN OYLIK (OKLAD) TAHRIRLASH MODAL --}}
+@if($showSalaryBaseEditor)
+@php $baseEditUser = \App\Models\User::find($salaryBaseEditUserId); @endphp
+<div style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px" wire:click.self="closeSalaryBaseEditor">
+<div style="background:#fff;border-radius:14px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.4)">
+    <div style="padding:18px 20px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center">
+        <h3 style="font-size:15px;font-weight:800;color:#111827;margin:0">Belgilangan oylik (oklad)</h3>
+        <button wire:click="closeSalaryBaseEditor" style="background:none;border:none;cursor:pointer;font-size:20px;color:#9ca3af">×</button>
+    </div>
+    <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+        <div style="font-size:13px;color:#374151">
+            <strong>{{ $baseEditUser?->name }}</strong> uchun har oy avtomatik qo'shiladigan oylik
+        </div>
+        <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px">Oylik (so'm) — ishlamagan oyda ham qo'shiladi</label>
+            <input wire:model="salaryBaseEditValue" type="number" min="0"
+                   placeholder="Masalan: 2000000 (0 — oklad yo'q)"
+                   style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;font-size:14px;font-weight:600;outline:none;box-sizing:border-box"
+                   onfocus="this.style.borderColor='#a21caf'" onblur="this.style.borderColor='#e2e8f0'">
+        </div>
+        <div style="font-size:11.5px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:9px 12px">
+            ⚠ Bu summa shu yilning BARCHA oylariga (o'tganlariga ham) avtomatik qo'shiladi — "To'lanishi kerak" jadvalidagi qoldiqlar shunga qarab oshadi.
+        </div>
+    </div>
+    <div style="padding:14px 20px;border-top:1px solid #e5e7eb;display:flex;gap:10px">
+        <button wire:click="saveSalaryBase"
+                style="flex:1;background:#a21caf;color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">
+            Saqlash
+        </button>
+        <button wire:click="closeSalaryBaseEditor"
+                style="flex:1;background:#f3f4f6;color:#374151;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:600;cursor:pointer">
+            Bekor qilish
+        </button>
+    </div>
+</div>
+</div>
+@endif
+
+{{-- BO'SHAGAN XODIMLAR OYNASI --}}
+@if($showDeparted)
+<div style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px" wire:click.self="closeDeparted">
+<div style="background:#fff;border-radius:14px;width:100%;max-width:900px;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.4)">
+    <div style="padding:18px 20px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;z-index:1">
+        <h3 style="font-size:15px;font-weight:800;color:#111827;margin:0">🚪 Bo'shagan xodimlar</h3>
+        <button wire:click="closeDeparted" style="background:none;border:none;cursor:pointer;font-size:20px;color:#9ca3af">×</button>
+    </div>
+    <div style="padding:20px">
+        @if(count($departedRows) === 0)
+            <div style="text-align:center;color:#94a3b8;padding:24px;font-size:13px">Bo'shagan hodimlar yo'q.</div>
+        @else
+        <div class="nrm-wrap">
+            <table class="nrm-tbl">
+                <thead>
+                    <tr>
+                        <th class="l">Hodim</th>
+                        @foreach($nrmMonths as $mn)<th>{{ $mn }}</th>@endforeach
+                        <th>Jami qoldiq</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($departedRows as $row)
+                    <tr>
+                        <td>
+                            <div class="nrm-emp" style="min-width:150px;flex-direction:column;align-items:flex-start;gap:3px">
+                                <span class="nrm-nm">{{ $row['user']->name }}</span>
+                                <span class="role-badge role-{{ $row['user']->role }}">{{ $row['user']->role_name }}</span>
+                            </div>
+                        </td>
+                        @for($m=1;$m<=12;$m++)
+                            @php $cell = $row['months'][$m]; @endphp
+                            <td>
+                                @if($cell['remaining'] > 0)
+                                    <span class="nrm-cell pay-due" wire:click="openSalaryPayModalForMonth({{ $row['user']->id }}, '{{ $cell['month_str'] }}', {{ $cell['remaining'] }})" title="{{ $cell['month_str'] }} uchun to'lash">{{ number_format($cell['remaining'], 0, '.', ' ') }}</span>
+                                @elseif($cell['calc'] > 0)
+                                    <span class="nrm-cell pay-clear" title="To'liq to'langan">✓</span>
+                                @else
+                                    <span class="nrm-cell nrm-na">—</span>
+                                @endif
+                            </td>
+                        @endfor
+                        <td><span class="nrm-sum {{ $row['year_remaining']>0 ? 'warn' : 'good' }}">{{ number_format($row['year_remaining'], 0, '.', ' ') }}</span></td>
+                        <td><button class="restore-btn" wire:click="toggleActive({{ $row['user']->id }})" wire:confirm="{{ $row['user']->name }}ni tiklaysizmi? U yana asosiy ro'yxatga qaytadi.">Tiklash</button></td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+        @endif
     </div>
 </div>
 </div>

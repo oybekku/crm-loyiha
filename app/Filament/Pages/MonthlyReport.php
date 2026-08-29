@@ -106,6 +106,81 @@ class MonthlyReport extends Page
         Notification::make()->title("{$user->name} — status yangilandi: {$user->role_name}")->success()->send();
     }
 
+    // Belgilangan oylik (oklad) tahrirlash
+    public bool   $showSalaryBaseEditor = false;
+    public int    $salaryBaseEditUserId = 0;
+    public string $salaryBaseEditValue  = '';
+
+    public function openSalaryBaseEditor(int $uid): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+
+        $user = User::find($uid);
+        if (!$user) return;
+
+        $this->salaryBaseEditUserId = $uid;
+        $this->salaryBaseEditValue  = (string) (float) $user->base_salary;
+        $this->showSalaryBaseEditor = true;
+    }
+
+    public function closeSalaryBaseEditor(): void
+    {
+        $this->showSalaryBaseEditor = false;
+        $this->salaryBaseEditUserId = 0;
+        $this->salaryBaseEditValue  = '';
+    }
+
+    public function saveSalaryBase(): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+
+        $user = User::find($this->salaryBaseEditUserId);
+        if (!$user) {
+            $this->closeSalaryBaseEditor();
+            return;
+        }
+
+        $amount = max(0, (float) str_replace([' ', ','], '', $this->salaryBaseEditValue));
+        $user->update(['base_salary' => $amount]);
+
+        $this->closeSalaryBaseEditor();
+        Notification::make()->title("{$user->name} — oylik (oklad) yangilandi: " . number_format($amount, 0, '.', ' ') . " so'm")->success()->send();
+    }
+
+    // Ishdan bo'shatish / tiklash — "Bo'shagan xodimlar" oynasi
+    public bool $showDeparted = false;
+
+    public function openDeparted(): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+        $this->showDeparted = true;
+    }
+
+    public function closeDeparted(): void
+    {
+        $this->showDeparted = false;
+    }
+
+    public function toggleActive(int $uid): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+
+        $user = User::find($uid);
+        if (!$user) return;
+
+        if ($user->id === auth()->id()) {
+            Notification::make()->title("O'zingizni ishdan bo'shata olmaysiz")->danger()->send();
+            return;
+        }
+
+        $user->update(['is_active' => !$user->is_active]);
+
+        Notification::make()
+            ->title($user->is_active ? "{$user->name} tiklandi" : "{$user->name} ishdan bo'shatildi")
+            ->success()
+            ->send();
+    }
+
     public function openRateEditor(int $uid): void
     {
         if (!auth()->user()?->isAdmin()) return;
@@ -826,7 +901,8 @@ class MonthlyReport extends Page
         usort($mygovRows, fn($a, $b) => $b['total'] <=> $a['total']);
 
         // ══ TO'LANISHI KERAK (yillik grid, hodim x oy) ══
-        $payableRows = EmployeePayableService::yearGrid($normYear);
+        $payableRows   = EmployeePayableService::yearGrid($normYear);
+        $departedRows  = EmployeePayableService::yearGrid($normYear, activeOnly: false);
 
         // Umumiy loyihalar — shu oyda ochilgan barcha loyihalar
         $allProjectsCount = (int)   Project::excludePaused()->whereYear('created_at', $year)->whereMonth('created_at', $month)->count();
@@ -844,7 +920,7 @@ class MonthlyReport extends Page
             'allProjectsCount', 'allProjectsSum',
             'toliqTugatilgan', 'qismanTugatilgan', 'toliqCount', 'qismanCount',
             'tugatilganIshlar',
-            'normRows', 'normYear', 'mygovRows', 'payableRows',
+            'normRows', 'normYear', 'mygovRows', 'payableRows', 'departedRows',
             'assignedByEmployee'
         );
     }
