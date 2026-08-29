@@ -218,14 +218,29 @@
 .dark .pay-due{background:#2a1d05!important;color:#fbbf24!important}
 .dark .pay-due:hover{background:#3b2a08!important}
 .dark .pay-clear{background:#0d2818!important;color:#3fb950!important}
+.role-badge{font-size:10px;font-weight:700;border-radius:20px;padding:2px 8px;cursor:pointer;white-space:nowrap;border:none;letter-spacing:.02em}
+.role-badge:hover{filter:brightness(0.95)}
+.role-admin{background:#ede9fe;color:#6d28d9}
+.role-menejer{background:#dbeafe;color:#1d4ed8}
+.role-bajaruvchi{background:#f1f5f9;color:#475569}
+.role-hisobchi{background:#ccfbf1;color:#0f766e}
+.dark .role-admin{background:#2e1065;color:#c4b5fd}
+.dark .role-menejer{background:#1e3a8a;color:#93c5fd}
+.dark .role-bajaruvchi{background:#1e293b;color:#94a3b8}
+.dark .role-hisobchi{background:#0f2e2a;color:#5eead4}
+.add-employee-btn{font-size:12px;font-weight:700;background:#0f172a;color:#fff;border:none;border-radius:8px;padding:7px 14px;cursor:pointer;white-space:nowrap;text-decoration:none;display:inline-block}
+.add-employee-btn:hover{background:#1e293b}
 </style>
 <div class="mr-card">
-    <div style="margin-bottom:12px">
-        <div style="font-size:16px;font-weight:800;color:#0f172a" class="dark:text-white">💰 To'lanishi kerak</div>
-        <div style="font-size:12px;color:#64748b;margin-top:2px">Har hodim uchun oy-oy qoldiq (mijoz to'lagan ulushga mos komissiya, minus berilgan ish haqi) — {{ $normYear }}-yil. Sariq katakchani bosib, o'sha oy uchun to'lang.</div>
+    <div style="margin-bottom:12px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div>
+            <div style="font-size:16px;font-weight:800;color:#0f172a" class="dark:text-white">💰 To'lanishi kerak</div>
+            <div style="font-size:12px;color:#64748b;margin-top:2px">Har hodim uchun oy-oy qoldiq (mijoz to'lagan ulushga mos komissiya, minus berilgan ish haqi) — {{ $normYear }}-yil. Sariq katakchani bosib, o'sha oy uchun to'lang.</div>
+        </div>
+        <a href="{{ \App\Filament\Resources\UserResource::getUrl('create') }}" wire:navigate class="add-employee-btn">+ Hodim qo'shish</a>
     </div>
     @if(count($payableRows) === 0)
-        <div style="text-align:center;color:#94a3b8;padding:24px;font-size:13px">Bu yilda hisoblangan komissiya yo'q.</div>
+        <div style="text-align:center;color:#94a3b8;padding:24px;font-size:13px">Hodimlar topilmadi.</div>
     @else
     <div class="nrm-wrap">
         <table class="nrm-tbl">
@@ -240,7 +255,12 @@
             <tbody>
                 @foreach($payableRows as $row)
                 <tr>
-                    <td><div class="nrm-emp" style="min-width:150px"><span class="nrm-nm">{{ $row['user']->name }}</span></div></td>
+                    <td>
+                        <div class="nrm-emp" style="min-width:150px;flex-direction:column;align-items:flex-start;gap:3px">
+                            <span class="nrm-nm">{{ $row['user']->name }}</span>
+                            <button class="role-badge role-{{ $row['user']->role }}" wire:click="openRoleEditor({{ $row['user']->id }})" title="Statusni o'zgartirish">{{ $row['user']->role_name }}</button>
+                        </div>
+                    </td>
                     @for($m=1;$m<=12;$m++)
                         @php $cell = $row['months'][$m]; @endphp
                         <td>
@@ -1245,6 +1265,46 @@
             Saqlash
         </button>
         <button wire:click="closeRateEditor"
+                style="flex:1;background:#f3f4f6;color:#374151;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:600;cursor:pointer">
+            Bekor qilish
+        </button>
+    </div>
+</div>
+</div>
+@endif
+
+{{-- HODIM STATUSINI (ROLINI) TAHRIRLASH MODAL — "To'lanishi kerak"
+     jadvalidagi rol nishonini bosib ochiladi. --}}
+@if($showRoleEditor)
+@php $roleEditUser = \App\Models\User::find($roleEditUserId); @endphp
+<div style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px" wire:click.self="closeRoleEditor">
+<div style="background:#fff;border-radius:14px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.4)">
+    <div style="padding:18px 20px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center">
+        <h3 style="font-size:15px;font-weight:800;color:#111827;margin:0">Statusni o'zgartirish</h3>
+        <button wire:click="closeRoleEditor" style="background:none;border:none;cursor:pointer;font-size:20px;color:#9ca3af">×</button>
+    </div>
+    <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+        <div style="font-size:13px;color:#374151">
+            <strong>{{ $roleEditUser?->name }}</strong> uchun yangi status
+        </div>
+        <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px">Status *</label>
+            <select wire:model="roleEditValue"
+                    style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;font-size:14px;font-weight:600;outline:none;box-sizing:border-box;background:#fff">
+                <option value="admin">Admin (Direktor)</option>
+                <option value="menejer">Menejer</option>
+                <option value="bajaruvchi">Bajaruvchi (Hodim)</option>
+                <option value="hisobchi">Hisobchi (Buxgalter)</option>
+            </select>
+            @error('roleEditValue')<span style="font-size:11px;color:#dc2626">{{ $message }}</span>@enderror
+        </div>
+    </div>
+    <div style="padding:14px 20px;border-top:1px solid #e5e7eb;display:flex;gap:10px">
+        <button wire:click="saveRole"
+                style="flex:1;background:#2563eb;color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">
+            Saqlash
+        </button>
+        <button wire:click="closeRoleEditor"
                 style="flex:1;background:#f3f4f6;color:#374151;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:600;cursor:pointer">
             Bekor qilish
         </button>

@@ -299,8 +299,10 @@ class EmployeePayableService
                 $paidByUserMonth[$p->user_id][$m] = ($paidByUserMonth[$p->user_id][$m] ?? 0) + (float) $p->amount;
             });
 
-        $userIds = array_unique(array_merge(array_keys($calcByUserMonth), array_keys($paidByUserMonth)));
-        $users   = User::whereIn('id', $userIds)->orderBy('name')->get()->keyBy('id');
+        // Barcha hodimlar ko'rsatiladi (hisoblangan/to'langan summasi bo'lmasa
+        // ham) — shu bilan roster to'liq ko'rinadi, hodim statusi (rol)
+        // tahrirlash imkoni bo'lishi uchun.
+        $users = User::orderBy('name')->get()->keyBy('id');
 
         $rows = [];
         foreach ($users as $uid => $user) {
@@ -322,8 +324,6 @@ class EmployeePayableService
                 $yearPaid      += $paid;
                 $yearRemaining += $remaining;
             }
-            if ($yearCalc <= 0 && $yearPaid <= 0) continue;
-
             $rows[] = [
                 'user'           => $user,
                 'months'         => $months,
@@ -333,7 +333,14 @@ class EmployeePayableService
             ];
         }
 
-        usort($rows, fn ($a, $b) => $b['year_remaining'] <=> $a['year_remaining']);
+        // Tartib: Admin (direktor) birinchi, keyin menejer, keyin qolganlar —
+        // shu guruh ichida ismi bo'yicha alifbo tartibida.
+        $rolePriority = ['admin' => 1, 'menejer' => 2, 'bajaruvchi' => 3, 'hisobchi' => 4];
+        usort($rows, function ($a, $b) use ($rolePriority) {
+            $pa = $rolePriority[$a['user']->role] ?? 9;
+            $pb = $rolePriority[$b['user']->role] ?? 9;
+            return $pa <=> $pb ?: strcmp($a['user']->name, $b['user']->name);
+        });
 
         return $rows;
     }

@@ -54,6 +54,58 @@ class MonthlyReport extends Page
     public int    $rateEditUserId  = 0;
     public string $rateEditValue   = '';
 
+    // Hodim statusini (rolini) tahrirlash — "To'lanishi kerak" jadvalidagi
+    // rol nishonini bosib ochiladi.
+    public bool   $showRoleEditor = false;
+    public int    $roleEditUserId = 0;
+    public string $roleEditValue  = '';
+
+    public function openRoleEditor(int $uid): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+
+        $user = User::find($uid);
+        if (!$user) return;
+
+        $this->roleEditUserId = $uid;
+        $this->roleEditValue  = $user->role;
+        $this->showRoleEditor = true;
+    }
+
+    public function closeRoleEditor(): void
+    {
+        $this->showRoleEditor = false;
+        $this->roleEditUserId = 0;
+        $this->roleEditValue  = '';
+    }
+
+    public function saveRole(): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+
+        $this->validate([
+            'roleEditValue' => 'required|in:admin,menejer,hisobchi,bajaruvchi',
+        ]);
+
+        $user = User::find($this->roleEditUserId);
+        if (!$user) {
+            $this->closeRoleEditor();
+            return;
+        }
+
+        // O'zini-o'zi admin'likdan tushirib qo'ymasin (panelga kirish
+        // huquqini yo'qotib qo'yishi mumkin).
+        if ($user->id === auth()->id() && $this->roleEditValue !== 'admin') {
+            Notification::make()->title("O'zingizning rolingizni o'zgartira olmaysiz")->danger()->send();
+            return;
+        }
+
+        $user->update(['role' => $this->roleEditValue]);
+
+        $this->closeRoleEditor();
+        Notification::make()->title("{$user->name} — status yangilandi: {$user->role_name}")->success()->send();
+    }
+
     public function openRateEditor(int $uid): void
     {
         if (!auth()->user()?->isAdmin()) return;
