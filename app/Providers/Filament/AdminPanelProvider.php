@@ -6,7 +6,6 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Navigation\NavigationItem;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -30,16 +29,13 @@ class AdminPanelProvider extends PanelProvider
             ->login(\App\Filament\Pages\Auth\Login::class)
             ->favicon(asset('favicon.png'))
             ->brandName(fn () => self::tenantBrandName())
+            ->topNavigation()
             ->colors([
                 'primary' => Color::Green,
             ])
             ->navigationGroups([
                 \Filament\Navigation\NavigationGroup::make('Loyihalar')
                     ->collapsible(),
-                \Filament\Navigation\NavigationGroup::make('Loyiha holatlari')
-                    ->icon('heroicon-o-funnel')
-                    ->collapsible()
-                    ->collapsed(),
                 \Filament\Navigation\NavigationGroup::make('Xodimlar')
                     ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('Sozlamalar')
@@ -50,7 +46,8 @@ class AdminPanelProvider extends PanelProvider
             ->pages([
                 \App\Filament\Pages\Dashboard::class,
             ])
-            ->navigationItems($this->buildStatusNavItems())
+            // "Loyiha holatlari" endi yuqori navigatsiyada emas — alohida
+            // chap panelda ko'rsatiladi (pastdagi renderHook, statusRailHtml()).
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 \App\Filament\Widgets\WelcomeHeroWidget::class,
@@ -87,10 +84,12 @@ class AdminPanelProvider extends PanelProvider
                     $sidebarBg      = $ds::hexToRgba($s['sidebar_color'],      round($s['sidebar_opacity'] / 100, 2));
                     $sidebarText    = $s['sidebar_text_color'];
                     $sidebarActive  = $s['sidebar_active_color'];
+                    $sidebarActiveBg = $ds::hexToRgba($sidebarActive, 0.12);
 
                     $sidebarDarkBg     = $ds::hexToRgba($s['sidebar_dark_color'], round($s['sidebar_dark_opacity'] / 100, 2));
                     $sidebarDarkText   = $s['sidebar_dark_text_color'];
                     $sidebarDarkActive = $s['sidebar_dark_active_color'];
+                    $sidebarDarkActiveBg = $ds::hexToRgba($sidebarDarkActive, 0.14);
 
                     $headerBg   = $ds::hexToRgba($s['header_color'], round($s['header_opacity'] / 100, 2));
                     $headerText = $s['header_text_color'];
@@ -177,8 +176,8 @@ body,.fi-body,.fi-main,.fi-main-ctn,main.fi-main{background:transparent!importan
 .fi-sidebar-item button:hover .fi-sidebar-item-label,
 .fi-sidebar-item a:hover .fi-sidebar-item-icon,
 .fi-sidebar-item button:hover .fi-sidebar-item-icon { color: {$sidebarText} !important; opacity: 1 !important; }
-.fi-sidebar-item-active a, .fi-sidebar-item-active button { background-color: rgba(0,0,0,0.2) !important; border-radius: 8px !important; border-left: 3px solid {$sidebarActive} !important; }
-.fi-sidebar-item-active .fi-sidebar-item-label { color: {$sidebarActive} !important; font-weight: 700 !important; opacity: 1 !important; }
+.fi-sidebar-item-active a, .fi-sidebar-item-active button { background-color: {$sidebarActiveBg} !important; border-radius: 8px !important; border-left: none !important; }
+.fi-sidebar-item-active .fi-sidebar-item-label { color: {$sidebarActive} !important; font-weight: 600 !important; opacity: 1 !important; }
 .fi-sidebar-item-active .fi-sidebar-item-icon { color: {$sidebarActive} !important; opacity: 1 !important; }
 
 /* ── SIDEBAR: Dark ── */
@@ -186,7 +185,8 @@ body,.fi-body,.fi-main,.fi-main-ctn,main.fi-main{background:transparent!importan
 .dark .fi-sidebar-item-label { color: {$sidebarDarkText} !important; }
 .dark .fi-sidebar-item-icon { color: {$sidebarDarkText} !important; opacity: 0.65; }
 .dark .fi-brand-name { color: {$sidebarDarkText} !important; }
-.dark .fi-sidebar-item-active .fi-sidebar-item-label { color: {$sidebarDarkActive} !important; }
+.dark .fi-sidebar-item-active a, .dark .fi-sidebar-item-active button { background-color: {$sidebarDarkActiveBg} !important; border-left: none !important; }
+.dark .fi-sidebar-item-active .fi-sidebar-item-label { color: {$sidebarDarkActive} !important; font-weight: 600 !important; }
 .dark .fi-sidebar-item-active .fi-sidebar-item-icon { color: {$sidebarDarkActive} !important; }
 
 /* ── SIDEBAR: Uy animatsiyasi ── */
@@ -287,6 +287,49 @@ body,.fi-body,.fi-main,.fi-main-ctn,main.fi-main{background:transparent!importan
 .fi-topbar svg path { color: {$headerText} !important; fill: currentColor; opacity: 0.85; }
 .fi-breadcrumbs-item-label { color: {$headerText} !important; }
 .fi-breadcrumbs-separator-icon { color: {$headerText} !important; opacity: 0.5; }
+
+/* ── TOP NAV: guruh dropdown'lari (Vercel.com uslubida — keng, toza panel) ── */
+.bh-nav-group { position: relative; list-style: none; }
+.bh-nav-group-btn {
+    display: flex; align-items: center; gap: 5px;
+    padding: 8px 14px; border-radius: 8px;
+    font-size: 0.875rem; font-weight: 500;
+    color: {$headerText}; background: transparent; border: none; cursor: pointer;
+    transition: background-color .15s ease;
+}
+.bh-nav-group-btn:hover,
+.bh-nav-group-btn-active { background-color: rgba(255,255,255,0.07); }
+.bh-nav-chevron { width: 14px; height: 14px; opacity: 0.55; transition: transform .15s ease; }
+.bh-nav-chevron-open { transform: rotate(180deg); }
+.bh-nav-panel {
+    position: absolute; top: calc(100% + 8px); left: 0; z-index: 50;
+    min-width: 230px; padding: 8px;
+    display: flex; flex-direction: column; gap: 1px;
+    background: #16181f; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px;
+    box-shadow: 0 24px 48px -12px rgba(0,0,0,0.55);
+}
+.bh-nav-panel-wide {
+    min-width: 440px;
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px 8px;
+}
+.bh-nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; border-radius: 8px;
+    font-size: 0.875rem; font-weight: 500;
+    color: #d4d4d8; text-decoration: none;
+    transition: background-color .12s ease, color .12s ease;
+}
+.bh-nav-item:hover { background-color: rgba(255,255,255,0.07); color: #fff; }
+.bh-nav-item-active { color: {$sidebarDarkActive}; }
+.bh-nav-item-icon { width: 18px; height: 18px; opacity: 0.65; flex-shrink: 0; }
+@media (max-width: 1023px) { .bh-nav-group, .bh-topbar-nav { display: none !important; } }
+
+/* Guruhsiz topbar elementlari (masalan bitta sahifa, dropdown emas) —
+   Filamentning standart 'hover:bg-gray-50' foni majburiy oq matn bilan
+   birga matnni ko'rinmas qilib qo'yardi (oq fonda oq matn). */
+.fi-topbar-item-button:hover,
+.fi-topbar-item-button:focus-visible { background-color: rgba(255,255,255,0.07) !important; }
+.fi-topbar-item-button.bg-gray-50 { background-color: rgba(255,255,255,0.1) !important; }
 
 /* ── PAGE HEADER: faqat sarlavha matnini yashir, tugmalar ko'rinsin ── */
 .fi-page-header-heading,
@@ -537,6 +580,10 @@ HTML;
                 }
             )
             ->renderHook(
+                'panels::body.start',
+                fn () => $this->statusRailHtml()
+            )
+            ->renderHook(
                 'panels::sidebar.footer',
                 function () {
                     return <<<'HTML'
@@ -623,20 +670,44 @@ HTML;
                     $name  = e(self::tenantBrandName());
                     $brand = "<a href=\"/admin\" wire:navigate style=\"color:{$color};font-weight:800;font-size:0.95rem;letter-spacing:0.07em;padding:0 1.25rem;white-space:nowrap;flex-shrink:0;text-decoration:none;\">{$name}</a>";
 
-                    // Boshqa shahar (tenant) saytlariga o'tish tugmalari — joriy
-                    // host o'zi shu ro'yxatda bo'lsa, o'ziga havola ko'rsatilmaydi.
+                    // Boshqa shahar (tenant) saytlariga o'tish — "Loyihalar"/
+                    // "Sozlamalar" bilan bir xil uslubdagi ochiladigan ro'yxat
+                    // ("Shaharlar"). Joriy host o'zi shu ro'yxatda bo'lsa,
+                    // o'ziga havola ko'rsatilmaydi.
                     $currentHost = request()->getHost();
-                    $switchLinks = '';
+                    $cityItems   = '';
                     foreach (config('tenants', []) as $host => $tenant) {
                         if ($host === $currentHost) {
                             continue;
                         }
                         $label = e($tenant['label'] ?? $host);
                         $url   = e('https://' . $host . '/admin');
-                        $switchLinks .= "<a href=\"{$url}\" style=\"color:{$color};font-weight:700;font-size:0.78rem;letter-spacing:0.03em;padding:4px 12px;margin-right:8px;border:1.5px solid currentColor;border-radius:999px;white-space:nowrap;flex-shrink:0;text-decoration:none;opacity:0.85;\">{$label}</a>";
+                        $cityItems .= "<a href=\"{$url}\" class=\"bh-nav-item\"><span>{$label}</span></a>";
                     }
 
-                    return $brand . $switchLinks;
+                    $citiesDropdown = '';
+                    if ($cityItems !== '') {
+                        $citiesDropdown = <<<HTML
+<div class="bh-nav-group" style="display:inline-flex;align-items:center;" x-data="{ open: false, closeTimer: null }"
+    x-on:mouseenter="clearTimeout(closeTimer); open = true"
+    x-on:mouseleave="closeTimer = setTimeout(() => open = false, 150)"
+    x-on:click.outside="open = false"
+    x-on:keydown.escape.window="open = false"
+>
+    <button type="button" x-on:click="open = ! open" :aria-expanded="open" class="bh-nav-group-btn" :class="{ 'bh-nav-group-btn-active': open }">
+        Shaharlar
+        <svg viewBox="0 0 20 20" fill="currentColor" class="bh-nav-chevron" :class="{ 'bh-nav-chevron-open': open }">
+            <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+        </svg>
+    </button>
+    <div x-show="open" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" x-cloak class="bh-nav-panel">
+        {$cityItems}
+    </div>
+</div>
+HTML;
+                    }
+
+                    return $brand . $citiesDropdown;
                 }
             )
             ->renderHook(
@@ -720,8 +791,15 @@ HTML;
         return $tenant['label'] ?? 'MAKONN.UZ';
     }
 
-    private function buildStatusNavItems(): array
+    // "Loyiha holatlari" — yuqori navigatsiyaga o'tilgandan keyin ham
+    // alohida, doimiy ko'rinadigan chap panelda qoladi (tez-tez ishlatiladigan,
+    // uzun ro'yxat bo'lgani uchun dropdown'dan ko'ra shu qulayroq).
+    private function statusRailHtml(): string
     {
+        if (! auth()->check()) {
+            return '';
+        }
+
         // Bo'limlar bazadan o'qiladi — doska (kanban) bilan aynan bir xil bo'lishi uchun
         $statuses = [];
         try {
@@ -733,25 +811,92 @@ HTML;
             // Baza tayyor bo'lmagan holat (migratsiya/o'rnatishdan oldin)
         }
 
-        $items = [];
-        $sort  = 1;
-        foreach ($statuses as $key => $label) {
-            $items[] = NavigationItem::make($label)
-                ->url('/admin/kanban-board?status=' . $key)
-                ->group('Loyiha holatlari')
-                ->sort($sort++)
-                // Hodim (bajaruvchi) — faqat o'z ish bo'limlari ko'rinadi
-                ->visible(function () use ($key) {
-                    $u = auth()->user();
-                    if ($u && $u->isBajaruvchi()) {
-                        return in_array($key, $u->kanbanServiceCols());
-                    }
-                    return true;
-                })
-                ->isActiveWhen(fn () => request()->get('status') === $key
-                    && request()->routeIs('filament.admin.pages.kanban-board'));
+        // Hodim (bajaruvchi) — faqat o'z ish bo'limlari ko'rinadi
+        $user = auth()->user();
+        if ($user && $user->isBajaruvchi()) {
+            $allowedCols = $user->kanbanServiceCols();
+            $statuses = array_filter($statuses, fn ($label, $key) => in_array($key, $allowedCols), ARRAY_FILTER_USE_BOTH);
         }
 
-        return $items;
+        // "Loyihalar" (Kanban board) — panelning eng tepasida, "Loyiha
+        // holatlari" ro'yxatidan (Ariza va h.k.) yuqorida turadi.
+        $projectLinks = '';
+        if (\App\Filament\Pages\KanbanBoard::canAccess()) {
+            $href = e(\App\Filament\Pages\KanbanBoard::getUrl());
+            $projectLinks = "<a href=\"{$href}\" wire:navigate class=\"bsr-item bsr-item-top\" data-exact-href=\"{$href}\">Loyihalar</a>";
+        }
+
+        if (empty($statuses) && $projectLinks === '') {
+            return '';
+        }
+
+        $s = \App\Services\DesignSettingsService::get();
+        $railBg         = $s['sidebar_color'];
+        $railText       = $s['sidebar_text_color'];
+        $railActive     = $s['sidebar_active_color'];
+        $railDarkBg     = $s['sidebar_dark_color'];
+        $railDarkText   = $s['sidebar_dark_text_color'];
+        $railDarkActive = $s['sidebar_dark_active_color'];
+
+        $items = '';
+        foreach ($statuses as $key => $label) {
+            $key   = e($key);
+            $label = e($label);
+            $items .= "<a href=\"/admin/kanban-board?status={$key}\" data-status-key=\"{$key}\" wire:navigate class=\"bsr-item\">{$label}</a>";
+        }
+
+        $topBlock = '';
+        if ($projectLinks !== '') {
+            $topBlock = "<nav class=\"bsr-top-nav\">{$projectLinks}</nav><div class=\"bsr-divider\"></div>";
+        }
+        $statusBlock = '';
+        if (! empty($statuses)) {
+            $statusBlock = "<div class=\"bsr-title\">Loyiha holatlari</div><nav>{$items}</nav>";
+        }
+
+        return <<<HTML
+<aside id="bh-status-rail" class="bh-status-rail">
+    {$topBlock}
+    {$statusBlock}
+</aside>
+<style>
+.bh-status-rail{position:fixed;top:64px;left:0;width:200px;height:calc(100vh - 64px);overflow-y:auto;padding:16px 10px;z-index:30;background:{$railBg};}
+.bh-status-rail .bsr-title{font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:{$railText};opacity:.55;padding:0 10px 10px;}
+.bh-status-rail .bsr-item{display:block;padding:8px 12px;border-radius:8px;font-size:.85rem;font-weight:500;color:{$railText};text-decoration:none;margin-bottom:2px;opacity:.85;}
+.bh-status-rail .bsr-item:hover{background:rgba(0,0,0,0.08);opacity:1;}
+.bh-status-rail .bsr-item.active{background:rgba(0,0,0,0.10);color:{$railActive};font-weight:700;opacity:1;}
+.bh-status-rail .bsr-top-nav{margin-bottom:4px;}
+.bh-status-rail .bsr-item-top{font-weight:600;}
+.bh-status-rail .bsr-divider{height:1px;background:{$railText}22;margin:8px 10px 12px;}
+.dark .bh-status-rail{background:{$railDarkBg};}
+.dark .bh-status-rail .bsr-title,
+.dark .bh-status-rail .bsr-item{color:{$railDarkText};}
+.dark .bh-status-rail .bsr-item:hover{background:rgba(255,255,255,0.06);}
+.dark .bh-status-rail .bsr-item.active{background:rgba(255,255,255,0.08);color:{$railDarkActive};}
+.dark .bh-status-rail .bsr-divider{background:{$railDarkText}22;}
+@media(max-width:1023px){.bh-status-rail{display:none;}}
+@media(min-width:1024px){
+    .fi-main,.fi-main-ctn > .fi-main,main.fi-main{padding-left:220px!important;}
+}
+</style>
+<script>
+(function(){
+    function markActive(){
+        var url = new URL(window.location.href);
+        var key = url.searchParams.get('status');
+        var onBoard = /\/admin\/kanban-board/.test(url.pathname);
+        document.querySelectorAll('.bh-status-rail .bsr-item[data-status-key]').forEach(function(el){
+            el.classList.toggle('active', onBoard && el.dataset.statusKey === key);
+        });
+        document.querySelectorAll('.bh-status-rail .bsr-item-top').forEach(function(el){
+            var linkPath = el.getAttribute('href').split('?')[0];
+            el.classList.toggle('active', !onBoard && url.pathname === linkPath);
+        });
+    }
+    markActive();
+    document.addEventListener('livewire:navigated', markActive);
+})();
+</script>
+HTML;
     }
 }

@@ -6,6 +6,7 @@ class Dashboard extends \Filament\Pages\Dashboard
 {
     protected static string  $view          = 'filament.pages.dashboard';
     protected static ?string $navigationLabel = 'My Perfect Home';
+    protected static bool $shouldRegisterNavigation = false;
     protected ?string $heading    = '';
     protected ?string $subheading = '';
 

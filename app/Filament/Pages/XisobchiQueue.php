@@ -16,6 +16,7 @@ class XisobchiQueue extends Page
     protected static string  $view            = 'filament.pages.xisobchi-queue';
     protected static ?string $navigationIcon  = 'heroicon-o-document-text';
     protected static ?string $navigationLabel = 'Yangi loyihalar (DIDOX)';
+    protected static ?string $navigationGroup = 'Loyihalar';
     protected static ?string $title           = 'Yangi Didox — shartnoma tuzish';
     protected static ?int    $navigationSort  = 1;
 

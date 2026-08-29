@@ -12,6 +12,7 @@ class Messages extends Page
     protected static string  $view           = 'filament.pages.messages';
     protected static ?string $navigationIcon = 'heroicon-o-chat-bubble-left-right';
     protected static ?string $navigationLabel = 'Xabarlar';
+    protected static ?string $navigationGroup = 'Sozlamalar';
     protected static ?int $navigationSort  = 5;
     protected static ?string $title           = 'Xabarlar';
 

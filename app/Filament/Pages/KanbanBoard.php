@@ -26,6 +26,11 @@ class KanbanBoard extends Page
     protected static ?int $navigationSort = 1;
     protected static ?string $title = '';
 
+    // Endi yuqori navigatsiya guruhida emas — chap "status rail" panelning
+    // eng tepasida ko'rsatiladi (AdminPanelProvider::statusRailHtml()),
+    // shu sabab standart Filament nav ro'yxatida ikki marta chiqmasin.
+    protected static bool $shouldRegisterNavigation = false;
+
     public string $filterStatus = '';
 
     // Xizmat hodim tayinlash modal
