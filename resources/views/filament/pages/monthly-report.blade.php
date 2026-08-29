@@ -1210,6 +1210,9 @@
         @if($salaryPayMonth)
         <div style="background:#eff6ff;border-radius:8px;padding:8px 12px;font-size:12.5px;font-weight:600;color:#1d4ed8">
             📅 {{ \Carbon\Carbon::createFromFormat('Y-m', $salaryPayMonth)->translatedFormat('F Y') }} oyi uchun
+            @if($salaryPayRemaining > 0)
+                — qoldiq: {{ number_format($salaryPayRemaining, 0, '.', ' ') }} so'm
+            @endif
         </div>
         @endif
         <div>
@@ -1218,6 +1221,9 @@
                    placeholder="Masalan: 500000"
                    style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;font-size:14px;font-weight:600;outline:none;box-sizing:border-box"
                    onfocus="this.style.borderColor='#2563eb'" onblur="this.style.borderColor='#e2e8f0'">
+            @if($salaryPayRemaining > 0)
+            <div style="font-size:11px;color:#94a3b8;margin-top:4px">To'liq ({{ number_format($salaryPayRemaining, 0, '.', ' ') }}) yoki kamroq (qisman/avans) summa kiritsangiz ham bo'ladi — qolgan qismi keyingi safar to'lanadi.</div>
+            @endif
         </div>
         <div>
             <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px">Sana *</label>

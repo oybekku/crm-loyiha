@@ -43,6 +43,7 @@ class MonthlyReport extends Page
     public string $salaryPayDate      = '';
     public string $salaryPayNote      = '';
     public string $salaryPayMonth     = ''; // qaysi oy uchun yozilayotgani (odatda selectedMonth, lekin "To'lanishi kerak" jadvalidan ochilsa — o'sha katakning oyi)
+    public float  $salaryPayRemaining = 0;  // shu oy uchun umumiy qoldiq (faqat ko'rsatish uchun — summa maydoni tahrirlanganda o'zgarmaydi, qisman/avans to'lov qancha kiritilganini solishtirish uchun)
     public int    $salaryPayEditId    = 0; // tahrirlash uchun
 
     // To'liq ma'lumot modal
@@ -267,12 +268,13 @@ class MonthlyReport extends Page
 
     public function openSalaryPayModal(int $userId): void
     {
-        $this->salaryPayUserId = $userId;
-        $this->salaryPayAmount = '';
-        $this->salaryPayDate   = now()->format('Y-m-d');
-        $this->salaryPayNote   = '';
-        $this->salaryPayMonth  = $this->selectedMonth;
-        $this->salaryPayEditId = 0;
+        $this->salaryPayUserId    = $userId;
+        $this->salaryPayAmount    = '';
+        $this->salaryPayDate      = now()->format('Y-m-d');
+        $this->salaryPayNote      = '';
+        $this->salaryPayMonth     = $this->selectedMonth;
+        $this->salaryPayRemaining = 0;
+        $this->salaryPayEditId    = 0;
         $this->showSalaryPayModal = true;
     }
 
@@ -281,12 +283,13 @@ class MonthlyReport extends Page
     // oldindan to'ldirilgan holda.
     public function openSalaryPayModalForMonth(int $userId, string $month, float $amount = 0): void
     {
-        $this->salaryPayUserId = $userId;
-        $this->salaryPayAmount = $amount > 0 ? (string) $amount : '';
-        $this->salaryPayDate   = now()->format('Y-m-d');
-        $this->salaryPayNote   = '';
-        $this->salaryPayMonth  = $month;
-        $this->salaryPayEditId = 0;
+        $this->salaryPayUserId    = $userId;
+        $this->salaryPayAmount    = $amount > 0 ? (string) $amount : '';
+        $this->salaryPayDate      = now()->format('Y-m-d');
+        $this->salaryPayNote      = '';
+        $this->salaryPayMonth     = $month;
+        $this->salaryPayRemaining = $amount;
+        $this->salaryPayEditId    = 0;
         $this->showSalaryPayModal = true;
     }
 
@@ -294,12 +297,13 @@ class MonthlyReport extends Page
     {
         $pay = \App\Models\EmployeeSalaryPayment::find($payId);
         if (!$pay) return;
-        $this->salaryPayUserId = $pay->user_id;
-        $this->salaryPayAmount = (string) $pay->amount;
-        $this->salaryPayDate   = $pay->paid_at->format('Y-m-d');
-        $this->salaryPayNote   = $pay->note ?? '';
-        $this->salaryPayMonth  = $pay->month;
-        $this->salaryPayEditId = $payId;
+        $this->salaryPayUserId    = $pay->user_id;
+        $this->salaryPayAmount    = (string) $pay->amount;
+        $this->salaryPayDate      = $pay->paid_at->format('Y-m-d');
+        $this->salaryPayNote      = $pay->note ?? '';
+        $this->salaryPayMonth     = $pay->month;
+        $this->salaryPayRemaining = 0;
+        $this->salaryPayEditId    = $payId;
         $this->showSalaryPayModal = true;
     }
 
