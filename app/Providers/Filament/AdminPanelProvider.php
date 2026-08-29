@@ -326,6 +326,17 @@ body,.fi-body,.fi-main,.fi-main-ctn,main.fi-main{background:transparent!importan
 .bh-nav-item-icon { width: 18px; height: 18px; opacity: 0.65; flex-shrink: 0; }
 @media (max-width: 1023px) { .bh-nav-group, .bh-topbar-nav { display: none !important; } }
 
+/* ── HEADER: logotip animatsiyasi (sekin, sezilmas nafas oluvchi porlash) ── */
+.bh-header-logo {
+    animation: bh-logo-pulse 3.2s ease-in-out infinite;
+    transform-origin: center;
+}
+@keyframes bh-logo-pulse {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(245,158,11,0)); }
+    50%      { transform: scale(1.08); filter: drop-shadow(0 0 6px rgba(245,158,11,0.65)); }
+}
+.bh-header-logo:hover { animation-play-state: paused; }
+
 /* Guruhsiz topbar elementlari (masalan bitta sahifa, dropdown emas) —
    Filamentning standart 'hover:bg-gray-50' foni majburiy oq matn bilan
    birga matnni ko'rinmas qilib qo'yardi (oq fonda oq matn). */
@@ -671,7 +682,7 @@ HTML;
                     $color = $s['header_text_color'];
                     $name  = e(self::tenantBrandName());
                     $logoUrl = e(asset('images/makonn-mark.png'));
-                    $logo  = "<a href=\"/admin\" wire:navigate style=\"display:flex;align-items:center;flex-shrink:0;\"><img src=\"{$logoUrl}\" alt=\"{$name} logo\" style=\"height:2rem;\"></a>";
+                    $logo  = "<a href=\"/admin\" wire:navigate style=\"display:flex;align-items:center;flex-shrink:0;\"><img src=\"{$logoUrl}\" alt=\"{$name} logo\" class=\"bh-header-logo\" style=\"height:2rem;\"></a>";
                     $brand = "<a href=\"/admin\" wire:navigate style=\"color:{$color};font-weight:800;font-size:0.95rem;letter-spacing:0.07em;padding:0 1.25rem;white-space:nowrap;flex-shrink:0;text-decoration:none;\">{$name}</a>";
 
                     // Boshqa shahar (tenant) saytlariga o'tish — "Loyihalar"/
