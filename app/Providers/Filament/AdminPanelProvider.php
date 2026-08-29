@@ -29,6 +29,8 @@ class AdminPanelProvider extends PanelProvider
             ->login(\App\Filament\Pages\Auth\Login::class)
             ->favicon(asset('favicon.png'))
             ->brandName(fn () => self::tenantBrandName())
+            ->brandLogo(asset('images/makonn-mark.png'))
+            ->brandLogoHeight('2rem')
             ->topNavigation()
             ->colors([
                 'primary' => Color::Green,
