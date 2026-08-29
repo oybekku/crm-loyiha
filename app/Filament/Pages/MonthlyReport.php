@@ -42,6 +42,7 @@ class MonthlyReport extends Page
     public string $salaryPayAmount    = '';
     public string $salaryPayDate      = '';
     public string $salaryPayNote      = '';
+    public string $salaryPayMonth     = ''; // qaysi oy uchun yozilayotgani (odatda selectedMonth, lekin "To'lanishi kerak" jadvalidan ochilsa — o'sha katakning oyi)
     public int    $salaryPayEditId    = 0; // tahrirlash uchun
 
     // To'liq ma'lumot modal
@@ -132,6 +133,21 @@ class MonthlyReport extends Page
         $this->salaryPayAmount = '';
         $this->salaryPayDate   = now()->format('Y-m-d');
         $this->salaryPayNote   = '';
+        $this->salaryPayMonth  = $this->selectedMonth;
+        $this->salaryPayEditId = 0;
+        $this->showSalaryPayModal = true;
+    }
+
+    // "To'lanishi kerak" (yillik grid) jadvalidagi bitta oy katakchasi
+    // bosilganda ochiladi — o'sha katakning oyi va qoldiq summasi bilan
+    // oldindan to'ldirilgan holda.
+    public function openSalaryPayModalForMonth(int $userId, string $month, float $amount = 0): void
+    {
+        $this->salaryPayUserId = $userId;
+        $this->salaryPayAmount = $amount > 0 ? (string) $amount : '';
+        $this->salaryPayDate   = now()->format('Y-m-d');
+        $this->salaryPayNote   = '';
+        $this->salaryPayMonth  = $month;
         $this->salaryPayEditId = 0;
         $this->showSalaryPayModal = true;
     }
@@ -144,6 +160,7 @@ class MonthlyReport extends Page
         $this->salaryPayAmount = (string) $pay->amount;
         $this->salaryPayDate   = $pay->paid_at->format('Y-m-d');
         $this->salaryPayNote   = $pay->note ?? '';
+        $this->salaryPayMonth  = $pay->month;
         $this->salaryPayEditId = $payId;
         $this->showSalaryPayModal = true;
     }
@@ -155,7 +172,7 @@ class MonthlyReport extends Page
 
         $data = [
             'user_id'  => $this->salaryPayUserId,
-            'month'    => $this->selectedMonth,
+            'month'    => $this->salaryPayMonth ?: $this->selectedMonth,
             'amount'   => $amount,
             'paid_at'  => $this->salaryPayDate ?: now()->toDateString(),
             'note'     => trim($this->salaryPayNote) ?: null,
@@ -181,6 +198,41 @@ class MonthlyReport extends Page
     public function closeSalaryPayModal(): void
     {
         $this->showSalaryPayModal = false;
+    }
+
+    // "To'lanishi kerak" jadvalidagi bitta hodimning shu yildagi BARCHA
+    // qoldiq oylarini bir vaqtda to'laydi — har biri o'z oyiga alohida
+    // yozuv sifatida (aralashib ketmasligi uchun).
+    public function payAllRemainingForUser(int $userId): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+
+        $year = $this->normYear ?: (int) now()->format('Y');
+        $grid = \App\Services\EmployeePayableService::yearGrid($year);
+        $row  = collect($grid)->firstWhere('user.id', $userId);
+        if (!$row) return;
+
+        $paidCount = 0;
+        foreach ($row['months'] as $m) {
+            if ($m['remaining'] <= 0) continue;
+            \App\Models\EmployeeSalaryPayment::create([
+                'user_id'  => $userId,
+                'month'    => $m['month_str'],
+                'amount'   => $m['remaining'],
+                'paid_at'  => now()->toDateString(),
+                'note'     => "Yillik qoldiqni to'lash (avtomatik, {$m['month_str']})",
+                'given_by' => auth()->id(),
+            ]);
+            $paidCount++;
+        }
+
+        if ($paidCount === 0) return;
+
+        Notification::make()
+            ->title("{$paidCount} ta oy uchun to'lov yozildi")
+            ->body(number_format($row['year_remaining'], 0, '.', ' ') . " so'm")
+            ->success()
+            ->send();
     }
 
     public static function canAccess(): bool
@@ -721,6 +773,8 @@ class MonthlyReport extends Page
         }
         usort($mygovRows, fn($a, $b) => $b['total'] <=> $a['total']);
 
+        // ══ TO'LANISHI KERAK (yillik grid, hodim x oy) ══
+        $payableRows = EmployeePayableService::yearGrid($normYear);
 
         // Umumiy loyihalar — shu oyda ochilgan barcha loyihalar
         $allProjectsCount = (int)   Project::excludePaused()->whereYear('created_at', $year)->whereMonth('created_at', $month)->count();
@@ -738,7 +792,7 @@ class MonthlyReport extends Page
             'allProjectsCount', 'allProjectsSum',
             'toliqTugatilgan', 'qismanTugatilgan', 'toliqCount', 'qismanCount',
             'tugatilganIshlar',
-            'normRows', 'normYear', 'mygovRows',
+            'normRows', 'normYear', 'mygovRows', 'payableRows',
             'assignedByEmployee'
         );
     }

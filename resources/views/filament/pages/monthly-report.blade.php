@@ -208,39 +208,57 @@
 </div>
 @endif
 
-{{-- ══ MyGOV — kim orqali kelgan (FISH) ══ --}}
+{{-- ══ TO'LANISHI KERAK (hodim x oy, yillik qoldiq) ══ --}}
 <style>
-.mg-has{background:#ccfbf1!important;color:#0f766e!important}
-.mg-total{background:#e0e7ff!important;color:#4338ca!important}
-.dark .mg-has{background:#0f2e2a!important;color:#5eead4!important}
-.dark .mg-total{background:#1e1b4b!important;color:#a5b4fc!important}
+.pay-due{background:#fef3c7!important;color:#b45309!important;cursor:pointer;border:none}
+.pay-due:hover{background:#fde68a!important}
+.pay-clear{background:#dcfce7!important;color:#15803d!important}
+.pay-all-btn{font-size:11px;font-weight:700;background:#2563eb;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;white-space:nowrap}
+.pay-all-btn:hover{background:#1d4ed8}
+.dark .pay-due{background:#2a1d05!important;color:#fbbf24!important}
+.dark .pay-due:hover{background:#3b2a08!important}
+.dark .pay-clear{background:#0d2818!important;color:#3fb950!important}
 </style>
 <div class="mr-card">
     <div style="margin-bottom:12px">
-        <div style="font-size:16px;font-weight:800;color:#0f172a" class="dark:text-white">🏛 MyGOV — kim orqali kelgan</div>
-        <div style="font-size:12px;color:#64748b;margin-top:2px">Har bir FISH (kim orqali kelgani) bo'yicha arizalar soni — {{ $normYear }}-yil. Yuqoridagi yil almashtirgichга bog'liq.</div>
+        <div style="font-size:16px;font-weight:800;color:#0f172a" class="dark:text-white">💰 To'lanishi kerak</div>
+        <div style="font-size:12px;color:#64748b;margin-top:2px">Har hodim uchun oy-oy qoldiq (mijoz to'lagan ulushga mos komissiya, minus berilgan ish haqi) — {{ $normYear }}-yil. Sariq katakchani bosib, o'sha oy uchun to'lang.</div>
     </div>
-    @if(count($mygovRows) === 0)
-        <div style="text-align:center;color:#94a3b8;padding:24px;font-size:13px">Hozircha MyGOV FISH kiritilmagan. Loyiha oynasida <b>MyGOV → FISH</b> maydonini to'ldiring.</div>
+    @if(count($payableRows) === 0)
+        <div style="text-align:center;color:#94a3b8;padding:24px;font-size:13px">Bu yilda hisoblangan komissiya yo'q.</div>
     @else
     <div class="nrm-wrap">
         <table class="nrm-tbl">
             <thead>
                 <tr>
-                    <th class="l">FISH — kim orqali</th>
+                    <th class="l">Hodim</th>
                     @foreach($nrmMonths as $mn)<th>{{ $mn }}</th>@endforeach
-                    <th>Jami</th>
+                    <th>Jami qoldiq</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
-                @foreach($mygovRows as $row)
+                @foreach($payableRows as $row)
                 <tr>
-                    <td><div class="nrm-emp" style="min-width:150px"><span class="nrm-nm">{{ $row['fish'] }}</span></div></td>
+                    <td><div class="nrm-emp" style="min-width:150px"><span class="nrm-nm">{{ $row['user']->name }}</span></div></td>
                     @for($m=1;$m<=12;$m++)
-                        @php $c = $row['months'][$m]; @endphp
-                        <td><span class="nrm-cell {{ $c>0 ? 'mg-has' : 'nrm-na' }}">{{ $c }}</span></td>
+                        @php $cell = $row['months'][$m]; @endphp
+                        <td>
+                            @if($cell['remaining'] > 0)
+                                <span class="nrm-cell pay-due" wire:click="openSalaryPayModalForMonth({{ $row['user']->id }}, '{{ $cell['month_str'] }}', {{ $cell['remaining'] }})" title="{{ $cell['month_str'] }} uchun to'lash">{{ number_format($cell['remaining'], 0, '.', ' ') }}</span>
+                            @elseif($cell['calc'] > 0)
+                                <span class="nrm-cell pay-clear" title="To'liq to'langan">✓</span>
+                            @else
+                                <span class="nrm-cell nrm-na">—</span>
+                            @endif
+                        </td>
                     @endfor
-                    <td><span class="nrm-sum mg-total">{{ $row['total'] }} ta</span></td>
+                    <td><span class="nrm-sum {{ $row['year_remaining']>0 ? 'warn' : 'good' }}">{{ number_format($row['year_remaining'], 0, '.', ' ') }}</span></td>
+                    <td>
+                        @if($row['year_remaining'] > 0)
+                        <button class="pay-all-btn" wire:click="payAllRemainingForUser({{ $row['user']->id }})" wire:confirm="{{ $row['user']->name }} uchun shu yildagi barcha qoldiq oylarni ({{ number_format($row['year_remaining'], 0, '.', ' ') }} so'm) to'lashni tasdiqlaysizmi?">Hammasini to'la</button>
+                        @endif
+                    </td>
                 </tr>
                 @endforeach
             </tbody>
@@ -1151,6 +1169,11 @@
         <button wire:click="closeSalaryPayModal" style="background:none;border:none;cursor:pointer;font-size:20px;color:#9ca3af">×</button>
     </div>
     <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+        @if($salaryPayMonth)
+        <div style="background:#eff6ff;border-radius:8px;padding:8px 12px;font-size:12.5px;font-weight:600;color:#1d4ed8">
+            📅 {{ \Carbon\Carbon::createFromFormat('Y-m', $salaryPayMonth)->translatedFormat('F Y') }} oyi uchun
+        </div>
+        @endif
         <div>
             <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px">Summa (so'm) *</label>
             <input wire:model="salaryPayAmount" type="number" min="1"

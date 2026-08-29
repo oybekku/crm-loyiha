@@ -250,6 +250,95 @@ class EmployeePayableService
     }
 
     /**
+     * Butun yil bo'yicha, har hodim x har oy (1-12) uchun "hali to'lanmagan
+     * qoldiq" grid'i — Oylik hisobotdagi "To'lanishi kerak" jadvali uchun
+     * (MyGOV jadvali bilan bir xil ko'rinishdagi joyni egallaydi).
+     *
+     * Bir oyning "qoldiq"i = shu oyda hisoblangan komissiya (forMonth() bilan
+     * BIR XIL formula — mijoz to'lagan ulushga mutanosib) minus shu oy uchun
+     * allaqachon berilgan ish haqi (EmployeeSalaryPayment). forMonth()dan
+     * farqi — u yerda "haqiqiy chiqim >= hisoblangan" bo'lsa max() bilan
+     * haqiqiy summa qaytariladi (Buxgalteriya uchun), bu yerda esa toza
+     * "qancha qoldi" kerak, shu sabab alohida, mustaqil metod (forMonth()ga
+     * tegilmaydi — Buxgalteriya undan foydalanishda davom etadi).
+     *
+     * @return array<int, array{user: \App\Models\User, months: array<int, array{calc: float, paid: float, remaining: float, month_str: string}>, year_calc: float, year_paid: float, year_remaining: float}>
+     */
+    public static function yearGrid(int $year): array
+    {
+        $monthStrings = [];
+        for ($m = 1; $m <= 12; $m++) {
+            $monthStrings[$m] = sprintf('%04d-%02d', $year, $m);
+        }
+
+        $calcByUserMonth = [];
+        for ($m = 1; $m <= 12; $m++) {
+            $completedServices = ProjectService::with(['assignedUser', 'project'])
+                ->whereNotNull('completed_at')
+                ->whereNotNull('assigned_user_id')
+                ->whereHas('project', fn ($q) => $q->whereYear('created_at', $year)
+                    ->whereMonth('created_at', $m)
+                    ->where('status', '!=', 'bekor_qilingan'))
+                ->get();
+
+            foreach ($completedServices as $service) {
+                $user    = $service->assignedUser;
+                $project = $service->project;
+                if (!$user || !$project) continue;
+
+                $calc = self::commissionForService($service, $project);
+                $calcByUserMonth[$user->id][$m] = ($calcByUserMonth[$user->id][$m] ?? 0) + $calc['comm_paid'];
+            }
+        }
+
+        $paidByUserMonth = [];
+        EmployeeSalaryPayment::whereIn('month', array_values($monthStrings))
+            ->get(['user_id', 'month', 'amount'])
+            ->each(function ($p) use (&$paidByUserMonth) {
+                $m = (int) substr($p->month, 5, 2);
+                $paidByUserMonth[$p->user_id][$m] = ($paidByUserMonth[$p->user_id][$m] ?? 0) + (float) $p->amount;
+            });
+
+        $userIds = array_unique(array_merge(array_keys($calcByUserMonth), array_keys($paidByUserMonth)));
+        $users   = User::whereIn('id', $userIds)->orderBy('name')->get()->keyBy('id');
+
+        $rows = [];
+        foreach ($users as $uid => $user) {
+            $months        = [];
+            $yearCalc      = 0.0;
+            $yearPaid      = 0.0;
+            $yearRemaining = 0.0;
+            for ($m = 1; $m <= 12; $m++) {
+                $calc      = $calcByUserMonth[$uid][$m] ?? 0.0;
+                $paid      = $paidByUserMonth[$uid][$m] ?? 0.0;
+                $remaining = max(0, $calc - $paid);
+                $months[$m] = [
+                    'calc'      => $calc,
+                    'paid'      => $paid,
+                    'remaining' => $remaining,
+                    'month_str' => $monthStrings[$m],
+                ];
+                $yearCalc      += $calc;
+                $yearPaid      += $paid;
+                $yearRemaining += $remaining;
+            }
+            if ($yearCalc <= 0 && $yearPaid <= 0) continue;
+
+            $rows[] = [
+                'user'           => $user,
+                'months'         => $months,
+                'year_calc'      => $yearCalc,
+                'year_paid'      => $yearPaid,
+                'year_remaining' => $yearRemaining,
+            ];
+        }
+
+        usort($rows, fn ($a, $b) => $b['year_remaining'] <=> $a['year_remaining']);
+
+        return $rows;
+    }
+
+    /**
      * Berilgan oy uchun hisoblangan "To'lanishi kerak" summalarini $accountId
      * hisobiga real Expense qatorlari sifatida yozib/yangilab qo'yadi (bitta
      * hodim + bitta oy = bitta qator, account_id+user_id+month bo'yicha
