@@ -959,6 +959,27 @@ class MonthlyReport extends Page
         $payableRows   = EmployeePayableService::yearGrid($normYear);
         $departedRows  = EmployeePayableService::yearGrid($normYear, activeOnly: false);
 
+        // Bo'sh oy ustunlari (hech qaysi hodimda summa yo'q) yashiriladi —
+        // faqat joriy va keyingi oy (agar hali ma'lumot bo'lmasa ham)
+        // "joy tutib turishi" uchun ko'rsatiladi. Bo'shagan xodimlar
+        // oynasi ham shu ustunlarni ishlatadi (bir xil jadval ko'rinishi).
+        $monthHasData = [];
+        foreach (array_merge($payableRows, $departedRows) as $row) {
+            foreach ($row['months'] as $m => $cell) {
+                if ($cell['calc'] > 0 || $cell['paid'] > 0) $monthHasData[$m] = true;
+            }
+        }
+        $isCurrentYear   = $normYear === (int) now()->format('Y');
+        $curMonthNum     = (int) now()->format('n');
+        $nextMonthNum    = $curMonthNum === 12 ? 1 : $curMonthNum + 1;
+        $payableVisibleMonths = [];
+        for ($m = 1; $m <= 12; $m++) {
+            $alwaysShow = $isCurrentYear && ($m === $curMonthNum || $m === $nextMonthNum);
+            if (!empty($monthHasData[$m]) || $alwaysShow) {
+                $payableVisibleMonths[] = $m;
+            }
+        }
+
         // Umumiy loyihalar — shu oyda ochilgan barcha loyihalar
         $allProjectsCount = (int)   Project::excludePaused()->whereYear('created_at', $year)->whereMonth('created_at', $month)->count();
         $allProjectsSum   = (float) Project::excludePaused()->whereYear('created_at', $year)->whereMonth('created_at', $month)->sum('total_price');
@@ -975,7 +996,7 @@ class MonthlyReport extends Page
             'allProjectsCount', 'allProjectsSum',
             'toliqTugatilgan', 'qismanTugatilgan', 'toliqCount', 'qismanCount',
             'tugatilganIshlar',
-            'normRows', 'normYear', 'mygovRows', 'payableRows', 'departedRows',
+            'normRows', 'normYear', 'mygovRows', 'payableRows', 'departedRows', 'payableVisibleMonths',
             'assignedByEmployee'
         );
     }

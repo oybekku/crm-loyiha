@@ -213,17 +213,17 @@
 .pay-due{background:#fef3c7!important;color:#b45309!important;cursor:pointer;border:none}
 .pay-due:hover{background:#fde68a!important}
 .pay-clear{background:#dcfce7!important;color:#15803d!important}
-/* Summalar chalg'itmasligi uchun — sukut holatda so'z (masalan
-   "TO'LANDI") ko'rinadi, aniq summa mishka olib borilgandagina chiqadi. */
-.cell-label{display:inline;font-size:10px;letter-spacing:.02em}
-.amt-text{display:none}
-.nrm-cell:hover .cell-label{display:none}
-.nrm-cell:hover .amt-text{display:inline}
+.nrm-cell-empty{background:transparent!important;border-radius:7px;padding:7px 4px;min-width:38px;display:inline-block;width:100%;box-sizing:border-box}
 .pay-all-btn{font-size:11px;font-weight:700;background:#2563eb;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;white-space:nowrap}
 .pay-all-btn:hover{background:#1d4ed8}
 .dark .pay-due{background:#2a1d05!important;color:#fbbf24!important}
 .dark .pay-due:hover{background:#3b2a08!important}
 .dark .pay-clear{background:#0d2818!important;color:#3fb950!important}
+.toggle-months-btn{font-size:12px;font-weight:700;background:#f3f4f6;color:#374151;border:1.5px solid #e5e7eb;border-radius:8px;padding:6px 13px;cursor:pointer;white-space:nowrap}
+.toggle-months-btn:hover{background:#e5e7eb}
+.fire-icon-btn{font-size:11px;background:#fee2e2;color:#dc2626;border:none;border-radius:20px;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;line-height:1}
+.fire-icon-btn:hover{background:#fecaca}
+.dark .fire-icon-btn{background:#2d1515;color:#f87171}
 .role-badge{font-size:10px;font-weight:700;border-radius:20px;padding:2px 8px;cursor:pointer;white-space:nowrap;border:none;letter-spacing:.02em}
 .role-badge:hover{filter:brightness(0.95)}
 .role-admin{background:#ede9fe;color:#6d28d9}
@@ -241,20 +241,18 @@
 .oklad-badge{font-size:10px;font-weight:700;border-radius:20px;padding:2px 8px;cursor:pointer;white-space:nowrap;border:none;letter-spacing:.02em;background:#fdf4ff;color:#a21caf}
 .oklad-badge:hover{filter:brightness(0.95)}
 .dark .oklad-badge{background:#3b0764;color:#e9d5ff}
-.fire-btn{font-size:11px;font-weight:700;background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:5px 10px;cursor:pointer;white-space:nowrap;margin-left:6px}
-.fire-btn:hover{background:#fecaca}
 .restore-btn{font-size:11px;font-weight:700;background:#dcfce7;color:#15803d;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;white-space:nowrap}
 .restore-btn:hover{background:#bbf7d0}
-.dark .fire-btn{background:#2d1515;color:#f87171}
 .dark .restore-btn{background:#0d2818;color:#3fb950}
 </style>
-<div class="mr-card">
+<div class="mr-card" x-data="{ hideMonths: false }">
     <div style="margin-bottom:12px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
         <div>
             <div style="font-size:16px;font-weight:800;color:#0f172a" class="dark:text-white">💰 To'lanishi kerak</div>
             <div style="font-size:12px;color:#64748b;margin-top:2px">Har hodim uchun oy-oy qoldiq (mijoz to'lagan ulushga mos komissiya + oklad, minus berilgan ish haqi) — {{ $normYear }}-yil. Sariq katakchani bosib, o'sha oy uchun to'lang.</div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="toggle-months-btn" @click="hideMonths = !hideMonths" x-text="hideMonths ? '👁 Oylarni ko\'rsatish' : '🙈 Oylarni yashirish'"></button>
             <button class="departed-btn" wire:click="openDeparted">🚪 Bo'shagan xodimlar ({{ count($departedRows) }})</button>
             <a href="{{ \App\Filament\Resources\UserResource::getUrl('create') }}" wire:navigate class="add-employee-btn">+ Hodim qo'shish</a>
         </div>
@@ -267,7 +265,7 @@
             <thead>
                 <tr>
                     <th class="l">Hodim</th>
-                    @foreach($nrmMonths as $mn)<th>{{ $mn }}</th>@endforeach
+                    @foreach($payableVisibleMonths as $m)<th x-show="!hideMonths">{{ $nrmMonths[$m-1] }}</th>@endforeach
                     <th>Jami qoldiq</th>
                     <th></th>
                 </tr>
@@ -278,30 +276,30 @@
                     <td>
                         <div class="nrm-emp" style="min-width:150px;flex-direction:column;align-items:flex-start;gap:3px">
                             <span class="nrm-nm">{{ $row['user']->name }}</span>
-                            <div style="display:flex;gap:4px;flex-wrap:wrap">
+                            <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
                                 <button class="role-badge role-{{ $row['user']->role }}" wire:click="openRoleEditor({{ $row['user']->id }})" title="Statusni o'zgartirish">{{ $row['user']->display_title }}</button>
                                 <button class="oklad-badge" wire:click="openSalaryBaseEditor({{ $row['user']->id }})" title="Belgilangan oylik (oklad)">{{ $row['user']->base_salary > 0 ? number_format($row['user']->base_salary, 0, '.', ' ') . " so'm" : 'Oklad: 0' }}</button>
+                                <button class="fire-icon-btn" wire:click="toggleActive({{ $row['user']->id }})" wire:confirm="{{ $row['user']->name }}ni ishdan bo'shatishni tasdiqlaysizmi? U ro'yxatdan yashiriladi, ma'lumotlari 'Bo'shagan xodimlar' oynasida qoladi." title="Ishdan bo'shatish">🚪</button>
                             </div>
                         </div>
                     </td>
-                    @for($m=1;$m<=12;$m++)
+                    @foreach($payableVisibleMonths as $m)
                         @php $cell = $row['months'][$m]; @endphp
-                        <td>
+                        <td x-show="!hideMonths">
                             @if($cell['remaining'] > 0)
-                                <span class="nrm-cell pay-due" wire:click="openSalaryPayModalForMonth({{ $row['user']->id }}, '{{ $cell['month_str'] }}', {{ $cell['remaining'] }})" title="{{ $cell['month_str'] }} uchun to'lash"><span class="cell-label">TO'LASH</span><span class="amt-text">{{ number_format($cell['remaining'], 0, '.', ' ') }}</span></span>
+                                <span class="nrm-cell pay-due" wire:click="openSalaryPayModalForMonth({{ $row['user']->id }}, '{{ $cell['month_str'] }}', {{ $cell['remaining'] }})" title="{{ $cell['month_str'] }} uchun to'lash">{{ number_format($cell['remaining'], 0, '.', ' ') }}</span>
                             @elseif($cell['calc'] > 0)
-                                <span class="nrm-cell pay-clear" title="To'liq to'langan"><span class="cell-label">TO'LANDI</span><span class="amt-text">{{ number_format($cell['paid'], 0, '.', ' ') }}</span></span>
+                                <span class="nrm-cell pay-clear" title="To'liq to'langan">0</span>
                             @else
-                                <span class="nrm-cell nrm-na">—</span>
+                                <span class="nrm-cell-empty"></span>
                             @endif
                         </td>
-                    @endfor
+                    @endforeach
                     <td><span class="nrm-sum {{ $row['year_remaining']>0 ? 'warn' : 'good' }}">{{ number_format($row['year_remaining'], 0, '.', ' ') }}</span></td>
                     <td style="white-space:nowrap">
                         @if($row['year_remaining'] > 0)
                         <button class="pay-all-btn" wire:click="payAllRemainingForUser({{ $row['user']->id }})" wire:confirm="{{ $row['user']->name }} uchun shu yildagi barcha qoldiq oylarni ({{ number_format($row['year_remaining'], 0, '.', ' ') }} so'm) to'lashni tasdiqlaysizmi?">Hammasini to'la</button>
                         @endif
-                        <button class="fire-btn" wire:click="toggleActive({{ $row['user']->id }})" wire:confirm="{{ $row['user']->name }}ni ishdan bo'shatishni tasdiqlaysizmi? U ro'yxatdan yashiriladi, ma'lumotlari 'Bo'shagan xodimlar' oynasida qoladi.">Bo'shatish</button>
                     </td>
                 </tr>
                 @endforeach
@@ -1408,7 +1406,7 @@
                 <thead>
                     <tr>
                         <th class="l">Hodim</th>
-                        @foreach($nrmMonths as $mn)<th>{{ $mn }}</th>@endforeach
+                        @foreach($payableVisibleMonths as $m)<th>{{ $nrmMonths[$m-1] }}</th>@endforeach
                         <th>Jami qoldiq</th>
                         <th></th>
                     </tr>
@@ -1422,18 +1420,18 @@
                                 <span class="role-badge role-{{ $row['user']->role }}">{{ $row['user']->display_title }}</span>
                             </div>
                         </td>
-                        @for($m=1;$m<=12;$m++)
+                        @foreach($payableVisibleMonths as $m)
                             @php $cell = $row['months'][$m]; @endphp
                             <td>
                                 @if($cell['remaining'] > 0)
-                                    <span class="nrm-cell pay-due" wire:click="openSalaryPayModalForMonth({{ $row['user']->id }}, '{{ $cell['month_str'] }}', {{ $cell['remaining'] }})" title="{{ $cell['month_str'] }} uchun to'lash"><span class="cell-label">TO'LASH</span><span class="amt-text">{{ number_format($cell['remaining'], 0, '.', ' ') }}</span></span>
+                                    <span class="nrm-cell pay-due" wire:click="openSalaryPayModalForMonth({{ $row['user']->id }}, '{{ $cell['month_str'] }}', {{ $cell['remaining'] }})" title="{{ $cell['month_str'] }} uchun to'lash">{{ number_format($cell['remaining'], 0, '.', ' ') }}</span>
                                 @elseif($cell['calc'] > 0)
-                                    <span class="nrm-cell pay-clear" title="To'liq to'langan"><span class="cell-label">TO'LANDI</span><span class="amt-text">{{ number_format($cell['paid'], 0, '.', ' ') }}</span></span>
+                                    <span class="nrm-cell pay-clear" title="To'liq to'langan">0</span>
                                 @else
-                                    <span class="nrm-cell nrm-na">—</span>
+                                    <span class="nrm-cell-empty"></span>
                                 @endif
                             </td>
-                        @endfor
+                        @endforeach
                         <td><span class="nrm-sum {{ $row['year_remaining']>0 ? 'warn' : 'good' }}">{{ number_format($row['year_remaining'], 0, '.', ' ') }}</span></td>
                         <td><button class="restore-btn" wire:click="toggleActive({{ $row['user']->id }})" wire:confirm="{{ $row['user']->name }}ni tiklaysizmi? U yana asosiy ro'yxatga qaytadi.">Tiklash</button></td>
                     </tr>
