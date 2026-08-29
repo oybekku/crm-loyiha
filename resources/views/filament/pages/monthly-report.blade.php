@@ -284,7 +284,7 @@
                             @if($cell['remaining'] > 0)
                                 <span class="nrm-cell pay-due" wire:click="openSalaryPayModalForMonth({{ $row['user']->id }}, '{{ $cell['month_str'] }}', {{ $cell['remaining'] }})" title="{{ $cell['month_str'] }} uchun to'lash">{{ number_format($cell['remaining'], 0, '.', ' ') }}</span>
                             @elseif($cell['calc'] > 0)
-                                <span class="nrm-cell pay-clear" title="To'liq to'langan">✓</span>
+                                <span class="nrm-cell pay-clear" title="To'liq to'langan">{{ number_format($cell['paid'], 0, '.', ' ') }}</span>
                             @else
                                 <span class="nrm-cell nrm-na">—</span>
                             @endif
@@ -1416,7 +1416,7 @@
                                 @if($cell['remaining'] > 0)
                                     <span class="nrm-cell pay-due" wire:click="openSalaryPayModalForMonth({{ $row['user']->id }}, '{{ $cell['month_str'] }}', {{ $cell['remaining'] }})" title="{{ $cell['month_str'] }} uchun to'lash">{{ number_format($cell['remaining'], 0, '.', ' ') }}</span>
                                 @elseif($cell['calc'] > 0)
-                                    <span class="nrm-cell pay-clear" title="To'liq to'langan">✓</span>
+                                    <span class="nrm-cell pay-clear" title="To'liq to'langan">{{ number_format($cell['paid'], 0, '.', ' ') }}</span>
                                 @else
                                     <span class="nrm-cell nrm-na">—</span>
                                 @endif
