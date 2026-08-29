@@ -326,16 +326,18 @@ body,.fi-body,.fi-main,.fi-main-ctn,main.fi-main{background:transparent!importan
 .bh-nav-item-icon { width: 18px; height: 18px; opacity: 0.65; flex-shrink: 0; }
 @media (max-width: 1023px) { .bh-nav-group, .bh-topbar-nav { display: none !important; } }
 
-/* ── HEADER: logotip animatsiyasi — davriy gorizontal (Y o'qi bo'yicha)
-   360° aylanish, joyida turgan holda, har 4 soniyada bir marta ── */
+/* ── HEADER: logotip animatsiyasi — sahifa ochilgandan 2 soniya keyin bir
+   marta gorizontal (Y o'qi) 360° aylanadi (bilinar-bilinmas yengil
+   porlash bilan birga), keyin har 1 daqiqada shu aylanish takrorlanadi. */
 .bh-header-logo {
-    animation: bh-logo-spin 4s cubic-bezier(.65,.05,.36,1) infinite;
+    animation: bh-logo-spin 60s ease-in-out 2s infinite;
     transform-style: preserve-3d;
 }
 @keyframes bh-logo-spin {
-    0%   { transform: perspective(500px) rotateY(0deg); }
-    22%  { transform: perspective(500px) rotateY(360deg); }
-    100% { transform: perspective(500px) rotateY(360deg); }
+    0%    { transform: perspective(500px) rotateY(0deg);   filter: drop-shadow(0 0 0 rgba(245,158,11,0)); }
+    1%    { transform: perspective(500px) rotateY(180deg); filter: drop-shadow(0 0 5px rgba(245,158,11,.32)); }
+    2.2%  { transform: perspective(500px) rotateY(360deg); filter: drop-shadow(0 0 0 rgba(245,158,11,0)); }
+    100%  { transform: perspective(500px) rotateY(360deg); filter: drop-shadow(0 0 0 rgba(245,158,11,0)); }
 }
 .bh-header-logo:hover { animation-play-state: paused; }
 
