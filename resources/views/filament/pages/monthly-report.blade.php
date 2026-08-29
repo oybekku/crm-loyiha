@@ -213,11 +213,12 @@
 .pay-due{background:#fef3c7!important;color:#b45309!important;cursor:pointer;border:none}
 .pay-due:hover{background:#fde68a!important}
 .pay-clear{background:#dcfce7!important;color:#15803d!important}
-/* Summalar chalg'itmasligi uchun — faqat rangli belgi ko'rinadi, aniq
-   summa mishka olib borilganda chiqadi (rang holatni ko'rsatib turadi:
-   sariq=qoldiq bor, yashil=to'langan). */
-.amt-text{opacity:0;transition:opacity .1s ease}
-.nrm-cell:hover .amt-text{opacity:1}
+/* Summalar chalg'itmasligi uchun — sukut holatda so'z (masalan
+   "TO'LANDI") ko'rinadi, aniq summa mishka olib borilgandagina chiqadi. */
+.cell-label{display:inline;font-size:10px;letter-spacing:.02em}
+.amt-text{display:none}
+.nrm-cell:hover .cell-label{display:none}
+.nrm-cell:hover .amt-text{display:inline}
 .pay-all-btn{font-size:11px;font-weight:700;background:#2563eb;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;white-space:nowrap}
 .pay-all-btn:hover{background:#1d4ed8}
 .dark .pay-due{background:#2a1d05!important;color:#fbbf24!important}
@@ -287,9 +288,9 @@
                         @php $cell = $row['months'][$m]; @endphp
                         <td>
                             @if($cell['remaining'] > 0)
-                                <span class="nrm-cell pay-due" wire:click="openSalaryPayModalForMonth({{ $row['user']->id }}, '{{ $cell['month_str'] }}', {{ $cell['remaining'] }})" title="{{ $cell['month_str'] }} uchun to'lash"><span class="amt-text">{{ number_format($cell['remaining'], 0, '.', ' ') }}</span></span>
+                                <span class="nrm-cell pay-due" wire:click="openSalaryPayModalForMonth({{ $row['user']->id }}, '{{ $cell['month_str'] }}', {{ $cell['remaining'] }})" title="{{ $cell['month_str'] }} uchun to'lash"><span class="cell-label">TO'LASH</span><span class="amt-text">{{ number_format($cell['remaining'], 0, '.', ' ') }}</span></span>
                             @elseif($cell['calc'] > 0)
-                                <span class="nrm-cell pay-clear" title="To'liq to'langan"><span class="amt-text">{{ number_format($cell['paid'], 0, '.', ' ') }}</span></span>
+                                <span class="nrm-cell pay-clear" title="To'liq to'langan"><span class="cell-label">TO'LANDI</span><span class="amt-text">{{ number_format($cell['paid'], 0, '.', ' ') }}</span></span>
                             @else
                                 <span class="nrm-cell nrm-na">—</span>
                             @endif
@@ -1425,9 +1426,9 @@
                             @php $cell = $row['months'][$m]; @endphp
                             <td>
                                 @if($cell['remaining'] > 0)
-                                    <span class="nrm-cell pay-due" wire:click="openSalaryPayModalForMonth({{ $row['user']->id }}, '{{ $cell['month_str'] }}', {{ $cell['remaining'] }})" title="{{ $cell['month_str'] }} uchun to'lash"><span class="amt-text">{{ number_format($cell['remaining'], 0, '.', ' ') }}</span></span>
+                                    <span class="nrm-cell pay-due" wire:click="openSalaryPayModalForMonth({{ $row['user']->id }}, '{{ $cell['month_str'] }}', {{ $cell['remaining'] }})" title="{{ $cell['month_str'] }} uchun to'lash"><span class="cell-label">TO'LASH</span><span class="amt-text">{{ number_format($cell['remaining'], 0, '.', ' ') }}</span></span>
                                 @elseif($cell['calc'] > 0)
-                                    <span class="nrm-cell pay-clear" title="To'liq to'langan"><span class="amt-text">{{ number_format($cell['paid'], 0, '.', ' ') }}</span></span>
+                                    <span class="nrm-cell pay-clear" title="To'liq to'langan"><span class="cell-label">TO'LANDI</span><span class="amt-text">{{ number_format($cell['paid'], 0, '.', ' ') }}</span></span>
                                 @else
                                     <span class="nrm-cell nrm-na">—</span>
                                 @endif
