@@ -326,14 +326,16 @@ body,.fi-body,.fi-main,.fi-main-ctn,main.fi-main{background:transparent!importan
 .bh-nav-item-icon { width: 18px; height: 18px; opacity: 0.65; flex-shrink: 0; }
 @media (max-width: 1023px) { .bh-nav-group, .bh-topbar-nav { display: none !important; } }
 
-/* ── HEADER: logotip animatsiyasi (sekin, sezilmas nafas oluvchi porlash) ── */
+/* ── HEADER: logotip animatsiyasi — davriy gorizontal (Y o'qi bo'yicha)
+   360° aylanish, joyida turgan holda, har 4 soniyada bir marta ── */
 .bh-header-logo {
-    animation: bh-logo-pulse 3.2s ease-in-out infinite;
-    transform-origin: center;
+    animation: bh-logo-spin 4s cubic-bezier(.65,.05,.36,1) infinite;
+    transform-style: preserve-3d;
 }
-@keyframes bh-logo-pulse {
-    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(245,158,11,0)); }
-    50%      { transform: scale(1.08); filter: drop-shadow(0 0 6px rgba(245,158,11,0.65)); }
+@keyframes bh-logo-spin {
+    0%   { transform: perspective(500px) rotateY(0deg); }
+    22%  { transform: perspective(500px) rotateY(360deg); }
+    100% { transform: perspective(500px) rotateY(360deg); }
 }
 .bh-header-logo:hover { animation-play-state: paused; }
 
