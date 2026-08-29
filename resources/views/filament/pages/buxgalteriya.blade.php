@@ -373,7 +373,7 @@
         @endif
         <div class="exp-list" x-show="open" x-collapse>
             @forelse($expenses as $exp)
-            <div class="exp-row" @if($exp->is_auto) title="Oylik hisobotdagi 'To'lanishi kerak' summasidan avtomatik hisoblanadi" @endif>
+            <div class="exp-row" @if($exp->is_auto) title="Oylik hisobotda hodimga berilgan ish haqi to'lovidan avtomatik yozilgan — tahrirlash uchun o'sha to'lovni o'zgartiring" @endif>
                 <span class="exp-date">{{ $exp->expense_date->format('d.m.Y') }}</span>
                 @if($exp->is_auto)
                 <span class="exp-acc-badge bx-auto-badge">👤 avtomatik</span>

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Expense extends Model
 {
     protected $fillable = [
-        'account_id', 'user_id', 'month', 'amount', 'comment', 'expense_date', 'created_by',
+        'account_id', 'user_id', 'salary_payment_id', 'month', 'amount', 'comment', 'expense_date', 'created_by',
     ];
 
     protected $casts = [
@@ -30,10 +30,17 @@ class Expense extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    public function salaryPayment()
+    {
+        return $this->belongsTo(EmployeeSalaryPayment::class, 'salary_payment_id');
+    }
+
     /**
-     * Xodim komissiyasidan EmployeePayableService orqali avtomatik yozilgan
-     * xarajat qatormi — bunday qatorlar qo'lda tahrirlanmaydi/o'chirilmaydi,
-     * chunki har sahifa yuklanganda qayta hisoblab yoziladi.
+     * Xodimga berilgan REAL ish haqi to'lovidan (EmployeeSalaryPayment)
+     * avtomatik yozilgan xarajat qatormi — bunday qatorlar qo'lda
+     * tahrirlanmaydi/o'chirilmaydi, chunki bog'liq to'lov o'zgartirilsa/
+     * o'chirilsa shu qator ham avtomatik sinxron yangilanadi/o'chiriladi
+     * (Oylik hisobot -> "To'lanishi kerak" jadvali orqali).
      */
     public function getIsAutoAttribute(): bool
     {
