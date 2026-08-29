@@ -41,6 +41,7 @@ class PaymentLog extends Model
             'edited'            => "Summa o'zgartirildi",
             'deleted'           => "To'lov o'chirildi",
             'employee_assigned' => "Hodim biriktirildi",
+            'split_corrected'   => "Xizmat taqsimoti tuzatildi",
             default             => $this->action,
         };
     }

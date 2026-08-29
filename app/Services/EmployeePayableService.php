@@ -101,9 +101,16 @@ class EmployeePayableService
             // Aniq taqsimot mavjud bo'lsa (yangi to'lovlar — ketma-ket/waterfall
             // usulida saqlangan) — o'sha aniq summani ishlatamiz, taxminiy
             // (narx nisbati bo'yicha proporsional) hisoblash shart emas.
+            // Split massivi TO'LIQ va yakuniy hisoblanadi: agar shu xizmatning
+            // kaliti unda yo'q bo'lsa — demak waterfall shu to'lovdan bu
+            // xizmatga 0 ajratgan (masalan, xizmat allaqachon to'liq
+            // to'langan edi) — bu holda pastdagi proporsional formulaga
+            // QAYTIB TUSHMASLIK kerak, aks holda pul ikki marta (split orqali
+            // BOSHQA xizmatga TO'LIQ, va bu yerda yana qisman proporsional)
+            // hisoblanib, xizmat "ortiqcha to'langan" bo'lib chiqadi.
             $split = $pay->service_split ?? null;
-            if (is_array($split) && array_key_exists($service->service_name, $split)) {
-                $paid += (float) $split[$service->service_name];
+            if (is_array($split)) {
+                $paid += (float) ($split[$service->service_name] ?? 0);
                 continue;
             }
 

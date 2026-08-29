@@ -166,6 +166,70 @@ class PaymentModal extends Component
         return $accounts->count() === 1 ? $accounts->first() : null;
     }
 
+    /**
+     * Bitta to'lov summasini loyihaning xizmatlariga ketma-ket (waterfall)
+     * taqsimlaydi: $selectedServices ichidagi xizmatlar birinchi navbatda,
+     * priority tartibida (Toposyomka -> Eskiz loyiha -> Ariza) to'liq
+     * qoplanguncha; qolgan summa bo'lsa, loyihaning QOLGAN xizmatlariga
+     * (belgilanmagan bo'lsa ham) shu tartibda o'tadi. Shu bilan xodim
+     * yolg'iz bitta katakchani belgilab qo'ysa ham, summa o'sha xizmat
+     * narxidan oshib ketganda ortig'i "yo'qolib" (bitta xizmatga ortiqcha
+     * yozilib) qolmaydi.
+     *
+     * $excludePaymentId — tahrirlash paytida shu to'lovning ESKI hissasini
+     * "allaqachon to'langan" hisobidan chiqarib turadi (aks holda to'lov
+     * o'zi-o'ziga to'sqinlik qilib, taqsimot noto'g'ri chiqadi).
+     *
+     * @return array<string, float> service_name => summa
+     */
+    private static function computeWaterfallSplit(Project $project, array $selectedServices, float $amount, ?int $excludePaymentId = null): array
+    {
+        if ($amount <= 0 || empty($selectedServices)) {
+            return [];
+        }
+
+        $project->loadMissing(['services', 'payments']);
+        if ($excludePaymentId) {
+            $project->setRelation(
+                'payments',
+                $project->payments->reject(fn ($p) => $p->id === $excludePaymentId)->values()
+            );
+        }
+
+        $priorityOrder    = array_keys(Project::serviceOptions());
+        $selectedOrdered  = array_values(array_filter($priorityOrder, fn ($sn) => in_array($sn, $selectedServices, true)));
+        $restOrdered      = array_values(array_filter($priorityOrder, fn ($sn) => !in_array($sn, $selectedServices, true)));
+        $orderedServices  = array_merge($selectedOrdered, $restOrdered);
+
+        $servicesByName = $project->services->keyBy('service_name');
+        $remaining       = $amount;
+        $split           = [];
+
+        foreach ($orderedServices as $sn) {
+            if ($remaining <= 0) break;
+            $svc = $servicesByName->get($sn);
+            if (!$svc) continue;
+            $already = \App\Services\EmployeePayableService::paidAmountForService($svc, $project);
+            $left    = max(0, (float) $svc->final_price - $already);
+            if ($left <= 0) continue;
+            $take = min($remaining, $left);
+            $split[$sn] = round($take, 2);
+            $remaining -= $take;
+        }
+
+        // Loyihaning barcha xizmatlari to'liq to'langan bo'lsa ham yana pul
+        // kirsa (masalan ortiqcha to'lov) — pul yo'qolib ketmasin, oxirgi
+        // tanlangan (yoki oxirgi) xizmatga qo'shib qo'yamiz.
+        if ($remaining > 0) {
+            $fallback = !empty($selectedOrdered) ? end($selectedOrdered) : (end($priorityOrder) ?: null);
+            if ($fallback) {
+                $split[$fallback] = round(($split[$fallback] ?? 0) + $remaining, 2);
+            }
+        }
+
+        return $split;
+    }
+
     // $keepOpen=true bo'lsa — oyna yopilmaydi, faqat summa/izoh tozalanadi
     // (admin ketma-ket bir nechta to'lov kiritishi yoki boshqa o'zgarish
     // qilishi uchun). Oddiy "Saqlash" tugmasi $keepOpen=false bilan chaqiradi.
@@ -226,28 +290,21 @@ class PaymentModal extends Component
             // taqsimlaymiz: birinchi xizmat (Toposyomka -> Eskiz loyiha -> Ariza
             // tartibida) to'liq qoplangунча, keyin qolgan summa navbatdagiga
             // o'tadi. Eski (narx nisbati bo'yicha proporsional) usul o'rniga.
-            $serviceSplit = null;
-            if (count($this->paymentSelectedServices) > 1) {
-                $priorityOrder   = array_keys(Project::serviceOptions());
-                $orderedServices = array_values(array_filter(
-                    $priorityOrder,
-                    fn ($sn) => in_array($sn, $this->paymentSelectedServices, true)
-                ));
-                $servicesByName = $project->services->keyBy('service_name');
-                $remaining      = (float) $this->paymentAmount;
-                $serviceSplit   = [];
-                foreach ($orderedServices as $i => $sn) {
-                    $svc = $servicesByName->get($sn);
-                    if (!$svc) continue;
-                    $already = \App\Services\EmployeePayableService::paidAmountForService($svc, $project);
-                    $left    = max(0, (float) $svc->final_price - $already);
-                    $isLast  = $i === count($orderedServices) - 1;
-                    $take    = $isLast ? $remaining : min($remaining, $left);
-                    if ($take <= 0 && !$isLast) continue;
-                    $serviceSplit[$sn] = round($take, 2);
-                    $remaining -= $take;
-                }
-            }
+            // Summani ketma-ket (waterfall) taqsimlaymiz: birinchi xizmat
+            // (Toposyomka -> Eskiz loyiha -> Ariza tartibida) to'liq
+            // qoplanguncha, keyin qolgan summa navbatdagiga o'tadi — hattoki
+            // faqat bitta xizmat belgilangan bo'lsa ham, agar summa o'sha
+            // xizmat narxidan oshib ketsa, ortig'i loyihaning boshqa (hali
+            // to'liq to'lanmagan) xizmatiga avtomatik o'tadi. Shu bilan
+            // xodim yolg'iz bitta katakchani belgilab qo'ysa ham, pul
+            // "yo'qolib" (bitta xizmatga ortiqcha yozilib) qolmaydi.
+            $serviceSplit = self::computeWaterfallSplit(
+                $project, $this->paymentSelectedServices, (float) $this->paymentAmount
+            );
+            $touchedServices = array_keys(array_filter($serviceSplit, fn ($v) => $v > 0));
+            $finalServices   = !empty($touchedServices)
+                ? array_values(array_unique(array_merge($this->paymentSelectedServices, $touchedServices)))
+                : $this->paymentSelectedServices;
 
             $payment = Payment::create([
                 'project_id'    => $project->id,
@@ -257,8 +314,8 @@ class PaymentModal extends Component
                 'account_id'    => $this->paymentAccountId ?: null,
                 'note'          => trim($this->paymentNote) ?: null,
                 'created_by'    => auth()->id(),
-                'services'      => !empty($this->paymentSelectedServices) ? $this->paymentSelectedServices : null,
-                'service_split' => $serviceSplit,
+                'services'      => !empty($finalServices) ? $finalServices : null,
+                'service_split' => !empty($serviceSplit) ? $serviceSplit : null,
             ]);
 
             PaymentLog::create([
@@ -432,16 +489,26 @@ class PaymentModal extends Component
             return;
         }
 
+        // Summa yoki xizmatlar o'zgargan bo'lsa — taqsimotni waterfall
+        // usulida QAYTA hisoblaymiz (shu to'lovning eski hissasi "allaqachon
+        // to'langan" hisobiga qo'shilib, o'zi-o'ziga to'sqinlik qilmasligi
+        // uchun computeWaterfallSplit() shu to'lovni loyihaning to'lovlar
+        // ro'yxatidan vaqtincha chiqarib turadi).
+        $newSplit = $payment->service_split;
+        if (($servicesChanged || $oldAmount !== $newAmount) && !empty($newServices)) {
+            $editProject = Project::with(['services', 'payments'])->find($payment->project_id);
+            $newSplit = $editProject
+                ? self::computeWaterfallSplit($editProject, $newServices, $newAmount, $payment->id)
+                : null;
+        }
+
         $payment->update([
             'amount'        => $newAmount,
             'payment_date'  => $this->editPaymentDate,
             'method'        => $this->editPaymentMethod,
             'account_id'    => $this->editPaymentAccountId,
             'services'      => $newServices,
-            // Summa yoki xizmatlar o'zgargan bo'lsa, avval saqlangan aniq
-            // taqsimot (agar bo'lsa) endi haqiqatga mos kelmaydi — tozalab,
-            // eski (narx nisbati bo'yicha proporsional) formulaga qaytariladi.
-            'service_split' => ($servicesChanged || $oldAmount !== $newAmount) ? null : $payment->service_split,
+            'service_split' => !empty($newSplit) ? $newSplit : null,
         ]);
 
         PaymentLog::create([
