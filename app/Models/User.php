@@ -24,6 +24,7 @@ class User extends Authenticatable implements FilamentUser
         'email',
         'password',
         'role',
+        'position',
         'is_active',
         'phone',
         'permissions',
@@ -123,6 +124,14 @@ class User extends Authenticatable implements FilamentUser
             'bajaruvchi' => 'Bajaruvchi (Hodim)',
             default      => $this->role,
         };
+    }
+
+    // Ko'rinadigan lavozim — "position" o'rnatilgan bo'lsa o'shani (masalan
+    // "Direktor"), aks holda tizim rolining nomini qaytaradi. Tizim huquqiga
+    // (role) TA'SIR QILMAYDI — faqat ko'rsatish uchun.
+    public function getDisplayTitleAttribute(): string
+    {
+        return trim((string) $this->position) !== '' ? $this->position : $this->role_name;
     }
 
     public function canAccessPanel(Panel $panel): bool { return (bool) $this->is_active; }

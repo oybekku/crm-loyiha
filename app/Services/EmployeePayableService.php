@@ -341,12 +341,20 @@ class EmployeePayableService
             ];
         }
 
-        // Tartib: Admin (direktor) birinchi, keyin menejer, keyin qolganlar —
-        // shu guruh ichida ismi bo'yicha alifbo tartibida.
+        // Tartib: lavozimida "direktor" so'zi bor har kim (position maydoni —
+        // tizim huquqidan mustaqil, masalan menejer bo'lsa ham) eng birinchi,
+        // keyin Admin, keyin menejer, keyin qolganlar — shu guruh ichida
+        // ismi bo'yicha alifbo tartibida.
         $rolePriority = ['admin' => 1, 'menejer' => 2, 'bajaruvchi' => 3, 'hisobchi' => 4];
-        usort($rows, function ($a, $b) use ($rolePriority) {
-            $pa = $rolePriority[$a['user']->role] ?? 9;
-            $pb = $rolePriority[$b['user']->role] ?? 9;
+        $priorityFor = function ($user) use ($rolePriority) {
+            if (str_contains(mb_strtolower((string) $user->position), 'direktor')) {
+                return 0;
+            }
+            return $rolePriority[$user->role] ?? 9;
+        };
+        usort($rows, function ($a, $b) use ($priorityFor) {
+            $pa = $priorityFor($a['user']);
+            $pb = $priorityFor($b['user']);
             return $pa <=> $pb ?: strcmp($a['user']->name, $b['user']->name);
         });
 

@@ -273,7 +273,7 @@
                         <div class="nrm-emp" style="min-width:150px;flex-direction:column;align-items:flex-start;gap:3px">
                             <span class="nrm-nm">{{ $row['user']->name }}</span>
                             <div style="display:flex;gap:4px;flex-wrap:wrap">
-                                <button class="role-badge role-{{ $row['user']->role }}" wire:click="openRoleEditor({{ $row['user']->id }})" title="Statusni o'zgartirish">{{ $row['user']->role_name }}</button>
+                                <button class="role-badge role-{{ $row['user']->role }}" wire:click="openRoleEditor({{ $row['user']->id }})" title="Statusni o'zgartirish">{{ $row['user']->display_title }}</button>
                                 <button class="oklad-badge" wire:click="openSalaryBaseEditor({{ $row['user']->id }})" title="Belgilangan oylik (oklad)">{{ $row['user']->base_salary > 0 ? number_format($row['user']->base_salary, 0, '.', ' ') . " so'm" : 'Oklad: 0' }}</button>
                             </div>
                         </div>
@@ -1298,23 +1298,33 @@
 <div style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px" wire:click.self="closeRoleEditor">
 <div style="background:#fff;border-radius:14px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.4)">
     <div style="padding:18px 20px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center">
-        <h3 style="font-size:15px;font-weight:800;color:#111827;margin:0">Statusni o'zgartirish</h3>
+        <h3 style="font-size:15px;font-weight:800;color:#111827;margin:0">Status va lavozim</h3>
         <button wire:click="closeRoleEditor" style="background:none;border:none;cursor:pointer;font-size:20px;color:#9ca3af">×</button>
     </div>
     <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
         <div style="font-size:13px;color:#374151">
-            <strong>{{ $roleEditUser?->name }}</strong> uchun yangi status
+            <strong>{{ $roleEditUser?->name }}</strong> uchun
         </div>
         <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px">Status *</label>
+            <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px">Tizim huquqi (status) *</label>
             <select wire:model="roleEditValue"
                     style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;font-size:14px;font-weight:600;outline:none;box-sizing:border-box;background:#fff">
-                <option value="admin">Admin (Direktor)</option>
+                <option value="admin">Admin</option>
                 <option value="menejer">Menejer</option>
                 <option value="bajaruvchi">Bajaruvchi (Hodim)</option>
                 <option value="hisobchi">Hisobchi (Buxgalter)</option>
             </select>
             @error('roleEditValue')<span style="font-size:11px;color:#dc2626">{{ $message }}</span>@enderror
+            <div style="font-size:11px;color:#94a3b8;margin-top:4px">Saytda qanday ruxsatlar bilan ishlashini belgilaydi.</div>
+        </div>
+        <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px">Lavozim (ixtiyoriy)</label>
+            <input wire:model="positionEditValue" type="text" maxlength="50"
+                   placeholder="Masalan: Direktor"
+                   style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;font-size:14px;font-weight:600;outline:none;box-sizing:border-box"
+                   onfocus="this.style.borderColor='#2563eb'" onblur="this.style.borderColor='#e2e8f0'">
+            @error('positionEditValue')<span style="font-size:11px;color:#dc2626">{{ $message }}</span>@enderror
+            <div style="font-size:11px;color:#94a3b8;margin-top:4px">Faqat ko'rinish uchun (jadvalda shu chiqadi) — huquqqa ta'sir qilmaydi. Bo'sh qoldirilsa, status nomi ko'rsatiladi.</div>
         </div>
     </div>
     <div style="padding:14px 20px;border-top:1px solid #e5e7eb;display:flex;gap:10px">
@@ -1397,7 +1407,7 @@
                         <td>
                             <div class="nrm-emp" style="min-width:150px;flex-direction:column;align-items:flex-start;gap:3px">
                                 <span class="nrm-nm">{{ $row['user']->name }}</span>
-                                <span class="role-badge role-{{ $row['user']->role }}">{{ $row['user']->role_name }}</span>
+                                <span class="role-badge role-{{ $row['user']->role }}">{{ $row['user']->display_title }}</span>
                             </div>
                         </td>
                         @for($m=1;$m<=12;$m++)

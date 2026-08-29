@@ -54,11 +54,16 @@ class MonthlyReport extends Page
     public int    $rateEditUserId  = 0;
     public string $rateEditValue   = '';
 
-    // Hodim statusini (rolini) tahrirlash — "To'lanishi kerak" jadvalidagi
-    // rol nishonini bosib ochiladi.
-    public bool   $showRoleEditor = false;
-    public int    $roleEditUserId = 0;
-    public string $roleEditValue  = '';
+    // Hodim statusini (rolini) va lavozimini tahrirlash — "To'lanishi
+    // kerak" jadvalidagi nishonni bosib ochiladi. Ikkalasi mustaqil:
+    // "role" — tizim huquqi (admin/menejer/hisobchi/bajaruvchi), "position"
+    // — ko'rinadigan lavozim (masalan "Direktor"), faqat ko'rsatish uchun,
+    // huquqqa ta'sir qilmaydi (masalan menejer huquqli, lekin "Direktor"
+    // lavozimli hodim bo'lishi mumkin).
+    public bool   $showRoleEditor    = false;
+    public int    $roleEditUserId    = 0;
+    public string $roleEditValue     = '';
+    public string $positionEditValue = '';
 
     public function openRoleEditor(int $uid): void
     {
@@ -67,16 +72,18 @@ class MonthlyReport extends Page
         $user = User::find($uid);
         if (!$user) return;
 
-        $this->roleEditUserId = $uid;
-        $this->roleEditValue  = $user->role;
-        $this->showRoleEditor = true;
+        $this->roleEditUserId    = $uid;
+        $this->roleEditValue     = $user->role;
+        $this->positionEditValue = (string) $user->position;
+        $this->showRoleEditor    = true;
     }
 
     public function closeRoleEditor(): void
     {
-        $this->showRoleEditor = false;
-        $this->roleEditUserId = 0;
-        $this->roleEditValue  = '';
+        $this->showRoleEditor    = false;
+        $this->roleEditUserId    = 0;
+        $this->roleEditValue     = '';
+        $this->positionEditValue = '';
     }
 
     public function saveRole(): void
@@ -84,7 +91,8 @@ class MonthlyReport extends Page
         if (!auth()->user()?->isAdmin()) return;
 
         $this->validate([
-            'roleEditValue' => 'required|in:admin,menejer,hisobchi,bajaruvchi',
+            'roleEditValue'     => 'required|in:admin,menejer,hisobchi,bajaruvchi',
+            'positionEditValue' => 'nullable|string|max:50',
         ]);
 
         $user = User::find($this->roleEditUserId);
@@ -100,10 +108,13 @@ class MonthlyReport extends Page
             return;
         }
 
-        $user->update(['role' => $this->roleEditValue]);
+        $user->update([
+            'role'     => $this->roleEditValue,
+            'position' => trim($this->positionEditValue) ?: null,
+        ]);
 
         $this->closeRoleEditor();
-        Notification::make()->title("{$user->name} — status yangilandi: {$user->role_name}")->success()->send();
+        Notification::make()->title("{$user->name} — status yangilandi: {$user->display_title}")->success()->send();
     }
 
     // Belgilangan oylik (oklad) tahrirlash
