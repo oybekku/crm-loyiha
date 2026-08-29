@@ -259,8 +259,8 @@
             <thead>
                 <tr>
                     <th class="l">Hodim</th>
-                    @foreach($payableVisibleMonths as $m)<th x-show="!hideMonths">{{ $nrmMonths[$m-1] }}</th>@endforeach
-                    <th>Jami qoldiq</th>
+                    @foreach($payableVisibleMonths as $m)<th x-show="!hideMonths" style="width:1%;white-space:nowrap">{{ $nrmMonths[$m-1] }}</th>@endforeach
+                    <th style="width:1%;white-space:nowrap">Jami qoldiq</th>
                 </tr>
             </thead>
             <tbody>
@@ -274,7 +274,7 @@
                     </td>
                     @foreach($payableVisibleMonths as $m)
                         @php $cell = $row['months'][$m]; @endphp
-                        <td x-show="!hideMonths">
+                        <td x-show="!hideMonths" style="width:1%;white-space:nowrap">
                             @if($cell['remaining'] > 0)
                                 <span class="nrm-cell pay-due" wire:click="openSalaryPayModalForMonth({{ $row['user']->id }}, '{{ $cell['month_str'] }}', {{ $cell['remaining'] }})" title="{{ $cell['month_str'] }} uchun to'lash">{{ number_format($cell['remaining'], 0, '.', ' ') }}</span>
                             @elseif($cell['calc'] > 0)
@@ -284,7 +284,7 @@
                             @endif
                         </td>
                     @endforeach
-                    <td style="white-space:nowrap">
+                    <td style="width:1%;white-space:nowrap">
                         <div style="display:flex;align-items:center;gap:8px">
                             <span class="nrm-sum {{ $row['year_remaining']>0 ? 'warn' : 'good' }}">{{ number_format($row['year_remaining'], 0, '.', ' ') }}</span>
                             @if($row['year_remaining'] > 0)
@@ -1374,9 +1374,9 @@
                 <thead>
                     <tr>
                         <th class="l">Hodim</th>
-                        @foreach($payableVisibleMonths as $m)<th>{{ $nrmMonths[$m-1] }}</th>@endforeach
-                        <th>Jami qoldiq</th>
-                        <th></th>
+                        @foreach($payableVisibleMonths as $m)<th style="width:1%;white-space:nowrap">{{ $nrmMonths[$m-1] }}</th>@endforeach
+                        <th style="width:1%;white-space:nowrap">Jami qoldiq</th>
+                        <th style="width:1%;white-space:nowrap"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -1390,7 +1390,7 @@
                         </td>
                         @foreach($payableVisibleMonths as $m)
                             @php $cell = $row['months'][$m]; @endphp
-                            <td>
+                            <td style="width:1%;white-space:nowrap">
                                 @if($cell['remaining'] > 0)
                                     <span class="nrm-cell pay-due" wire:click="openSalaryPayModalForMonth({{ $row['user']->id }}, '{{ $cell['month_str'] }}', {{ $cell['remaining'] }})" title="{{ $cell['month_str'] }} uchun to'lash">{{ number_format($cell['remaining'], 0, '.', ' ') }}</span>
                                 @elseif($cell['calc'] > 0)
@@ -1400,8 +1400,8 @@
                                 @endif
                             </td>
                         @endforeach
-                        <td><span class="nrm-sum {{ $row['year_remaining']>0 ? 'warn' : 'good' }}">{{ number_format($row['year_remaining'], 0, '.', ' ') }}</span></td>
-                        <td><button class="restore-btn" wire:click="toggleActive({{ $row['user']->id }})" wire:confirm="{{ $row['user']->name }}ni tiklaysizmi? U yana asosiy ro'yxatga qaytadi.">Tiklash</button></td>
+                        <td style="width:1%;white-space:nowrap"><span class="nrm-sum {{ $row['year_remaining']>0 ? 'warn' : 'good' }}">{{ number_format($row['year_remaining'], 0, '.', ' ') }}</span></td>
+                        <td style="width:1%;white-space:nowrap"><button class="restore-btn" wire:click="toggleActive({{ $row['user']->id }})" wire:confirm="{{ $row['user']->name }}ni tiklaysizmi? U yana asosiy ro'yxatga qaytadi.">Tiklash</button></td>
                     </tr>
                     @endforeach
                 </tbody>
