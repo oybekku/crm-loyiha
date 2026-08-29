@@ -55,15 +55,13 @@
 
         @if (filament()->hasTopNavigation() || (! filament()->hasNavigation()))
             {{--
-                BESTHOME CRM: brend NOMI (filial nomi bilan) va filiallar
-                orasida almashish tugmalari alohida 'panels::topbar.start'
-                render hook orqali chiqadi (AdminPanelProvider.php) — shu
-                sabab bu yerda faqat LOGOTIP RASMI (brandLogo, matnsiz)
-                chiqariladi, aks holda ikkita bir xil nom chiqib qolardi.
+                BESTHOME CRM: logotip RASMI + brend NOMI (filial nomi bilan) va
+                filiallar orasida almashish tugmalari — hammasi eng chapda,
+                birga chiqishi uchun 'panels::topbar.start' render hook orqali
+                chiqariladi (AdminPanelProvider.php), shu sabab bu yerda
+                standart Filament logo komponenti ISHLATILMAYDI (aks holda
+                logotip menyulardan KEYIN chiqib qolardi).
             --}}
-            <div class="me-3 hidden lg:flex">
-                <x-filament-panels::logo />
-            </div>
 
             @if (filament()->hasTenancy() && filament()->hasTenantMenu())
                 <x-filament-panels::tenant-menu class="hidden lg:block" />

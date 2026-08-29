@@ -670,6 +670,8 @@ HTML;
                     $s     = \App\Services\DesignSettingsService::get();
                     $color = $s['header_text_color'];
                     $name  = e(self::tenantBrandName());
+                    $logoUrl = e(asset('images/makonn-mark.png'));
+                    $logo  = "<a href=\"/admin\" wire:navigate style=\"display:flex;align-items:center;flex-shrink:0;\"><img src=\"{$logoUrl}\" alt=\"{$name} logo\" style=\"height:2rem;\"></a>";
                     $brand = "<a href=\"/admin\" wire:navigate style=\"color:{$color};font-weight:800;font-size:0.95rem;letter-spacing:0.07em;padding:0 1.25rem;white-space:nowrap;flex-shrink:0;text-decoration:none;\">{$name}</a>";
 
                     // Boshqa shahar (tenant) saytlariga o'tish — "Loyihalar"/
@@ -709,7 +711,7 @@ HTML;
 HTML;
                     }
 
-                    return $brand . $citiesDropdown;
+                    return $logo . $brand . $citiesDropdown;
                 }
             )
             ->renderHook(
