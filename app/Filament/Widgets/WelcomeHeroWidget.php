@@ -140,6 +140,10 @@ class WelcomeHeroWidget extends Widget
         $collection = $q->orderByDesc('work_started_at')->get();
         if (in_array($bucket, ['overdue', 'month_overdue'], true)) {
             $collection = $collection->filter(fn ($s) => $s->is_late)->values();
+        } elseif (in_array($bucket, ['inprogress', 'month_prog'], true)) {
+            // Kechikayotganlar "Jarayonda" ro'yxatiga kirmaydi — ular alohida
+            // "Kechikayotgan" bandida ko'rsatiladi (ikkalasiga ham qo'shilmasin).
+            $collection = $collection->reject(fn ($s) => $s->is_late)->values();
         }
         $items = $collection->map(function ($s) use ($svcLabels) {
             $status = 'Boshlanmagan';
@@ -419,24 +423,24 @@ class WelcomeHeroWidget extends Widget
                 $total = (clone $svcQ)->count();
                 if ($total === 0) continue;
 
-                $completed  = (clone $svcQ)->whereNotNull('completed_at')->count();
-                $inProgress = (clone $svcQ)->whereNotNull('work_started_at')->whereNull('completed_at')
-                    ->whereHas('project', fn ($p) => $p->whereNull('timer_paused_at'))->count();
+                $completed = (clone $svcQ)->whereNotNull('completed_at')->count();
+
+                // Jarayonda va Kechikayotgan — bir-birini istisno qiladi (Kechikayotgan
+                // Jarayondan AJRATIB olinadi, ikkalasiga ham qo'shilmaydi). is_late —
+                // accessor, SQL'da hisoblab bo'lmaydi, shu sabab PHP'da filtrlanadi.
+                $activeRows = (clone $svcQ)->whereNotNull('work_started_at')->whereNull('completed_at')
+                    ->whereHas('project', fn ($p) => $p->whereNull('timer_paused_at'))
+                    ->get(['id', 'work_started_at', 'submitted_at', 'deadline_days']);
+                $overdue    = $activeRows->filter(fn ($s) => $s->is_late)->count();
+                $inProgress = $activeRows->count() - $overdue;
+
                 $paused     = (clone $svcQ)->whereNotNull('work_started_at')->whereNull('completed_at')
                     ->whereHas('project', fn ($p) => $p->whereNotNull('timer_paused_at'))->count();
 
                 // Boshlanmagan — biriktirilgan, lekin hali ish boshlanmagan
-                // (work_started_at yo'q). Jami = Yakunlangan+Jarayonda+
-                // Muzlatilgan+Boshlanmagan bo'lishi uchun.
-                $notStarted = max(0, $total - $completed - $inProgress - $paused);
-
-                // Kechikayotgan — jarayondagilarning ichidan muddati o'tganlari
-                // (is_late — accessor, SQL'da hisoblab bo'lmaydi, shu sabab PHP'da filtrlanadi).
-                $overdue = (clone $svcQ)->whereNotNull('work_started_at')->whereNull('completed_at')
-                    ->where('deadline_days', '>', 0)
-                    ->whereHas('project', fn ($p) => $p->whereNull('timer_paused_at'))
-                    ->get(['id', 'work_started_at', 'submitted_at', 'deadline_days'])
-                    ->filter(fn ($s) => $s->is_late)->count();
+                // (work_started_at yo'q). Jami = Yakunlangan+Jarayonda+Kechikayotgan+
+                // Muzlatilgan+Boshlanmagan bo'lishi uchun (hech biri takrorlanmaydi).
+                $notStarted = max(0, $total - $completed - $inProgress - $overdue - $paused);
 
                 // Har oy uchun to'rtta son: LOYIHA OCHILGAN OYI bo'yicha (Oylik
                 // hisobotdagi mezon bilan bir xil — EmployeePayableService::statsForUser())
@@ -463,9 +467,10 @@ class WelcomeHeroWidget extends Widget
                         } elseif (!in_array($s->project->status, $archiveStatuses, true)) {
                             if ($s->project->timer_paused_at) {
                                 $monthlyPaused[$m]++;
+                            } elseif ($s->is_late) {
+                                $monthlyOverdue[$m]++;
                             } else {
                                 $monthlyProg[$m]++;
-                                if ($s->is_late) $monthlyOverdue[$m]++;
                             }
                         }
                     });
