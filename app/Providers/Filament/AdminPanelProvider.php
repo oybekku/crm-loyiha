@@ -711,7 +711,7 @@ HTML;
 HTML;
                     }
 
-                    return $logo . $brand . $citiesDropdown;
+                    return $brand . $logo . $citiesDropdown;
                 }
             )
             ->renderHook(
