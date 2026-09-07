@@ -893,7 +893,21 @@ HTML;
 .dark .bh-status-rail .bsr-item:hover{background:rgba(255,255,255,0.06);}
 .dark .bh-status-rail .bsr-item.active{background:rgba(255,255,255,0.08);color:{$railDarkActive};}
 .dark .bh-status-rail .bsr-divider{background:{$railDarkText}22;}
-@media(max-width:1023px){.bh-status-rail{display:none;}}
+/* Mobil/planshet: chap qattiq panel o'rniga header ostida gorizontal
+   siljiydigan chiziq — aks holda "Loyihalar" va bo'limlarga mobil orqali
+   umuman kirib bo'lmay qolgan edi (faqat desktop uchun mo'ljallangan edi). */
+@media(max-width:1023px){
+    .bh-status-rail{
+        position:sticky;top:64px;left:0;width:100%;height:auto;max-height:none;
+        display:flex;align-items:center;overflow-x:auto;overflow-y:visible;
+        padding:8px 10px;gap:6px;z-index:40;
+        box-shadow:0 1px 0 rgba(0,0,0,0.08);
+    }
+    .bh-status-rail .bsr-title{display:none;}
+    .bh-status-rail nav{display:flex;flex-direction:row;gap:6px;flex-shrink:0;margin:0;}
+    .bh-status-rail .bsr-item{display:inline-block;white-space:nowrap;margin-bottom:0;padding:7px 12px;}
+    .bh-status-rail .bsr-divider{width:1px;height:22px;margin:0 4px;flex-shrink:0;}
+}
 @media(min-width:1024px){
     .fi-main,.fi-main-ctn > .fi-main,main.fi-main{padding-left:220px!important;}
 }
