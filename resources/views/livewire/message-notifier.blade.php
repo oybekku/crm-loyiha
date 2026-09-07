@@ -1,4 +1,4 @@
-<div wire:poll.8s="refresh" x-data>
+<div wire:poll.30s="refresh" x-data>
 <style>@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}</style>
 
     {{-- Bell tugma --}}
