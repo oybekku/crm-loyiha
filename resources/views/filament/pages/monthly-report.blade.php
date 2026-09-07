@@ -208,7 +208,8 @@
 </div>
 @endif
 
-{{-- ══ TO'LANISHI KERAK (hodim x oy, yillik qoldiq) ══ --}}
+{{-- ══ TO'LANISHI KERAK (hodim x oy, yillik qoldiq) — yashirilgan (admin so'rovi) ══ --}}
+@if(false)
 <style>
 .pay-due{background:#fef3c7!important;color:#b45309!important;cursor:pointer;border:none}
 .pay-due:hover{background:#fde68a!important}
@@ -299,6 +300,7 @@
     </div>
     @endif
 </div>
+@endif
 
 {{-- UMUMIY STATISTIKA (yashirilgan) --}}
 @if(false)
