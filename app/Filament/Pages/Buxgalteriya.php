@@ -457,15 +457,27 @@ class Buxgalteriya extends Page
         // Dashboarddagi "loyiha ochilgan oyi" mantig'i bilan bir xil bo'lishi uchun —
         // to'lov sanasi emas, balki shu to'lov tegishli LOYIHANING ochilgan (created_at)
         // oyi bo'yicha filtrlanadi. Shu bilan ikkala sahifadagi summalar mos keladi.
-        // Xarajatlar esa loyihaga bog'liq emas — o'zining sanasi (expense_date) bo'yicha.
+        // Xarajatlar: oylik to'lovlardan avtomatik yozilganlari (`month` maydoni
+        // to'ldirilgan) — QAYSI OY UCHUN ekanligi bo'yicha (masalan kechikib,
+        // sentyabrda to'langan avgust oyligi — avgust xarajatiga tushadi, admin
+        // shuni so'ragan: kechikkan to'lov o'sha oyning "qarzi" sifatida hisobga
+        // qo'shilishi kerak, real to'lov sanasi emas). Qo'lda kiritilgan oddiy
+        // xarajatlarda `month` bo'sh — ular o'zining sanasi (expense_date) bo'yicha.
+        $ym = sprintf('%04d-%02d', $year, $month);
+        $expenseMonthScope = function ($q) use ($year, $month, $ym) {
+            $q->where('month', $ym)
+                ->orWhere(function ($q2) use ($year, $month) {
+                    $q2->whereNull('month')
+                        ->whereYear('expense_date', $year)
+                        ->whereMonth('expense_date', $month);
+                });
+        };
         $accounts = FinancialAccount::withSum(['payments as payments_sum_amount' => function ($q) use ($year, $month) {
                 $q->whereHas('project', function ($pq) use ($year, $month) {
                     $pq->whereYear('created_at', $year)->whereMonth('created_at', $month);
                 });
             }], 'amount')
-            ->withSum(['expenses as expenses_sum_amount' => function ($q) use ($year, $month) {
-                $q->whereYear('expense_date', $year)->whereMonth('expense_date', $month);
-            }], 'amount')
+            ->withSum(['expenses as expenses_sum_amount' => $expenseMonthScope], 'amount')
             ->withSum(['transfersIn as transfers_in_sum_amount' => function ($q) use ($year, $month) {
                 $q->whereYear('transfer_date', $year)->whereMonth('transfer_date', $month);
             }], 'amount')
@@ -501,8 +513,7 @@ class Buxgalteriya extends Page
         $totalTransferred = (float) $transfers->sum('amount');
 
         $expenses = Expense::with(['account', 'user'])
-            ->whereYear('expense_date', $year)
-            ->whereMonth('expense_date', $month)
+            ->where($expenseMonthScope)
             ->orderByDesc('expense_date')
             ->orderByDesc('id')
             ->get();
