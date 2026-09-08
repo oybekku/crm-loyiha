@@ -8,6 +8,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
@@ -152,6 +153,15 @@ class PaymentResource extends Resource
                         : $query->whereHas('project', fn ($q) => $q->whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$key])))
                     ->collapsible(),
 
+                Tables\Grouping\Group::make('createdBy.name')
+                    ->label('Kim kiritdi')
+                    ->getKeyFromRecordUsing(fn (Payment $record) => (string) ($record->created_by ?? '—'))
+                    ->getTitleFromRecordUsing(fn (Payment $record) => $record->createdBy?->name ?? "Noma'lum")
+                    ->scopeQueryByKeyUsing(fn (Builder $query, string $key) => $key === '—'
+                        ? $query->whereNull('created_by')
+                        : $query->where('created_by', $key))
+                    ->collapsible(),
+
                 Tables\Grouping\Group::make('project.owner_name')
                     ->label('Mijoz')
                     ->getKeyFromRecordUsing(fn (Payment $record) => $record->project?->owner_name ?? '—')
@@ -172,6 +182,14 @@ class PaymentResource extends Resource
                     ->query(fn (Builder $query) => $query->whereNull('account_id'))
                     ->toggle()
                     ->indicateUsing(fn (): string => "Hisobga bog'lanmagan to'lovlar"),
+
+                SelectFilter::make('created_by')
+                    ->label('Kim kiritdi')
+                    ->options(fn () => \App\Models\User::query()
+                        ->whereIn('id', Payment::query()->whereNotNull('created_by')->distinct()->pluck('created_by'))
+                        ->orderBy('name')
+                        ->pluck('name', 'id'))
+                    ->searchable(),
 
                 Filter::make('created_range')
                     ->form([
