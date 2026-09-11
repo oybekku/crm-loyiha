@@ -119,6 +119,7 @@ class AdminPanelProvider extends PanelProvider
                             default => 'background:#ffffff!important;',
                         };
                         $loginBgCss = "
+html:has(.fi-simple-layout),body:has(.fi-simple-layout){height:100%!important;overflow:hidden!important;}
 .fi-simple-layout{
     background-image:url('{$bgUrl}')!important;
     background-size:cover!important;
@@ -127,6 +128,11 @@ class AdminPanelProvider extends PanelProvider
     align-items:flex-start!important;
     justify-content:flex-end!important;
     padding:40px 60px!important;
+    height:100vh!important;
+    min-height:100vh!important;
+    max-height:100vh!important;
+    overflow:hidden!important;
+    box-sizing:border-box!important;
 }
 .fi-simple-main{
     position:relative!important;
