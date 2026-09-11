@@ -34,7 +34,7 @@ a { color: inherit; text-decoration:none; }
 
 /* ── Hero ── */
 .hero {
-    position:relative; overflow:hidden; min-height:100vh; min-height:100dvh;
+    position:relative; overflow:hidden; height:100vh; height:100dvh;
     display:flex; flex-direction:column; color:#fff;
     background:#0e0c0a;
 }
@@ -86,9 +86,11 @@ a { color: inherit; text-decoration:none; }
 /* Sichqoncha bilan harakatlanuvchi CAD-krest — faqat haqiqiy sichqonchali (desktop) qurilmada */
 .cad-cursor { display:none; }
 @media (hover:hover) and (pointer:fine) {
-    body.cad-active { cursor:none; }
-    body.cad-active * { cursor:none !important; }
-    .cad-cursor { display:block; position:fixed; z-index:50; pointer-events:none; }
+    .hero:hover, .hero:hover * { cursor:none !important; }
+    .hero:hover .form-container, .hero:hover .form-container * { cursor:auto !important; }
+    .hero:hover .form-submit-btn { cursor:pointer !important; }
+    .cad-cursor { display:block; position:absolute; z-index:50; pointer-events:none; opacity:0; transition:opacity .15s; }
+    .hero:hover .cad-cursor { opacity:1; }
     .cad-h { left:0; right:0; height:0; border-top:1px solid rgba(250,204,21,.55); }
     .cad-v { top:0; bottom:0; width:0; border-left:1px solid rgba(250,204,21,.55); }
     .cad-square { width:14px; height:14px; border:1.5px solid #facc15; }
@@ -253,18 +255,20 @@ a { color: inherit; text-decoration:none; }
         });
     }
 
-    // CAD-krest effekti — faqat haqiqiy sichqonchali qurilmalarda
+    // CAD-krest effekti — faqat haqiqiy sichqonchali qurilmalarda, faqat hero ichida
     if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
 
-    document.body.classList.add('cad-active');
+    var hero = document.querySelector('.hero');
     var h = document.getElementById('cadH');
     var v = document.getElementById('cadV');
     var sq = document.getElementById('cadSquare');
     var coordWrap = document.getElementById('cadCoord');
     var coordText = document.getElementById('coordText');
 
-    document.addEventListener('mousemove', function (e) {
-        var x = e.clientX, y = e.clientY;
+    hero.addEventListener('mousemove', function (e) {
+        var rect = hero.getBoundingClientRect();
+        var x = e.clientX - rect.left;
+        var y = e.clientY - rect.top;
         h.style.top = y + 'px';
         v.style.left = x + 'px';
         sq.style.left = (x - 7) + 'px';
