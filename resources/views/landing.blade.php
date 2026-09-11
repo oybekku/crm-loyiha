@@ -8,7 +8,7 @@
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 html { scroll-behavior: smooth; }
-body { font-family:'IBM Plex Sans', Arial, sans-serif; color:#111827; background:#f3f4f6; }
+body { font-family:'IBM Plex Sans', Arial, sans-serif; color:#e5e7eb; background:#0e0c0a; }
 a { color: inherit; text-decoration:none; }
 .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
 
@@ -108,21 +108,20 @@ a { color: inherit; text-decoration:none; }
 }
 
 /* ── Xizmatlar ── */
-.section { padding: 56px 0; }
-.section-title { font-size:24px; font-weight:900; color:#111827; text-align:center; }
-.section-sub { text-align:center; color:#6b7280; font-size:14px; margin-top:8px; max-width:520px; margin-left:auto; margin-right:auto; }
+.section { padding: 56px 0; background:#0e0c0a; border-top:1px solid rgba(255,255,255,.06); }
+.section-title { font-size:24px; font-weight:900; color:#fff; text-align:center; font-family:'Space Grotesk',sans-serif; }
+.section-sub { text-align:center; color:#9ca3af; font-size:14px; margin-top:8px; max-width:520px; margin-left:auto; margin-right:auto; }
 .services-grid { margin-top:32px; display:grid; grid-template-columns:1fr; gap:18px; }
 @media(min-width:800px){ .services-grid{ grid-template-columns:repeat(3,1fr); } }
 .service-card {
-    background:#fff; border:1px solid #e5e7eb; border-radius:16px; padding:24px 22px;
-    box-shadow:0 2px 10px rgba(15,23,42,.04);
+    background:#1a1a1a; border:1px solid #2b2b2b; border-radius:16px; padding:24px 22px;
 }
 .service-icon {
-    width:44px; height:44px; border-radius:12px; background:#fef9c3; color:#a16207;
+    width:44px; height:44px; border-radius:12px; background:rgba(250,204,21,.12); color:#facc15;
     display:flex; align-items:center; justify-content:center; margin-bottom:14px;
 }
-.service-card h3 { font-size:16px; font-weight:800; color:#111827; margin-bottom:6px; }
-.service-card p { font-size:13.5px; color:#6b7280; line-height:1.55; }
+.service-card h3 { font-size:16px; font-weight:800; color:#fff; margin-bottom:6px; font-family:'Space Grotesk',sans-serif; }
+.service-card p { font-size:13.5px; color:#9ca3af; line-height:1.55; }
 
 /* ── Footer ── */
 .site-footer { background:#080d18; color:#94a3b8; padding:24px 0; text-align:center; font-size:12px; }
