@@ -228,18 +228,14 @@ Route::middleware(['auth'])->group(function () {
         ]);
     })->name('print.project.rozilik');
 
-    // DIDOX shartnoma (PDF — HTML shablondan dompdf orqali, avtomat to'ldiriladi,
-    // shartnoma narxi loyiha summasidan mustaqil, doim qat'iy 250 000 so'm)
+    // DIDOX shartnoma (Word .docx — PhpWord orqali, avtomat to'ldiriladi,
+    // shartnoma narxi loyiha summasidan mustaqil, doim qat'iy 400 000 so'm)
     Route::get('/print/project/{project}/didox', function (\App\Models\Project $project) {
-        $html   = view('print.didox-shartnoma', compact('project'))->render();
-        $dompdf = new \Dompdf\Dompdf();
-        $dompdf->setPaper('A4', 'portrait');
-        $dompdf->loadHtml($html, 'UTF-8');
-        $dompdf->render();
-        $fname = 'shartnoma-didox-' . ($project->seq_no ?: $project->id) . '.pdf';
-        return response($dompdf->output(), 200, [
-            'Content-Type'        => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="' . $fname . '"',
+        $data  = \App\Services\DidoxShartnomaGenerator::generate($project);
+        $fname = 'shartnoma-didox-' . ($project->seq_no ?: $project->id) . '.docx';
+        return response($data, 200, [
+            'Content-Type'        => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'Content-Disposition' => 'attachment; filename="' . $fname . '"',
         ]);
     })->name('print.project.didox');
 
