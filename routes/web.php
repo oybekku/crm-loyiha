@@ -2,9 +2,18 @@
 
 use Illuminate\Support\Facades\Route;
 
+// Ommaviy bosh sahifa (mijozlar uchun) — tizimga kirgan xodim/admin bo'lsa,
+// to'g'ridan-to'g'ri boshqaruv paneliga o'tkaziladi.
 Route::get('/', function () {
-    return redirect('/admin');
+    if (auth()->check()) {
+        return redirect('/admin');
+    }
+    return view('landing');
 });
+
+Route::post('/aloqa', [\App\Http\Controllers\ContactRequestController::class, 'store'])
+    ->middleware('throttle:5,1')
+    ->name('contact.store');
 
 // iOS Safari ba'zan login formani Livewire (AJAX) orqali emas, balki to'g'ridan-to'g'ri
 // "native" POST qilib yuboradi (sahifa bfcache'dan tiklanganda yoki klaviaturadagi "Go"
