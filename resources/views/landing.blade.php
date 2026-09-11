@@ -83,7 +83,12 @@ a { color: inherit; text-decoration:none; }
 }
 
 /* ── Xizmatlar ── */
-.section { padding: 56px 0; background:#0c0a08; border-top:1px solid rgba(255,255,255,.06); }
+.section {
+    padding: 56px 0; border-top:1px solid rgba(255,255,255,.06);
+    background-color:#0c0a08;
+    background-image: linear-gradient(180deg, rgba(12,10,8,.72), rgba(12,10,8,.92)), url('{{ asset("images/hero-lakehouse.jpg") }}');
+    background-size: cover; background-position: center; background-repeat: no-repeat;
+}
 .section-title { font-size:24px; font-weight:800; color:#fff; text-align:center; }
 .section-sub { text-align:center; color:#9ca3af; font-size:14px; margin-top:8px; max-width:520px; margin-left:auto; margin-right:auto; }
 .services-grid { margin-top:32px; display:grid; grid-template-columns:1fr; gap:18px; }
@@ -126,7 +131,12 @@ a { color: inherit; text-decoration:none; }
     background:rgba(34,197,94,.12); border:1px solid rgba(34,197,94,.4); color:#86efac;
     font-size:12.5px; font-weight:700; padding:10px 14px; border-radius:8px;
 }
-.contact-section { padding:56px 0 64px; }
+.contact-section {
+    padding:56px 0 64px; border-top:1px solid rgba(255,255,255,.06);
+    background-color:#0c0a08;
+    background-image: linear-gradient(180deg, rgba(12,10,8,.72), rgba(12,10,8,.92)), url('{{ asset("images/hero-forest.jpg") }}');
+    background-size: cover; background-position: center; background-repeat: no-repeat;
+}
 .contact-wrap { display:flex; flex-direction:column; gap:32px; align-items:flex-start; }
 .contact-info { display:flex; flex-direction:column; gap:14px; max-width:460px; }
 .contact-info h2 { font-size:24px; font-weight:800; color:#fff; }
