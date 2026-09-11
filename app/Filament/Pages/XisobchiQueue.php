@@ -28,8 +28,10 @@ class XisobchiQueue extends Page
 
     // yangi_didox = admin/menejer "O'tkazish → Yangi Didox" orqali TANLAB
     //   yuborgan loyihalar (DIDOX shartnoma tuzish kerak bo'lganlari),
-    // tugallangan = is_didox=true VA holati "tugallangan" bo'lgan, lekin
-    //   hali shot-faktura yuborilmagan loyihalar — AVTOMATIK chiqadi,
+    // tugallangan = is_didox=true VA loyiha tugagan (holati "tugallangan"
+    //   YOKI "didox" — ikkalasi ham loyihaning yakuniy/arxiv holati,
+    //   loyiha qaysi birida tugashi routing'ga bog'liq), lekin hali
+    //   shot-faktura yuborilmagan loyihalar — AVTOMATIK chiqadi,
     //   admin/menejer qo'lda status o'zgartirishi shart emas (loyiha
     //   qachon "Yangi Didox"dan o'tgan bo'lsa, doimiy is_didox belgisi
     //   tufayli — ish qachon va qanday tugatilishidan qat'i nazar shu
@@ -37,6 +39,11 @@ class XisobchiQueue extends Page
     public string $tab = 'yangi_didox';
 
     protected const TABS = ['yangi_didox', 'tugallangan'];
+
+    // Loyihaning "tugagan" deb hisoblanadigan holatlari — oddiy loyihalar
+    // "tugallangan"da tugaydi, Didox orqali yopiladigan loyihalar esa
+    // to'g'ridan-to'g'ri "didox" holatida (o'zi ham arxiv holati).
+    private const FINISHED_STATUSES = ['tugallangan', 'didox'];
 
     public function setTab(string $tab): void
     {
@@ -47,7 +54,7 @@ class XisobchiQueue extends Page
     {
         $projects = match ($this->tab) {
             'tugallangan' => Project::where('is_didox', true)
-                ->where('status', 'tugallangan')
+                ->whereIn('status', self::FINISHED_STATUSES)
                 ->whereNull('invoice_sent_at')
                 ->orderBy('created_at')
                 ->get(),
@@ -92,7 +99,7 @@ class XisobchiQueue extends Page
         if (!$user?->isHisobchi() && !$user?->isAdmin()) return;
 
         $project = Project::where('is_didox', true)
-            ->where('status', 'tugallangan')
+            ->whereIn('status', self::FINISHED_STATUSES)
             ->whereNull('invoice_sent_at')
             ->find($projectId);
         if (!$project) return;
