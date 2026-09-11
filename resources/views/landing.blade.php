@@ -253,7 +253,7 @@ a { color: inherit; text-decoration:none; }
             </div>
             <div class="contact-line" style="align-items:flex-start;">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d4af6a" stroke-width="2" style="margin-top:2px; flex-shrink:0;"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                <span style="font-weight:500; color:#9ca3af;">Toshkent sh., Yangihayot t., Uzar ko'chasi, 60-uy, 46-xona</span>
+                <span style="font-weight:500; color:#9ca3af;">Quyichirchiq tumani, Do'stobod shahri, Bibi-Xanum ko'chasi</span>
             </div>
         </div>
 
@@ -289,7 +289,7 @@ a { color: inherit; text-decoration:none; }
 
 <footer class="site-footer">
     <div class="container">
-        <strong>"MY PERFECT HOME" MCHJ</strong> &middot; Toshkent shahri, Yangihayot tumani &middot; &copy; {{ date('Y') }}
+        <strong>"MY PERFECT HOME" MCHJ</strong> &middot; Quyichirchiq tumani, Do'stobod shahri &middot; &copy; {{ date('Y') }}
     </div>
 </footer>
 
