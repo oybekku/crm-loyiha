@@ -34,7 +34,7 @@ a { color: inherit; text-decoration:none; }
 
 /* ── Hero ── */
 .hero {
-    position:relative; overflow:hidden; min-height:640px;
+    position:relative; overflow:hidden; min-height:100vh; min-height:100dvh;
     display:flex; flex-direction:column; color:#fff;
     background:#0e0c0a;
 }
@@ -97,7 +97,6 @@ a { color: inherit; text-decoration:none; }
 
 /* ── Desktop hero tartibi ── */
 @media(min-width:900px){
-    .hero { min-height:760px; }
     .hero-frame { display:block; }
     .hero-inner { flex-direction:row; padding:44px 60px; align-items:flex-start; }
     .hero-headline { display:none; }
