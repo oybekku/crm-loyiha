@@ -36,11 +36,12 @@ a { color: inherit; text-decoration:none; }
 
 /* ── Hero ── */
 .hero {
-    position:relative; overflow:hidden; height:100vh; height:100dvh;
+    position:relative; overflow:hidden;
+    height:calc(100vh - 68px); height:calc(100dvh - 68px);
     display:flex; flex-direction:column; color:#fff;
     background:#0c0a08;
 }
-.hero-bg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 40%; z-index:0; }
+.hero-bg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center center; z-index:0; }
 .hero-overlay {
     position:absolute; inset:0; z-index:1;
     background:linear-gradient(100deg, rgba(10,8,6,.92) 0%, rgba(10,8,6,.62) 42%, rgba(10,8,6,.2) 68%, rgba(10,8,6,.4) 100%);
