@@ -810,6 +810,10 @@ class KanbanBoard extends Page
             // Doimiy belgi — loyiha keyinroq boshqa bo'limlarga o'tsa ham
             // "bunga DIDOX shot-faktura kerak" degani yo'qolib qolmasin.
             $update['is_didox'] = true;
+            if (!$project->didox_added_at) {
+                $update['didox_added_at'] = now();
+                $update['didox_added_by'] = auth()->id();
+            }
         }
         if ($this->routeAssignedUserId) {
             $update['assigned_user_id'] = $this->routeAssignedUserId;
@@ -847,6 +851,10 @@ class KanbanBoard extends Page
         $update = ['status' => $newStatus];
         if ($newStatus === 'yangi_didox') {
             $update['is_didox'] = true;
+            if (!$project->didox_added_at) {
+                $update['didox_added_at'] = now();
+                $update['didox_added_by'] = auth()->id();
+            }
         }
         $project->update($update);
     }

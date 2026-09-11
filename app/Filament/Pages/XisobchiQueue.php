@@ -6,11 +6,13 @@ use App\Models\Project;
 use App\Models\ProjectStatusLog;
 use Filament\Pages\Page;
 
-// Faqat "hisobchi" (va nazorat uchun admin) ko'radigan, ruxsatnomalar
-// tizimidan mustaqil sahifa — admin/menejer "Yangi Didox"ga TANLAB
-// o'tkazgan loyihalarni (shartnoma tuzish) va shot-faktura kutayotgan
-// tugallangan loyihalarni ko'rsatadi. Boshqa hech qanday CRM ma'lumoti
-// (moliya, boshqa loyihalar, xodimlar) shu sahifada ko'rinmaydi.
+// Hisobchi, admin va menejerlar ko'radigan, ruxsatnomalar tizimidan
+// mustaqil sahifa — admin/menejer "Yangi Didox"ga TANLAB o'tkazgan
+// loyihalarni (shartnoma tuzish), shot-faktura kutayotgan tugallangan
+// loyihalarni va ularning to'liq tarixini ko'rsatadi. "Tayyor"
+// tugmalari faqat hisobchi/admin uchun ishlaydi — menejer faqat
+// ko'ra oladi. Boshqa hech qanday CRM ma'lumoti (moliya, boshqa
+// loyihalar, xodimlar) shu sahifada ko'rinmaydi.
 class XisobchiQueue extends Page
 {
     protected static string  $view            = 'filament.pages.xisobchi-queue';
@@ -23,7 +25,7 @@ class XisobchiQueue extends Page
     public static function canAccess(): bool
     {
         $user = auth()->user();
-        return $user?->isHisobchi() || $user?->isAdmin();
+        return $user?->isHisobchi() || $user?->isAdmin() || $user?->isMenejer();
     }
 
     // yangi_didox = admin/menejer "O'tkazish → Yangi Didox" orqali TANLAB
@@ -38,7 +40,7 @@ class XisobchiQueue extends Page
     //   yerda ko'rinadi).
     public string $tab = 'yangi_didox';
 
-    protected const TABS = ['yangi_didox', 'tugallangan'];
+    protected const TABS = ['yangi_didox', 'tugallangan', 'tarix'];
 
     // Loyihaning "tugagan" deb hisoblanadigan holatlari — oddiy loyihalar
     // "tugallangan"da tugaydi, Didox orqali yopiladigan loyihalar esa
@@ -57,6 +59,10 @@ class XisobchiQueue extends Page
                 ->whereIn('status', self::FINISHED_STATUSES)
                 ->whereNull('invoice_sent_at')
                 ->orderBy('created_at')
+                ->get(),
+            'tarix' => Project::where('is_didox', true)
+                ->with(['didoxAddedBy', 'didoxContractDoneBy', 'invoiceSentBy'])
+                ->orderByDesc('didox_added_at')
                 ->get(),
             default => Project::where('status', 'yangi_didox')->orderBy('created_at')->get(),
         };
@@ -84,7 +90,11 @@ class XisobchiQueue extends Page
             'entered_at' => now(),
         ]);
 
-        $project->update(['status' => 'yangi_toposyomka']);
+        $project->update([
+            'status'                  => 'yangi_toposyomka',
+            'didox_contract_done_at'  => now(),
+            'didox_contract_done_by'  => $user->id,
+        ]);
 
         $this->dispatch('notify', type: 'success', message: "«{$project->owner_name}» — shartnoma tayyor, Toposyomka navbatiga yuborildi");
     }
@@ -104,7 +114,10 @@ class XisobchiQueue extends Page
             ->find($projectId);
         if (!$project) return;
 
-        $project->update(['invoice_sent_at' => now()]);
+        $project->update([
+            'invoice_sent_at' => now(),
+            'invoice_sent_by' => $user->id,
+        ]);
 
         $this->dispatch('notify', type: 'success', message: "«{$project->owner_name}» — shot-faktura yuborildi");
     }

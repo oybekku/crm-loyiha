@@ -15,7 +15,8 @@ class Project extends Model
         'passport_series', 'passport_issued_by', 'pinfl',
         'applicant_type', 'cadastre_number', 'region', 'district', 'registration_basis', 'ownership_document_path',
         'description', 'category', 'status', 'is_didox', 'work_status', 'assigned_user_id',
-        'total_price', 'paid_amount', 'deadline_date', 'timer_paused_at', 'invoice_sent_at',
+        'total_price', 'paid_amount', 'deadline_date', 'timer_paused_at', 'invoice_sent_at', 'invoice_sent_by',
+        'didox_added_at', 'didox_added_by', 'didox_contract_done_at', 'didox_contract_done_by',
         'payment_requested_at', 'payment_requested_by',
         'mygov_login', 'mygov_password', 'mygov_fish',
         'is_urgent', 'urgent_accepted_at', 'urgent_accepted_by',
@@ -38,6 +39,8 @@ class Project extends Model
         'deadline_date'         => 'date',
         'timer_paused_at'       => 'datetime',
         'invoice_sent_at'       => 'datetime',
+        'didox_added_at'        => 'datetime',
+        'didox_contract_done_at'=> 'datetime',
         'payment_requested_at'  => 'datetime',
         'mygov_password'        => 'encrypted',
         'is_urgent'             => 'boolean',
@@ -173,6 +176,21 @@ class Project extends Model
     public function paymentRequester()
     {
         return $this->belongsTo(User::class, 'payment_requested_by');
+    }
+
+    public function didoxAddedBy()
+    {
+        return $this->belongsTo(User::class, 'didox_added_by');
+    }
+
+    public function didoxContractDoneBy()
+    {
+        return $this->belongsTo(User::class, 'didox_contract_done_by');
+    }
+
+    public function invoiceSentBy()
+    {
+        return $this->belongsTo(User::class, 'invoice_sent_by');
     }
 
     public function assignedUsers()

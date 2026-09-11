@@ -22,6 +22,16 @@
 .dark .xq-tab{border-color:#334155;color:#94a3b8}
 .xq-tab.active{background:#0891b2;border-color:#0891b2;color:#fff}
 #xq-notify-box{display:none;position:fixed;top:16px;right:16px;z-index:9999;color:#fff;font-size:13px;font-weight:600;padding:10px 16px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.2)}
+.xq-steps{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+.xq-step{flex:1;min-width:170px;border-radius:8px;padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb}
+.dark .xq-step{background:#0f172a;border-color:#334155}
+.xq-step.done{background:#f0fdf4;border-color:#bbf7d0}
+.dark .xq-step.done{background:#052e1b;border-color:#166534}
+.xq-step-title{font-size:10.5px;font-weight:700;color:#6b7280}
+.dark .xq-step-title{color:#94a3b8}
+.xq-step.done .xq-step-title{color:#16a34a}
+.xq-step-val{font-size:12px;font-weight:600;color:#111827;margin-top:2px}
+.dark .xq-step-val{color:#e2e8f0}
 </style>
 
 <div id="xq-notify-box"></div>
@@ -30,12 +40,15 @@
 $xqTabLabels = [
     'yangi_didox' => 'Yangi Didox',
     'tugallangan' => 'Shot-faktura kerak',
+    'tarix'       => 'Tarix',
 ];
+$xqCanAct = auth()->user()?->isHisobchi() || auth()->user()?->isAdmin();
 @endphp
 
 <div class="xq-tabs">
     <button type="button" wire:click="setTab('yangi_didox')" class="xq-tab @if($tab === 'yangi_didox') active @endif">Yangi Didox</button>
     <button type="button" wire:click="setTab('tugallangan')" class="xq-tab @if($tab === 'tugallangan') active @endif">Shot-faktura kerak</button>
+    <button type="button" wire:click="setTab('tarix')" class="xq-tab @if($tab === 'tarix') active @endif">Tarix</button>
 </div>
 
 <div class="xq-panel">
@@ -56,7 +69,7 @@ $xqTabLabels = [
                 <a href="{{ route('print.project.didox', $p) }}" target="_blank" class="xq-btn" style="justify-content:center">
                     🔷 DIDOX shartnoma
                 </a>
-                @if($tab === 'yangi_didox')
+                @if($xqCanAct && $tab === 'yangi_didox')
                 <button type="button"
                         wire:click.stop="markDidoxDone({{ $p->id }})"
                         wire:confirm="Shartnoma tayyor va loyiha Toposyomka navbatiga yuboriladimi?"
@@ -64,7 +77,7 @@ $xqTabLabels = [
                         style="justify-content:center">
                     ✅ Tayor
                 </button>
-                @elseif($tab === 'tugallangan')
+                @elseif($xqCanAct && $tab === 'tugallangan')
                 <button type="button"
                         wire:click.stop="markInvoiceDone({{ $p->id }})"
                         wire:confirm="Shot-faktura yuborildimi?"
@@ -75,6 +88,40 @@ $xqTabLabels = [
                 @endif
             </div>
         </div>
+
+        @if($tab === 'tarix')
+        <div class="xq-steps">
+            <div class="xq-step done">
+                <div class="xq-step-title">📥 Yangi Didoxga qo'shildi</div>
+                <div class="xq-step-val">
+                    {{ $p->didox_added_at?->format('d.m.Y H:i') ?: '—' }}
+                    @if($p->didoxAddedBy) · {{ $p->didoxAddedBy->name }} @endif
+                </div>
+            </div>
+            <div class="xq-step @if($p->didox_contract_done_at) done @endif">
+                <div class="xq-step-title">📝 Shartnoma tayyor</div>
+                <div class="xq-step-val">
+                    @if($p->didox_contract_done_at)
+                        {{ $p->didox_contract_done_at->format('d.m.Y H:i') }}
+                        @if($p->didoxContractDoneBy) · {{ $p->didoxContractDoneBy->name }} @endif
+                    @else
+                        hali tayyor emas
+                    @endif
+                </div>
+            </div>
+            <div class="xq-step @if($p->invoice_sent_at) done @endif">
+                <div class="xq-step-title">🧾 Shot-faktura yuborildi</div>
+                <div class="xq-step-val">
+                    @if($p->invoice_sent_at)
+                        {{ $p->invoice_sent_at->format('d.m.Y H:i') }}
+                        @if($p->invoiceSentBy) · {{ $p->invoiceSentBy->name }} @endif
+                    @else
+                        hali yuborilmagan
+                    @endif
+                </div>
+            </div>
+        </div>
+        @else
         <div class="xq-grid">
             <div>
                 <div class="xq-label">Manzil</div>
@@ -104,11 +151,13 @@ $xqTabLabels = [
                 <div class="xq-val">{{ $p->created_at?->format('d.m.Y H:i') }}</div>
             </div>
         </div>
+        @endif
     </div>
     @empty
     <div class="xq-empty">
         @if($tab === 'tugallangan') Hozircha shot-faktura kutayotgan loyiha yo'q
         @elseif($tab === 'yangi_didox') Hozircha "Yangi Didox"ga o'tkazilgan loyiha yo'q
+        @elseif($tab === 'tarix') Hozircha DIDOX tarixi yo'q
         @else Hozircha yangi loyiha yo'q
         @endif
     </div>
