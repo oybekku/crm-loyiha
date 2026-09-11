@@ -22,16 +22,21 @@
 .dark .xq-tab{border-color:#334155;color:#94a3b8}
 .xq-tab.active{background:#0891b2;border-color:#0891b2;color:#fff}
 #xq-notify-box{display:none;position:fixed;top:16px;right:16px;z-index:9999;color:#fff;font-size:13px;font-weight:600;padding:10px 16px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.2)}
-.xq-steps{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
-.xq-step{flex:1;min-width:170px;border-radius:8px;padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb}
-.dark .xq-step{background:#0f172a;border-color:#334155}
+.xq-added-line{color:#6b7280;font-size:11px;margin-top:6px}
+.dark .xq-added-line{color:#94a3b8}
+.xq-steps{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+.xq-step{flex:1;min-width:200px;border-radius:8px;padding:9px 12px;background:#fef2f2;border:1px solid #fecaca}
+.dark .xq-step{background:#2a0f0f;border-color:#7f1d1d}
 .xq-step.done{background:#f0fdf4;border-color:#bbf7d0}
 .dark .xq-step.done{background:#052e1b;border-color:#166534}
-.xq-step-title{font-size:10.5px;font-weight:700;color:#6b7280}
-.dark .xq-step-title{color:#94a3b8}
-.xq-step.done .xq-step-title{color:#16a34a}
-.xq-step-val{font-size:12px;font-weight:600;color:#111827;margin-top:2px}
-.dark .xq-step-val{color:#e2e8f0}
+.xq-step-title{font-size:10.5px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.03em}
+.dark .xq-step-title{color:#64748b}
+.xq-step-val{font-size:13px;font-weight:700;color:#b91c1c;margin-top:2px}
+.dark .xq-step-val{color:#fca5a5}
+.xq-step.done .xq-step-val{color:#15803d}
+.dark .xq-step.done .xq-step-val{color:#4ade80}
+.xq-step-who{font-size:11px;font-weight:500;color:#6b7280;margin-top:1px}
+.dark .xq-step-who{color:#94a3b8}
 </style>
 
 <div id="xq-notify-box"></div>
@@ -90,35 +95,27 @@ $xqCanAct = auth()->user()?->isHisobchi() || auth()->user()?->isAdmin();
         </div>
 
         @if($tab === 'tarix')
+        @if($p->didox_added_at)
+        <div class="xq-added-line">Yangi Didoxga qo'shilgan: {{ $p->didox_added_at->format('d.m.Y H:i') }}@if($p->didoxAddedBy) — {{ $p->didoxAddedBy->name }}@endif</div>
+        @endif
         <div class="xq-steps">
-            <div class="xq-step done">
-                <div class="xq-step-title">📥 Yangi Didoxga qo'shildi</div>
-                <div class="xq-step-val">
-                    {{ $p->didox_added_at?->format('d.m.Y H:i') ?: '—' }}
-                    @if($p->didoxAddedBy) · {{ $p->didoxAddedBy->name }} @endif
-                </div>
-            </div>
             <div class="xq-step @if($p->didox_contract_done_at) done @endif">
-                <div class="xq-step-title">📝 Shartnoma tayyor</div>
-                <div class="xq-step-val">
-                    @if($p->didox_contract_done_at)
-                        {{ $p->didox_contract_done_at->format('d.m.Y H:i') }}
-                        @if($p->didoxContractDoneBy) · {{ $p->didoxContractDoneBy->name }} @endif
-                    @else
-                        hali tayyor emas
-                    @endif
-                </div>
+                <div class="xq-step-title">Shartnoma</div>
+                @if($p->didox_contract_done_at)
+                    <div class="xq-step-val">✅ Jo'natilgan</div>
+                    <div class="xq-step-who">{{ $p->didox_contract_done_at->format('d.m.Y H:i') }}@if($p->didoxContractDoneBy) — {{ $p->didoxContractDoneBy->name }}@endif</div>
+                @else
+                    <div class="xq-step-val">❌ Jo'natilmagan</div>
+                @endif
             </div>
             <div class="xq-step @if($p->invoice_sent_at) done @endif">
-                <div class="xq-step-title">🧾 Shot-faktura yuborildi</div>
-                <div class="xq-step-val">
-                    @if($p->invoice_sent_at)
-                        {{ $p->invoice_sent_at->format('d.m.Y H:i') }}
-                        @if($p->invoiceSentBy) · {{ $p->invoiceSentBy->name }} @endif
-                    @else
-                        hali yuborilmagan
-                    @endif
-                </div>
+                <div class="xq-step-title">Shot-faktura</div>
+                @if($p->invoice_sent_at)
+                    <div class="xq-step-val">✅ Yuborilgan</div>
+                    <div class="xq-step-who">{{ $p->invoice_sent_at->format('d.m.Y H:i') }}@if($p->invoiceSentBy) — {{ $p->invoiceSentBy->name }}@endif</div>
+                @else
+                    <div class="xq-step-val">❌ Yuborilmagan</div>
+                @endif
             </div>
         </div>
         @else
