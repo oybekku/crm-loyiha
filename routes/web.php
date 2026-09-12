@@ -8,7 +8,22 @@ Route::get('/', function () {
     if (auth()->check()) {
         return redirect('/admin');
     }
-    return view('landing');
+
+    // Har bir shahar (tenant) o'z aloqa ma'lumotlarini ko'rsatadi — bo'lmasa,
+    // bosh ofis (Toshkent) ma'lumotlari ishlatiladi.
+    $tenant = config('tenants')[request()->getHost()] ?? [];
+    $rawPhones = !empty($tenant['phone'])
+        ? [$tenant['phone']]
+        : ['+998770919101', '+998994681991'];
+    $prettyPhone = function (string $raw): string {
+        $digits = preg_replace('/\D/', '', $raw); // 998951481991
+        return sprintf('+%s %s %s %s %s',
+            substr($digits, 0, 3), substr($digits, 3, 2), substr($digits, 5, 3), substr($digits, 8, 2), substr($digits, 10, 2));
+    };
+    $contactPhones = array_map(fn (string $raw) => ['raw' => $raw, 'pretty' => $prettyPhone($raw)], $rawPhones);
+    $contactAddress = $tenant['address'] ?? "Quyichirchiq tumani, Do'stobod shahri, Bibi-Xanum ko'chasi";
+
+    return view('landing', compact('contactPhones', 'contactAddress'));
 });
 
 Route::post('/aloqa', [\App\Http\Controllers\ContactRequestController::class, 'store'])

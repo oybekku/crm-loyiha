@@ -194,7 +194,7 @@ a { color: inherit; text-decoration:none; }
     <div class="hero-bottom-row">
         <div class="hero-phone">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d4af6a" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.34 1.79.65 2.65a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.43-1.42a2 2 0 0 1 2.11-.45c.86.31 1.75.53 2.65.65A2 2 0 0 1 22 16.92z"/></svg>
-            <a href="tel:+998770919101">+998 77 091 91 01</a>
+            <a href="tel:{{ $contactPhones[0]['raw'] }}">{{ $contactPhones[0]['pretty'] }}</a>
         </div>
         <div class="hero-steps">
             <span>Loyihalash</span>
@@ -243,17 +243,15 @@ a { color: inherit; text-decoration:none; }
         <div class="contact-info">
             <h2>Biz bilan bog'laning</h2>
             <p>Loyihangiz haqida qisqacha ma'lumot qoldiring — mutaxassislarimiz tez orada siz bilan bog'lanadi.</p>
+            @foreach($contactPhones as $phone)
             <div class="contact-line">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d4af6a" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.34 1.79.65 2.65a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.43-1.42a2 2 0 0 1 2.11-.45c.86.31 1.75.53 2.65.65A2 2 0 0 1 22 16.92z"/></svg>
-                <a href="tel:+998770919101">+998 77 091 91 01</a>
+                <a href="tel:{{ $phone['raw'] }}">{{ $phone['pretty'] }}</a>
             </div>
-            <div class="contact-line">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d4af6a" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.34 1.79.65 2.65a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.43-1.42a2 2 0 0 1 2.11-.45c.86.31 1.75.53 2.65.65A2 2 0 0 1 22 16.92z"/></svg>
-                <a href="tel:+998994681991">+998 99 468 19 91</a>
-            </div>
+            @endforeach
             <div class="contact-line" style="align-items:flex-start;">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d4af6a" stroke-width="2" style="margin-top:2px; flex-shrink:0;"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                <span style="font-weight:500; color:#9ca3af;">Quyichirchiq tumani, Do'stobod shahri, Bibi-Xanum ko'chasi</span>
+                <span style="font-weight:500; color:#9ca3af;">{{ $contactAddress }}</span>
             </div>
         </div>
 
@@ -289,7 +287,7 @@ a { color: inherit; text-decoration:none; }
 
 <footer class="site-footer">
     <div class="container">
-        <strong>"MY PERFECT HOME" MCHJ</strong> &middot; Quyichirchiq tumani, Do'stobod shahri &middot; &copy; {{ date('Y') }}
+        <strong>"MY PERFECT HOME" MCHJ</strong> &middot; {{ $contactAddress }} &middot; &copy; {{ date('Y') }}
     </div>
 </footer>
 

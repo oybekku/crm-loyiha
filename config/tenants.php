@@ -18,6 +18,9 @@ return [
         'username' => env('DB_ANDIJON_USERNAME', 'elkayo0i_andijon'),
         'password' => env('DB_ANDIJON_PASSWORD'),
         'label'    => 'Andijon',
+        // Ommaviy bosh sahifada (landing) shu shahar uchun ko'rsatiladigan aloqa ma'lumotlari.
+        'phone'    => '+998951481991',
+        'address'  => "Andijon viloyati, Baliqchi tumani, Baliqchi shox ko'chasi",
     ],
 
 ];
