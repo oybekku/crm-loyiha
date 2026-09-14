@@ -7,8 +7,9 @@
 <title>GENPLAN yig'ish — {{ $project->number }}</title>
 @php
     $manzil = trim($project->oblozhka_address ?: $project->address ?: '');
-    $tuman  = 'Toshkent viloyati Quyichirchiq tumani';
-    $shahar = 'Toshkent';
+    $tenant = config('tenants')[request()->getHost()] ?? [];
+    $tuman  = $tenant['obloshka_tuman'] ?? 'Toshkent viloyati Quyichirchiq tumani';
+    $shahar = $tenant['obloshka_shahar'] ?? 'Toshkent';
     $yil    = now()->year;
 @endphp
 <style>
