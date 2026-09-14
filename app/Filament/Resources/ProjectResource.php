@@ -120,7 +120,10 @@ class ProjectResource extends Resource
                         ->label('Obloshka manzili')
                         ->rows(2)
                         ->columnSpanFull()
-                        ->placeholder('Toshkent viloyati Quyichirchiq tumani "Jumagul" mahallasi "Qolmoq" ko\'chasi 4-uy')
+                        ->placeholder(
+                            (config('tenants')[request()->getHost()]['obloshka_tuman'] ?? 'Toshkent viloyati Quyichirchiq tumani')
+                            . ' "Jumagul" mahallasi "Qolmoq" ko\'chasi 4-uy'
+                        )
                         ->hint("Obloshka (muqova) chop etishda ishlatiladi. Bo'sh qoldirilsa yuqoridagi oddiy manzil olinadi."),
 
                     Forms\Components\View::make('filament.forms.components.map-picker')

@@ -24,6 +24,9 @@ return [
         // Obloshka (chizma jildi) varag'idagi shahar/tuman yozuvlari
         'obloshka_shahar' => 'Andijon',
         'obloshka_tuman'  => 'Andijon viloyati, Baliqchi tumani',
+        // Yangi loyiha ochilganda "Obyekt hududi (viloyat)" / "tumani" maydonlari uchun standart qiymat
+        'default_region'   => 'andijon',
+        'default_district' => 'Baliqchi tumani',
     ],
 
 ];

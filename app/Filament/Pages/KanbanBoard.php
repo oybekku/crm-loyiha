@@ -244,6 +244,10 @@ class KanbanBoard extends Page
         $user = auth()->user();
         if ($user?->isHisobchi()) return;
         $this->reset(['owner_name', 'proj_title', 'address', 'latitude', 'longitude', 'description', 'mygov_fish', 'passport_series', 'passport_issued_by', 'pinfl', 'applicant_type', 'cadastre_number', 'region', 'district', 'registration_basis', 'assigned_user_ids', 'deadline_days', 'showDeadlineConfirm']);
+        // Yangi loyiha viloyat/tuman maydonlari joriy shahar (tenant) bo'yicha oldindan to'ldiriladi
+        $tenant = config('tenants')[request()->getHost()] ?? [];
+        $this->region   = $tenant['default_region'] ?? 'toshkent_viloyati';
+        $this->district = $tenant['default_district'] ?? 'Quyichirchiq tumani';
         $this->phones             = ['+998'];
         $this->category           = 'turar';
         $this->uploadedFiles      = [];
