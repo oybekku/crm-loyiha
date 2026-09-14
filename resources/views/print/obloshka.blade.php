@@ -2,8 +2,9 @@
     // Obloshka manzili — alohida kiritilgan bo'lsa o'sha, bo'lmasa oddiy manzil
     $manzil = trim($project->oblozhka_address ?: $project->address ?: '');
     $yil    = now()->year;            // avtomatik joriy yil
-    $shahar = 'Toshkent';             // yil yonidagi shahar nomi
-    $tuman  = 'Toshkent viloyati Quyichirchiq tumani';  // har bir loyiha manzili tepasidagi doimiy qator
+    $tenant = config('tenants')[request()->getHost()] ?? [];
+    $shahar = $tenant['obloshka_shahar'] ?? 'Toshkent';             // yil yonidagi shahar nomi
+    $tuman  = $tenant['obloshka_tuman'] ?? 'Toshkent viloyati Quyichirchiq tumani';  // har bir loyiha manzili tepasidagi doimiy qator
 
     // Qavat turi: 1 yoki 2 — faqat fon shabloni o'zgaradi
     $qavat   = (int) request('qavat') === 2 ? 2 : 1;
