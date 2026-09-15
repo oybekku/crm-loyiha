@@ -640,8 +640,21 @@ class PaymentModal extends Component
             return;
         }
 
-        $newPrice = max(0, (float) str_replace([' ', ','], '', $this->servicePriceValue));
-        $svc->update(['final_price' => $newPrice, 'price' => $newPrice]);
+        $newFinal = max(0, (float) str_replace([' ', ','], '', $this->servicePriceValue));
+
+        // ProjectService'ning "saving" hook'i final_price'ni doim price va
+        // discount_type/value asosida qayta hisoblaydi. Chegirma o'z holida
+        // qolishi kerak bo'lgani uchun, bu yerda "price"ni shunday hisoblaymizki,
+        // mavjud chegirma qo'llangandan keyin natija aynan kiritilgan summaga
+        // (final_price) teng chiqsin.
+        $discountValue = (float) $svc->discount_value;
+        $basePrice = match ($svc->discount_type) {
+            'percent' => $discountValue >= 100 ? $newFinal : $newFinal / (1 - $discountValue / 100),
+            'fixed'   => $newFinal + $discountValue,
+            default   => $newFinal,
+        };
+
+        $svc->update(['price' => $basePrice]);
 
         Project::find($svc->project_id)?->updateTotals();
 
