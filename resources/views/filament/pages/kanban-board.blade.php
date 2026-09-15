@@ -2061,7 +2061,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
     $calcSelectedCount = count(array_filter($calcServices, fn($s) => !empty($s['selected'])));
     $calcTotal = array_sum(array_map(fn($s) => !empty($s['selected']) ? (float)str_replace([' ',','],'',$s['price']??'0') : 0, $calcServices));
 @endphp
-<div class="kb-overlay" wire:click.self="closeCalcModal">
+<div class="kb-overlay">
 <div class="kb-modal" style="max-width:520px;max-height:88vh" wire:click.stop>
     <div class="kb-head">
         <h3 style="font-size:16px;font-weight:700">🧮 Xizmatlar narxini hisoblash</h3>
@@ -2335,7 +2335,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
     $aPreview = (float)$areaValue > 0 ? (int)round($aRate * (float)$areaValue) : 0;
 @endphp
 <div style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1200;display:flex;align-items:center;justify-content:center;padding:16px"
-     wire:click.self="closeAreaModal">
+>
 <div style="background:#fff !important;border-radius:16px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;padding:24px;box-shadow:0 25px 80px rgba(0,0,0,.3)" wire:click.stop>
 
     {{-- Header --}}
@@ -2409,7 +2409,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
     $dPrice = (float)($services[$dKey]['price'] ?? 0);
 @endphp
 <div style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1200;display:flex;align-items:center;justify-content:center;padding:16px"
-     wire:click.self="closeDiscountModal">
+>
 <div style="background:#fff;border-radius:16px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto;padding:24px;box-shadow:0 25px 80px rgba(0,0,0,.3)" wire:click.stop>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
         <div style="display:flex;align-items:center;gap:8px">

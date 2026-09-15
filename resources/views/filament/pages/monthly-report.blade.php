@@ -1252,7 +1252,7 @@
      o'tgan oylarga ta'sir qilmaydi (server tomonida ham tekshiriladi). --}}
 @if($showRateEditor)
 @php $rateEditUser = \App\Models\User::find($rateEditUserId); @endphp
-<div style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px" wire:click.self="closeRateEditor">
+<div style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px">
 <div style="background:#fff;border-radius:14px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.4)">
     <div style="padding:18px 20px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center">
         <h3 style="font-size:15px;font-weight:800;color:#111827;margin:0">Ulush foizini o'zgartirish</h3>
@@ -1298,7 +1298,7 @@
      jadvalidagi rol nishonini bosib ochiladi. --}}
 @if($showRoleEditor)
 @php $roleEditUser = \App\Models\User::find($roleEditUserId); @endphp
-<div style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px" wire:click.self="closeRoleEditor">
+<div style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px">
 <div style="background:#fff;border-radius:14px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.4)">
     <div style="padding:18px 20px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center">
         <h3 style="font-size:15px;font-weight:800;color:#111827;margin:0">Hodim sozlamalari</h3>

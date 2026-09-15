@@ -458,7 +458,7 @@
 
 {{-- TO'LOVNI O'CHIRISH — PIN MODAL --}}
 @if($showDeletePaymentModal)
-<div style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1500;display:flex;align-items:center;justify-content:center;padding:16px" wire:click.self="closeDeletePayment">
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1500;display:flex;align-items:center;justify-content:center;padding:16px">
     <div style="background:#fff;border-radius:16px;padding:28px 32px;width:320px;box-shadow:0 25px 60px rgba(0,0,0,.2)" wire:click.stop>
         <div style="font-size:16px;font-weight:700;color:#111827;margin-bottom:6px">🔐 Telegram kodi</div>
         @if(\App\Services\TelegramOtpService::otpRequired())
@@ -496,7 +496,7 @@
 {{-- XIZMAT NARXINI O'RNATISH — PIN MODAL --}}
 @if($showServicePriceModal)
 @php $spSvc = \App\Models\ProjectService::find($servicePriceId); @endphp
-<div style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1500;display:flex;align-items:center;justify-content:center;padding:16px" wire:click.self="closeServicePrice">
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1500;display:flex;align-items:center;justify-content:center;padding:16px">
     <div style="background:#fff;border-radius:16px;padding:28px 32px;width:340px;box-shadow:0 25px 60px rgba(0,0,0,.2)" wire:click.stop>
         <div style="font-size:16px;font-weight:700;color:#111827;margin-bottom:6px">🔧 Joriy narxni o'rnatish</div>
         @if($spSvc)

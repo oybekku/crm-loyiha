@@ -1,6 +1,6 @@
 <div>
 @if($showEditInfoModal)
-<div style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1400;display:flex;align-items:center;justify-content:center;padding:16px" wire:click.self="closeEditInfoModal">
+<div style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1400;display:flex;align-items:center;justify-content:center;padding:16px">
     <div style="background:#fff;border-radius:16px;width:100%;max-width:760px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 25px 80px rgba(0,0,0,.3)" wire:click.stop>
         {{-- STICKY SARLAVHA --}}
         <div style="flex-shrink:0;padding:18px 26px 14px;border-bottom:1px solid #eef2f7">
@@ -534,8 +534,7 @@
             $svcArea    = (float) $svcTierArea;
             $svcPreview = $svcArea > 0 ? (int) round($svcRate * $svcArea) : (int) $svcRate;
         @endphp
-        <div style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1500;display:flex;align-items:center;justify-content:center;padding:16px"
-             wire:click.self="closeSvcTierModal">
+        <div style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1500;display:flex;align-items:center;justify-content:center;padding:16px">
         <div class="svc-tier-modal" wire:click.stop>
 
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">

@@ -455,7 +455,7 @@
 
     {{-- ── Hisob qo'shish/tahrirlash oynasi ── --}}
     @if($showAccountModal)
-    <div class="bx-modal-ov" wire:click.self="closeAccountModal">
+    <div class="bx-modal-ov">
         <div class="bx-modal">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
                 <div style="font-size:16px;font-weight:800">{{ $editAccountId ? 'Hisobni tahrirlash' : 'Yangi hisob qo\'shish' }}</div>
@@ -526,7 +526,7 @@
 
     {{-- ── Xarajat qo'shish/tahrirlash oynasi ── --}}
     @if($showExpenseModal)
-    <div class="bx-modal-ov" wire:click.self="closeExpenseModal">
+    <div class="bx-modal-ov">
         <div class="bx-modal">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
                 <div style="font-size:16px;font-weight:800">{{ $editExpenseId ? 'Xarajatni tahrirlash' : 'Xarajat qo\'shish' }}</div>
@@ -572,7 +572,7 @@
 
     {{-- ── Pul o'tkazish oynasi ── --}}
     @if($showTransferModal)
-    <div class="bx-modal-ov" wire:click.self="closeTransferModal">
+    <div class="bx-modal-ov">
         <div class="bx-modal">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
                 <div style="font-size:16px;font-weight:800">{{ $editTransferId ? "O'tkazmani tahrirlash" : "Pul o'tkazish" }}</div>
