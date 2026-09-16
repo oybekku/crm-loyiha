@@ -156,7 +156,26 @@ Route::post('/telegram/webhook', function (\Illuminate\Http\Request $request) {
         if ($chatType !== 'private') {
             $reply = "❌ Bog'lash faqat botning shaxsiy (private) chatida ishlaydi, guruhda emas.";
         } else {
-            $user  = \App\Services\TelegramOtpService::linkByToken($token, (string) $chatId);
+            $user = \App\Services\TelegramOtpService::linkByToken($token, (string) $chatId);
+
+            // Bot BARCHA shahar (tenant) saytlari uchun umumiy, lekin Telegram
+            // webhook'ni faqat BITTA belgilangan domenga yuboradi — shu sababli
+            // SwitchTenantDatabase shu yerda faqat o'sha domenning bazasini
+            // tanlaydi, holbuki token boshqa shahar (masalan Andijon) bazasida
+            // saqlangan bo'lishi mumkin. Joriy bazada topilmasa, har bir shahar
+            // bazasini birma-bir tekshiramiz.
+            if (!$user) {
+                foreach (config('tenants', []) as $tenant) {
+                    \Illuminate\Support\Facades\Config::set('database.connections.mysql.database', $tenant['database']);
+                    \Illuminate\Support\Facades\Config::set('database.connections.mysql.username', $tenant['username']);
+                    \Illuminate\Support\Facades\Config::set('database.connections.mysql.password', $tenant['password']);
+                    \Illuminate\Support\Facades\DB::purge('mysql');
+
+                    $user = \App\Services\TelegramOtpService::linkByToken($token, (string) $chatId);
+                    if ($user) break;
+                }
+            }
+
             $reply = $user
                 ? "✅ Bog'landi! Endi tasdiqlash kodlari shu yerga keladi, {$user->name}."
                 : "❌ Havola noto'g'ri yoki eskirgan. Saytdan qaytadan urinib ko'ring.";
