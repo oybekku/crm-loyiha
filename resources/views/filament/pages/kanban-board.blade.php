@@ -562,6 +562,13 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
     @endforeach
 </div>
 
+@if($filterEmployee)
+<div style="display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:8px 14px;background:#fef9c3;border:1px solid #fde047;border-radius:10px;font-size:13px;color:#422006">
+    <span>Hodim: <b>{{ $filterEmployeeName ?? '—' }}</b> — {{ $kbMonthLabel }} oyidagi loyihalari</span>
+    <a href="{{ \App\Filament\Pages\KanbanBoard::getUrl() }}" wire:navigate style="margin-left:auto;font-weight:600;color:#92400e;text-decoration:none">✕ Tozalash</a>
+</div>
+@endif
+
 {{-- KANBAN --}}
 <div class="{{ $filterStatus ? 'kanban-grid-mode' : '' }}">
 

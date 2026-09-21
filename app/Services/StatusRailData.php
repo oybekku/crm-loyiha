@@ -92,7 +92,7 @@ class StatusRailData
      * Faol hodimlar (bajaruvchi) va ularga biriktirilgan loyihalar soni.
      * Ishi yo'q hodim ro'yxatga kirmaydi. Faqat admin/menejer uchun.
      *
-     * @return list<array{name:string,count:int}>
+     * @return list<array{id:int,name:string,count:int}>
      */
     public static function staff(?User $user, int $year, int $month): array
     {
@@ -114,7 +114,7 @@ class StatusRailData
                 ->whereIn('id', $perUser->keys())
                 ->orderBy('name')
                 ->get(['id', 'name'])
-                ->map(fn ($u) => ['name' => $u->name, 'count' => (int) $perUser[$u->id]])
+                ->map(fn ($u) => ['id' => (int) $u->id, 'name' => $u->name, 'count' => (int) $perUser[$u->id]])
                 ->all();
         } catch (\Throwable $e) {
             return [];

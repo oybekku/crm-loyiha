@@ -32,6 +32,7 @@ class KanbanBoard extends Page
     protected static bool $shouldRegisterNavigation = false;
 
     public string $filterStatus = '';
+    public int    $filterEmployee = 0; // ?employee={id} — chap paneldagi "Hodimlar" bo'limidan
 
     // Xizmat hodim tayinlash modal
     public bool  $showServiceAssignModal = false;
@@ -163,6 +164,9 @@ class KanbanBoard extends Page
     public function mount(): void
     {
         $this->filterStatus = request()->get('status', '');
+        if (auth()->user()?->canSeeAllProjects()) {
+            $this->filterEmployee = (int) request()->get('employee', 0);
+        }
         $this->kbYear  ??= (int) now()->year;
         $this->kbMonth ??= (int) now()->month;
         $this->initServices();
@@ -1196,6 +1200,13 @@ class KanbanBoard extends Page
             }
         }
 
+        // Hodim bo'yicha saralash: faqat shu hodimga biriktirilgan loyihalar
+        $filterEmployeeName = null;
+        if ($this->filterEmployee) {
+            $projectQuery->whereHas('services', fn ($s) => $s->where('assigned_user_id', $this->filterEmployee));
+            $filterEmployeeName = User::whereKey($this->filterEmployee)->value('name');
+        }
+
         $projects = $projectQuery->get()->groupBy('status');
 
         // MyGOV ustuni oyга bog'liq bo'lmasin — ariza navbati barcha oylar bo'yicha to'liq ko'rinsin.
@@ -1209,7 +1220,18 @@ class KanbanBoard extends Page
                 && !$authUser->hasPermission('kanban_all_mygov')) {
                 $mygovQuery->whereHas('services', fn($q) => $q->where('assigned_user_id', $authUser->id));
             }
+            if ($this->filterEmployee) {
+                // Hodim saralashida sonlar bilan mos bo'lishi uchun MyGOV ham tanlangan oy bilan cheklanadi
+                $mStart = \Carbon\Carbon::create($this->kbYear, $this->kbMonth, 1)->startOfMonth();
+                $mygovQuery->whereBetween('created_at', [$mStart, $mStart->copy()->endOfMonth()])
+                    ->whereHas('services', fn ($q) => $q->where('assigned_user_id', $this->filterEmployee));
+            }
             $projects['mygov'] = $mygovQuery->get();
+        }
+
+        // Hodim saralashida bo'sh ustunlar ko'rsatilmaydi
+        if ($this->filterEmployee) {
+            $statuses = array_filter($statuses, fn ($s, $key) => $projects->get($key, collect())->isNotEmpty(), ARRAY_FILTER_USE_BOTH);
         }
 
         $users           = User::orderBy('name')->get();
@@ -1248,6 +1270,6 @@ class KanbanBoard extends Page
         // Qidiruv tekis ro'yxati uchun — barcha statuslar belgisi
         $statusMap = $dbStatuses->keyBy('key')->map(fn($s) => ['label' => $s->label, 'color' => $s->color])->toArray();
 
-        return compact('statuses', 'allStatuses', 'routeStatuses', 'projects', 'users', 'serviceOptions', 'categoryOptions', 'priceTiers', 'paymentQueue', 'existingOwners', 'mygovFishList', 'kbMonthLabel', 'statusMap');
+        return compact('statuses', 'allStatuses', 'routeStatuses', 'projects', 'users', 'serviceOptions', 'categoryOptions', 'priceTiers', 'paymentQueue', 'existingOwners', 'mygovFishList', 'kbMonthLabel', 'statusMap', 'filterEmployeeName');
     }
 }

@@ -879,7 +879,7 @@ HTML;
         if ($showStaff) {
             $staffItems = '';
             foreach ($staffList as $row) {
-                $staffItems .= '<div class="bsr-item bsr-staff"><span class="bsr-label">' . e($row['name']) . '</span><span class="bsr-count">' . (int) $row['count'] . '</span></div>';
+                $staffItems .= '<a href="/admin/kanban-board?employee=' . (int) $row['id'] . '" data-employee-id="' . (int) $row['id'] . '" wire:navigate class="bsr-item bsr-staff"><span class="bsr-label">' . e($row['name']) . '</span><span class="bsr-count">' . (int) $row['count'] . '</span></a>';
             }
             $staffSection = $section('staff', 'Hodimlar', $staffItems);
             if (empty($staffList)) {
@@ -903,8 +903,6 @@ HTML;
 .bh-status-rail .bsr-section{margin-bottom:12px;}
 .bh-status-rail .bsr-label{min-width:0;}
 .bh-status-rail .bsr-count{flex-shrink:0;min-width:22px;padding:1px 7px;border-radius:999px;background:#facc15;color:#422006;font-size:.72rem;font-weight:700;line-height:1.35;text-align:center;}
-.bh-status-rail .bsr-staff{cursor:default;}
-.bh-status-rail .bsr-staff:hover{background:none;opacity:.85;}
 .bh-status-rail .bsr-section.bsr-collapsed .bsr-chevron{transform:rotate(180deg);}
 .bh-status-rail .bsr-section.bsr-collapsed .bsr-list{display:none;}
 .bh-status-rail .bsr-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;border-radius:8px;font-size:.85rem;font-weight:500;color:{$railText};text-decoration:none;margin-bottom:2px;opacity:.85;}
@@ -948,6 +946,10 @@ HTML;
         var onBoard = /\/admin\/kanban-board/.test(url.pathname);
         document.querySelectorAll('.bh-status-rail .bsr-item[data-status-key]').forEach(function(el){
             el.classList.toggle('active', onBoard && el.dataset.statusKey === key);
+        });
+        var emp = url.searchParams.get('employee');
+        document.querySelectorAll('.bh-status-rail .bsr-item[data-employee-id]').forEach(function(el){
+            el.classList.toggle('active', onBoard && el.dataset.employeeId === emp);
         });
         document.querySelectorAll('.bh-status-rail .bsr-item-top').forEach(function(el){
             var linkPath = el.getAttribute('href').split('?')[0];
@@ -999,9 +1001,10 @@ HTML;
                 var sec = rail.querySelector('.bsr-section[data-section="staff"]');
                 if (sec) {
                     sec.querySelector('.bsr-list').innerHTML = d.staff.map(function(r){
-                        return '<div class="bsr-item bsr-staff"><span class="bsr-label">' + esc(r.name) + '</span><span class="bsr-count">' + r.count + '</span></div>';
+                        return '<a href="/admin/kanban-board?employee=' + r.id + '" data-employee-id="' + r.id + '" wire:navigate class="bsr-item bsr-staff"><span class="bsr-label">' + esc(r.name) + '</span><span class="bsr-count">' + r.count + '</span></a>';
                     }).join('');
                     sec.style.display = d.staff.length ? '' : 'none';
+                    markActive();
                 }
             })
             .catch(function(){});
