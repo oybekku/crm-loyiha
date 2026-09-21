@@ -851,7 +851,33 @@ HTML;
             $projectLinks = "<a href=\"{$href}\" wire:navigate class=\"bsr-item bsr-item-top\" data-exact-href=\"{$href}\">Loyihalar</a>";
         }
 
-        if (empty($statuses) && $projectLinks === '') {
+        // "Hodimlar" — faqat admin/menejer ko'radi; ro'yxatda faqat faol hodimlar (bajaruvchi)
+        $staffNames = [];
+        if ($user && $user->canSeeAllProjects()) {
+            try {
+                // Joriy oyda ochilgan loyihalardan har bir hodimga biriktirilganlar soni;
+                // ishi yo'q hodim ro'yxatda ko'rinmaydi.
+                $start = now()->startOfMonth();
+                $perUser = \App\Models\ProjectService::query()
+                    ->whereNotNull('assigned_user_id')
+                    ->whereHas('project', fn ($q) => $q->whereBetween('created_at', [$start, $start->copy()->endOfMonth()]))
+                    ->selectRaw('assigned_user_id, count(distinct project_id) as c')
+                    ->groupBy('assigned_user_id')
+                    ->pluck('c', 'assigned_user_id');
+
+                $staffNames = \App\Models\User::where('role', 'bajaruvchi')
+                    ->where('is_active', true)
+                    ->whereIn('id', $perUser->keys())
+                    ->orderBy('name')
+                    ->get(['id', 'name'])
+                    ->mapWithKeys(fn ($u) => [$u->id => $u->name . ' (' . (int) $perUser[$u->id] . ')'])
+                    ->toArray();
+            } catch (\Throwable $e) {
+                // Baza tayyor bo'lmagan holat
+            }
+        }
+
+        if (empty($statuses) && empty($staffNames) && $projectLinks === '') {
             return '';
         }
 
@@ -863,10 +889,57 @@ HTML;
         $railDarkText   = $s['sidebar_dark_text_color'];
         $railDarkActive = $s['sidebar_dark_active_color'];
 
+        // Har bir bo'limdagi loyihalar soni — doskaning ko'rinish qoidalari bilan bir xil:
+        // joriy oy (MyGOV — barcha oylar), hodim faqat o'z loyihalari.
+        $counts = [];
+        if (! empty($statuses) && $user) {
+            try {
+                $visible = function ($q, bool $isMygov) use ($user) {
+                    if ($user->canSeeAllProjects()) {
+                        return $q;
+                    }
+                    if ($user->isHisobchi()) {
+                        return $isMygov ? $q : $q->where('status', '!=', 'yangi');
+                    }
+                    if ($user->hasPermission('barcha_loyihalar')) {
+                        return $q;
+                    }
+                    if ($isMygov) {
+                        return $user->hasPermission('kanban_all_mygov')
+                            ? $q
+                            : $q->whereHas('services', fn ($s) => $s->where('assigned_user_id', $user->id));
+                    }
+                    $fullCols = [];
+                    foreach (array_keys($statuses) as $k) {
+                        if ($user->hasPermission('kanban_all_' . $k)) {
+                            $fullCols[] = $k;
+                        }
+                    }
+
+                    return $q->where(function ($w) use ($user, $fullCols) {
+                        $w->whereHas('services', fn ($s) => $s->where('assigned_user_id', $user->id));
+                        if ($fullCols) {
+                            $w->orWhereIn('status', $fullCols);
+                        }
+                    });
+                };
+
+                $start = now()->startOfMonth();
+                $counts = $visible(\App\Models\Project::query(), false)
+                    ->whereBetween('created_at', [$start, $start->copy()->endOfMonth()])
+                    ->selectRaw('status, count(*) as c')->groupBy('status')
+                    ->pluck('c', 'status')->toArray();
+                $counts['mygov'] = $visible(\App\Models\Project::query(), true)->where('status', 'mygov')->count();
+            } catch (\Throwable $e) {
+                $counts = [];
+            }
+        }
+
         $items = '';
         foreach ($statuses as $key => $label) {
+            $n     = ! empty($counts[$key]) ? ' (' . (int) $counts[$key] . ')' : '';
             $key   = e($key);
-            $label = e($label);
+            $label = e($label) . $n;
             $items .= "<a href=\"/admin/kanban-board?status={$key}\" data-status-key=\"{$key}\" wire:navigate class=\"bsr-item\">{$label}</a>";
         }
 
@@ -874,9 +947,18 @@ HTML;
         if ($projectLinks !== '') {
             $topBlock = "<nav class=\"bsr-top-nav\">{$projectLinks}</nav><div class=\"bsr-divider\"></div>";
         }
+        $section = fn (string $key, string $title, string $inner) => "<div class=\"bsr-section\" data-section=\"{$key}\"><button type=\"button\" class=\"bsr-title bsr-toggle\" aria-expanded=\"true\"><span>{$title}</span><svg class=\"bsr-chevron\" viewBox=\"0 0 20 20\" width=\"12\" height=\"12\" fill=\"currentColor\"><path d=\"M5.23 12.79a1 1 0 0 0 1.41.02L10 9.6l3.36 3.21a1 1 0 1 0 1.38-1.44l-4.05-3.87a1 1 0 0 0-1.38 0L5.25 11.4a1 1 0 0 0-.02 1.39z\"/></svg></button><nav class=\"bsr-list\">{$inner}</nav></div>";
+
         $statusBlock = '';
         if (! empty($statuses)) {
-            $statusBlock = "<div class=\"bsr-title\">Loyiha holatlari</div><nav>{$items}</nav>";
+            $statusBlock = $section('statuses', 'Loyiha holatlari', $items);
+        }
+        if (! empty($staffNames)) {
+            $staffItems = '';
+            foreach ($staffNames as $name) {
+                $staffItems .= '<div class="bsr-item bsr-staff">' . e($name) . '</div>';
+            }
+            $statusBlock .= $section('staff', 'Hodimlar', $staffItems);
         }
 
         return <<<HTML
@@ -887,6 +969,14 @@ HTML;
 <style>
 .bh-status-rail{position:fixed;top:64px;left:0;width:200px;height:calc(100vh - 64px);overflow-y:auto;padding:16px 10px;z-index:30;background:{$railBg};}
 .bh-status-rail .bsr-title{font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:{$railText};opacity:.55;padding:0 10px 10px;}
+.bh-status-rail .bsr-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:0;cursor:pointer;text-align:left;}
+.bh-status-rail .bsr-toggle:hover{opacity:.9;}
+.bh-status-rail .bsr-chevron{transition:transform .2s;flex-shrink:0;}
+.bh-status-rail .bsr-section{margin-bottom:12px;}
+.bh-status-rail .bsr-staff{cursor:default;}
+.bh-status-rail .bsr-staff:hover{background:none;opacity:.85;}
+.bh-status-rail .bsr-section.bsr-collapsed .bsr-chevron{transform:rotate(180deg);}
+.bh-status-rail .bsr-section.bsr-collapsed .bsr-list{display:none;}
 .bh-status-rail .bsr-item{display:block;padding:8px 12px;border-radius:8px;font-size:.85rem;font-weight:500;color:{$railText};text-decoration:none;margin-bottom:2px;opacity:.85;}
 .bh-status-rail .bsr-item:hover{background:rgba(0,0,0,0.08);opacity:1;}
 .bh-status-rail .bsr-item.active{background:rgba(0,0,0,0.10);color:{$railActive};font-weight:700;opacity:1;}
@@ -910,6 +1000,8 @@ HTML;
         box-shadow:0 1px 0 rgba(0,0,0,0.08);
     }
     .bh-status-rail .bsr-title{display:none;}
+    .bh-status-rail .bsr-section{display:contents;}
+    .bh-status-rail .bsr-section.bsr-collapsed .bsr-list{display:flex;}
     .bh-status-rail nav{display:flex;flex-direction:row;gap:6px;flex-shrink:0;margin:0;}
     .bh-status-rail .bsr-item{display:inline-block;white-space:nowrap;margin-bottom:0;padding:7px 12px;}
     .bh-status-rail .bsr-divider{width:1px;height:22px;margin:0 4px;flex-shrink:0;}
@@ -932,8 +1024,31 @@ HTML;
             el.classList.toggle('active', !onBoard && url.pathname === linkPath);
         });
     }
+    // "Loyiha holatlari" ro'yxatini yig'ish/ochish (holat brauzerda eslab qolinadi)
+    function keyOf(sec){ return 'bsr-collapsed-' + sec.dataset.section; }
+    function applyCollapsed(){
+        document.querySelectorAll('.bh-status-rail .bsr-section').forEach(function(sec){
+            var c = false;
+            try { c = localStorage.getItem(keyOf(sec)) === '1'; } catch (e) {}
+            sec.classList.toggle('bsr-collapsed', c);
+            var t = sec.querySelector('.bsr-toggle');
+            if (t) t.setAttribute('aria-expanded', c ? 'false' : 'true');
+        });
+    }
+    if (!window.__bsrToggleBound) {
+        window.__bsrToggleBound = true;
+        document.addEventListener('click', function(ev){
+            var t = ev.target.closest && ev.target.closest('.bh-status-rail .bsr-toggle');
+            if (!t) return;
+            var sec = t.closest('.bsr-section');
+            var c = !sec.classList.contains('bsr-collapsed');
+            try { localStorage.setItem(keyOf(sec), c ? '1' : '0'); } catch (e) {}
+            applyCollapsed();
+        });
+    }
     markActive();
-    document.addEventListener('livewire:navigated', markActive);
+    applyCollapsed();
+    document.addEventListener('livewire:navigated', function(){ markActive(); applyCollapsed(); });
 })();
 </script>
 HTML;
