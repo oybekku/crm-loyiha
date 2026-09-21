@@ -870,7 +870,7 @@ HTML;
                     ->whereIn('id', $perUser->keys())
                     ->orderBy('name')
                     ->get(['id', 'name'])
-                    ->mapWithKeys(fn ($u) => [$u->id => $u->name . ' (' . (int) $perUser[$u->id] . ')'])
+                    ->mapWithKeys(fn ($u) => [$u->name . '#' . $u->id => (int) $perUser[$u->id]])
                     ->toArray();
             } catch (\Throwable $e) {
                 // Baza tayyor bo'lmagan holat
@@ -937,9 +937,9 @@ HTML;
 
         $items = '';
         foreach ($statuses as $key => $label) {
-            $n     = ! empty($counts[$key]) ? ' (' . (int) $counts[$key] . ')' : '';
+            $n     = ! empty($counts[$key]) ? '<span class="bsr-count">' . (int) $counts[$key] . '</span>' : '';
             $key   = e($key);
-            $label = e($label) . $n;
+            $label = '<span class="bsr-label">' . e($label) . '</span>' . $n;
             $items .= "<a href=\"/admin/kanban-board?status={$key}\" data-status-key=\"{$key}\" wire:navigate class=\"bsr-item\">{$label}</a>";
         }
 
@@ -955,8 +955,9 @@ HTML;
         }
         if (! empty($staffNames)) {
             $staffItems = '';
-            foreach ($staffNames as $name) {
-                $staffItems .= '<div class="bsr-item bsr-staff">' . e($name) . '</div>';
+            foreach ($staffNames as $nameKey => $cnt) {
+                $name = preg_replace('/#\d+$/', '', $nameKey);
+                $staffItems .= '<div class="bsr-item bsr-staff"><span class="bsr-label">' . e($name) . '</span><span class="bsr-count">' . (int) $cnt . '</span></div>';
             }
             $statusBlock .= $section('staff', 'Hodimlar', $staffItems);
         }
@@ -967,17 +968,19 @@ HTML;
     {$statusBlock}
 </aside>
 <style>
-.bh-status-rail{position:fixed;top:64px;left:0;width:200px;height:calc(100vh - 64px);overflow-y:auto;padding:16px 10px;z-index:30;background:{$railBg};}
+.bh-status-rail{position:fixed;top:64px;left:0;width:230px;height:calc(100vh - 64px);overflow-y:auto;padding:16px 10px;z-index:30;background:{$railBg};}
 .bh-status-rail .bsr-title{font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:{$railText};opacity:.55;padding:0 10px 10px;}
 .bh-status-rail .bsr-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:0;cursor:pointer;text-align:left;}
 .bh-status-rail .bsr-toggle:hover{opacity:.9;}
 .bh-status-rail .bsr-chevron{transition:transform .2s;flex-shrink:0;}
 .bh-status-rail .bsr-section{margin-bottom:12px;}
+.bh-status-rail .bsr-label{min-width:0;}
+.bh-status-rail .bsr-count{flex-shrink:0;min-width:22px;padding:1px 7px;border-radius:999px;background:#facc15;color:#422006;font-size:.72rem;font-weight:700;line-height:1.35;text-align:center;}
 .bh-status-rail .bsr-staff{cursor:default;}
 .bh-status-rail .bsr-staff:hover{background:none;opacity:.85;}
 .bh-status-rail .bsr-section.bsr-collapsed .bsr-chevron{transform:rotate(180deg);}
 .bh-status-rail .bsr-section.bsr-collapsed .bsr-list{display:none;}
-.bh-status-rail .bsr-item{display:block;padding:8px 12px;border-radius:8px;font-size:.85rem;font-weight:500;color:{$railText};text-decoration:none;margin-bottom:2px;opacity:.85;}
+.bh-status-rail .bsr-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;border-radius:8px;font-size:.85rem;font-weight:500;color:{$railText};text-decoration:none;margin-bottom:2px;opacity:.85;}
 .bh-status-rail .bsr-item:hover{background:rgba(0,0,0,0.08);opacity:1;}
 .bh-status-rail .bsr-item.active{background:rgba(0,0,0,0.10);color:{$railActive};font-weight:700;opacity:1;}
 .bh-status-rail .bsr-top-nav{margin-bottom:4px;}
@@ -1003,11 +1006,11 @@ HTML;
     .bh-status-rail .bsr-section{display:contents;}
     .bh-status-rail .bsr-section.bsr-collapsed .bsr-list{display:flex;}
     .bh-status-rail nav{display:flex;flex-direction:row;gap:6px;flex-shrink:0;margin:0;}
-    .bh-status-rail .bsr-item{display:inline-block;white-space:nowrap;margin-bottom:0;padding:7px 12px;}
+    .bh-status-rail .bsr-item{display:inline-flex;white-space:nowrap;margin-bottom:0;padding:7px 12px;}
     .bh-status-rail .bsr-divider{width:1px;height:22px;margin:0 4px;flex-shrink:0;}
 }
 @media(min-width:1024px){
-    .fi-main,.fi-main-ctn > .fi-main,main.fi-main{padding-left:220px!important;}
+    .fi-main,.fi-main-ctn > .fi-main,main.fi-main{padding-left:250px!important;}
 }
 </style>
 <script>
