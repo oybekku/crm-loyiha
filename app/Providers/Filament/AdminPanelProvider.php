@@ -825,23 +825,8 @@ HTML;
             return '';
         }
 
-        // Bo'limlar bazadan o'qiladi — doska (kanban) bilan aynan bir xil bo'lishi uchun
-        $statuses = [];
-        try {
-            $statuses = \App\Models\ProjectStatus::allOrdered()
-                ->where('is_hidden', false)
-                ->pluck('label', 'key')
-                ->toArray();
-        } catch (\Throwable $e) {
-            // Baza tayyor bo'lmagan holat (migratsiya/o'rnatishdan oldin)
-        }
-
-        // Hodim (bajaruvchi) — faqat o'z ish bo'limlari ko'rinadi
-        $user = auth()->user();
-        if ($user && $user->isBajaruvchi()) {
-            $allowedCols = $user->kanbanServiceCols();
-            $statuses = array_filter($statuses, fn ($label, $key) => in_array($key, $allowedCols), ARRAY_FILTER_USE_BOTH);
-        }
+        $user     = auth()->user();
+        $statuses = \App\Services\StatusRailData::statuses($user);
 
         // "Loyihalar" (Kanban board) — panelning eng tepasida, "Loyiha
         // holatlari" ro'yxatidan (Ariza va h.k.) yuqorida turadi.
@@ -851,33 +836,13 @@ HTML;
             $projectLinks = "<a href=\"{$href}\" wire:navigate class=\"bsr-item bsr-item-top\" data-exact-href=\"{$href}\">Loyihalar</a>";
         }
 
-        // "Hodimlar" — faqat admin/menejer ko'radi; ro'yxatda faqat faol hodimlar (bajaruvchi)
-        $staffNames = [];
-        if ($user && $user->canSeeAllProjects()) {
-            try {
-                // Joriy oyda ochilgan loyihalardan har bir hodimga biriktirilganlar soni;
-                // ishi yo'q hodim ro'yxatda ko'rinmaydi.
-                $start = now()->startOfMonth();
-                $perUser = \App\Models\ProjectService::query()
-                    ->whereNotNull('assigned_user_id')
-                    ->whereHas('project', fn ($q) => $q->whereBetween('created_at', [$start, $start->copy()->endOfMonth()]))
-                    ->selectRaw('assigned_user_id, count(distinct project_id) as c')
-                    ->groupBy('assigned_user_id')
-                    ->pluck('c', 'assigned_user_id');
+        // Sonlar joriy oy uchun; doskada oy almashtirilsa JS yangilaydi (kb-month-changed)
+        $railYear  = (int) now()->year;
+        $railMonth = (int) now()->month;
+        $staffList = \App\Services\StatusRailData::staff($user, $railYear, $railMonth);
+        $showStaff = $user && $user->canSeeAllProjects();
 
-                $staffNames = \App\Models\User::where('role', 'bajaruvchi')
-                    ->where('is_active', true)
-                    ->whereIn('id', $perUser->keys())
-                    ->orderBy('name')
-                    ->get(['id', 'name'])
-                    ->mapWithKeys(fn ($u) => [$u->name . '#' . $u->id => (int) $perUser[$u->id]])
-                    ->toArray();
-            } catch (\Throwable $e) {
-                // Baza tayyor bo'lmagan holat
-            }
-        }
-
-        if (empty($statuses) && empty($staffNames) && $projectLinks === '') {
+        if (empty($statuses) && ! $showStaff && $projectLinks === '') {
             return '';
         }
 
@@ -889,51 +854,9 @@ HTML;
         $railDarkText   = $s['sidebar_dark_text_color'];
         $railDarkActive = $s['sidebar_dark_active_color'];
 
-        // Har bir bo'limdagi loyihalar soni — doskaning ko'rinish qoidalari bilan bir xil:
-        // joriy oy (MyGOV — barcha oylar), hodim faqat o'z loyihalari.
-        $counts = [];
-        if (! empty($statuses) && $user) {
-            try {
-                $visible = function ($q, bool $isMygov) use ($user) {
-                    if ($user->canSeeAllProjects()) {
-                        return $q;
-                    }
-                    if ($user->isHisobchi()) {
-                        return $isMygov ? $q : $q->where('status', '!=', 'yangi');
-                    }
-                    if ($user->hasPermission('barcha_loyihalar')) {
-                        return $q;
-                    }
-                    if ($isMygov) {
-                        return $user->hasPermission('kanban_all_mygov')
-                            ? $q
-                            : $q->whereHas('services', fn ($s) => $s->where('assigned_user_id', $user->id));
-                    }
-                    $fullCols = [];
-                    foreach (array_keys($statuses) as $k) {
-                        if ($user->hasPermission('kanban_all_' . $k)) {
-                            $fullCols[] = $k;
-                        }
-                    }
+        $counts = \App\Services\StatusRailData::counts($user, $statuses, $railYear, $railMonth);
 
-                    return $q->where(function ($w) use ($user, $fullCols) {
-                        $w->whereHas('services', fn ($s) => $s->where('assigned_user_id', $user->id));
-                        if ($fullCols) {
-                            $w->orWhereIn('status', $fullCols);
-                        }
-                    });
-                };
-
-                $start = now()->startOfMonth();
-                $counts = $visible(\App\Models\Project::query(), false)
-                    ->whereBetween('created_at', [$start, $start->copy()->endOfMonth()])
-                    ->selectRaw('status, count(*) as c')->groupBy('status')
-                    ->pluck('c', 'status')->toArray();
-                $counts['mygov'] = $visible(\App\Models\Project::query(), true)->where('status', 'mygov')->count();
-            } catch (\Throwable $e) {
-                $counts = [];
-            }
-        }
+        $countsUrl = e(url('/admin/rail-counts'));
 
         $items = '';
         foreach ($statuses as $key => $label) {
@@ -953,17 +876,21 @@ HTML;
         if (! empty($statuses)) {
             $statusBlock = $section('statuses', 'Loyiha holatlari', $items);
         }
-        if (! empty($staffNames)) {
+        if ($showStaff) {
             $staffItems = '';
-            foreach ($staffNames as $nameKey => $cnt) {
-                $name = preg_replace('/#\d+$/', '', $nameKey);
-                $staffItems .= '<div class="bsr-item bsr-staff"><span class="bsr-label">' . e($name) . '</span><span class="bsr-count">' . (int) $cnt . '</span></div>';
+            foreach ($staffList as $row) {
+                $staffItems .= '<div class="bsr-item bsr-staff"><span class="bsr-label">' . e($row['name']) . '</span><span class="bsr-count">' . (int) $row['count'] . '</span></div>';
             }
-            $statusBlock .= $section('staff', 'Hodimlar', $staffItems);
+            $staffSection = $section('staff', 'Hodimlar', $staffItems);
+            if (empty($staffList)) {
+                // Ishi bor hodim yo'q — bo'lim yashirin; boshqa oyga o'tilsa JS ochadi
+                $staffSection = str_replace('class="bsr-section"', 'class="bsr-section" style="display:none"', $staffSection);
+            }
+            $statusBlock .= $staffSection;
         }
 
         return <<<HTML
-<aside id="bh-status-rail" class="bh-status-rail">
+<aside id="bh-status-rail" class="bh-status-rail" data-counts-url="{$countsUrl}">
     {$topBlock}
     {$statusBlock}
 </aside>
@@ -1047,6 +974,44 @@ HTML;
             var c = !sec.classList.contains('bsr-collapsed');
             try { localStorage.setItem(keyOf(sec), c ? '1' : '0'); } catch (e) {}
             applyCollapsed();
+        });
+    }
+    // Doskada oy almashtirilganda sonlarni shu oy bo'yicha yangilash
+    function esc(t){ var d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+    function setCount(item, n){
+        var c = item.querySelector('.bsr-count');
+        if (!n) { if (c) c.remove(); return; }
+        if (!c) { c = document.createElement('span'); c.className = 'bsr-count'; item.appendChild(c); }
+        c.textContent = n;
+    }
+    var reqSeq = 0;
+    function refreshCounts(year, month){
+        var rail = document.getElementById('bh-status-rail');
+        if (!rail || !rail.dataset.countsUrl) return;
+        var seq = ++reqSeq;
+        fetch(rail.dataset.countsUrl + '?year=' + year + '&month=' + month, {headers: {'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest'}, credentials: 'same-origin'})
+            .then(function(r){ return r.ok ? r.json() : null; })
+            .then(function(d){
+                if (!d || seq !== reqSeq) return;
+                rail.querySelectorAll('.bsr-item[data-status-key]').forEach(function(el){
+                    setCount(el, d.statuses[el.dataset.statusKey] || 0);
+                });
+                var sec = rail.querySelector('.bsr-section[data-section="staff"]');
+                if (sec) {
+                    sec.querySelector('.bsr-list').innerHTML = d.staff.map(function(r){
+                        return '<div class="bsr-item bsr-staff"><span class="bsr-label">' + esc(r.name) + '</span><span class="bsr-count">' + r.count + '</span></div>';
+                    }).join('');
+                    sec.style.display = d.staff.length ? '' : 'none';
+                }
+            })
+            .catch(function(){});
+    }
+    if (!window.__bsrMonthBound) {
+        window.__bsrMonthBound = true;
+        window.addEventListener('kb-month-changed', function(ev){
+            var d = ev.detail || {};
+            if (Array.isArray(d)) d = d[0] || {};
+            if (d.year && d.month) refreshCounts(d.year, d.month);
         });
     }
     markActive();

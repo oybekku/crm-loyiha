@@ -196,12 +196,14 @@ class KanbanBoard extends Page
         $date = \Carbon\Carbon::create($this->kbYear, $this->kbMonth, 1)->addMonths($delta);
         $this->kbYear  = (int) $date->year;
         $this->kbMonth = (int) $date->month;
+        $this->dispatch('kb-month-changed', year: $this->kbYear, month: $this->kbMonth);
     }
 
     public function kbSetMonth(int $year, int $month): void
     {
         $this->kbYear  = $year;
         $this->kbMonth = $month;
+        $this->dispatch('kb-month-changed', year: $this->kbYear, month: $this->kbMonth);
     }
 
     private function initServices(): void

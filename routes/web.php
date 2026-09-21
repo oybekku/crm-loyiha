@@ -191,6 +191,19 @@ Route::post('/telegram/webhook', function (\Illuminate\Http\Request $request) {
 })->name('telegram.webhook');
 
 Route::middleware(['auth'])->group(function () {
+    // Chap panel sonlari — doskada tanlangan oy bo'yicha
+    Route::get('/admin/rail-counts', function (\Illuminate\Http\Request $request) {
+        $user  = auth()->user();
+        $year  = max(2000, min(2100, (int) $request->query('year', now()->year)));
+        $month = max(1, min(12, (int) $request->query('month', now()->month)));
+        $statuses = \App\Services\StatusRailData::statuses($user);
+
+        return response()->json([
+            'statuses' => \App\Services\StatusRailData::counts($user, $statuses, $year, $month),
+            'staff'    => \App\Services\StatusRailData::staff($user, $year, $month),
+        ]);
+    });
+
     Route::get('/print/project/{project}/ariza', function (\App\Models\Project $project) {
         return view('print.ariza', compact('project'));
     })->name('print.project.ariza');
