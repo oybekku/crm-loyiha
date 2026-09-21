@@ -870,7 +870,7 @@ HTML;
         if ($projectLinks !== '') {
             $topBlock = "<nav class=\"bsr-top-nav\">{$projectLinks}</nav><div class=\"bsr-divider\"></div>";
         }
-        $section = fn (string $key, string $title, string $inner) => "<div class=\"bsr-section\" data-section=\"{$key}\"><button type=\"button\" class=\"bsr-title bsr-toggle\" aria-expanded=\"true\"><span>{$title}</span><svg class=\"bsr-chevron\" viewBox=\"0 0 20 20\" width=\"12\" height=\"12\" fill=\"currentColor\"><path d=\"M5.23 12.79a1 1 0 0 0 1.41.02L10 9.6l3.36 3.21a1 1 0 1 0 1.38-1.44l-4.05-3.87a1 1 0 0 0-1.38 0L5.25 11.4a1 1 0 0 0-.02 1.39z\"/></svg></button><nav class=\"bsr-list\">{$inner}</nav></div>";
+        $section = fn (string $key, string $title, string $inner) => "<div class=\"bsr-section\" data-section=\"{$key}\"><button type=\"button\" class=\"bsr-title bsr-toggle\" aria-expanded=\"true\"><span class=\"bsr-shine\"></span><span class=\"bsr-ttext\">{$title}</span><svg class=\"bsr-chevron\" viewBox=\"0 0 20 20\" width=\"12\" height=\"12\" fill=\"currentColor\"><path d=\"M5.23 12.79a1 1 0 0 0 1.41.02L10 9.6l3.36 3.21a1 1 0 1 0 1.38-1.44l-4.05-3.87a1 1 0 0 0-1.38 0L5.25 11.4a1 1 0 0 0-.02 1.39z\"/></svg></button><nav class=\"bsr-list\">{$inner}</nav></div>";
 
         $statusBlock = '';
         if (! empty($statuses)) {
@@ -897,10 +897,17 @@ HTML;
 <style>
 .bh-status-rail{position:fixed;top:64px;left:0;width:230px;height:calc(100vh - 64px);overflow-y:auto;padding:16px 10px;z-index:30;background:{$railBg};}
 .bh-status-rail .bsr-title{font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:{$railText};opacity:.55;padding:0 10px 10px;}
-.bh-status-rail .bsr-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:0;cursor:pointer;text-align:left;}
-.bh-status-rail .bsr-toggle:hover{opacity:.9;}
-.bh-status-rail .bsr-chevron{transition:transform .2s;flex-shrink:0;}
-.bh-status-rail .bsr-section{margin-bottom:12px;}
+/* Bo'lim sarlavhasi — qora tugma uslubi: oq matn, hover'da halqa va o'ngdan chapga yuruvchi nur */
+.bh-status-rail .bsr-toggle{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;height:36px;margin-bottom:8px;padding:0 14px;border:0;border-radius:6px;background:rgba(0,0,0,.8);color:#fff!important;opacity:1!important;cursor:pointer;text-align:left;box-shadow:0 1px 3px rgba(0,0,0,.35);transition:all .3s ease-out;outline:none;}
+.bh-status-rail .bsr-toggle:hover,.bh-status-rail .bsr-toggle:focus-visible{background:rgba(0,0,0,.72);box-shadow:0 0 0 2px #fff,0 0 0 4px #000;}
+.bh-status-rail .bsr-toggle .bsr-ttext{position:relative;z-index:1;}
+.bh-status-rail .bsr-toggle .bsr-shine{position:absolute;right:-32px;top:-48px;height:128px;width:32px;background:#fff;opacity:.10;transform:rotate(12deg);transition:right 1s ease-out;pointer-events:none;}
+.bh-status-rail .bsr-toggle:hover .bsr-shine{right:100%;}
+.bh-status-rail .bsr-toggle .bsr-chevron{position:relative;z-index:1;}
+.bh-status-rail .bsr-chevron{transition:transform .2s;flex-shrink:0;color:#fff;}
+.bh-status-rail .bsr-section{margin-bottom:14px;}
+.dark .bh-status-rail .bsr-toggle{background:rgba(0,0,0,.8);box-shadow:0 0 0 1px #3f3f46;}
+.dark .bh-status-rail .bsr-toggle:hover,.dark .bh-status-rail .bsr-toggle:focus-visible{box-shadow:0 0 0 2px #000,0 0 0 4px #fff;}
 .bh-status-rail .bsr-label{min-width:0;}
 .bh-status-rail .bsr-count{flex-shrink:0;min-width:22px;padding:1px 7px;border-radius:999px;background:#facc15;color:#422006;font-size:.72rem;font-weight:700;line-height:1.35;text-align:center;}
 .bh-status-rail .bsr-section.bsr-collapsed .bsr-chevron{transform:rotate(180deg);}
@@ -912,7 +919,7 @@ HTML;
 .bh-status-rail .bsr-item-top{font-weight:600;}
 .bh-status-rail .bsr-divider{height:1px;background:{$railText}22;margin:8px 10px 12px;}
 .dark .bh-status-rail{background:{$railDarkBg};}
-.dark .bh-status-rail .bsr-title,
+.dark .bh-status-rail .bsr-title:not(.bsr-toggle),
 .dark .bh-status-rail .bsr-item{color:{$railDarkText};}
 .dark .bh-status-rail .bsr-item:hover{background:rgba(255,255,255,0.06);}
 .dark .bh-status-rail .bsr-item.active{background:rgba(255,255,255,0.08);color:{$railDarkActive};}
