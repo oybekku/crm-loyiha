@@ -909,7 +909,8 @@ HTML;
 .dark .bh-status-rail .bsr-toggle{background:rgba(0,0,0,.8);box-shadow:0 0 0 1px #3f3f46;}
 .dark .bh-status-rail .bsr-toggle:hover,.dark .bh-status-rail .bsr-toggle:focus-visible{box-shadow:0 0 0 2px #000,0 0 0 4px #fff;}
 .bh-status-rail .bsr-label{min-width:0;}
-.bh-status-rail .bsr-count{flex-shrink:0;min-width:22px;padding:1px 7px;border-radius:999px;background:#facc15;color:#422006;font-size:.72rem;font-weight:700;line-height:1.35;text-align:center;}
+.bh-status-rail .bsr-count{flex-shrink:0;min-width:22px;padding:1px 7px;border-radius:999px;background:rgba(0,0,0,.08);color:{$railText};font-size:.72rem;font-weight:700;line-height:1.35;text-align:center;}
+.dark .bh-status-rail .bsr-count{background:rgba(255,255,255,.12);color:{$railDarkText};}
 .bh-status-rail .bsr-section.bsr-collapsed .bsr-chevron{transform:rotate(180deg);}
 .bh-status-rail .bsr-section.bsr-collapsed .bsr-list{display:none;}
 .bh-status-rail .bsr-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;border-radius:8px;font-size:.85rem;font-weight:500;color:{$railText};text-decoration:none;margin-bottom:2px;opacity:.85;}
