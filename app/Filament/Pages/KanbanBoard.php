@@ -167,8 +167,10 @@ class KanbanBoard extends Page
         if (auth()->user()?->canSeeAllProjects()) {
             $this->filterEmployee = (int) request()->get('employee', 0);
         }
-        $this->kbYear  ??= (int) now()->year;
-        $this->kbMonth ??= (int) now()->month;
+        // Chap paneldagi bo'lim/hodim linklari o'zi ko'rsatib turgan oyni ?year=&month=
+        // bilan yuboradi (StatusRailData bilan mos bo'lishi uchun) — bo'lmasa joriy oy.
+        $this->kbYear  ??= (int) request()->get('year', now()->year);
+        $this->kbMonth ??= (int) request()->get('month', now()->month);
         $this->initServices();
 
         // Boshqa sahifalardan (masalan Dashboard'dagi "Xodimlar yuklamasi"

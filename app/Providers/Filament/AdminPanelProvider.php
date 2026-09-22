@@ -863,7 +863,7 @@ HTML;
             $n     = ! empty($counts[$key]) ? '<span class="bsr-count">' . (int) $counts[$key] . '</span>' : '';
             $key   = e($key);
             $label = '<span class="bsr-label">' . e($label) . '</span>' . $n;
-            $items .= "<a href=\"/admin/kanban-board?status={$key}\" data-status-key=\"{$key}\" wire:navigate class=\"bsr-item\">{$label}</a>";
+            $items .= "<a href=\"/admin/kanban-board?status={$key}&amp;year={$railYear}&amp;month={$railMonth}\" data-status-key=\"{$key}\" wire:navigate class=\"bsr-item\">{$label}</a>";
         }
 
         $topBlock = '';
@@ -879,7 +879,7 @@ HTML;
         if ($showStaff) {
             $staffItems = '';
             foreach ($staffList as $row) {
-                $staffItems .= '<a href="/admin/kanban-board?employee=' . (int) $row['id'] . '" data-employee-id="' . (int) $row['id'] . '" wire:navigate class="bsr-item bsr-staff"><span class="bsr-label">' . e($row['name']) . '</span><span class="bsr-count">' . (int) $row['count'] . '</span></a>';
+                $staffItems .= '<a href="/admin/kanban-board?employee=' . (int) $row['id'] . '&amp;year=' . $railYear . '&amp;month=' . $railMonth . '" data-employee-id="' . (int) $row['id'] . '" wire:navigate class="bsr-item bsr-staff"><span class="bsr-label">' . e($row['name']) . '</span><span class="bsr-count">' . (int) $row['count'] . '</span></a>';
             }
             $staffSection = $section('staff', 'Hodimlar', $staffItems);
             if (empty($staffList)) {
@@ -1005,11 +1005,13 @@ HTML;
                 if (!d || seq !== reqSeq) return;
                 rail.querySelectorAll('.bsr-item[data-status-key]').forEach(function(el){
                     setCount(el, d.statuses[el.dataset.statusKey] || 0);
+                    // href'dagi oyni ham yangilaymiz — aks holda bosilganda doska boshqa oyga qaytib ketadi
+                    el.setAttribute('href', '/admin/kanban-board?status=' + el.dataset.statusKey + '&year=' + year + '&month=' + month);
                 });
                 var sec = rail.querySelector('.bsr-section[data-section="staff"]');
                 if (sec) {
                     sec.querySelector('.bsr-list').innerHTML = d.staff.map(function(r){
-                        return '<a href="/admin/kanban-board?employee=' + r.id + '" data-employee-id="' + r.id + '" wire:navigate class="bsr-item bsr-staff"><span class="bsr-label">' + esc(r.name) + '</span><span class="bsr-count">' + r.count + '</span></a>';
+                        return '<a href="/admin/kanban-board?employee=' + r.id + '&year=' + year + '&month=' + month + '" data-employee-id="' + r.id + '" wire:navigate class="bsr-item bsr-staff"><span class="bsr-label">' + esc(r.name) + '</span><span class="bsr-count">' + r.count + '</span></a>';
                     }).join('');
                     sec.style.display = d.staff.length ? '' : 'none';
                     markActive();
