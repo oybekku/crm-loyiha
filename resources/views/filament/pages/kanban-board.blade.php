@@ -73,8 +73,6 @@
   background:linear-gradient(145deg,color-mix(in srgb,var(--acc) 75%,#fff),var(--acc));box-shadow:0 4px 8px -3px color-mix(in srgb,var(--acc) 60%,transparent);transition:transform .2s ease-out}
 .kbn-tile:hover{transform:scale(1.07)}
 .kbn-tile svg.ic{width:18px;height:18px}
-.kbn-tile.kbn-tile-photo{background:none;box-shadow:0 0 0 2px #fff,0 0 0 3px var(--acc)}
-.kbn-tile.kbn-tile-photo img{width:36px;height:36px;border-radius:10px;object-fit:cover;display:block}
 .kbn-tile .kbn-exp{position:absolute;right:-4px;bottom:-4px;width:15px;height:15px;border-radius:50%;background:#fff;color:var(--acc);display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.28);transition:transform .2s}
 .kbn-tile:hover .kbn-exp{transform:translateY(2px)}
 .kbn-tile .kbn-exp svg{width:9px;height:9px;stroke-width:3.4}
@@ -751,10 +749,6 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                 $wsIc      = $kbIc::workStatus($project->work_status ?? 'yangi');
                 $showMoney = $project->total_price > 0 && !auth()->user()?->isBajaruvchi();
                 $svcList   = $project->services->take(3);
-                // Chap blok: shu ustunga (joriy status) mas'ul hodimning surati bo'lsa —
-                // ikonka o'rniga o'sha ko'rinadi. Boshqa ustunga o'tsa boshqa hodim
-                // bo'lishi mumkin, shuning uchun har doim JORIY ustun xizmatidan olinadi.
-                $tileUser = $currentStatusServices->first(fn ($s) => $s->assignedUser?->avatar_path)?->assignedUser;
             @endphp
             <div x-show="collapsed" class="kb-wcard kbn-card {{ $isUrgent ? 'kbn-fire' : '' }}" style="--acc:{{ $wsC['color'] }}">
                 <span class="kbn-shine"><i></i></span>
@@ -764,12 +758,8 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                 @endif
                 <div class="kbn-top">
                     {{-- Chap katta blok — bosilsa karta to'liq ochiladi --}}
-                    <button type="button" @click.stop="collapsed=false" class="kbn-tile {{ $tileUser ? 'kbn-tile-photo' : '' }}" title="{{ $tileUser ? $tileUser->name . ' — to\'liq ochish' : 'To\'liq ochish' }}" aria-label="To'liq ochish">
-                        @if($tileUser)
-                        <img src="{{ $tileUser->avatarUrl() }}" alt="{{ $tileUser->name }}" loading="lazy" width="36" height="36">
-                        @else
+                    <button type="button" @click.stop="collapsed=false" class="kbn-tile" title="To'liq ochish" aria-label="To'liq ochish">
                         {!! $kbIc::svg($wsIc[0], 'ic') !!}
-                        @endif
                         <span class="kbn-exp">{!! $kbIc::svg('chevron') !!}</span>
                     </button>
                     <div style="flex:1;min-width:0">

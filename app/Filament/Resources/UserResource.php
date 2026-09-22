@@ -50,21 +50,6 @@ class UserResource extends Resource
     {
         return $form->schema([
             Forms\Components\Section::make()->columns(2)->schema([
-                Forms\Components\FileUpload::make('avatar_path')
-                    ->label('Surati')
-                    ->image()
-                    ->imageEditor()
-                    ->imageCropAspectRatio('1:1')
-                    ->imageResizeTargetWidth('160')
-                    ->imageResizeTargetHeight('160')
-                    ->imageResizeMode('cover')
-                    ->disk('public')
-                    ->directory('avatars')
-                    ->avatar()
-                    ->maxSize(2048)
-                    ->columnSpan(2)
-                    ->helperText('Kanban kartasida shu hodim mas\'ul bo\'lgan ustunda ko\'rinadi (masalan Toposyomka). Avtomatik kichik qilinadi.'),
-
                 Forms\Components\TextInput::make('name')
                     ->label('Ismi')
                     ->required(),
