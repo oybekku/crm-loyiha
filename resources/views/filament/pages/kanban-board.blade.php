@@ -56,53 +56,53 @@
 
 /* ══ Status-rangli yumshoq shishasimon karta (ikonkali) ══ */
 .kbn-host{padding:0!important;border:none!important;background:transparent!important;box-shadow:none!important;overflow:visible!important}
-.kbn-card{position:relative;display:flex;flex-direction:column;border-radius:14px;padding:12px 14px;overflow:visible;
+.kbn-card{position:relative;display:flex;flex-direction:column;border-radius:11px;padding:8px 10px;overflow:visible;
   border:1px solid color-mix(in srgb,var(--acc) 22%,#fff);
   background:linear-gradient(135deg,color-mix(in srgb,var(--acc) 13%,transparent) 0%,transparent 58%),#fff;
   box-shadow:0 6px 18px -8px color-mix(in srgb,var(--acc) 40%,transparent),0 1px 2px rgba(17,24,39,.05);
   transition:box-shadow .3s ease-out}
 .kbn-card:hover{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--acc)}
 /* Hover'da nur o'ngdan chapga yuradi + burchakdagi tus (kartadan chiqib ketmasligi uchun alohida qirqilgan qatlamda) */
-.kbn-card .kbn-shine{position:absolute;inset:0;overflow:hidden;border-radius:13px;pointer-events:none;z-index:0}
-.kbn-card .kbn-shine::before{content:"";position:absolute;left:-26px;top:-26px;width:80px;height:80px;background:color-mix(in srgb,var(--acc) 22%,transparent);transform:rotate(45deg)}
+.kbn-card .kbn-shine{position:absolute;inset:0;overflow:hidden;border-radius:10px;pointer-events:none;z-index:0}
+.kbn-card .kbn-shine::before{content:"";position:absolute;left:-20px;top:-20px;width:60px;height:60px;background:color-mix(in srgb,var(--acc) 22%,transparent);transform:rotate(45deg)}
 .kbn-card .kbn-shine i{position:absolute;right:-60px;top:-40px;height:300px;width:38px;background:var(--acc);opacity:.14;transform:rotate(12deg);transition:right 1s ease-out}
 .kbn-card:hover .kbn-shine i{right:100%}
-.kbn-top{position:relative;z-index:1;display:flex;align-items:center;gap:12px}
+.kbn-top{position:relative;z-index:1;display:flex;align-items:center;gap:8px}
 /* Chap katta blok = kartani to'liq ochish tugmasi (burchagidagi chevron shuni bildiradi) */
-.kbn-tile{position:relative;flex-shrink:0;width:50px;height:50px;border:0;padding:0;border-radius:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;
-  background:linear-gradient(145deg,color-mix(in srgb,var(--acc) 75%,#fff),var(--acc));box-shadow:0 6px 12px -4px color-mix(in srgb,var(--acc) 60%,transparent);transition:transform .2s ease-out}
+.kbn-tile{position:relative;flex-shrink:0;width:36px;height:36px;border:0;padding:0;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;
+  background:linear-gradient(145deg,color-mix(in srgb,var(--acc) 75%,#fff),var(--acc));box-shadow:0 4px 8px -3px color-mix(in srgb,var(--acc) 60%,transparent);transition:transform .2s ease-out}
 .kbn-tile:hover{transform:scale(1.07)}
-.kbn-tile svg.ic{width:26px;height:26px}
-.kbn-tile .kbn-exp{position:absolute;right:-6px;bottom:-6px;width:20px;height:20px;border-radius:50%;background:#fff;color:var(--acc);display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.28);transition:transform .2s}
+.kbn-tile svg.ic{width:18px;height:18px}
+.kbn-tile .kbn-exp{position:absolute;right:-4px;bottom:-4px;width:15px;height:15px;border-radius:50%;background:#fff;color:var(--acc);display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.28);transition:transform .2s}
 .kbn-tile:hover .kbn-exp{transform:translateY(2px)}
-.kbn-tile .kbn-exp svg{width:12px;height:12px;stroke-width:3}
+.kbn-tile .kbn-exp svg{width:9px;height:9px;stroke-width:3.4}
 .kbn-name{color:#0f172a!important}
 .kbn-emp{color:#64748b!important}
-.kbn-pills{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
-.kbn-spill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;border-radius:999px;padding:5px 12px;white-space:nowrap;color:color-mix(in srgb,var(--acc) 85%,#000);background:color-mix(in srgb,var(--acc) 16%,#fff);border:1px solid color-mix(in srgb,var(--acc) 22%,#fff)}
-.kbn-spill svg{width:13px;height:13px}
-.kbn-didoxp{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;border-radius:999px;padding:4px 10px;white-space:nowrap;color:#0e7490;background:#cffafe;border:1px solid #a5f3fc}
-.kbn-didoxp svg{width:11px;height:11px}
-.kbn-body{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:10px 14px;margin-top:11px;padding-top:10px;border-top:1px solid color-mix(in srgb,var(--acc) 16%,#fff)}
-.kbn-svc{flex:1 1 170px;display:flex;flex-direction:column;gap:7px;justify-content:center;min-width:0}
-.kbn-srow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.kbn-chip{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;border-radius:999px;padding:5px 12px 5px 9px;white-space:nowrap;color:#6d28d9;background:#f0e9ff;border:1px solid #e4d8ff}
+.kbn-pills{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0}
+.kbn-spill{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:700;border-radius:999px;padding:3px 9px;white-space:nowrap;color:color-mix(in srgb,var(--acc) 85%,#000);background:color-mix(in srgb,var(--acc) 16%,#fff);border:1px solid color-mix(in srgb,var(--acc) 22%,#fff)}
+.kbn-spill svg{width:11px;height:11px}
+.kbn-didoxp{display:inline-flex;align-items:center;gap:3px;font-size:8.5px;font-weight:800;border-radius:999px;padding:3px 8px;white-space:nowrap;color:#0e7490;background:#cffafe;border:1px solid #a5f3fc}
+.kbn-didoxp svg{width:9px;height:9px}
+.kbn-body{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:7px 10px;margin-top:7px;padding-top:7px;border-top:1px solid color-mix(in srgb,var(--acc) 16%,#fff)}
+.kbn-svc{flex:1 1 150px;display:flex;flex-direction:column;gap:4px;justify-content:center;min-width:0}
+.kbn-srow{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.kbn-chip{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;border-radius:999px;padding:3px 9px 3px 7px;white-space:nowrap;color:#6d28d9;background:#f0e9ff;border:1px solid #e4d8ff}
 .kbn-chip.done{color:#047857;background:#d9f7e8;border-color:#b7edd2}
-.kbn-chip svg{width:14px;height:14px}
-.kbn-stx{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:#64748b;white-space:nowrap}
-.kbn-stx i{width:11px;height:11px;border-radius:50%;border:1.6px solid #b8bdc9;display:inline-block}
+.kbn-chip svg{width:11px;height:11px}
+.kbn-stx{display:inline-flex;align-items:center;gap:4px;font-size:10px;color:#64748b;white-space:nowrap}
+.kbn-stx i{width:9px;height:9px;border-radius:50%;border:1.4px solid #b8bdc9;display:inline-block}
 .kbn-stx.ok{color:#059669;font-weight:700}
-.kbn-stx.ok svg{width:14px;height:14px}
-.kbn-money{flex:1 1 200px;display:flex;gap:10px;align-items:center;border-radius:14px;padding:10px 14px 10px 10px;font-variant-numeric:tabular-nums;background:color-mix(in srgb,var(--acc) 9%,#fff);border:1px solid color-mix(in srgb,var(--acc) 14%,#fff)}
-.kbn-coin{flex-shrink:0;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;background:linear-gradient(145deg,color-mix(in srgb,var(--acc) 70%,#fff),var(--acc))}
-.kbn-coin svg{width:16px;height:16px}
-.kbn-rows{flex:1;display:flex;flex-direction:column;gap:3px;font-size:12px}
-.kbn-rows > div{display:flex;justify-content:space-between;gap:14px;color:#64748b;white-space:nowrap}
-.kbn-rows b{color:#0f172a;font-size:13.5px;font-weight:800}
+.kbn-stx.ok svg{width:11px;height:11px}
+.kbn-money{flex:1 1 175px;display:flex;gap:7px;align-items:center;border-radius:10px;padding:6px 10px 6px 7px;font-variant-numeric:tabular-nums;background:color-mix(in srgb,var(--acc) 9%,#fff);border:1px solid color-mix(in srgb,var(--acc) 14%,#fff)}
+.kbn-coin{flex-shrink:0;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;background:linear-gradient(145deg,color-mix(in srgb,var(--acc) 70%,#fff),var(--acc))}
+.kbn-coin svg{width:12px;height:12px}
+.kbn-rows{flex:1;display:flex;flex-direction:column;gap:2px;font-size:10.5px}
+.kbn-rows > div{display:flex;justify-content:space-between;gap:10px;color:#64748b;white-space:nowrap}
+.kbn-rows b{color:#0f172a;font-size:11.5px;font-weight:800}
 .kbn-rows b.kbn-paid{color:#059669}
 .kbn-rows b.kbn-debt{color:#e11d48}
-.kbn-full{display:inline-flex;align-items:center;gap:5px;align-self:flex-end;font-size:12px;font-weight:700;color:#047857;background:#d9f7e8;border-radius:999px;padding:4px 12px}
-.kbn-full svg{width:14px;height:14px}
+.kbn-full{display:inline-flex;align-items:center;gap:4px;align-self:flex-end;font-size:10px;font-weight:700;color:#047857;background:#d9f7e8;border-radius:999px;padding:3px 10px}
+.kbn-full svg{width:11px;height:11px}
 @media(prefers-reduced-motion:reduce){.kbn-card,.kbn-card *{transition:none}}
 /* ══ Tungi rejim ══ */
 .dark .kbn-card{border-color:color-mix(in srgb,var(--acc) 35%,#000);background:linear-gradient(135deg,color-mix(in srgb,var(--acc) 25%,transparent) 0%,transparent 60%),#161b22}
@@ -763,9 +763,9 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                         <span class="kbn-exp">{!! $kbIc::svg('chevron') !!}</span>
                     </button>
                     <div style="flex:1;min-width:0">
-                        <div class="kbn-name" style="font-size:15px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $project->owner_name }}</div>
+                        <div class="kbn-name" style="font-size:12.5px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $project->owner_name }}</div>
                         @if($empsC->isNotEmpty())
-                        <div class="kbn-emp" style="font-size:12px;font-weight:500;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Hodim: {{ $empsC->join(', ') }}</div>
+                        <div class="kbn-emp" style="font-size:10.5px;font-weight:500;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Hodim: {{ $empsC->join(', ') }}</div>
                         @endif
                     </div>
                     <div class="kbn-pills">
