@@ -836,9 +836,13 @@ HTML;
             $projectLinks = "<a href=\"{$href}\" wire:navigate class=\"bsr-item bsr-item-top\" data-exact-href=\"{$href}\">Loyihalar</a>";
         }
 
-        // Sonlar joriy oy uchun; doskada oy almashtirilsa JS yangilaydi (kb-month-changed)
-        $railYear  = (int) now()->year;
-        $railMonth = (int) now()->month;
+        // Sonlar va linklar hozir ko'rinib turgan oyga mos bo'lishi uchun — agar
+        // joriy sahifa ?year=&month= bilan ochilgan bo'lsa (masalan shu panelning
+        // o'zidan boshqa oyga link bosilgan bo'lsa) o'shani olamiz, aks holda joriy oy.
+        // Doska ichida (Livewire orqali, sahifa to'liq qayta yuklanmasdan) oy
+        // almashtirilsa — buni JS yangilaydi (kb-month-changed, pastda).
+        $railYear  = max(2000, min(2100, (int) request()->get('year', now()->year)));
+        $railMonth = max(1, min(12, (int) request()->get('month', now()->month)));
         $staffList = \App\Services\StatusRailData::staff($user, $railYear, $railMonth);
         $showStaff = $user && $user->canSeeAllProjects();
 
