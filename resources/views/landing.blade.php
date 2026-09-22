@@ -109,6 +109,14 @@ a { color: inherit; text-decoration:none; }
     background:#161310; border:1.5px solid #3a3225; border-radius:14px;
     padding:20px 18px; display:flex; flex-direction:column; gap:13px;
 }
+.form-tabs { display:flex; gap:6px; }
+.form-tab {
+    flex:1; padding:9px 0; border-radius:8px; border:1px solid #40382a; background:transparent;
+    color:#a99a7c; font-family:inherit; font-size:11px; font-weight:700; letter-spacing:.3px;
+    text-transform:uppercase; cursor:pointer; transition:all .15s;
+}
+.form-tab:hover:not(.active) { border-color:#d4af6a; color:#d4af6a; }
+.form-tab.active { background:#d4af6a; border-color:#d4af6a; color:#14110c; }
 .form-container .form-title { font-weight:700; font-size:15px; }
 .form-container .form { display:flex; flex-direction:column; gap:13px; }
 .form-container .form-group { display:flex; flex-direction:column; gap:5px; }
@@ -256,14 +264,20 @@ a { color: inherit; text-decoration:none; }
         </div>
 
         <div class="form-container">
-            <p class="form-title">Bog'lanish uchun ariza</p>
+            @php $reqType = old('type', 'zayavka'); @endphp
+            <div class="form-tabs">
+                <button type="button" class="form-tab {{ $reqType === 'zayavka' ? 'active' : '' }}" data-type="zayavka">Ariza qoldirish</button>
+                <button type="button" class="form-tab {{ $reqType === 'qongiroq' ? 'active' : '' }}" data-type="qongiroq">Qayta qo'ng'iroq</button>
+            </div>
+            <p class="form-title" id="form_title">{{ $reqType === 'qongiroq' ? "Qayta qo'ng'iroq buyurtma qilish" : "Bog'lanish uchun ariza" }}</p>
 
             @if(session('contact_sent'))
-            <div class="form-success">✓ Arizangiz qabul qilindi. Tez orada bog'lanamiz!</div>
+            <div class="form-success">✓ So'rovingiz qabul qilindi. Tez orada bog'lanamiz!</div>
             @endif
 
             <form class="form" method="POST" action="{{ route('contact.store') }}">
                 @csrf
+                <input type="hidden" name="type" id="request_type" value="{{ $reqType }}">
                 <div class="form-group">
                     <label for="full_name">F.I.Sh</label>
                     <input type="text" id="full_name" name="full_name" placeholder="Familiya Ism Sharif" value="{{ old('full_name') }}" required>
@@ -274,12 +288,12 @@ a { color: inherit; text-decoration:none; }
                     <input type="tel" id="phone" name="phone" placeholder="+998 __ ___ __ __" value="{{ old('phone') }}" required>
                     @error('phone') <span class="form-error">{{ $message }}</span> @enderror
                 </div>
-                <div class="form-group">
+                <div class="form-group" id="message_group" style="{{ $reqType === 'qongiroq' ? 'display:none' : '' }}">
                     <label for="message">Koment</label>
                     <textarea id="message" name="message" placeholder="Loyihangiz haqida qisqacha...">{{ old('message') }}</textarea>
                     @error('message') <span class="form-error">{{ $message }}</span> @enderror
                 </div>
-                <button type="submit" class="form-submit-btn">Yuborish</button>
+                <button type="submit" class="form-submit-btn" id="form_submit_btn">{{ $reqType === 'qongiroq' ? "Qo'ng'iroq so'rash" : 'Yuborish' }}</button>
             </form>
         </div>
     </div>
@@ -303,6 +317,33 @@ a { color: inherit; text-decoration:none; }
         if (digits.length > 5) out += ' ' + digits.slice(5, 7);
         if (digits.length > 7) out += ' ' + digits.slice(7, 9);
         phone.value = out;
+    });
+})();
+
+(function () {
+    var tabs      = document.querySelectorAll('.form-tab');
+    var typeInput = document.getElementById('request_type');
+    var msgGroup  = document.getElementById('message_group');
+    var title     = document.getElementById('form_title');
+    var submitBtn = document.getElementById('form_submit_btn');
+    if (!tabs.length || !typeInput) return;
+
+    tabs.forEach(function (tab) {
+        tab.addEventListener('click', function () {
+            tabs.forEach(function (t) { t.classList.remove('active'); });
+            tab.classList.add('active');
+            var type = tab.dataset.type;
+            typeInput.value = type;
+            if (type === 'qongiroq') {
+                msgGroup.style.display = 'none';
+                title.textContent = "Qayta qo'ng'iroq buyurtma qilish";
+                submitBtn.textContent = "Qo'ng'iroq so'rash";
+            } else {
+                msgGroup.style.display = '';
+                title.textContent = "Bog'lanish uchun ariza";
+                submitBtn.textContent = 'Yuborish';
+            }
+        });
     });
 })();
 </script>

@@ -19,6 +19,7 @@ class ContactRequestController extends Controller
         $data = $request->validate([
             'full_name' => ['required', 'string', 'max:150'],
             'phone'     => ['required', 'string', 'max:30'],
+            'type'      => ['nullable', 'string', 'in:' . ContactRequest::TYPE_ZAYAVKA . ',' . ContactRequest::TYPE_QONGIROQ],
             'message'   => [
                 'nullable', 'string', 'max:1000',
                 function (string $attribute, mixed $value, \Closure $fail) {
