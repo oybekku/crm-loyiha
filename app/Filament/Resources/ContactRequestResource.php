@@ -18,11 +18,11 @@ class ContactRequestResource extends Resource
     protected static ?string $model = ContactRequest::class;
 
     protected static ?string $navigationIcon  = 'heroicon-o-document-text';
-    protected static ?string $navigationLabel = 'Zayavkalar';
+    protected static ?string $navigationLabel = "Sayt orqali buyurtmalar";
     protected static ?string $navigationGroup = 'Buyurtmalar';
     protected static ?int    $navigationSort  = 0;
-    protected static ?string $modelLabel      = 'Zayavka';
-    protected static ?string $pluralModelLabel = 'Zayavkalar';
+    protected static ?string $modelLabel      = "Sayt buyurtmasi";
+    protected static ?string $pluralModelLabel = "Sayt orqali buyurtmalar";
 
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
     {
