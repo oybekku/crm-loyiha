@@ -93,6 +93,8 @@
 .kbn-stx i{width:9px;height:9px;border-radius:50%;border:1.4px solid #b8bdc9;display:inline-block}
 .kbn-stx.ok{color:#059669;font-weight:700}
 .kbn-stx.ok svg{width:11px;height:11px}
+button.kbn-stx{border:none;background:none;padding:0;cursor:pointer;font-family:inherit}
+button.kbn-stx:hover{text-decoration:underline}
 .kbn-money{flex:1 1 175px;display:flex;gap:7px;align-items:center;border-radius:10px;padding:6px 10px 6px 7px;font-variant-numeric:tabular-nums;background:color-mix(in srgb,var(--acc) 9%,#fff);border:1px solid color-mix(in srgb,var(--acc) 14%,#fff)}
 .kbn-coin{flex-shrink:0;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;background:linear-gradient(145deg,color-mix(in srgb,var(--acc) 70%,#fff),var(--acc))}
 .kbn-coin svg{width:12px;height:12px}
@@ -805,10 +807,22 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                         @foreach($svcList as $srv)
                         <div class="kbn-srow">
                             <span class="kbn-chip {{ $srv->completed_at ? 'done' : '' }}">{!! $kbIc::svg($kbIc::service($srv->service_name)) !!}{{ $serviceOptions[$srv->service_name] ?? $srv->service_name }}</span>
-                            @if($srv->completed_at)
-                            <span class="kbn-stx ok">{!! $kbIc::svg('chk') !!}Tugallandi</span>
+                            @if(auth()->user()?->isAdmin() || auth()->user()?->isMenejer())
+                                @if($srv->completed_at)
+                                <button type="button" class="kbn-stx ok" onclick="event.stopPropagation()"
+                                        wire:click.stop="toggleServiceComplete({{ $srv->id }})"
+                                        title="Tugallanmagan deb belgilash">{!! $kbIc::svg('chk') !!}Tugallandi</button>
+                                @else
+                                <button type="button" class="kbn-stx" onclick="event.stopPropagation()"
+                                        wire:click.stop="toggleServiceComplete({{ $srv->id }})"
+                                        title="Tugallangan deb belgilash"><i></i>Tugalmagan</button>
+                                @endif
                             @else
-                            <span class="kbn-stx"><i></i>Tugalmagan</span>
+                                @if($srv->completed_at)
+                                <span class="kbn-stx ok">{!! $kbIc::svg('chk') !!}Tugallandi</span>
+                                @else
+                                <span class="kbn-stx"><i></i>Tugalmagan</span>
+                                @endif
                             @endif
                         </div>
                         @endforeach
