@@ -27,6 +27,7 @@ class User extends Authenticatable implements FilamentUser
         'position',
         'is_active',
         'phone',
+        'avatar_path',
         'permissions',
         'commission_rate',
         'monthly_norm',
@@ -34,6 +35,12 @@ class User extends Authenticatable implements FilamentUser
         'telegram_chat_id',
         'telegram_link_token',
     ];
+
+    /** Hodim surati manzili (yo'q bo'lsa — null, chaqiruvchi joyda ikonkaga tushiladi). */
+    public function avatarUrl(): ?string
+    {
+        return $this->avatar_path ? asset('storage/' . $this->avatar_path) : null;
+    }
 
     public static function defaultPermissions(): array
     {
