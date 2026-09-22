@@ -285,14 +285,14 @@ body,.fi-body,.fi-main,.fi-main-ctn,main.fi-main{background:transparent!importan
 .fi-main-ctn {
     padding-top: 0 !important;
 }
-.fi-topbar button,
-.fi-topbar a,
-.fi-topbar span,
-.fi-topbar p,
-.fi-topbar li,
-.fi-topbar label { color: {$headerText} !important; }
-.fi-topbar svg,
-.fi-topbar svg path { color: {$headerText} !important; fill: currentColor; opacity: 0.85; }
+.fi-topbar button:not(.fi-badge, .fi-badge *),
+.fi-topbar a:not(.fi-badge, .fi-badge *),
+.fi-topbar span:not(.fi-badge, .fi-badge *),
+.fi-topbar p:not(.fi-badge, .fi-badge *),
+.fi-topbar li:not(.fi-badge, .fi-badge *),
+.fi-topbar label:not(.fi-badge, .fi-badge *) { color: {$headerText} !important; }
+.fi-topbar svg:not(.fi-badge svg),
+.fi-topbar svg path:not(.fi-badge svg path) { color: {$headerText} !important; fill: currentColor; opacity: 0.85; }
 .fi-breadcrumbs-item-label { color: {$headerText} !important; }
 .fi-breadcrumbs-separator-icon { color: {$headerText} !important; opacity: 0.5; }
 
