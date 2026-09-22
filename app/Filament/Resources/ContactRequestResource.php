@@ -17,21 +17,15 @@ class ContactRequestResource extends Resource
 
     protected static ?string $model = ContactRequest::class;
 
-    protected static ?string $navigationIcon  = 'heroicon-o-document-text';
-    protected static ?string $navigationLabel = "Sayt orqali buyurtmalar";
-    protected static ?string $navigationGroup = 'Buyurtmalar';
+    protected static ?string $navigationIcon  = 'heroicon-o-phone-arrow-down-left';
+    protected static ?string $navigationLabel = 'Buyurtmalar';
     protected static ?int    $navigationSort  = 0;
-    protected static ?string $modelLabel      = "Sayt buyurtmasi";
-    protected static ?string $pluralModelLabel = "Sayt orqali buyurtmalar";
-
-    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
-    {
-        return parent::getEloquentQuery()->where('type', ContactRequest::TYPE_ZAYAVKA);
-    }
+    protected static ?string $modelLabel      = 'Buyurtma';
+    protected static ?string $pluralModelLabel = 'Buyurtmalar';
 
     public static function getNavigationBadge(): ?string
     {
-        $count = static::getEloquentQuery()->where('is_handled', false)->count();
+        $count = static::getModel()::where('is_handled', false)->count();
         return $count > 0 ? (string) $count : null;
     }
 
@@ -43,7 +37,10 @@ class ContactRequestResource extends Resource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\Hidden::make('type')->default(ContactRequest::TYPE_ZAYAVKA),
+            // Yangi yozuv qaysi tab ("Qayta qo'ng'iroq" / "Sayt orqali buyurtmalar")
+            // ochiq bo'lsa, o'sha turdagi deb yaratiladi.
+            Forms\Components\Hidden::make('type')
+                ->default(fn ($livewire) => $livewire->activeTab ?? ContactRequest::TYPE_ZAYAVKA),
 
             Forms\Components\Section::make()->schema([
                 Forms\Components\TextInput::make('full_name')

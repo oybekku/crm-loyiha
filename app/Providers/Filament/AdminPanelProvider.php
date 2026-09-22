@@ -36,8 +36,6 @@ class AdminPanelProvider extends PanelProvider
                 'primary' => Color::Green,
             ])
             ->navigationGroups([
-                \Filament\Navigation\NavigationGroup::make('Buyurtmalar')
-                    ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('Loyihalar')
                     ->collapsible(),
                 \Filament\Navigation\NavigationGroup::make('Xodimlar')
