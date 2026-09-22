@@ -769,6 +769,7 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                         @endif
                     </div>
                     <div class="kbn-pills">
+                        <span style="font-size:9px;color:#94a3b8;white-space:nowrap" title="Loyiha ochilgan sana">{{ $project->created_at->format('d-M') }}</span>
                         @if($project->is_didox)
                         <span class="kbn-didoxp" title="Bu loyiha DIDOX orqali ro'yxatdan o'tgan — oxirida shot-faktura DIDOX orqali yuborilishi kerak">{!! $kbIc::svg('dia') !!} DIDOX</span>
                         @endif
