@@ -81,6 +81,8 @@
 .kbn-pills{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0}
 .kbn-spill{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:700;border-radius:999px;padding:3px 9px;white-space:nowrap;color:color-mix(in srgb,var(--acc) 85%,#000);background:color-mix(in srgb,var(--acc) 16%,#fff);border:1px solid color-mix(in srgb,var(--acc) 22%,#fff)}
 .kbn-spill svg{width:11px;height:11px}
+.kbn-spill-btn{cursor:pointer}
+.kbn-spill-btn:hover{filter:brightness(.95)}
 .kbn-didoxp{display:inline-flex;align-items:center;gap:3px;font-size:8.5px;font-weight:800;border-radius:999px;padding:3px 8px;white-space:nowrap;color:#0e7490;background:#cffafe;border:1px solid #a5f3fc}
 .kbn-didoxp svg{width:9px;height:9px}
 .kbn-body{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:7px 10px;margin-top:7px;padding-top:7px;border-top:1px solid color-mix(in srgb,var(--acc) 16%,#fff)}
@@ -781,7 +783,16 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                         @if($project->is_didox)
                         <span class="kbn-didoxp" title="Bu loyiha DIDOX orqali ro'yxatdan o'tgan — oxirida shot-faktura DIDOX orqali yuborilishi kerak">{!! $kbIc::svg('dia') !!} DIDOX</span>
                         @endif
+                        @if(!auth()->user()?->isHisobchi())
+                        <button type="button" class="kbn-spill kbn-spill-btn" onclick="event.stopPropagation()"
+                                wire:click.stop="openRouteModal({{ $project->id }}, '{{ $project->status }}')"
+                                title="Boshqa bo'limga yo'naltirish">
+                            {!! $kbIc::svg($wsIc[1]) !!}{{ $wsC['label'] }}
+                            <svg width="8" height="8" viewBox="0 0 20 20" fill="currentColor" style="margin-left:1px;opacity:.7"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+                        </button>
+                        @else
                         <span class="kbn-spill">{!! $kbIc::svg($wsIc[1]) !!}{{ $wsC['label'] }}</span>
+                        @endif
                         @if(auth()->user()?->isAdmin() || auth()->user()?->isMenejer())
                             @if($project->status === 'tugallangan')
                             <button type="button" class="kbn-donebtn" onclick="event.stopPropagation()"

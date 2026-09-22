@@ -810,6 +810,24 @@ class KanbanBoard extends Page
         $project = Project::find($this->routeProjectId);
         if (!$project) return;
 
+        // "Qayta qo'ng'iroq" — loyiha Kanban'dan chiqadi (arxivga/bekor qilinganga
+        // o'tadi), o'rniga Buyurtmalar > Qayta qo'ng'iroq'ga F.I.Sh+telefon bilan
+        // yangi yozuv tushadi (loyihaning o'zi, tarixi, to'lovlari bazada saqlanadi).
+        if ($this->routeNewStatus === 'qayta_qongiroq') {
+            \App\Models\ContactRequest::create([
+                'full_name' => $project->owner_name,
+                'phone'     => $project->phones[0]['phone'] ?? '',
+                'type'      => \App\Models\ContactRequest::TYPE_QONGIROQ,
+            ]);
+
+            $this->logStatusChange($project, 'bekor_qilingan');
+            $project->update(['status' => 'bekor_qilingan']);
+
+            $this->closeRouteModal();
+            $this->dispatch('notify', type: 'success', message: "Loyiha 'Qayta qo'ng'iroq' bo'limiga (Buyurtmalar) yuborildi!");
+            return;
+        }
+
         // Toposyomka / Eskiz loyiha ga yuborilsa — avval "Yangi X" (staging) bo'limiga tushadi
         $targetDept  = $this->routeNewStatus;
         $stagingMap  = ['toposyomka' => 'yangi_toposyomka', 'eskiz_loyiha' => 'yangi_eskiz_loyiha'];
@@ -1145,6 +1163,18 @@ class KanbanBoard extends Page
             if (!$ps->is_archive || $authUser?->isAdmin() || $authUser?->isMenejer() || $authUser?->hasPermission('kanban_' . $ps->key)) {
                 $statuses[$ps->key] = $data;
             }
+        }
+
+        // "Qayta qo'ng'iroq" — Kanban ustuni emas, faqat yo'naltirish ro'yxatida
+        // ko'rinadi: tanlansa loyiha Buyurtmalar > Qayta qo'ng'iroq'ga tushadi.
+        if ($isPrivileged) {
+            $routeStatuses['qayta_qongiroq'] = [
+                'label'      => "Qayta qo'ng'iroq",
+                'color'      => '#f97316',
+                'is_archive' => false,
+                'head_bg'    => '#f97316',
+                'head_text'  => '#ffffff',
+            ];
         }
 
         $allStatuses = $statuses; // Tab bar uchun har doim barchasi
