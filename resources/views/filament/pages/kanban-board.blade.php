@@ -103,6 +103,12 @@
 .kbn-rows b.kbn-debt{color:#e11d48}
 .kbn-full{display:inline-flex;align-items:center;gap:4px;align-self:flex-end;font-size:10px;font-weight:700;color:#047857;background:#d9f7e8;border-radius:999px;padding:3px 10px}
 .kbn-full svg{width:11px;height:11px}
+.kbn-donebtn{display:inline-flex;align-items:center;gap:3px;font-size:9.5px;font-weight:700;border-radius:999px;padding:3px 9px;white-space:nowrap;cursor:pointer;border:1px solid #86efac;background:#dcfce7;color:#16a34a}
+.kbn-donebtn svg{width:10px;height:10px}
+.kbn-donebtn:hover{filter:brightness(.96)}
+.kbn-donebtn-todo{border-color:#d1d5db;background:#f3f4f6;color:#6b7280}
+.dark .kbn-donebtn{background:rgba(6,95,70,.45);border-color:rgba(52,211,153,.35);color:#6ee7b7}
+.dark .kbn-donebtn-todo{background:#273244;border-color:#374151;color:#cbd5e1}
 @media(prefers-reduced-motion:reduce){.kbn-card,.kbn-card *{transition:none}}
 /* ══ Tungi rejim ══ */
 .dark .kbn-card{border-color:color-mix(in srgb,var(--acc) 35%,#000);background:linear-gradient(135deg,color-mix(in srgb,var(--acc) 25%,transparent) 0%,transparent 60%),#161b22}
@@ -774,6 +780,23 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                         <span class="kbn-didoxp" title="Bu loyiha DIDOX orqali ro'yxatdan o'tgan — oxirida shot-faktura DIDOX orqali yuborilishi kerak">{!! $kbIc::svg('dia') !!} DIDOX</span>
                         @endif
                         <span class="kbn-spill">{!! $kbIc::svg($wsIc[1]) !!}{{ $wsC['label'] }}</span>
+                        @if(auth()->user()?->isAdmin() || auth()->user()?->isMenejer())
+                            @if($project->status === 'tugallangan')
+                            <button type="button" class="kbn-donebtn" onclick="event.stopPropagation()"
+                                    wire:click.stop="markUncomplete({{ $project->id }})"
+                                    wire:confirm="Loyihani jarayonga qaytarmoqchimisiz?"
+                                    title="Jarayonga qaytarish">
+                                {!! $kbIc::svg('chk') !!} Tugallandi
+                            </button>
+                            @else
+                            <button type="button" class="kbn-donebtn kbn-donebtn-todo" onclick="event.stopPropagation()"
+                                    wire:click.stop="markComplete({{ $project->id }})"
+                                    wire:confirm="Loyihani tugallangan deb belgilaysizmi?"
+                                    title="Ichini ochmasdan tugallangan deb belgilash">
+                                Tugatish
+                            </button>
+                            @endif
+                        @endif
                     </div>
                 </div>
                 @if($svcList->isNotEmpty() || $showMoney)
