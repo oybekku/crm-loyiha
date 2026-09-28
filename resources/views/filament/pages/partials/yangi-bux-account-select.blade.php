@@ -3,8 +3,9 @@
 @php
     $fmtA = fn ($v) => number_format((float) $v, 0, '.', ' ');
     $types = \App\Models\FinancialAccount::typeOptions();
-    $company = $accountsList->filter(fn ($a) => !$a->is_personal && !$a->user_id);
-    $staff   = $accountsList->filter(fn ($a) => $a->is_personal || $a->user_id);
+    $company  = $accountsList->filter(fn ($a) => !$a->is_personal && !$a->user_id);
+    $staff    = $accountsList->filter(fn ($a) => $a->user_id);
+    $personal = $accountsList->filter(fn ($a) => $a->is_personal && !$a->user_id);
 @endphp
 <select class="yb-in" wire:model.live="{{ $model }}">
     <option value="">— tanlang —</option>
@@ -13,9 +14,14 @@
             @foreach($company as $a)<option value="{{ $a->id }}">{{ $a->name ?: ($types[$a->type] ?? $a->type) }} · {{ $fmtA($accountBalances[$a->id] ?? 0) }}</option>@endforeach
         </optgroup>
     @endif
-    @if(($showStaff ?? true) && $staff->isNotEmpty())
-        <optgroup label="Xodimlar kartalari">
-            @foreach($staff as $a)<option value="{{ $a->id }}">{{ $a->owner?->name ? $a->owner->name . ' — ' : '' }}{{ $a->name }} · {{ $fmtA($accountBalances[$a->id] ?? 0) }}</option>@endforeach
+    @if($staff->isNotEmpty())
+        <optgroup label="Xodimlar xarajat kartalari">
+            @foreach($staff as $a)<option value="{{ $a->id }}">{{ $a->name }} · {{ $fmtA($accountBalances[$a->id] ?? 0) }}</option>@endforeach
+        </optgroup>
+    @endif
+    @if($personal->isNotEmpty())
+        <optgroup label="Shaxsiy hisoblar (ulush)">
+            @foreach($personal as $a)<option value="{{ $a->id }}">{{ $a->name }}</option>@endforeach
         </optgroup>
     @endif
 </select>

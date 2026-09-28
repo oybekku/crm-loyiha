@@ -93,9 +93,12 @@ class YangiBux extends Page
     public string $trDate    = '';
     public string $trComment = '';
 
-    // ── Hisob egalarini belgilash ──
-    public bool  $showOwnersModal = false;
-    public array $ownerMap = [];   // account_id => user_id|''
+    // ── Xodimga xarajat kartasi ochish ──
+    public bool   $showNewCardModal = false;
+    public ?int   $ncUserId = null;
+    public string $ncName   = '';
+    public string $ncNumber = '';
+
 
     public ?int $historyUserId = null;
 
@@ -317,24 +320,49 @@ class YangiBux extends Page
         Notification::make()->title('Pul ajratildi')->body("Xarajat emas — o'tkazma sifatida yozildi.")->success()->send();
     }
 
-    // ── Hisob egalari ───────────────────────────────────────────────────────
-    public function openOwners(): void
+    // ── Xodimga xarajat kartasi ochish ──────────────────────────────────────
+    // Eski shaxsiy kartalardan (sheriklar ulushi) ALOHIDA hisob — faqat
+    // xarajatlar uchun ajratilgan pul shu yerda yuradi, ulush bilan aralashmaydi.
+    public function openNewCard(): void
     {
         if (!auth()->user()?->isAdmin()) return;
-        $this->ownerMap = FinancialAccount::pluck('user_id', 'id')->map(fn ($v) => $v ? (string) $v : '')->all();
-        $this->showOwnersModal = true;
+        $this->resetValidation();
+        $this->ncUserId = null;
+        $this->ncName = $this->ncNumber = '';
+        $this->showNewCardModal = true;
     }
 
-    public function saveOwners(): void
+    public function updatedNcUserId($value): void
+    {
+        $name = $value ? User::whereKey($value)->value('name') : null;
+        $this->ncName = $name ? "{$name} — xarajatlar" : '';
+    }
+
+    public function saveNewCard(): void
     {
         if (!auth()->user()?->isAdmin()) return;
-        foreach ($this->ownerMap as $accId => $uid) {
-            $uid = $uid !== '' && $uid !== null ? (int) $uid : null;
-            if ($uid && !User::whereKey($uid)->exists()) continue;
-            FinancialAccount::whereKey((int) $accId)->update(['user_id' => $uid]);
+        $this->validate([
+            'ncUserId' => 'required|exists:users,id',
+            'ncName'   => 'required|string|max:120',
+        ], ['ncUserId.required' => 'Xodimni tanlang', 'ncName.required' => 'Karta nomini yozing']);
+
+        if (FinancialAccount::where('user_id', $this->ncUserId)->exists()) {
+            $this->addError('ncUserId', 'Bu xodimda xarajat kartasi allaqachon bor');
+            return;
         }
-        $this->showOwnersModal = false;
-        Notification::make()->title('Hisob egalari saqlandi')->success()->send();
+
+        FinancialAccount::create([
+            'type'         => 'karta',
+            'name'         => trim($this->ncName),
+            'card_number'  => trim($this->ncNumber) ?: null,
+            'user_id'      => $this->ncUserId,
+            // Eski Buxgalteriyada ham kompaniya "Jami balans"iga kirmasin va
+            // ikkinchi bo'limda tursin (shaxsiy kartalar bilan bir xil qoida).
+            'is_personal'  => true,
+            'is_secondary' => true,
+        ]);
+        $this->showNewCardModal = false;
+        Notification::make()->title('Xarajat kartasi ochildi')->success()->send();
     }
 
     // ── Oylik maosh ─────────────────────────────────────────────────────────
@@ -813,9 +841,10 @@ class YangiBux extends Page
         $accountBalances = $allAccountsSum->mapWithKeys(fn ($a) => [$a->id => (float) $a->balance]);
         $accounts = $allAccountsSum->where('is_personal', false)->whereNull('user_id');
 
-        // Xodimlar kartalari (shaxsiy yoki egasi belgilangan) — kompaniya "Jami
-        // qoldig'i"ga kirmaydi; shu oyda qancha ajratildi / sarflandi / qoldi.
-        $staffCards = $allAccountsSum->filter(fn ($a) => $a->is_personal || $a->user_id)->map(function ($a) use ($year, $month) {
+        // Xodimlarning xarajat kartalari (egasi belgilangan hisoblar) — kompaniya
+        // "Jami qoldig'i"ga kirmaydi; shu oyda qancha ajratildi / sarflandi / qoldi.
+        // Egasiz shaxsiy kartalar (sheriklar ulushi) bu yerda ko'rsatilmaydi.
+        $staffCards = $allAccountsSum->filter(fn ($a) => $a->user_id)->map(function ($a) use ($year, $month) {
             return [
                 'account' => $a,
                 'label'   => $a->owner?->name ?: $a->name,
@@ -876,7 +905,6 @@ class YangiBux extends Page
             'staffCards'   => $staffCards,
             'accountBalances' => $accountBalances,
             'mainAccounts' => $allAccountsSum->where('is_personal', false)->whereNull('user_id')->values(),
-            'ownerAccounts'=> $this->showOwnersModal ? $allAccountsSum->values() : collect(),
             'balanceTotal' => $balanceTotal,
             'ops'          => $ops,
             'opsFiltered'  => $opsFiltered,

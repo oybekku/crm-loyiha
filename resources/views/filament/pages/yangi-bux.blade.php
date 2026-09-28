@@ -793,26 +793,34 @@
     @endteleport
 @endif
 
-{{-- ── Hisob egalari ── --}}
-@if($showOwnersModal)
+{{-- ── Xodimga xarajat kartasi ochish ── --}}
+@if($showNewCardModal)
     @teleport('body')
-    <div class="yb yb-ov" wire:click.self="$set('showOwnersModal', false)">
-        <div class="yb-modal">
-            <div class="yb-modal-h" style="background:#f3f4f6">Hisob egalari <button type="button" wire:click="$set('showOwnersModal', false)">×</button></div>
+    <div class="yb yb-ov" wire:click.self="$set('showNewCardModal', false)">
+        <div class="yb-modal" style="max-width:440px">
+            <div class="yb-modal-h" style="background:#f3f4f6">Xodimga xarajat kartasi ochish <button type="button" wire:click="$set('showNewCardModal', false)">×</button></div>
             <div class="yb-modal-b">
-                <div class="yb-sub" style="margin-bottom:10px">Xodimga biriktirilgan karta kompaniya "Jami qoldig'i"ga kirmaydi, "Xodimlar kartalari"da ko'rinadi. Kompaniya hisoblarini (Karta, Naqd, Bank) bo'sh qoldiring.</div>
-                @foreach($ownerAccounts as $oa)
-                    <div class="yb-li" style="border-bottom:1px solid var(--yb-bd);gap:12px">
-                        <div style="min-width:0;flex:1">{{ $oa->name ?: $oa->type }}<span class="yb-sub">{{ \App\Models\FinancialAccount::typeOptions()[$oa->type] ?? $oa->type }}@if($oa->is_personal) · shaxsiy @endif</span></div>
-                        <select class="yb-in" style="width:190px" wire:model="ownerMap.{{ $oa->id }}">
-                            <option value="">— kompaniya —</option>
-                            @foreach($staffUsers as $su)<option value="{{ $su->id }}">{{ $su->name }}</option>@endforeach
-                        </select>
-                    </div>
-                @endforeach
-                <div style="display:flex;gap:10px;margin-top:14px">
-                    <button type="button" class="yb-b2" wire:click="$set('showOwnersModal', false)">Bekor qilish</button>
-                    <button type="button" class="yb-b2" style="background:#111827;border-color:#111827;color:#fff" wire:click="saveOwners">Saqlash</button>
+                <div class="yb-fld">
+                    <label>Xodim <i>*</i></label>
+                    <select class="yb-in" wire:model.live="ncUserId">
+                        <option value="">— tanlang —</option>
+                        @foreach($staffUsers as $su)<option value="{{ $su->id }}">{{ $su->name }}</option>@endforeach
+                    </select>
+                    @error('ncUserId')<div class="yb-err">{{ $message }}</div>@enderror
+                </div>
+                <div class="yb-fld">
+                    <label>Karta nomi <i>*</i></label>
+                    <input type="text" class="yb-in" wire:model="ncName" placeholder="Masalan: Nursaid — xarajatlar">
+                    @error('ncName')<div class="yb-err">{{ $message }}</div>@enderror
+                </div>
+                <div class="yb-fld">
+                    <label>Karta raqami (ixtiyoriy)</label>
+                    <input type="text" class="yb-in" wire:model="ncNumber" placeholder="8600 ....">
+                </div>
+                <div class="yb-sub" style="margin-bottom:10px">Bu karta faqat xarajatlar uchun ajratilgan pulni yuritadi. Kompaniya "Jami qoldig'i"ga kirmaydi. Shaxsiy (ulush) kartalar bilan aralashmaydi.</div>
+                <div style="display:flex;gap:10px">
+                    <button type="button" class="yb-b2" wire:click="$set('showNewCardModal', false)">Bekor qilish</button>
+                    <button type="button" class="yb-b2" style="background:#111827;border-color:#111827;color:#fff" wire:click="saveNewCard">Ochish</button>
                 </div>
             </div>
         </div>
