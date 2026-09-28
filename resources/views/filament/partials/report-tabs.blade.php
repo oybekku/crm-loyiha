@@ -26,6 +26,12 @@
             'icon'  => '💳',
             'show'  => \App\Filament\Pages\Buxgalteriya::canAccess(),
         ],
+        [
+            'route' => 'filament.admin.pages.yangi-bux',
+            'label' => 'Yangi bux',
+            'icon'  => '📈',
+            'show'  => \App\Filament\Pages\YangiBux::canAccess(),
+        ],
     ];
 @endphp
 
