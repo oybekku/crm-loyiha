@@ -20,7 +20,7 @@
     <div>
         <div class="acc-name">{{ $acc->name }}</div>
         <div class="exp-tot-l" style="font-size:10px;letter-spacing:.05em;margin-top:6px;text-transform:uppercase">Xarajatlar · {{ $bxMonthLabel }}</div>
-        <div class="acc-balance" style="font-size:22px;margin-top:2px;color:#fca5a5 !important">− {{ number_format($ps['total'], 0, '.', ' ') }} <span class="exp-tot-l" style="font-size:13px">so'm</span></div>
+        <div class="acc-balance exp-tot-sum" style="font-size:22px;margin-top:2px">− {{ number_format($ps['total'], 0, '.', ' ') }} <span class="exp-tot-l" style="font-size:13px">so'm</span></div>
         <div style="margin-top:8px;display:flex;flex-direction:column;gap:3px">
             @forelse(array_slice($ps['by'], 0, 3, true) as $label => $sum)
                 <div style="display:flex;justify-content:space-between;gap:8px;font-size:11.5px">

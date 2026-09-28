@@ -74,14 +74,13 @@
 }
 .acc-card.is-total{background:linear-gradient(135deg,#04351f,#0a4a2c 50%,#0f5c36) !important;border-color:#166534;cursor:default}
 .acc-card.is-total .acc-name{color:#bbf7d0 !important}
-.acc-card.is-expense-total{background:linear-gradient(135deg,#3b0a0a,#5b1111 50%,#7f1d1d) !important;border-color:#991b1b;cursor:default;justify-content:flex-start;gap:14px}
-.acc-card.is-expense-total.has-bg{
-    background-image:linear-gradient(180deg, rgba(60,8,8,.35), rgba(60,8,8,.7) 55%, rgba(40,5,5,.9)), var(--acc-bg) !important;
-    background-size:cover;background-position:center;
-}
-.acc-card.is-expense-total .acc-name{color:#fecaca !important}
-.acc-card.is-expense-total .exp-tot-l{color:#fecaca !important;opacity:.85}
-.acc-card.is-expense-total .exp-tot-v{color:#fff !important}
+/* Xarajat kartalari (Umumiy xarajatlar, xodimlar) — yuqoridagi hisob
+   kartalari bilan BIR XIL qora dizayn (fon rasm ham xuddi shunday), faqat
+   summa qizil — bu xarajat ekanini bildiradi. */
+.acc-card.is-expense-total{cursor:default;justify-content:flex-start;gap:14px}
+.acc-card.is-expense-total .exp-tot-l{color:rgba(255,255,255,.55) !important}
+.acc-card.is-expense-total .exp-tot-v{color:#f1f5f9 !important}
+.acc-card.is-expense-total .exp-tot-sum{color:#f87171 !important}
 .acc-card.is-contract{background:linear-gradient(135deg,#1e1b4b,#312e81 50%,#3730a3) !important;border-color:#4338ca;cursor:default}
 .acc-card.is-contract .acc-name{color:#c7d2fe !important;text-transform:none;font-size:12.5px}
 
@@ -465,7 +464,7 @@
                     </div>
                     <div>
                         <div class="acc-name">Umumiy xarajatlar ({{ $bxMonthLabel }})</div>
-                        <div class="acc-balance" style="font-size:24px;margin-top:8px;color:#fca5a5 !important">− {{ number_format($totalSpent, 0, '.', ' ') }} <span class="exp-tot-l" style="font-size:13px">so'm</span></div>
+                        <div class="acc-balance exp-tot-sum" style="font-size:24px;margin-top:8px">− {{ number_format($totalSpent, 0, '.', ' ') }} <span class="exp-tot-l" style="font-size:13px">so'm</span></div>
                         <div style="margin-top:10px;display:flex;flex-direction:column;gap:4px">
                             @forelse($spentByAcc->take(4) as $sa)
                                 <div style="display:flex;justify-content:space-between;gap:8px;font-size:11.5px">
