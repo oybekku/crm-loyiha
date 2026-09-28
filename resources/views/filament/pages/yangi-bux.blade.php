@@ -114,7 +114,11 @@
 .yb-f input,.yb-f select,.yb-in{border:1px solid var(--yb-bd);background:var(--yb-card);color:var(--yb-tx);border-radius:8px;padding:8px 10px;font-size:12.5px;outline:none;width:100%}
 .yb-f input:focus,.yb-f select:focus,.yb-in:focus{border-color:#93c5fd;box-shadow:0 0 0 3px #dbeafe}
 .yb-f select{min-width:120px}
-.yb-ov{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:60;display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto}
+/* Filament (Tailwind forms) select'ga o'q rasmini qo'yadi — "background"
+   qisqa yozuvi uni butun kenglik bo'ylab takrorlatib yuborardi. */
+.yb-f select,select.yb-in{background-repeat:no-repeat !important;background-position:right .5rem center !important;background-size:1.25em 1.25em !important;padding-right:2rem !important;appearance:none;-webkit-appearance:none}
+/* Oyna yuqoridagi qora menyu (topbar) ustida turishi kerak */
+.yb-ov{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:1000;display:flex;align-items:flex-start;justify-content:center;padding:90px 16px 40px;overflow:auto}
 .yb-modal{background:var(--yb-card);color:var(--yb-tx);border-radius:14px;width:100%;max-width:520px;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden}
 .yb-modal-h{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;font-weight:800;font-size:15px;color:#111827}
 .dark .yb-modal-h{filter:brightness(.9)}
