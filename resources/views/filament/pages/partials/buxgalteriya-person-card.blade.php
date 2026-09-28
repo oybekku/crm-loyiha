@@ -2,11 +2,16 @@
      yig'indisi (xarajatdagi "kim uchun" belgisi bo'yicha) va qaysi hisobdan
      qanchasi chiqqani. Balansga ta'sir qilmaydi. --}}
 @php $ps = $personSpend[$acc->user_id] ?? ['total' => 0, 'count' => 0, 'by' => []]; @endphp
-<div class="acc-card is-expense-total"
+<div class="acc-card is-expense-total {{ $acc->background_image ? 'has-bg' : '' }}"
+     @if($acc->background_image) style="--acc-bg:url('{{ \Illuminate\Support\Facades\Storage::url($acc->background_image) }}')" @endif
      draggable="true"
      @dragstart="$event.target.classList.add('dragging'); $event.dataTransfer.setData('text/plain', '{{ $acc->id }}')"
      @dragend="$event.target.classList.remove('dragging')">
     <div class="acc-actions">
+        <button class="acc-act-btn" @click.stop="$wire.call('setBgTarget', {{ $acc->id }}).then(() => $refs.bgFileInput.click())" title="Fon rasm qo'yish">🖼️</button>
+        @if($acc->background_image)
+        <button class="acc-act-btn" wire:click.stop="removeAccountBackground({{ $acc->id }})" wire:confirm="Fon rasmni olib tashlaysizmi?" title="Fonni olib tashlash">🚫</button>
+        @endif
         <button class="acc-act-btn" wire:click.stop="openAccountModal({{ $acc->id }})" title="Tahrirlash">✎</button>
     </div>
     <div style="display:flex;justify-content:space-between;align-items:flex-start">

@@ -75,6 +75,10 @@
 .acc-card.is-total{background:linear-gradient(135deg,#04351f,#0a4a2c 50%,#0f5c36) !important;border-color:#166534;cursor:default}
 .acc-card.is-total .acc-name{color:#bbf7d0 !important}
 .acc-card.is-expense-total{background:linear-gradient(135deg,#3b0a0a,#5b1111 50%,#7f1d1d) !important;border-color:#991b1b;cursor:default;justify-content:flex-start;gap:14px}
+.acc-card.is-expense-total.has-bg{
+    background-image:linear-gradient(180deg, rgba(60,8,8,.35), rgba(60,8,8,.7) 55%, rgba(40,5,5,.9)), var(--acc-bg) !important;
+    background-size:cover;background-position:center;
+}
 .acc-card.is-expense-total .acc-name{color:#fecaca !important}
 .acc-card.is-expense-total .exp-tot-l{color:#fecaca !important;opacity:.85}
 .acc-card.is-expense-total .exp-tot-v{color:#fff !important}
