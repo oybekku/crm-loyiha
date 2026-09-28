@@ -150,6 +150,11 @@
 .yb-next{display:flex;gap:12px;align-items:center;border-top:1px solid var(--yb-bd);padding-top:14px;margin-top:6px}
 .yb-next b{display:block;color:var(--yb-tx)}
 .yb-act:disabled{opacity:.35;cursor:default}
+.yb-staff{display:grid;grid-template-columns:minmax(0,1.6fr) 1fr 1fr 1fr 32px;gap:10px;align-items:center;padding:10px 4px;border-bottom:1px solid var(--yb-bd);font-size:12.5px}
+.yb-staff:last-of-type{border-bottom:none}
+.yb-staff b{color:var(--yb-tx)}
+.yb-staff-n{text-align:right;white-space:nowrap}
+@media (max-width:700px){.yb-staff{grid-template-columns:1fr 1fr}}
 </style>
 
 @include('filament.partials.report-tabs')
@@ -221,9 +226,11 @@
                 <div class="yb-bal"><span class="yb-bal-ic">{{ $b['icon'] }}</span>{{ $b['label'] }}<b class="{{ $b['value'] < 0 ? 'yb-r' : '' }}">{{ $fmt($b['value']) }} so'm</b></div>
             @endforeach
             <div class="yb-bal" style="font-weight:800"><span class="yb-bal-ic">Σ</span>Jami qoldiq<b>{{ $fmt($balanceTotal) }} so'm</b></div>
-            <div class="yb-sub" style="margin-top:6px">Shaxsiy hisoblar kirmaydi · barcha davr uchun</div>
+            <div class="yb-sub" style="margin-top:6px">Kompaniya hisoblari · xodimlar kartalari kirmaydi · barcha davr uchun</div>
         </div>
     </div>
+
+    <div style="margin-bottom:16px">@include('filament.pages.partials.yangi-bux-staff-cards')</div>
 
     <div class="yb-row yb-row-2">
         {{-- ── So'nggi operatsiyalar ── --}}
@@ -296,6 +303,8 @@
         @include('filament.pages.partials.yangi-bux-donut', ['donutTitle' => "To'lovlar manbalari (xizmatlar bo'yicha)"])
     </div>
 
+    <div style="margin-bottom:16px">@include('filament.pages.partials.yangi-bux-staff-cards')</div>
+
     <div class="yb-card">
         {{-- Filtrlar --}}
         <div class="yb-fbar">
@@ -343,6 +352,7 @@
             <div style="display:flex;gap:8px">
                 <button type="button" class="yb-btn" style="background:#16a34a" wire:click="openKirim">＋ Kirim qo'shish</button>
                 <button type="button" class="yb-btn" style="background:#dc2626" wire:click="openChiqim">＋ Chiqim qo'shish</button>
+                <button type="button" class="yb-btn" style="background:#2563eb" wire:click="openTransfer">⇄ Pul ajratish</button>
             </div>
         </div>
         @include('filament.pages.partials.yangi-bux-ops', ['rows' => $opsFiltered, 'actions' => true])
@@ -651,22 +661,16 @@
                 <div class="yb-grid2">
                     <div class="yb-fld">
                         <label>To'lov turi (hisob) <i>*</i></label>
-                        <select class="yb-in" wire:model="chAccountId">
-                            <option value="">— tanlang —</option>
-                            @foreach($allAccounts->groupBy('type') as $t => $accs)
-                                <optgroup label="{{ \App\Models\FinancialAccount::typeOptions()[$t] ?? $t }}">
-                                    @foreach($accs as $a)<option value="{{ $a->id }}">{{ $a->name ?: (\App\Models\FinancialAccount::typeOptions()[$t] ?? $t) }}</option>@endforeach
-                                </optgroup>
-                            @endforeach
-                        </select>
+                        @include('filament.pages.partials.yangi-bux-account-select', ['model' => 'chAccountId', 'accountsList' => $allAccounts, 'selectedId' => $chAccountId])
                         @error('chAccountId')<div class="yb-err">{{ $message }}</div>@enderror
                     </div>
                     <div class="yb-fld">
                         <label>Mas'ul</label>
-                        <select class="yb-in" wire:model="chResponsibleId">
+                        <select class="yb-in" wire:model.live="chResponsibleId">
                             <option value="">—</option>
                             @foreach($staffUsers as $su)<option value="{{ $su->id }}">{{ $su->name }}</option>@endforeach
                         </select>
+                        <div class="yb-sub" style="margin-top:4px">Kartasi biriktirilgan xodim tanlansa — uning kartasi o'zi tanlanadi</div>
                     </div>
                 </div>
                 <div class="yb-fld">
@@ -726,13 +730,89 @@
                     </div>
                 </div>
                 <div class="yb-fld">
+                    <label>Qaysi hisobdan berildi <i>*</i></label>
+                    @include('filament.pages.partials.yangi-bux-account-select', ['model' => 'payAccountId', 'accountsList' => $allAccounts, 'selectedId' => $payAccountId])
+                    @error('payAccountId')<div class="yb-err">{{ $message }}</div>@enderror
+                </div>
+                <div class="yb-fld">
                     <label>Izoh</label>
                     <input type="text" class="yb-in" wire:model="payNote" placeholder="Masalan: avans">
                 </div>
-                <div class="yb-sub" style="margin-bottom:10px">Qoldiqdan kam summa — "qisman avans" deb yoziladi. Oylik hisobot va Buxgalteriya xarajatlariga ham tushadi.</div>
+                <div class="yb-sub" style="margin-bottom:10px">Qoldiqdan kam summa — "qisman avans" deb yoziladi. Oylik hisobotga va tanlangan hisobdan xarajat sifatida yoziladi.</div>
                 <div style="display:flex;gap:10px">
                     <button type="button" class="yb-b2" wire:click="$set('showPayModal', false)">Bekor qilish</button>
                     <button type="button" class="yb-b2" style="background:#16a34a;border-color:#16a34a;color:#fff" wire:click="savePay" wire:loading.attr="disabled">Saqlash</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endteleport
+@endif
+
+{{-- ── Pul ajratish (o'tkazma, xarajat emas) ── --}}
+@if($showTransferModal)
+    @teleport('body')
+    <div class="yb yb-ov" wire:click.self="$set('showTransferModal', false)">
+        <div class="yb-modal" style="max-width:440px">
+            <div class="yb-modal-h" style="background:#dbeafe">Pul ajratish <button type="button" wire:click="$set('showTransferModal', false)">×</button></div>
+            <div class="yb-modal-b">
+                <div class="yb-fld">
+                    <label>Qaysi hisobdan <i>*</i></label>
+                    @include('filament.pages.partials.yangi-bux-account-select', ['model' => 'trFromId', 'accountsList' => $allAccounts, 'selectedId' => $trFromId])
+                    @error('trFromId')<div class="yb-err">{{ $message }}</div>@enderror
+                </div>
+                <div class="yb-fld">
+                    <label>Kimga (karta) <i>*</i></label>
+                    @include('filament.pages.partials.yangi-bux-account-select', ['model' => 'trToId', 'accountsList' => $allAccounts, 'selectedId' => $trToId])
+                    @error('trToId')<div class="yb-err">{{ $message }}</div>@enderror
+                </div>
+                <div class="yb-grid2">
+                    <div class="yb-fld">
+                        <label>Summa (so'm) <i>*</i></label>
+                        <input type="text" inputmode="numeric" class="yb-in" wire:model="trAmount" placeholder="0"
+                               x-data x-on:input="let v=$el.value.replace(/\D/g,'');$el.value=v.replace(/\B(?=(\d{3})+(?!\d))/g,' ')">
+                        @error('trAmount')<div class="yb-err">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="yb-fld">
+                        <label>Sana <i>*</i></label>
+                        <input type="date" class="yb-in" wire:model="trDate">
+                    </div>
+                </div>
+                <div class="yb-fld">
+                    <label>Izoh</label>
+                    <input type="text" class="yb-in" wire:model="trComment" placeholder="Xarajatlar uchun pul ajratildi">
+                </div>
+                <div class="yb-sub" style="margin-bottom:10px">Bu xarajat emas — pul kompaniya hisobidan xodim kartasiga o'tadi. Xodim sarflaganda "Chiqim qo'shish"da uning kartasidan yoziladi.</div>
+                <div style="display:flex;gap:10px">
+                    <button type="button" class="yb-b2" wire:click="$set('showTransferModal', false)">Bekor qilish</button>
+                    <button type="button" class="yb-b2" style="background:#2563eb;border-color:#2563eb;color:#fff" wire:click="saveTransfer" wire:loading.attr="disabled">Ajratish</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endteleport
+@endif
+
+{{-- ── Hisob egalari ── --}}
+@if($showOwnersModal)
+    @teleport('body')
+    <div class="yb yb-ov" wire:click.self="$set('showOwnersModal', false)">
+        <div class="yb-modal">
+            <div class="yb-modal-h" style="background:#f3f4f6">Hisob egalari <button type="button" wire:click="$set('showOwnersModal', false)">×</button></div>
+            <div class="yb-modal-b">
+                <div class="yb-sub" style="margin-bottom:10px">Xodimga biriktirilgan karta kompaniya "Jami qoldig'i"ga kirmaydi, "Xodimlar kartalari"da ko'rinadi. Kompaniya hisoblarini (Karta, Naqd, Bank) bo'sh qoldiring.</div>
+                @foreach($ownerAccounts as $oa)
+                    <div class="yb-li" style="border-bottom:1px solid var(--yb-bd);gap:12px">
+                        <div style="min-width:0;flex:1">{{ $oa->name ?: $oa->type }}<span class="yb-sub">{{ \App\Models\FinancialAccount::typeOptions()[$oa->type] ?? $oa->type }}@if($oa->is_personal) · shaxsiy @endif</span></div>
+                        <select class="yb-in" style="width:190px" wire:model="ownerMap.{{ $oa->id }}">
+                            <option value="">— kompaniya —</option>
+                            @foreach($staffUsers as $su)<option value="{{ $su->id }}">{{ $su->name }}</option>@endforeach
+                        </select>
+                    </div>
+                @endforeach
+                <div style="display:flex;gap:10px;margin-top:14px">
+                    <button type="button" class="yb-b2" wire:click="$set('showOwnersModal', false)">Bekor qilish</button>
+                    <button type="button" class="yb-b2" style="background:#111827;border-color:#111827;color:#fff" wire:click="saveOwners">Saqlash</button>
                 </div>
             </div>
         </div>

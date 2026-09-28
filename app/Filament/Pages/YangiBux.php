@@ -83,6 +83,19 @@ class YangiBux extends Page
     public string $payNote      = '';
     public ?int   $payEditId    = null;
     public float  $payRemaining = 0;
+    public ?int   $payAccountId = null;   // oylik qaysi hisobdan berildi
+
+    // ── Pul ajratish (kompaniya hisobi → xodim kartasi), xarajat EMAS ──
+    public bool   $showTransferModal = false;
+    public ?int   $trFromId  = null;
+    public ?int   $trToId    = null;
+    public string $trAmount  = '';
+    public string $trDate    = '';
+    public string $trComment = '';
+
+    // ── Hisob egalarini belgilash ──
+    public bool  $showOwnersModal = false;
+    public array $ownerMap = [];   // account_id => user_id|''
 
     public ?int $historyUserId = null;
 
@@ -255,6 +268,75 @@ class YangiBux extends Page
         $this->closeChiqim();
     }
 
+    // Chiqimda Mas'ul tanlanganda — uning kartasi bo'lsa, o'sha hisob tanlanadi
+    public function updatedChResponsibleId($value): void
+    {
+        if (!$value) return;
+        $acc = FinancialAccount::where('user_id', $value)->value('id');
+        if ($acc) $this->chAccountId = $acc;
+    }
+
+    // ── Pul ajratish ────────────────────────────────────────────────────────
+    public function openTransfer(?int $toAccountId = null): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+        $this->resetValidation();
+        $this->trFromId  = null;
+        $this->trToId    = $toAccountId;
+        $this->trAmount  = '';
+        $this->trDate    = now()->format('Y-m-d');
+        $this->trComment = '';
+        $this->showTransferModal = true;
+    }
+
+    public function saveTransfer(): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+        $this->trAmount = str_replace([' ', ','], '', $this->trAmount);
+        $this->validate([
+            'trFromId' => 'required|exists:financial_accounts,id|different:trToId',
+            'trToId'   => 'required|exists:financial_accounts,id',
+            'trAmount' => 'required|numeric|min:1',
+            'trDate'   => 'required|date',
+        ], [
+            'trFromId.required'  => 'Qaysi hisobdan berilishini tanlang',
+            'trToId.required'    => 'Kimga (qaysi kartaga) ekanini tanlang',
+            'trFromId.different' => "Bir xil hisob bo'lishi mumkin emas",
+            'trAmount.required'  => 'Summani kiriting',
+        ]);
+
+        \App\Models\AccountTransfer::create([
+            'from_account_id' => $this->trFromId,
+            'to_account_id'   => $this->trToId,
+            'amount'          => (float) $this->trAmount,
+            'transfer_date'   => $this->trDate,
+            'comment'         => trim($this->trComment) ?: 'Xarajatlar uchun pul ajratildi',
+            'created_by'      => auth()->id(),
+        ]);
+        $this->showTransferModal = false;
+        Notification::make()->title('Pul ajratildi')->body("Xarajat emas — o'tkazma sifatida yozildi.")->success()->send();
+    }
+
+    // ── Hisob egalari ───────────────────────────────────────────────────────
+    public function openOwners(): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+        $this->ownerMap = FinancialAccount::pluck('user_id', 'id')->map(fn ($v) => $v ? (string) $v : '')->all();
+        $this->showOwnersModal = true;
+    }
+
+    public function saveOwners(): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+        foreach ($this->ownerMap as $accId => $uid) {
+            $uid = $uid !== '' && $uid !== null ? (int) $uid : null;
+            if ($uid && !User::whereKey($uid)->exists()) continue;
+            FinancialAccount::whereKey((int) $accId)->update(['user_id' => $uid]);
+        }
+        $this->showOwnersModal = false;
+        Notification::make()->title('Hisob egalari saqlandi')->success()->send();
+    }
+
     // ── Oylik maosh ─────────────────────────────────────────────────────────
     private function ym(): string
     {
@@ -278,6 +360,7 @@ class YangiBux extends Page
         $this->payAmount    = $this->payRemaining > 0 ? number_format($this->payRemaining, 0, '.', ' ') : '';
         $this->payDate      = now()->format('Y-m-d');
         $this->payNote      = '';
+        $this->payAccountId = null;   // har safar admin o'zi tanlaydi (naqd yoki karta)
         $this->showPayModal = true;
     }
 
@@ -301,6 +384,7 @@ class YangiBux extends Page
         $this->payDate      = $p->paid_at->format('Y-m-d');
         $this->payNote      = (string) $p->note;
         $this->payRemaining = 0;
+        $this->payAccountId = Expense::where('salary_payment_id', $p->id)->value('account_id');
         $this->historyUserId = null;
         $this->showPayModal = true;
     }
@@ -313,7 +397,12 @@ class YangiBux extends Page
             'payUserId' => 'required|exists:users,id',
             'payAmount' => 'required|numeric|min:1',
             'payDate'   => 'required|date',
-        ], ['payUserId.required' => 'Xodimni tanlang', 'payAmount.required' => 'Summani kiriting']);
+            'payAccountId' => 'required|exists:financial_accounts,id',
+        ], [
+            'payUserId.required'    => 'Xodimni tanlang',
+            'payAmount.required'    => 'Summani kiriting',
+            'payAccountId.required' => 'Qaysi hisobdan berilganini tanlang',
+        ]);
 
         $amount = (float) $this->payAmount;
         $month  = $this->payEditId ? (EmployeeSalaryPayment::find($this->payEditId)?->month ?? $this->ym()) : $this->ym();
@@ -324,10 +413,10 @@ class YangiBux extends Page
             'paid_at'  => $this->payDate,
             'note'     => trim($this->payNote) ?: null,
             'given_by' => auth()->id(),
-        ], $this->payEditId, $this->payRemaining > 0 && $amount < $this->payRemaining);
+        ], $this->payEditId, $this->payRemaining > 0 && $amount < $this->payRemaining, $this->payAccountId);
 
         $this->showPayModal = false;
-        Notification::make()->title('Maosh saqlandi')->body("Oylik hisobot va Buxgalteriyaga ham yozildi.")->success()->send();
+        Notification::make()->title('Maosh saqlandi')->body("Oylik hisobotga va tanlangan hisobdan xarajat sifatida yozildi.")->success()->send();
     }
 
     public function deletePay(int $paymentId): void
@@ -714,12 +803,27 @@ class YangiBux extends Page
         }
 
         // Hisoblar qoldig'i — barcha vaqt bo'yicha (shaxsiy hisoblar jamiga kirmaydi).
-        $accounts = FinancialAccount::withSum('payments as payments_sum_amount', 'amount')
+        $allAccountsSum = FinancialAccount::with('owner:id,name')
+            ->withSum('payments as payments_sum_amount', 'amount')
             ->withSum('expenses as expenses_sum_amount', 'amount')
             ->withSum('transfersIn as transfers_in_sum_amount', 'amount')
             ->withSum('transfersOut as transfers_out_sum_amount', 'amount')
-            ->where('is_personal', false)
+            ->orderBy('type')->orderBy('name')
             ->get();
+        $accountBalances = $allAccountsSum->mapWithKeys(fn ($a) => [$a->id => (float) $a->balance]);
+        $accounts = $allAccountsSum->where('is_personal', false)->whereNull('user_id');
+
+        // Xodimlar kartalari (shaxsiy yoki egasi belgilangan) — kompaniya "Jami
+        // qoldig'i"ga kirmaydi; shu oyda qancha ajratildi / sarflandi / qoldi.
+        $staffCards = $allAccountsSum->filter(fn ($a) => $a->is_personal || $a->user_id)->map(function ($a) use ($year, $month) {
+            return [
+                'account' => $a,
+                'label'   => $a->owner?->name ?: $a->name,
+                'balance' => (float) $a->balance,
+                'given'   => (float) \App\Models\AccountTransfer::where('to_account_id', $a->id)->whereYear('transfer_date', $year)->whereMonth('transfer_date', $month)->sum('amount'),
+                'spent'   => (float) Expense::where('account_id', $a->id)->where($this->expenseScope($year, $month))->sum('amount'),
+            ];
+        })->values();
         $balances = [
             ['label' => 'Kassa (naqd)',      'icon' => '💵', 'value' => (float) $accounts->where('type', 'naqd')->sum(fn ($a) => $a->balance)],
             ['label' => 'Bank hisobraqami',  'icon' => '🏦', 'value' => (float) $accounts->where('type', 'bank')->sum(fn ($a) => $a->balance)],
@@ -769,13 +873,17 @@ class YangiBux extends Page
             'donut'        => $donut,
             'donutTotal'   => $srcTotal,
             'balances'     => $balances,
+            'staffCards'   => $staffCards,
+            'accountBalances' => $accountBalances,
+            'mainAccounts' => $allAccountsSum->where('is_personal', false)->whereNull('user_id')->values(),
+            'ownerAccounts'=> $this->showOwnersModal ? $allAccountsSum->values() : collect(),
             'balanceTotal' => $balanceTotal,
             'ops'          => $ops,
             'opsFiltered'  => $opsFiltered,
             'kirimProjects'=> $this->showKirimPicker ? $projectResults($this->kirimSearch) : collect(),
             'chProjects'   => $this->showChiqimModal && trim($this->chProjectSearch) !== '' ? $projectResults($this->chProjectSearch) : collect(),
             'chProject'    => $this->chProjectId ? Project::find($this->chProjectId, ['id', 'seq_no', 'owner_name', 'address']) : null,
-            'allAccounts'  => FinancialAccount::orderBy('type')->orderBy('name')->get(['id', 'name', 'type']),
+            'allAccounts'  => $allAccountsSum->values(),
             'staffUsers'   => User::where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'methodOptions'=> Payment::methodOptions(),
             'salary'       => $salary,

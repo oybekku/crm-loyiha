@@ -14,7 +14,11 @@ use Carbon\Carbon;
  */
 class SalaryPaymentService
 {
-    public static function save(array $data, ?int $editId = null, bool $isPartial = false): ?EmployeeSalaryPayment
+    /**
+     * $accountId — oylik qaysi hisobdan berilgani ("Yangi bux"da admin tanlaydi).
+     * Berilmasa (Oylik hisobot) — avvalgidek "Xarajatlar hisobi" belgisi.
+     */
+    public static function save(array $data, ?int $editId = null, bool $isPartial = false, ?int $accountId = null): ?EmployeeSalaryPayment
     {
         if ($editId) {
             $payment = EmployeeSalaryPayment::find($editId);
@@ -23,7 +27,7 @@ class SalaryPaymentService
             $payment = EmployeeSalaryPayment::create($data);
         }
 
-        if ($payment) self::syncExpense($payment, $isPartial);
+        if ($payment) self::syncExpense($payment, $isPartial, $accountId);
 
         return $payment;
     }
@@ -40,9 +44,13 @@ class SalaryPaymentService
     // (salary_payment_id orqali), shu sabab to'lov tahrirlansa/o'chirilsa
     // shu qator ham sinxron o'zgaradi. "Xarajatlar hisobi" belgilanmagan
     // bo'lsa — hech narsa yozilmaydi (jim o'tkazib yuboriladi).
-    public static function syncExpense(EmployeeSalaryPayment $payment, bool $isPartial): void
+    public static function syncExpense(EmployeeSalaryPayment $payment, bool $isPartial, ?int $accountId = null): void
     {
-        $expenseAccountId = FinancialAccount::where('is_expense_account', true)->value('id');
+        // Ustuvorlik: aniq tanlangan hisob → shu to'lovning mavjud xarajati
+        // hisobi (tahrirlashda o'zgarmasin) → "Xarajatlar hisobi" belgisi.
+        $expenseAccountId = $accountId
+            ?: Expense::where('salary_payment_id', $payment->id)->value('account_id')
+            ?: FinancialAccount::where('is_expense_account', true)->value('id');
         if (!$expenseAccountId) return;
 
         $monthLabel = Carbon::createFromFormat('Y-m', $payment->month)->translatedFormat('F Y');

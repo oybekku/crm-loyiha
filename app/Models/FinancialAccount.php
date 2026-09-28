@@ -10,7 +10,14 @@ class FinancialAccount extends Model
         'type', 'name', 'card_number', 'bank_name', 'expiry_date',
         'account_number', 'is_favorite', 'sort_order', 'is_personal',
         'background_image', 'is_secondary', 'is_expense_account', 'is_commission_source',
+        'user_id',
     ];
+
+    /** Hisob egasi (xodim kartasi bo'lsa) */
+    public function owner()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
 
     protected $casts = [
         'is_favorite'           => 'boolean',
