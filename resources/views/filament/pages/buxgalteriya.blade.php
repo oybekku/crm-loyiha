@@ -305,7 +305,7 @@
         @endif
 
         @forelse($primaryAccs as $acc)
-            @include('filament.pages.partials.buxgalteriya-account-card', ['acc' => $acc])
+            @include($acc->user_id ? 'filament.pages.partials.buxgalteriya-person-card' : 'filament.pages.partials.buxgalteriya-account-card', ['acc' => $acc])
         @empty
         <div class="bx-empty">Hali hech qanday hisob qo'shilmagan — "Yangi hisob qo'shish" tugmasini bosing</div>
         @endforelse
@@ -478,7 +478,7 @@
                     </div>
                 </div>
                 @foreach($secondaryAccs as $acc)
-                    @include('filament.pages.partials.buxgalteriya-account-card', ['acc' => $acc])
+                    @include($acc->user_id ? 'filament.pages.partials.buxgalteriya-person-card' : 'filament.pages.partials.buxgalteriya-account-card', ['acc' => $acc])
                 @endforeach
             </div>
         </div>
@@ -567,32 +567,27 @@
             </div>
 
             <div class="bx-field">
-                <label>Xarajatni kim qildi (xodim) <span style="color:#dc2626">*</span></label>
-                <select wire:model.live="expResponsibleId">
+                <label>Xarajat kim uchun / kim qildi (xodim) <span style="color:#dc2626">*</span></label>
+                <select wire:model="expResponsibleId">
                     <option value="">— xodimni tanlang —</option>
                     @foreach($staffUsers as $su)
                     <option value="{{ $su->id }}">{{ $su->name }}</option>
                     @endforeach
                 </select>
                 @error('expResponsibleId')<span style="font-size:11px;color:#f87171">{{ $message }}</span>@enderror
-                @if($editExpenseId && $expCard && (int) $expAccountId !== (int) $expCard->id)
-                    <button type="button" wire:click="attachExpenseToCard"
-                            style="margin-top:6px;width:100%;padding:8px;border-radius:8px;border:1.5px dashed #2563eb;background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:700;cursor:pointer">
-                        💳 → "{{ $expCard->name }}" kartasiga biriktirish
-                    </button>
-                @endif
+                <span style="display:block;font-size:11px;color:#6b7280;margin-top:4px">Faqat belgi — balansga ta'sir qilmaydi. Elyor/Nursait kartalarida shu bo'yicha jamlanadi.</span>
             </div>
 
             @php
+                // Xodim kartalari (egasi bor hisoblar) pul hisobi emas — ro'yxatda yo'q
                 $accCompany  = $allAccounts->filter(fn ($a) => !$a->is_personal && !$a->user_id);
-                $accStaff    = $allAccounts->filter(fn ($a) => $a->user_id);
                 $accPersonal = $allAccounts->filter(fn ($a) => $a->is_personal && !$a->user_id);
             @endphp
             <div class="bx-field">
-                <label>Qaysi hisobdan?</label>
-                <select wire:model.live="expAccountId">
+                <label>Qaysi hisobdan? (pul qayerdan chiqdi)</label>
+                <select wire:model="expAccountId">
                     <option value="">— tanlang —</option>
-                    @foreach(['Kompaniya hisoblari' => $accCompany, 'Xodimlar xarajat kartalari' => $accStaff, 'Shaxsiy hisoblar (ulush)' => $accPersonal] as $grp => $list)
+                    @foreach(['Kompaniya hisoblari' => $accCompany, 'Shaxsiy hisoblar (ulush)' => $accPersonal] as $grp => $list)
                         @if($list->isNotEmpty())
                         <optgroup label="{{ $grp }}">
                             @foreach($list as $a)
@@ -603,19 +598,6 @@
                     @endforeach
                 </select>
                 @error('expAccountId')<span style="font-size:11px;color:#f87171">{{ $message }}</span>@enderror
-                @if($editExpenseId && $expOrigAccountId && (int) $expAccountId !== (int) $expOrigAccountId)
-                    @php
-                        $origAcc = $allAccounts->firstWhere('id', $expOrigAccountId);
-                        $newAcc  = $allAccounts->firstWhere('id', (int) $expAccountId);
-                        $amt     = number_format((float) $expAmount, 0, '.', ' ');
-                    @endphp
-                    <div style="margin-top:6px;padding:8px 10px;border-radius:8px;background:#fef2f2;border:1px solid #fecaca;font-size:11.5px;color:#991b1b;line-height:1.5">
-                        ⚠️ Hisob o'zgaradi — saqlasangiz balanslar o'zgaradi:<br>
-                        <b>{{ $origAcc?->name ?? '—' }}</b>: <b style="color:#15803d">+{{ $amt }}</b> so'm (xarajat undan olib tashlanadi)<br>
-                        <b>{{ $newAcc?->name ?? '—' }}</b>: <b>−{{ $amt }}</b> so'm
-                        <a href="#" wire:click.prevent="revertExpenseAccount" style="display:inline-block;margin-left:4px;color:#2563eb">bekor qilish</a>
-                    </div>
-                @endif
             </div>
 
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">

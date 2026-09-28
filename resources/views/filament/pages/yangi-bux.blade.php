@@ -150,7 +150,7 @@
 .yb-next{display:flex;gap:12px;align-items:center;border-top:1px solid var(--yb-bd);padding-top:14px;margin-top:6px}
 .yb-next b{display:block;color:var(--yb-tx)}
 .yb-act:disabled{opacity:.35;cursor:default}
-.yb-staff{display:grid;grid-template-columns:minmax(0,1.6fr) 1fr 1fr 1fr 32px;gap:10px;align-items:center;padding:10px 4px;border-bottom:1px solid var(--yb-bd);font-size:12.5px}
+.yb-staff{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,2fr) auto;gap:10px;align-items:center;padding:10px 4px;border-bottom:1px solid var(--yb-bd);font-size:12.5px}
 .yb-staff:last-of-type{border-bottom:none}
 .yb-staff b{color:var(--yb-tx)}
 .yb-staff-n{text-align:right;white-space:nowrap}
@@ -352,7 +352,6 @@
             <div style="display:flex;gap:8px">
                 <button type="button" class="yb-btn" style="background:#16a34a" wire:click="openKirim">＋ Kirim qo'shish</button>
                 <button type="button" class="yb-btn" style="background:#dc2626" wire:click="openChiqim">＋ Chiqim qo'shish</button>
-                <button type="button" class="yb-btn" style="background:#2563eb" wire:click="openTransfer">⇄ Pul ajratish</button>
             </div>
         </div>
         @include('filament.pages.partials.yangi-bux-ops', ['rows' => $opsFiltered, 'actions' => true])
@@ -660,18 +659,18 @@
                 </div>
                 <div class="yb-grid2">
                     <div class="yb-fld">
-                        <label>To'lov turi (hisob) <i>*</i></label>
+                        <label>Qaysi hisobdan (pul qayerdan chiqdi) <i>*</i></label>
                         @include('filament.pages.partials.yangi-bux-account-select', ['model' => 'chAccountId', 'accountsList' => $allAccounts, 'selectedId' => $chAccountId])
                         @error('chAccountId')<div class="yb-err">{{ $message }}</div>@enderror
                     </div>
                     <div class="yb-fld">
-                        <label>Mas'ul (kim qildi) <i>*</i></label>
+                        <label>Kim uchun / kim qildi <i>*</i></label>
                         <select class="yb-in" wire:model.live="chResponsibleId">
                             <option value="">—</option>
                             @foreach($staffUsers as $su)<option value="{{ $su->id }}">{{ $su->name }}</option>@endforeach
                         </select>
                         @error('chResponsibleId')<div class="yb-err">{{ $message }}</div>@enderror
-                        <div class="yb-sub" style="margin-top:4px">Kartasi biriktirilgan xodim tanlansa — uning kartasi o'zi tanlanadi</div>
+                        <div class="yb-sub" style="margin-top:4px">Faqat belgi — balansga ta'sir qilmaydi</div>
                     </div>
                 </div>
                 <div class="yb-fld">
@@ -750,56 +749,12 @@
     @endteleport
 @endif
 
-{{-- ── Pul ajratish (o'tkazma, xarajat emas) ── --}}
-@if($showTransferModal)
-    @teleport('body')
-    <div class="yb yb-ov" wire:click.self="$set('showTransferModal', false)">
-        <div class="yb-modal" style="max-width:440px">
-            <div class="yb-modal-h" style="background:#dbeafe">Pul ajratish <button type="button" wire:click="$set('showTransferModal', false)">×</button></div>
-            <div class="yb-modal-b">
-                <div class="yb-fld">
-                    <label>Qaysi hisobdan <i>*</i></label>
-                    @include('filament.pages.partials.yangi-bux-account-select', ['model' => 'trFromId', 'accountsList' => $allAccounts, 'selectedId' => $trFromId])
-                    @error('trFromId')<div class="yb-err">{{ $message }}</div>@enderror
-                </div>
-                <div class="yb-fld">
-                    <label>Kimga (karta) <i>*</i></label>
-                    @include('filament.pages.partials.yangi-bux-account-select', ['model' => 'trToId', 'accountsList' => $allAccounts, 'selectedId' => $trToId])
-                    @error('trToId')<div class="yb-err">{{ $message }}</div>@enderror
-                </div>
-                <div class="yb-grid2">
-                    <div class="yb-fld">
-                        <label>Summa (so'm) <i>*</i></label>
-                        <input type="text" inputmode="numeric" class="yb-in" wire:model="trAmount" placeholder="0"
-                               x-data x-on:input="let v=$el.value.replace(/\D/g,'');$el.value=v.replace(/\B(?=(\d{3})+(?!\d))/g,' ')">
-                        @error('trAmount')<div class="yb-err">{{ $message }}</div>@enderror
-                    </div>
-                    <div class="yb-fld">
-                        <label>Sana <i>*</i></label>
-                        <input type="date" class="yb-in" wire:model="trDate">
-                    </div>
-                </div>
-                <div class="yb-fld">
-                    <label>Izoh</label>
-                    <input type="text" class="yb-in" wire:model="trComment" placeholder="Xarajatlar uchun pul ajratildi">
-                </div>
-                <div class="yb-sub" style="margin-bottom:10px">Bu xarajat emas — pul kompaniya hisobidan xodim kartasiga o'tadi. Xodim sarflaganda "Chiqim qo'shish"da uning kartasidan yoziladi.</div>
-                <div style="display:flex;gap:10px">
-                    <button type="button" class="yb-b2" wire:click="$set('showTransferModal', false)">Bekor qilish</button>
-                    <button type="button" class="yb-b2" style="background:#2563eb;border-color:#2563eb;color:#fff" wire:click="saveTransfer" wire:loading.attr="disabled">Ajratish</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    @endteleport
-@endif
-
 {{-- ── Xodimga xarajat kartasi ochish ── --}}
 @if($showNewCardModal)
     @teleport('body')
     <div class="yb yb-ov" wire:click.self="$set('showNewCardModal', false)">
         <div class="yb-modal" style="max-width:440px">
-            <div class="yb-modal-h" style="background:#f3f4f6">Xodimga xarajat kartasi ochish <button type="button" wire:click="$set('showNewCardModal', false)">×</button></div>
+            <div class="yb-modal-h" style="background:#f3f4f6">Xodimni ko'rsatish (xarajatlar kartasi) <button type="button" wire:click="$set('showNewCardModal', false)">×</button></div>
             <div class="yb-modal-b">
                 <div class="yb-fld">
                     <label>Xodim <i>*</i></label>
@@ -818,10 +773,10 @@
                     <label>Karta raqami (ixtiyoriy)</label>
                     <input type="text" class="yb-in" wire:model="ncNumber" placeholder="8600 ....">
                 </div>
-                <div class="yb-sub" style="margin-bottom:10px">Bu karta faqat xarajatlar uchun ajratilgan pulni yuritadi. Kompaniya "Jami qoldig'i"ga kirmaydi. Shaxsiy (ulush) kartalar bilan aralashmaydi.</div>
+                <div class="yb-sub" style="margin-bottom:10px">Bu pul hisobi emas — shu xodimga qilingan xarajatlar ("kim uchun" belgisi) har oy shu kartada jamlanib ko'rinadi. Balanslarga ta'sir qilmaydi.</div>
                 <div style="display:flex;gap:10px">
                     <button type="button" class="yb-b2" wire:click="$set('showNewCardModal', false)">Bekor qilish</button>
-                    <button type="button" class="yb-b2" style="background:#111827;border-color:#111827;color:#fff" wire:click="saveNewCard">Ochish</button>
+                    <button type="button" class="yb-b2" style="background:#111827;border-color:#111827;color:#fff" wire:click="saveNewCard">Qo'shish</button>
                 </div>
             </div>
         </div>

@@ -1,10 +1,10 @@
-{{-- Hisob tanlash: kompaniya hisoblari va xodimlar kartalari alohida guruhda, qoldig'i bilan.
+{{-- Hisob tanlash: kompaniya hisoblari (qoldig'i bilan) va shaxsiy (ulush) hisoblar.
+     Xodim kartalari pul hisobi emas — bu ro'yxatda yo'q.
      $model — wire:model nomi, $accountsList — FinancialAccount'lar, $selectedId — joriy qiymat. --}}
 @php
     $fmtA = fn ($v) => number_format((float) $v, 0, '.', ' ');
     $types = \App\Models\FinancialAccount::typeOptions();
     $company  = $accountsList->filter(fn ($a) => !$a->is_personal && !$a->user_id);
-    $staff    = $accountsList->filter(fn ($a) => $a->user_id);
     $personal = $accountsList->filter(fn ($a) => $a->is_personal && !$a->user_id);
 @endphp
 <select class="yb-in" wire:model.live="{{ $model }}">
@@ -12,11 +12,6 @@
     @if($company->isNotEmpty())
         <optgroup label="Kompaniya hisoblari">
             @foreach($company as $a)<option value="{{ $a->id }}">{{ $a->name ?: ($types[$a->type] ?? $a->type) }} · {{ $fmtA($accountBalances[$a->id] ?? 0) }}</option>@endforeach
-        </optgroup>
-    @endif
-    @if($staff->isNotEmpty())
-        <optgroup label="Xodimlar xarajat kartalari">
-            @foreach($staff as $a)<option value="{{ $a->id }}">{{ $a->name }} · {{ $fmtA($accountBalances[$a->id] ?? 0) }}</option>@endforeach
         </optgroup>
     @endif
     @if($personal->isNotEmpty())

@@ -65,8 +65,7 @@ class Buxgalteriya extends Page
     public string $expAmount        = '';
     public string $expComment       = '';
     public string $expDate          = '';
-    public ?int   $expResponsibleId = null;   // kim sarfladi (majburiy)
-    public ?int   $expOrigAccountId = null;   // tahrirlashda asl hisob (ogohlantirish uchun)
+    public ?int   $expResponsibleId = null;   // kim uchun / kim qildi (majburiy)
 
     // ── Pul o'tkazish oynasi (hisoblar orasida) ──
     public bool   $showTransferModal = false;
@@ -279,10 +278,8 @@ class Buxgalteriya extends Page
             $this->expComment   = (string) $exp->comment;
             $this->expDate      = $exp->expense_date->format('Y-m-d');
             $this->expResponsibleId = $exp->responsible_id;
-            $this->expOrigAccountId = $exp->account_id;
         } else {
             $this->expResponsibleId = null;
-            $this->expOrigAccountId = null;
             $this->expAccountId = null;
             $this->expAmount    = '';
             $this->expComment   = '';
@@ -293,28 +290,6 @@ class Buxgalteriya extends Page
         }
 
         $this->showExpenseModal = true;
-    }
-
-    // Yangi xarajatda xodim tanlanganda — uning xarajat kartasi bo'lsa, o'sha
-    // hisob avtomatik tanlanadi. Mavjud xarajatni TAHRIRLASHDA esa hisob jimgina
-    // almashmaydi (balanslar o'zgaradi) — "kartasiga biriktirish" tugmasi orqali.
-    public function updatedExpResponsibleId($value): void
-    {
-        if (!$value || $this->editExpenseId) return;
-        $acc = FinancialAccount::where('user_id', $value)->value('id');
-        if ($acc) $this->expAccountId = $acc;
-    }
-
-    public function attachExpenseToCard(): void
-    {
-        if (!auth()->user()?->isAdmin() || !$this->expResponsibleId) return;
-        $acc = FinancialAccount::where('user_id', $this->expResponsibleId)->value('id');
-        if ($acc) $this->expAccountId = $acc;
-    }
-
-    public function revertExpenseAccount(): void
-    {
-        $this->expAccountId = $this->expOrigAccountId;
     }
 
     public function closeExpenseModal(): void
@@ -332,7 +307,7 @@ class Buxgalteriya extends Page
         $isAuto = $this->editExpenseId && Expense::whereKey($this->editExpenseId)->whereNotNull('user_id')->exists();
 
         $this->validate([
-            'expAccountId'     => 'required|exists:financial_accounts,id',
+            'expAccountId'     => 'required|exists:financial_accounts,id,user_id,NULL',   // xodim kartasi pul hisobi emas
             'expAmount'        => 'required|numeric|min:0.01',
             'expDate'          => 'required|date',
             'expResponsibleId' => ($isAuto ? 'nullable' : 'required') . '|exists:users,id',
@@ -563,15 +538,17 @@ class Buxgalteriya extends Page
             'bxMonthLabel'     => $bxMonthLabel,
             'expenses'         => $expenses,
             'expenseAccountId' => $expenseAccountId,
+            // Xodim kartalari (egasi bor hisoblar) — pul hisobi emas, shu oyda
+            // o'sha xodimga qilingan xarajatlar yig'indisi (owner user_id bo'yicha).
+            'personSpend'      => \App\Services\PersonExpenseService::forMonth(
+                $year, $month, $accounts->whereNotNull('user_id')->pluck('user_id')->all()
+            ),
             'commissionSourceId' => $commissionSourceId ?? null,
             'dayPayments'      => $dayPayments,
             'dayIncome'        => $dayIncome,
             'transfers'        => $transfers,
             'allAccounts'      => FinancialAccount::orderBy('name')->get(),
             'staffUsers'       => $this->showExpenseModal ? \App\Models\User::where('is_active', true)->orderBy('name')->get(['id', 'name']) : collect(),
-            'expCard'          => $this->showExpenseModal && $this->expResponsibleId
-                ? FinancialAccount::where('user_id', $this->expResponsibleId)->first(['id', 'name'])
-                : null,
             'contractTotal'    => $contractTotal,
             'contractPaid'     => $contractPaid,
             'contractDebt'     => $contractDebt,

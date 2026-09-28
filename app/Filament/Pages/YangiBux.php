@@ -85,14 +85,6 @@ class YangiBux extends Page
     public float  $payRemaining = 0;
     public ?int   $payAccountId = null;   // oylik qaysi hisobdan berildi
 
-    // ── Pul ajratish (kompaniya hisobi → xodim kartasi), xarajat EMAS ──
-    public bool   $showTransferModal = false;
-    public ?int   $trFromId  = null;
-    public ?int   $trToId    = null;
-    public string $trAmount  = '';
-    public string $trDate    = '';
-    public string $trComment = '';
-
     // ── Xodimga xarajat kartasi ochish ──
     public bool   $showNewCardModal = false;
     public ?int   $ncUserId = null;
@@ -228,7 +220,7 @@ class YangiBux extends Page
             'chDate'          => 'required|date',
             'chComment'       => 'required|string|max:255',
             'chAmount'        => 'required|numeric|min:1',
-            'chAccountId'     => 'required|exists:financial_accounts,id',
+            'chAccountId'     => 'required|exists:financial_accounts,id,user_id,NULL',
             'chResponsibleId' => 'required|exists:users,id',
             'chProjectId'     => 'nullable|exists:projects,id',
             'chFile'          => 'nullable|file|max:8192|mimes:jpg,jpeg,png,webp,pdf,doc,docx,xls,xlsx',
@@ -272,58 +264,11 @@ class YangiBux extends Page
         $this->closeChiqim();
     }
 
-    // Chiqimda Mas'ul tanlanganda — uning kartasi bo'lsa, o'sha hisob tanlanadi
-    public function updatedChResponsibleId($value): void
-    {
-        if (!$value) return;
-        $acc = FinancialAccount::where('user_id', $value)->value('id');
-        if ($acc) $this->chAccountId = $acc;
-    }
-
-    // ── Pul ajratish ────────────────────────────────────────────────────────
-    public function openTransfer(?int $toAccountId = null): void
-    {
-        if (!auth()->user()?->isAdmin()) return;
-        $this->resetValidation();
-        $this->trFromId  = null;
-        $this->trToId    = $toAccountId;
-        $this->trAmount  = '';
-        $this->trDate    = now()->format('Y-m-d');
-        $this->trComment = '';
-        $this->showTransferModal = true;
-    }
-
-    public function saveTransfer(): void
-    {
-        if (!auth()->user()?->isAdmin()) return;
-        $this->trAmount = str_replace([' ', ','], '', $this->trAmount);
-        $this->validate([
-            'trFromId' => 'required|exists:financial_accounts,id|different:trToId',
-            'trToId'   => 'required|exists:financial_accounts,id',
-            'trAmount' => 'required|numeric|min:1',
-            'trDate'   => 'required|date',
-        ], [
-            'trFromId.required'  => 'Qaysi hisobdan berilishini tanlang',
-            'trToId.required'    => 'Kimga (qaysi kartaga) ekanini tanlang',
-            'trFromId.different' => "Bir xil hisob bo'lishi mumkin emas",
-            'trAmount.required'  => 'Summani kiriting',
-        ]);
-
-        \App\Models\AccountTransfer::create([
-            'from_account_id' => $this->trFromId,
-            'to_account_id'   => $this->trToId,
-            'amount'          => (float) $this->trAmount,
-            'transfer_date'   => $this->trDate,
-            'comment'         => trim($this->trComment) ?: 'Xarajatlar uchun pul ajratildi',
-            'created_by'      => auth()->id(),
-        ]);
-        $this->showTransferModal = false;
-        Notification::make()->title('Pul ajratildi')->body("Xarajat emas — o'tkazma sifatida yozildi.")->success()->send();
-    }
-
     // ── Xodimga xarajat kartasi ochish ──────────────────────────────────────
-    // Eski shaxsiy kartalardan (sheriklar ulushi) ALOHIDA hisob — faqat
-    // xarajatlar uchun ajratilgan pul shu yerda yuradi, ulush bilan aralashmaydi.
+    // Xodim kartasi — PUL HISOBI EMAS, faqat ko'rinish: shu oyda o'sha xodimga
+    // qilingan xarajatlar (xarajatdagi "kim uchun" belgisi) shu kartada jamlanadi.
+    // Belgi tizimda har bir xodim uchun yuritiladi; karta faqat kimni ekranda
+    // ko'rsatishni belgilaydi.
     public function openNewCard(): void
     {
         if (!auth()->user()?->isAdmin()) return;
@@ -363,7 +308,7 @@ class YangiBux extends Page
             'is_secondary' => true,
         ]);
         $this->showNewCardModal = false;
-        Notification::make()->title('Xarajat kartasi ochildi')->success()->send();
+        Notification::make()->title('Xodim kartasi qo\'shildi')->success()->send();
     }
 
     // ── Oylik maosh ─────────────────────────────────────────────────────────
@@ -426,7 +371,7 @@ class YangiBux extends Page
             'payUserId' => 'required|exists:users,id',
             'payAmount' => 'required|numeric|min:1',
             'payDate'   => 'required|date',
-            'payAccountId' => 'required|exists:financial_accounts,id',
+            'payAccountId' => 'required|exists:financial_accounts,id,user_id,NULL',
         ], [
             'payUserId.required'    => 'Xodimni tanlang',
             'payAmount.required'    => 'Summani kiriting',
@@ -842,18 +787,16 @@ class YangiBux extends Page
         $accountBalances = $allAccountsSum->mapWithKeys(fn ($a) => [$a->id => (float) $a->balance]);
         $accounts = $allAccountsSum->where('is_personal', false)->whereNull('user_id');
 
-        // Xodimlarning xarajat kartalari (egasi belgilangan hisoblar) — kompaniya
-        // "Jami qoldig'i"ga kirmaydi; shu oyda qancha ajratildi / sarflandi / qoldi.
-        // Egasiz shaxsiy kartalar (sheriklar ulushi) bu yerda ko'rsatilmaydi.
-        $staffCards = $allAccountsSum->filter(fn ($a) => $a->user_id)->map(function ($a) use ($year, $month) {
-            return [
-                'account' => $a,
-                'label'   => $a->owner?->name ?: $a->name,
-                'balance' => (float) $a->balance,
-                'given'   => (float) \App\Models\AccountTransfer::where('to_account_id', $a->id)->whereYear('transfer_date', $year)->whereMonth('transfer_date', $month)->sum('amount'),
-                'spent'   => (float) Expense::where('account_id', $a->id)->where($this->expenseScope($year, $month))->sum('amount'),
-            ];
-        })->values();
+        // Xodim kartalari (egasi belgilangan hisoblar) — pul hisobi emas: shu oyda
+        // o'sha xodimga qilingan xarajatlar (eski Buxgalteriya bilan bir xil servis).
+        $personCardAccs = $allAccountsSum->filter(fn ($a) => $a->user_id)->values();
+        $personSpend = \App\Services\PersonExpenseService::forMonth($year, $month, $personCardAccs->pluck('user_id')->all());
+        $staffCards = $personCardAccs->map(fn ($a) => [
+            'account' => $a,
+            'spent'   => $personSpend[$a->user_id]['total'] ?? 0.0,
+            'count'   => $personSpend[$a->user_id]['count'] ?? 0,
+            'by'      => $personSpend[$a->user_id]['by'] ?? [],
+        ])->values();
         $balances = [
             ['label' => 'Kassa (naqd)',      'icon' => '💵', 'value' => (float) $accounts->where('type', 'naqd')->sum(fn ($a) => $a->balance)],
             ['label' => 'Bank hisobraqami',  'icon' => '🏦', 'value' => (float) $accounts->where('type', 'bank')->sum(fn ($a) => $a->balance)],
