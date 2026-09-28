@@ -521,7 +521,8 @@
 
     {{-- Shu oydagi to'lovlar tarixi --}}
     @if($S['historyUser'])
-        <div class="yb-ov" wire:click.self="$set('historyUserId', null)">
+        @teleport('body')
+        <div class="yb yb-ov" wire:click.self="$set('historyUserId', null)">
             <div class="yb-modal">
                 <div class="yb-modal-h" style="background:#dbeafe">{{ $S['historyUser']->name }} — {{ $monthLabel }} to'lovlari <button type="button" wire:click="$set('historyUserId', null)">×</button></div>
                 <div class="yb-modal-b">
@@ -539,6 +540,7 @@
                 </div>
             </div>
         </div>
+        @endteleport
     @endif
 
 @elseif($tab === 'hisobotlar')
@@ -580,7 +582,8 @@
 
 {{-- ── Kirim qo'shish: loyiha tanlash ── --}}
 @if($showKirimPicker)
-    <div class="yb-ov" wire:click.self="$set('showKirimPicker', false)">
+    @teleport('body')
+    <div class="yb yb-ov" wire:click.self="$set('showKirimPicker', false)">
         <div class="yb-modal">
             <div class="yb-modal-h" style="background:#dcfce7">Kirim qo'shish — loyihani tanlang <button type="button" wire:click="$set('showKirimPicker', false)">×</button></div>
             <div class="yb-modal-b">
@@ -602,11 +605,13 @@
             </div>
         </div>
     </div>
+    @endteleport
 @endif
 
 {{-- ── Chiqim qo'shish / tahrirlash ── --}}
 @if($showChiqimModal)
-    <div class="yb-ov" wire:click.self="closeChiqim">
+    @teleport('body')
+    <div class="yb yb-ov" wire:click.self="closeChiqim">
         <div class="yb-modal">
             <div class="yb-modal-h" style="background:#fee2e2">{{ $chiqimId ? 'Chiqimni tahrirlash' : "Chiqim qo'shish" }} <button type="button" wire:click="closeChiqim">×</button></div>
             <div class="yb-modal-b">
@@ -687,11 +692,13 @@
             </div>
         </div>
     </div>
+    @endteleport
 @endif
 
 {{-- ── Maosh to'lash / tahrirlash ── --}}
 @if($showPayModal)
-    <div class="yb-ov" wire:click.self="$set('showPayModal', false)">
+    @teleport('body')
+    <div class="yb yb-ov" wire:click.self="$set('showPayModal', false)">
         <div class="yb-modal" style="max-width:440px">
             <div class="yb-modal-h" style="background:#dcfce7">{{ $payEditId ? "To'lovni tahrirlash" : "Maosh to'lash — " . $monthLabel }} <button type="button" wire:click="$set('showPayModal', false)">×</button></div>
             <div class="yb-modal-b">
@@ -730,6 +737,7 @@
             </div>
         </div>
     </div>
+    @endteleport
 @endif
 
 @livewire('payment-modal')
