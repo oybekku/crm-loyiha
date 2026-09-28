@@ -380,7 +380,7 @@
                 @else
                 <span class="exp-acc-badge">{{ $exp->account ? ($exp->account->name ?: $typeOptions[$exp->account->type]) : '—' }}</span>
                 @endif
-                <span class="exp-comment">{{ $exp->comment ?: '—' }}</span>
+                <span class="exp-comment">{{ $exp->comment ?: '—' }}@if($exp->responsible)<span style="display:block;font-size:11px;color:#6b7280">👤 {{ $exp->responsible->name }}</span>@endif</span>
                 <span class="exp-amount">− {{ number_format($exp->amount, 0, '.', ' ') }} so'm</span>
                 @unless($exp->is_auto)
                 <div class="exp-row-actions">
@@ -531,6 +531,17 @@
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
                 <div style="font-size:16px;font-weight:800">{{ $editExpenseId ? 'Xarajatni tahrirlash' : 'Xarajat qo\'shish' }}</div>
                 <button wire:click="closeExpenseModal" style="background:none;border:none;font-size:20px;cursor:pointer;color:#64748b;line-height:1">×</button>
+            </div>
+
+            <div class="bx-field">
+                <label>Xarajatni kim qildi (xodim) <span style="color:#dc2626">*</span></label>
+                <select wire:model.live="expResponsibleId">
+                    <option value="">— xodimni tanlang —</option>
+                    @foreach($staffUsers as $su)
+                    <option value="{{ $su->id }}">{{ $su->name }}</option>
+                    @endforeach
+                </select>
+                @error('expResponsibleId')<span style="font-size:11px;color:#f87171">{{ $message }}</span>@enderror
             </div>
 
             <div class="bx-field">

@@ -65,6 +65,7 @@ class Buxgalteriya extends Page
     public string $expAmount        = '';
     public string $expComment       = '';
     public string $expDate          = '';
+    public ?int   $expResponsibleId = null;   // kim sarfladi (majburiy)
 
     // ── Pul o'tkazish oynasi (hisoblar orasida) ──
     public bool   $showTransferModal = false;
@@ -276,7 +277,9 @@ class Buxgalteriya extends Page
             $this->expAmount    = (string) $exp->amount;
             $this->expComment   = (string) $exp->comment;
             $this->expDate      = $exp->expense_date->format('Y-m-d');
+            $this->expResponsibleId = $exp->responsible_id;
         } else {
+            $this->expResponsibleId = null;
             $this->expAccountId = null;
             $this->expAmount    = '';
             $this->expComment   = '';
@@ -289,6 +292,14 @@ class Buxgalteriya extends Page
         $this->showExpenseModal = true;
     }
 
+    // Xodim tanlanganda — uning xarajat kartasi bo'lsa, o'sha hisob tanlanadi
+    public function updatedExpResponsibleId($value): void
+    {
+        if (!$value) return;
+        $acc = FinancialAccount::where('user_id', $value)->value('id');
+        if ($acc) $this->expAccountId = $acc;
+    }
+
     public function closeExpenseModal(): void
     {
         $this->showExpenseModal = false;
@@ -299,17 +310,25 @@ class Buxgalteriya extends Page
     {
         if (!auth()->user()?->isAdmin()) return;
 
+        // Oylikdan avtomatik yozilgan qator allaqachon xodimga bog'langan —
+        // unda Mas'ul talab qilinmaydi. Qolgan barcha xarajatlarda majburiy.
+        $isAuto = $this->editExpenseId && Expense::whereKey($this->editExpenseId)->whereNotNull('user_id')->exists();
+
         $this->validate([
-            'expAccountId' => 'required|exists:financial_accounts,id',
-            'expAmount'    => 'required|numeric|min:0.01',
-            'expDate'      => 'required|date',
+            'expAccountId'     => 'required|exists:financial_accounts,id',
+            'expAmount'        => 'required|numeric|min:0.01',
+            'expDate'          => 'required|date',
+            'expResponsibleId' => ($isAuto ? 'nullable' : 'required') . '|exists:users,id',
+        ], [
+            'expResponsibleId.required' => 'Xarajatni kim qilganini (xodimni) tanlang',
         ]);
 
         $data = [
-            'account_id'   => $this->expAccountId,
-            'amount'       => (float) $this->expAmount,
-            'comment'      => trim($this->expComment) ?: null,
-            'expense_date' => $this->expDate,
+            'account_id'     => $this->expAccountId,
+            'amount'         => (float) $this->expAmount,
+            'comment'        => trim($this->expComment) ?: null,
+            'expense_date'   => $this->expDate,
+            'responsible_id' => $this->expResponsibleId,
         ];
 
         if ($this->editExpenseId) {
@@ -512,7 +531,7 @@ class Buxgalteriya extends Page
             ->get();
         $totalTransferred = (float) $transfers->sum('amount');
 
-        $expenses = Expense::with(['account', 'user'])
+        $expenses = Expense::with(['account', 'user', 'responsible'])
             ->where($expenseMonthScope)
             ->orderByDesc('expense_date')
             ->orderByDesc('id')
@@ -532,6 +551,7 @@ class Buxgalteriya extends Page
             'dayIncome'        => $dayIncome,
             'transfers'        => $transfers,
             'allAccounts'      => FinancialAccount::orderBy('name')->get(),
+            'staffUsers'       => $this->showExpenseModal ? \App\Models\User::where('is_active', true)->orderBy('name')->get(['id', 'name']) : collect(),
             'contractTotal'    => $contractTotal,
             'contractPaid'     => $contractPaid,
             'contractDebt'     => $contractDebt,

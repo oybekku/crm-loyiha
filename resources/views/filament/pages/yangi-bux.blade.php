@@ -665,11 +665,12 @@
                         @error('chAccountId')<div class="yb-err">{{ $message }}</div>@enderror
                     </div>
                     <div class="yb-fld">
-                        <label>Mas'ul</label>
+                        <label>Mas'ul (kim qildi) <i>*</i></label>
                         <select class="yb-in" wire:model.live="chResponsibleId">
                             <option value="">—</option>
                             @foreach($staffUsers as $su)<option value="{{ $su->id }}">{{ $su->name }}</option>@endforeach
                         </select>
+                        @error('chResponsibleId')<div class="yb-err">{{ $message }}</div>@enderror
                         <div class="yb-sub" style="margin-top:4px">Kartasi biriktirilgan xodim tanlansa — uning kartasi o'zi tanlanadi</div>
                     </div>
                 </div>

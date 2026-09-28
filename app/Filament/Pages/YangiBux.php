@@ -200,7 +200,7 @@ class YangiBux extends Page
             $this->chComment       = '';
             $this->chAmount        = '';
             $this->chAccountId     = null;
-            $this->chResponsibleId = auth()->id();
+            $this->chResponsibleId = null;   // har safar xodim tanlanishi shart
             $this->chNote          = '';
             $this->chExistingFile  = null;
         }
@@ -229,13 +229,14 @@ class YangiBux extends Page
             'chComment'       => 'required|string|max:255',
             'chAmount'        => 'required|numeric|min:1',
             'chAccountId'     => 'required|exists:financial_accounts,id',
-            'chResponsibleId' => 'nullable|exists:users,id',
+            'chResponsibleId' => 'required|exists:users,id',
             'chProjectId'     => 'nullable|exists:projects,id',
             'chFile'          => 'nullable|file|max:8192|mimes:jpg,jpeg,png,webp,pdf,doc,docx,xls,xlsx',
         ], [
             'chComment.required'   => 'Tavsif kiriting',
             'chAmount.required'    => 'Summani kiriting',
             'chAccountId.required' => "Qaysi hisobdan to'langanini tanlang",
+            'chResponsibleId.required' => 'Xarajatni kim qilganini (xodimni) tanlang',
         ]);
 
         $old = $this->chiqimId ? Expense::find($this->chiqimId) : null;
