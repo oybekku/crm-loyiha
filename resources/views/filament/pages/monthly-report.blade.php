@@ -289,7 +289,7 @@
                         <div style="display:flex;align-items:center;gap:8px">
                             <span class="nrm-sum {{ $row['year_remaining']>0 ? 'warn' : 'good' }}">{{ number_format($row['year_remaining'], 0, '.', ' ') }}</span>
                             @if($row['year_remaining'] > 0)
-                            <button class="pay-all-btn" wire:click="payAllRemainingForUser({{ $row['user']->id }})" wire:confirm="{{ $row['user']->name }} uchun shu yildagi barcha qoldiq oylarni ({{ number_format($row['year_remaining'], 0, '.', ' ') }} so'm) to'lashni tasdiqlaysizmi?">Hammasini to'la</button>
+                            <button class="pay-all-btn" wire:click="payAllRemainingForUser({{ $row['user']->id }})">Hammasini to'la</button>
                             @endif
                         </div>
                     </td>
@@ -1193,6 +1193,58 @@
 </div>
 @endif
 
+
+{{-- "HAMMASINI TO'LA" — hisob tanlash + tasdiq --}}
+@if($payAllUserId)
+@php
+    $paRow = collect(\App\Services\EmployeePayableService::yearGrid($normYear ?: (int) now()->format('Y')))->firstWhere('user.id', $payAllUserId);
+@endphp
+<div style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px">
+<div style="background:#fff;border-radius:14px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.4)">
+    <div style="padding:18px 20px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center">
+        <h3 style="font-size:15px;font-weight:800;color:#111827;margin:0">Hammasini to'lash</h3>
+        <button wire:click="closePayAll" style="background:none;border:none;cursor:pointer;font-size:20px;color:#9ca3af">×</button>
+    </div>
+    <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+        <div style="background:#eff6ff;border-radius:8px;padding:10px 12px;font-size:13px;color:#1d4ed8">
+            <b>{{ $paRow['user']->name ?? '' }}</b> — shu yildagi barcha qoldiq oylar:
+            <b>{{ number_format($paRow['year_remaining'] ?? 0, 0, '.', ' ') }} so'm</b>
+        </div>
+        @php
+            $mrAccs = \App\Models\FinancialAccount::whereNull('user_id')->orderBy('is_personal')->orderBy('name')->get(['id', 'name', 'type', 'is_personal']);
+            $mrTypes = \App\Models\FinancialAccount::typeOptions();
+        @endphp
+        <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px">Qaysi hisobdan berildi *</label>
+            <select wire:model="payAllAccountId"
+                    style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;font-size:13px;outline:none;box-sizing:border-box;background:#fff">
+                <option value="">— tanlang (Naqd / Karta / Bank) —</option>
+                @foreach(['Kompaniya hisoblari' => $mrAccs->where('is_personal', false), 'Shaxsiy hisoblar (ulush)' => $mrAccs->where('is_personal', true)] as $grp => $list)
+                    @if($list->isNotEmpty())
+                    <optgroup label="{{ $grp }}">
+                        @foreach($list as $a)<option value="{{ $a->id }}">{{ $a->name ?: ($mrTypes[$a->type] ?? $a->type) }}</option>@endforeach
+                    </optgroup>
+                    @endif
+                @endforeach
+            </select>
+            @error('payAllAccountId')<div style="font-size:11px;color:#dc2626;margin-top:4px">{{ $message }}</div>@enderror
+            <div style="font-size:11px;color:#94a3b8;margin-top:4px">Summa xodim to'lovlariga yoziladi va shu hisobdan xarajat sifatida yechiladi.</div>
+        </div>
+    </div>
+    <div style="padding:14px 20px;border-top:1px solid #e5e7eb;display:flex;gap:10px">
+        <button wire:click="confirmPayAll" wire:loading.attr="disabled"
+                style="flex:1;background:#16a34a;color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">
+            To'lash
+        </button>
+        <button wire:click="closePayAll"
+                style="flex:1;background:#f3f4f6;color:#374151;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:600;cursor:pointer">
+            Bekor qilish
+        </button>
+    </div>
+</div>
+</div>
+@endif
+
 {{-- ISH HAQI TO'LOVI MODAL --}}
 @if($showSalaryPayModal)
 <div style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px">
@@ -1222,6 +1274,32 @@
             <div style="font-size:11px;color:#94a3b8;margin-top:4px">To'liq ({{ number_format($salaryPayRemaining, 0, '.', ' ') }}) yoki kamroq (qisman/avans) summa kiritsangiz ham bo'ladi — qolgan qismi keyingi safar to'lanadi.</div>
             @endif
         </div>
+        @php
+            $mrAccs = \App\Models\FinancialAccount::whereNull('user_id')->orderBy('is_personal')->orderBy('name')->get(['id', 'name', 'type', 'is_personal']);
+            $mrTypes = \App\Models\FinancialAccount::typeOptions();
+        @endphp
+        <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px">Qaysi hisobdan berildi *</label>
+            <select wire:model="salaryPayAccountId"
+                    style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;font-size:13px;outline:none;box-sizing:border-box;background:#fff">
+                <option value="">— tanlang (Naqd / Karta / Bank) —</option>
+                @foreach(['Kompaniya hisoblari' => $mrAccs->where('is_personal', false), 'Shaxsiy hisoblar (ulush)' => $mrAccs->where('is_personal', true)] as $grp => $list)
+                    @if($list->isNotEmpty())
+                    <optgroup label="{{ $grp }}">
+                        @foreach($list as $a)<option value="{{ $a->id }}">{{ $a->name ?: ($mrTypes[$a->type] ?? $a->type) }}</option>@endforeach
+                    </optgroup>
+                    @endif
+                @endforeach
+            </select>
+            @error('salaryPayAccountId')<div style="font-size:11px;color:#dc2626;margin-top:4px">{{ $message }}</div>@enderror
+            @if($salaryPayEditId && !\App\Models\Expense::where('salary_payment_id', $salaryPayEditId)->exists())
+            <div style="margin-top:6px;padding:8px 10px;border-radius:8px;background:#fffbeb;border:1px solid #fde68a;font-size:11.5px;color:#92400e;line-height:1.45">
+                ⚠️ Bu to'lov avval Buxgalteriyaga (xarajatga) yozilmagan edi. Saqlasangiz, tanlangan hisobdan
+                <b>{{ \Carbon\Carbon::createFromFormat('Y-m', $salaryPayMonth ?: $selectedMonth)->translatedFormat('F Y') }}</b> oyi xarajati sifatida qo'shiladi.
+            </div>
+            @endif
+            <div style="font-size:11px;color:#94a3b8;margin-top:4px">Summa xodim to'lovlariga yoziladi va shu hisobdan xarajat sifatida yechiladi.</div>
+        </div>
         <div>
             <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px">Sana *</label>
             <input wire:model="salaryPayDate" type="date"
@@ -1229,9 +1307,13 @@
         </div>
         <div>
             <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px">Izoh (ixtiyoriy)</label>
+            @if($salaryPayLockedNote)
+            <div style="border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;font-size:13px;background:#f9fafb;color:#374151">{{ preg_replace('/^svc:\d+\|/', '', $salaryPayLockedNote) }}</div>
+            @else
             <input wire:model="salaryPayNote" type="text"
                    placeholder="Masalan: Iyun oyi ish haqi"
                    style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;font-size:13px;outline:none;box-sizing:border-box">
+            @endif
         </div>
     </div>
     <div style="padding:14px 20px;border-top:1px solid #e5e7eb;display:flex;gap:10px">

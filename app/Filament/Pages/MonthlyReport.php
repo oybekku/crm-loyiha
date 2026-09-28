@@ -45,6 +45,16 @@ class MonthlyReport extends Page
     public string $salaryPayMonth     = ''; // qaysi oy uchun yozilayotgani (odatda selectedMonth, lekin "To'lanishi kerak" jadvalidan ochilsa — o'sha katakning oyi)
     public float  $salaryPayRemaining = 0;  // shu oy uchun umumiy qoldiq (faqat ko'rsatish uchun — summa maydoni tahrirlanganda o'zgarmaydi, qisman/avans to'lov qancha kiritilganini solishtirish uchun)
     public int    $salaryPayEditId    = 0; // tahrirlash uchun
+    // Qaysi hisobdan berildi (majburiy) — summa xodim to'lovlariga ham, shu
+    // hisobdan xarajat sifatida Buxgalteriyaga ham yoziladi.
+    public ?int    $salaryPayAccountId = null;
+    // "Xizmat ulushini to'lash"dan ochilganda izoh (svc:ID|...) o'zgarmasligi
+    // kerak — shu belgi bo'yicha xizmat "to'langan" deb ko'rsatiladi.
+    public ?string $salaryPayLockedNote = null;
+
+    // "Hammasini to'la" — avval hisobni so'raydigan tasdiq oynasi
+    public int   $payAllUserId    = 0;
+    public ?int  $payAllAccountId = null;
 
     // To'liq ma'lumot modal
     public bool   $showDetailModal  = false;
@@ -209,22 +219,17 @@ class MonthlyReport extends Page
         Notification::make()->title("Ulush foizi {$this->selectedMonth} oyidan boshlab yangilandi")->success()->send();
     }
 
+    // Endi to'g'ridan-to'g'ri yozilmaydi — oyna ochiladi, u yerda "Qaysi
+    // hisobdan" tanlanadi (xarajat Buxgalteriyaga ham tushishi uchun).
     public function payServiceShare(int $serviceId, int $userId, float $amount): void
     {
         if (!auth()->user()?->isAdmin()) return;
 
         $svc = \App\Models\ProjectService::with('project')->findOrFail($serviceId);
 
-        \App\Models\EmployeeSalaryPayment::create([
-            'user_id'  => $userId,
-            'month'    => $this->selectedMonth,
-            'amount'   => $amount,
-            'paid_at'  => now()->toDateString(),
-            'note'     => 'svc:' . $serviceId . '|' . $svc->project?->number . ' — ' . $svc->service_label . ' ulushi',
-            'given_by' => auth()->id(),
-        ]);
-
-        Notification::make()->title("To'lov yozildi: " . number_format($amount, 0, '.', ' ') . " so'm")->success()->send();
+        $this->openSalaryPayModalForMonth($userId, $this->selectedMonth, $amount);
+        $this->salaryPayLockedNote = 'svc:' . $serviceId . '|' . $svc->project?->number . ' — ' . $svc->service_label . ' ulushi';
+        $this->salaryPayNote       = $this->salaryPayLockedNote;
     }
 
     public function openDetailModal(int $uid): void
@@ -248,6 +253,9 @@ class MonthlyReport extends Page
         $this->salaryPayMonth     = $this->selectedMonth;
         $this->salaryPayRemaining = 0;
         $this->salaryPayEditId    = 0;
+        $this->salaryPayAccountId = null;
+        $this->salaryPayLockedNote = null;
+        $this->resetValidation();
         $this->showSalaryPayModal = true;
     }
 
@@ -263,6 +271,9 @@ class MonthlyReport extends Page
         $this->salaryPayMonth     = $month;
         $this->salaryPayRemaining = $amount;
         $this->salaryPayEditId    = 0;
+        $this->salaryPayAccountId = null;
+        $this->salaryPayLockedNote = null;
+        $this->resetValidation();
         $this->showSalaryPayModal = true;
     }
 
@@ -277,30 +288,43 @@ class MonthlyReport extends Page
         $this->salaryPayMonth     = $pay->month;
         $this->salaryPayRemaining = 0;
         $this->salaryPayEditId    = $payId;
+        // Avval xarajatga yozilgan bo'lsa — o'sha hisob; eski (yozilmagan)
+        // to'lovda bo'sh — saqlash uchun tanlash shart.
+        $this->salaryPayAccountId = \App\Models\Expense::where('salary_payment_id', $payId)->value('account_id');
+        $this->salaryPayLockedNote = str_starts_with((string) $pay->note, 'svc:') ? $pay->note : null;
+        $this->resetValidation();
         $this->showSalaryPayModal = true;
     }
 
     public function saveSalaryPay(): void
     {
+        if (!auth()->user()?->isAdmin()) return;
         $amount = (float) str_replace([' ', ','], '', $this->salaryPayAmount);
         if ($amount <= 0) return;
+
+        $this->validate([
+            'salaryPayAccountId' => 'required|exists:financial_accounts,id,user_id,NULL',
+        ], [
+            'salaryPayAccountId.required' => 'Qaysi hisobdan berilganini tanlang',
+        ]);
 
         $data = [
             'user_id'  => $this->salaryPayUserId,
             'month'    => $this->salaryPayMonth ?: $this->selectedMonth,
             'amount'   => $amount,
             'paid_at'  => $this->salaryPayDate ?: now()->toDateString(),
-            'note'     => trim($this->salaryPayNote) ?: null,
+            'note'     => $this->salaryPayLockedNote ?? (trim($this->salaryPayNote) ?: null),
             'given_by' => auth()->id(),
         ];
 
         // Qoldiqdan kamroq summa kiritilgan bo'lsa — "qisman avans", aks
         // holda "to'liq oylik" deb Buxgalteriyaga yoziladi.
         $isPartial = $this->salaryPayRemaining > 0 && $amount < $this->salaryPayRemaining;
-        \App\Services\SalaryPaymentService::save($data, $this->salaryPayEditId ?: null, $isPartial);
+        \App\Services\SalaryPaymentService::save($data, $this->salaryPayEditId ?: null, $isPartial, $this->salaryPayAccountId);
 
         $this->showSalaryPayModal = false;
-        Notification::make()->title('Saqlandi! Buxgalteriyaga ham avtomatik yozildi.')->success()->send();
+        $this->salaryPayLockedNote = null;
+        Notification::make()->title('Saqlandi!')->body("Xodim to'lovlariga va tanlangan hisobdan xarajat sifatida Buxgalteriyaga yozildi.")->success()->send();
     }
 
     public function deleteSalaryPay(int $payId): void
@@ -309,9 +333,9 @@ class MonthlyReport extends Page
         Notification::make()->title("O'chirildi! (Buxgalteriyadagi mos xarajat ham o'chirildi)")->warning()->send();
     }
 
-    private function syncSalaryExpense(\App\Models\EmployeeSalaryPayment $payment, bool $isPartial): void
+    private function syncSalaryExpense(\App\Models\EmployeeSalaryPayment $payment, bool $isPartial, ?int $accountId = null): void
     {
-        \App\Services\SalaryPaymentService::syncExpense($payment, $isPartial);
+        \App\Services\SalaryPaymentService::syncExpense($payment, $isPartial, $accountId);
     }
 
     public function closeSalaryPayModal(): void
@@ -325,6 +349,24 @@ class MonthlyReport extends Page
     public function payAllRemainingForUser(int $userId): void
     {
         if (!auth()->user()?->isAdmin()) return;
+        $this->resetValidation();
+        $this->payAllUserId    = $userId;
+        $this->payAllAccountId = null;
+    }
+
+    public function closePayAll(): void
+    {
+        $this->payAllUserId = 0;
+    }
+
+    public function confirmPayAll(): void
+    {
+        if (!auth()->user()?->isAdmin() || !$this->payAllUserId) return;
+        $this->validate([
+            'payAllAccountId' => 'required|exists:financial_accounts,id,user_id,NULL',
+        ], ['payAllAccountId.required' => 'Qaysi hisobdan berilganini tanlang']);
+
+        $userId = $this->payAllUserId;
 
         $year = $this->normYear ?: (int) now()->format('Y');
         $grid = \App\Services\EmployeePayableService::yearGrid($year);
@@ -342,10 +384,11 @@ class MonthlyReport extends Page
                 'note'     => "Yillik qoldiqni to'lash (avtomatik, {$m['month_str']})",
                 'given_by' => auth()->id(),
             ]);
-            $this->syncSalaryExpense($payment, isPartial: false);
+            $this->syncSalaryExpense($payment, isPartial: false, accountId: $this->payAllAccountId);
             $paidCount++;
         }
 
+        $this->payAllUserId = 0;
         if ($paidCount === 0) return;
 
         Notification::make()
