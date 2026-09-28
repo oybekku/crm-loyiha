@@ -571,6 +571,13 @@ class MonthlyReport extends Page
             ->filter()
             ->unique('id');
 
+        // Shu oy uchun oylik/avans olgan, lekin shu oyda xizmati bo'lmagan
+        // xodimlar (masalan faqat oklad oladiganlar) ham ko'rinsin — aks holda
+        // ularga berilgan pul "To'landi" jamisiga kirmay, Buxgalteriya bilan
+        // mos kelmay qoladi.
+        $salaryOnlyUsers = User::whereIn('id', \App\Models\EmployeeSalaryPayment::where('month', $this->selectedMonth)->pluck('user_id'))->get();
+        $allAssignedUsers = $allAssignedUsers->concat($salaryOnlyUsers)->unique('id');
+
         foreach ($allAssignedUsers as $u) {
             if (!isset($userStats[$u->id])) {
                 $userStats[$u->id] = [
