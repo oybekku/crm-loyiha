@@ -335,7 +335,7 @@
                 <span class="yb-sub">{{ $opsFiltered->count() }} ta operatsiya ·
                     Kirim: <b class="yb-g">{{ $fmt($opsFiltered->where('type', 'kirim')->sum('amount')) }}</b> ·
                     Chiqim: <b class="yb-r">{{ $fmt($opsFiltered->where('type', 'chiqim')->sum('amount')) }}</b> so'm
-                    @if($opFrom || $opTo || $opFilter !== 'all' || $opMethod || $opProject || $opUser || $opSearch)
+                    @if($opFrom || $opTo || $opFilter !== 'chiqim' || $opMethod || $opProject || $opUser || $opSearch)
                         · <a href="#" wire:click.prevent="opResetFilters" style="color:#2563eb">filtrlarni tozalash</a>
                     @endif
                 </span>

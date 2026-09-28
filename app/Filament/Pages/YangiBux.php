@@ -44,7 +44,7 @@ class YangiBux extends Page
     public ?int   $ybYear  = null;
     public ?int   $ybMonth = null;
     // ── Kirim-chiqim tabidagi filtrlar ──
-    public string  $opFilter  = 'all';   // all | kirim | chiqim
+    public string  $opFilter  = 'chiqim'; // all | kirim | chiqim — sukut bo'yicha faqat chiqim
     public ?string $opFrom    = null;    // bo'sh = tanlangan oy to'liq
     public ?string $opTo      = null;
     public string  $opMethod  = '';      // naqd | bank | karta
@@ -128,7 +128,7 @@ class YangiBux extends Page
 
     public function opResetFilters(): void
     {
-        $this->opFilter = 'all';
+        $this->opFilter = 'chiqim';
         $this->opFrom = $this->opTo = null;
         $this->opMethod = $this->opProject = $this->opUser = $this->opSearch = '';
     }
