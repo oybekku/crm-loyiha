@@ -189,7 +189,7 @@ class YangiBux extends Page
             $this->chNote          = (string) $e->note;
             $this->chExistingFile  = $e->attachment;
             $this->chKind          = $e->kind;
-            $this->chSalaryMonth   = '';
+            $this->chSalaryMonth   = $e->month ?: $e->expense_date->format('Y-m');
         } else {
             $isCur = $this->ybYear === (int) now()->year && $this->ybMonth === (int) now()->month;
             $this->chDate          = $isCur ? now()->format('Y-m-d') : Carbon::create($this->ybYear, $this->ybMonth, 1)->format('Y-m-d');
@@ -225,9 +225,12 @@ class YangiBux extends Page
         $this->chAmount = str_replace([' ', ','], ['', '.'], $this->chAmount);
         // Yangi "Oylik / avans" — oylik tizimiga (xodim to'lovlari) ham yoziladi
         $newSalary = !$this->chiqimId && $this->chKind === Expense::KIND_OYLIK;
+        // Mavjud oddiy chiqim "Oylik / avans" qilinsa — xodim to'loviga aylanadi
+        $oldCh  = $this->chiqimId ? Expense::find($this->chiqimId) : null;
+        $attach = $oldCh && !$oldCh->salary_payment_id && $this->chKind === Expense::KIND_OYLIK;
         $this->validate([
             'chKind'          => 'required|in:' . Expense::KIND_XARAJAT . ',' . Expense::KIND_OYLIK,
-            'chSalaryMonth'   => $newSalary ? ['required', 'regex:/^\d{4}-\d{2}$/'] : 'nullable',
+            'chSalaryMonth'   => ($newSalary || $attach) ? ['required', 'regex:/^\d{4}-\d{2}$/'] : 'nullable',
             'chDate'          => 'required|date',
             'chComment'       => ($newSalary ? 'nullable' : 'required') . '|string|max:255',
             'chAmount'        => 'required|numeric|min:1',
@@ -295,6 +298,12 @@ class YangiBux extends Page
 
         if ($old) {
             $old->update($data);
+            if ($attach) {
+                \App\Services\SalaryPaymentService::attachExpense($old->fresh(), (int) $this->chResponsibleId, $this->chSalaryMonth);
+                Notification::make()->title('Oylik / avansga aylantirildi')->body("Xodim to'lovlariga (Oylik maosh, Oylik hisobot) qo'shildi. Chiqim ikki marta hisoblanmaydi.")->success()->send();
+                $this->closeChiqim();
+                return;
+            }
             Notification::make()->title('Chiqim yangilandi')->success()->send();
         } else {
             Expense::create($data + ['created_by' => auth()->id()]);

@@ -32,6 +32,34 @@ class SalaryPaymentService
         return $payment;
     }
 
+    /**
+     * Mavjud oddiy chiqimni xodimning oylik/avans to'loviga aylantiradi:
+     * yangi EmployeeSalaryPayment yaratiladi va o'sha chiqim qatori unga
+     * bog'lanadi (yangi xarajat YARATILMAYDI — pul ikki marta hisoblanmaydi).
+     * Summa, sana va hisob chiqimdagidek qoladi.
+     */
+    public static function attachExpense(Expense $expense, int $userId, string $month): EmployeeSalaryPayment
+    {
+        $payment = EmployeeSalaryPayment::create([
+            'user_id'  => $userId,
+            'month'    => $month,
+            'amount'   => $expense->amount,
+            'paid_at'  => $expense->expense_date,
+            'note'     => $expense->comment,
+            'given_by' => auth()->id(),
+        ]);
+
+        $expense->update([
+            'salary_payment_id' => $payment->id,
+            'user_id'           => $userId,
+            'responsible_id'    => $userId,
+            'category'          => Expense::KIND_OYLIK,
+            'month'             => $month,
+        ]);
+
+        return $payment;
+    }
+
     public static function delete(int $paymentId): void
     {
         Expense::where('salary_payment_id', $paymentId)->delete();

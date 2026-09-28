@@ -281,7 +281,8 @@ class Buxgalteriya extends Page
             $this->expDate      = $exp->expense_date->format('Y-m-d');
             $this->expResponsibleId = $exp->responsible_id;
             $this->expKind          = $exp->kind;
-            $this->expSalaryMonth   = '';
+            // "Oylik / avans"ga aylantirilsa — qaysi oy uchun (sukut: chiqim oyi)
+            $this->expSalaryMonth   = $exp->month ?: $exp->expense_date->format('Y-m');
         } else {
             $this->expResponsibleId = null;
             $this->expKind          = '';   // turi har safar tanlanishi shart
@@ -314,10 +315,13 @@ class Buxgalteriya extends Page
 
         // Yangi "Oylik / avans" — xodim to'lovlariga (Oylik hisobot) ham yoziladi
         $newSalary = !$this->editExpenseId && $this->expKind === Expense::KIND_OYLIK;
+        // Mavjud oddiy chiqim "Oylik / avans" qilinsa — xodim to'loviga aylanadi
+        $oldExp = $this->editExpenseId ? Expense::find($this->editExpenseId) : null;
+        $attach = $oldExp && !$oldExp->salary_payment_id && $this->expKind === Expense::KIND_OYLIK;
 
         $this->validate([
             'expKind'          => 'required|in:' . Expense::KIND_XARAJAT . ',' . Expense::KIND_OYLIK,
-            'expSalaryMonth'   => $newSalary ? ['required', 'regex:/^\d{4}-\d{2}$/'] : 'nullable',
+            'expSalaryMonth'   => ($newSalary || $attach) ? ['required', 'regex:/^\d{4}-\d{2}$/'] : 'nullable',
             'expAccountId'     => 'required|exists:financial_accounts,id,user_id,NULL',   // xodim kartasi pul hisobi emas
             'expAmount'        => 'required|numeric|min:0.01',
             'expDate'          => 'required|date',
@@ -358,6 +362,12 @@ class Buxgalteriya extends Page
 
         if ($this->editExpenseId) {
             Expense::whereKey($this->editExpenseId)->update($data);
+            if ($attach) {
+                \App\Services\SalaryPaymentService::attachExpense($oldExp->fresh(), (int) $this->expResponsibleId, $this->expSalaryMonth);
+                Notification::make()->title('Oylik / avansga aylantirildi')->body("Xodim to'lovlariga (Oylik hisobot, Yangi bux → Oylik maosh) qo'shildi. Xarajat ikki marta hisoblanmaydi.")->success()->send();
+                $this->closeExpenseModal();
+                return;
+            }
             Notification::make()->title('Xarajat yangilandi')->success()->send();
         } else {
             $data['created_by'] = auth()->id();

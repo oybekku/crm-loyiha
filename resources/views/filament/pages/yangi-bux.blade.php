@@ -654,10 +654,10 @@
                     @if($chKind === 'oylik' && !$chiqimId)
                         <div class="yb-sub" style="margin-top:6px">Xodim to'lovlariga (Oylik hisobot) ham yoziladi — xodimning "to'lanishi kerak" summasi kamayadi.</div>
                     @elseif($chKind === 'oylik' && $chiqimId)
-                        <div class="yb-sub" style="margin-top:6px">Mavjud chiqim — faqat statistika uchun "oylik" deb belgilanadi, Oylik hisobot o'zgarmaydi.</div>
+                        <div class="yb-sub" style="margin-top:6px">Saqlansa — tanlangan xodimning oylik/avans to'loviga aylanadi (Oylik maosh va Oylik hisobotda ko'rinadi). Summa va hisob o'zgarmaydi.</div>
                     @endif
                 </div>
-                @if($chKind === 'oylik' && !$chiqimId)
+                @if($chKind === 'oylik')
                     <div class="yb-fld">
                         <label>Qaysi oy uchun <i>*</i></label>
                         <input type="month" class="yb-in" wire:model="chSalaryMonth">

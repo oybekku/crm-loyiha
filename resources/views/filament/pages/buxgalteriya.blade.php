@@ -588,11 +588,11 @@
                 @if($expKind === 'oylik' && !$editExpenseId)
                     <span style="display:block;font-size:11px;color:#b45309;margin-top:2px">Xodim to'lovlariga (Oylik hisobot) ham yoziladi.</span>
                 @elseif($expKind === 'oylik' && $editExpenseId)
-                    <span style="display:block;font-size:11px;color:#6b7280;margin-top:2px">Mavjud xarajat — faqat statistika uchun "oylik" deb belgilanadi, Oylik hisobot o'zgarmaydi.</span>
+                    <span style="display:block;font-size:11px;color:#b45309;margin-top:2px">Saqlansa — tanlangan xodimning oylik/avans to'loviga aylanadi (Oylik hisobotda ko'rinadi). Summa va hisob o'zgarmaydi, ikki marta hisoblanmaydi.</span>
                 @endif
             </div>
 
-            @if($expKind === 'oylik' && !$editExpenseId)
+            @if($expKind === 'oylik')
             <div class="bx-field">
                 <label>Qaysi oy uchun <span style="color:#dc2626">*</span></label>
                 <input type="month" wire:model="expSalaryMonth">
