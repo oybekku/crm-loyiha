@@ -138,6 +138,14 @@
 .yb-act{width:28px;height:28px;border-radius:7px;border:1px solid var(--yb-bd);background:var(--yb-card);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:12px;color:var(--yb-mu)}
 .yb-act:hover{background:var(--yb-soft);color:var(--yb-tx)}
 .yb-act.del:hover{background:#fee2e2;color:#dc2626}
+.yb-prog{margin-bottom:14px;font-size:12.5px}
+.yb-prog>div:first-child{display:flex;justify-content:space-between;margin-bottom:5px}
+.yb-prog-bar{height:8px;border-radius:6px;background:var(--yb-soft);overflow:hidden}
+.yb-prog-bar i{display:block;height:100%;border-radius:6px}
+.yb-prog small{display:block;text-align:right;color:var(--yb-mu);font-size:11px;margin-top:2px}
+.yb-next{display:flex;gap:12px;align-items:center;border-top:1px solid var(--yb-bd);padding-top:14px;margin-top:6px}
+.yb-next b{display:block;color:var(--yb-tx)}
+.yb-act:disabled{opacity:.35;cursor:default}
 </style>
 
 @include('filament.partials.report-tabs')
@@ -364,42 +372,170 @@
     </div>
 
 @elseif($tab === 'oylik')
-    <div class="yb-row yb-row-2">
-        <div class="yb-card">
-            <div class="yb-h"><span>Oylik maosh — {{ $monthLabel }} <span class="yb-sub">Oylik hisobotdagi "To'lanishi kerak" bilan bir xil hisob</span></span></div>
-            <div class="yb-tbl-wrap">
-            <table class="yb-tbl">
-                <thead><tr><th>Xodim</th><th class="num">Shu oy hisoblangan</th><th class="num">Shu oy berilgan</th><th class="num">Shu oy qoldiq</th><th class="num">Yil boshidan qarz</th></tr></thead>
-                <tbody>
-                @forelse($staffOwed as $s)
-                    @php $m = $s['month']; @endphp
-                    <tr>
-                        <td>{{ $s['user']->name }}<span class="yb-sub">{{ $s['user']->position ?? '' }}</span></td>
-                        <td class="num">{{ $fmt($m['calc'] ?? 0) }}</td>
-                        <td class="num yb-g">{{ $fmt($m['paid'] ?? 0) }}</td>
-                        <td class="num {{ ($m['remaining'] ?? 0) > 0 ? 'yb-r' : '' }}">{{ $fmt(max(0, $m['remaining'] ?? 0)) }}</td>
-                        <td class="num {{ $s['owed'] > 0 ? 'yb-r' : '' }}">{{ $fmt($s['owed']) }}</td>
-                    </tr>
-                @empty
-                    <tr><td colspan="5" class="yb-empty">Ma'lumot yo'q</td></tr>
-                @endforelse
-                </tbody>
-            </table>
-            </div>
+    @php $S = $salary; @endphp
+    <div class="yb-kpis" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+        <div class="yb-card yb-kpi">
+            <div class="yb-kpi-ic" style="background:#dcfce7;color:#16a34a">👥</div>
+            <div style="min-width:0"><div class="yb-kpi-l">Jami xodimlar</div><div class="yb-kpi-v">{{ $S['staffCount'] }} nafar</div><div class="yb-kpi-s">{{ $S['roleCount'] }} ta bo'lim</div></div>
         </div>
-        <div class="yb-card">
-            <div class="yb-h"><span>Shu oy uchun berilgan oyliklar</span></div>
-            @forelse($salaryPayments as $sp)
-                <div class="yb-li">
-                    <span class="yb-av" style="background:#10b981">{{ $initials($sp->user?->name) }}</span>
-                    <div style="min-width:0">{{ $sp->user?->name ?? '—' }}<span class="yb-sub">{{ $sp->paid_at?->format('d.m.Y') }}@if($sp->giver) · {{ $sp->giver->name }}@endif @if($sp->note) · {{ $sp->note }}@endif</span></div>
-                    <b class="yb-g">{{ $fmt($sp->amount) }}</b>
-                </div>
-            @empty
-                <div class="yb-empty">Bu oy uchun oylik berilmagan</div>
-            @endforelse
+        <div class="yb-card yb-kpi">
+            <div class="yb-kpi-ic" style="background:#dbeafe;color:#2563eb">👛</div>
+            <div style="min-width:0"><div class="yb-kpi-l">Jami maosh fondi</div><div class="yb-kpi-v">{{ $fmt($S['fund']) }} so'm</div><div class="yb-kpi-s">{{ $monthLabel }} uchun · oklad + komissiya</div></div>
+        </div>
+        <div class="yb-card yb-kpi">
+            <div class="yb-kpi-ic" style="background:#ffedd5;color:#ea580c">◔</div>
+            <div style="min-width:0"><div class="yb-kpi-l">To'langan</div><div class="yb-kpi-v">{{ $fmt($S['paid']) }} so'm</div><div class="yb-kpi-s"><span class="yb-up">{{ $S['paidPct'] }}%</span> · {{ $S['paidPeople'] }} nafar</div></div>
+        </div>
+        <div class="yb-card yb-kpi">
+            <div class="yb-kpi-ic" style="background:#fee2e2;color:#dc2626">⏰</div>
+            <div style="min-width:0"><div class="yb-kpi-l">To'lanmagan</div><div class="yb-kpi-v">{{ $fmt($S['unpaid']) }} so'm</div><div class="yb-kpi-s"><span class="yb-down">{{ 100 - $S['paidPct'] }}%</span> · {{ $S['unpaidPeople'] }} nafar</div></div>
         </div>
     </div>
+
+    <div class="yb-row yb-row-3">
+        {{-- So'nggi 6 oy --}}
+        <div class="yb-card">
+            <div class="yb-h">
+                <span>Oylik maosh dinamikasi (so'nggi 6 oy)</span>
+                <div class="yb-legend"><span><i style="background:#3b82f6"></i>To'langan</span><span><i style="background:#ef4444"></i>To'lanmagan</span></div>
+            </div>
+            <div class="yb-chart">
+                <div class="yb-grid">
+                    @foreach([1, .75, .5, .25, 0] as $g)
+                        <div><span>{{ $S['sixMax'] * $g >= 1e6 ? rtrim(rtrim(number_format($S['sixMax'] * $g / 1e6, 1, '.', ''), '0'), '.') . 'M' : ($S['sixMax'] * $g >= 1e3 ? round($S['sixMax'] * $g / 1e3) . 'K' : 0) }}</span></div>
+                    @endforeach
+                </div>
+                @foreach($S['six'] as $c)
+                    <div class="yb-col {{ $c['cur'] ? 'cur' : '' }}" title="{{ $c['label'] }}: to'langan {{ $fmt($c['paid']) }}, to'lanmagan {{ $fmt($c['unpaid']) }}">
+                        <div class="yb-bars" style="flex-direction:column;justify-content:flex-end;align-items:center;gap:0">
+                            <div style="width:42%;max-width:44px;background:#ef4444;border-radius:4px 4px 0 0;height:{{ $c['unpaid'] / $S['sixMax'] * 100 }}%"></div>
+                            <div style="width:42%;max-width:44px;background:#3b82f6;height:{{ $c['paid'] / $S['sixMax'] * 100 }}%;{{ $c['unpaid'] > 0 ? '' : 'border-radius:4px 4px 0 0' }}"></div>
+                        </div>
+                        <div class="yb-col-l">{{ $c['label'] }}</div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+
+        {{-- Lavozimlar bo'yicha --}}
+        @include('filament.pages.partials.yangi-bux-donut', ['donutTitle' => "Maosh fondi lavozimlar bo'yicha", 'donut' => $S['posDonut'], 'donutTotal' => $S['fund']])
+
+        {{-- To'lov holati --}}
+        <div class="yb-card">
+            <div class="yb-h"><span>To'lov holati</span></div>
+            @php $cp = max(1, $S['countedPeople']); @endphp
+            <div class="yb-prog">
+                <div><span>To'langan xodimlar</span><b>{{ $S['paidPeople'] }} nafar</b></div>
+                <div class="yb-prog-bar"><i style="width:{{ $S['paidPeople'] / $cp * 100 }}%;background:#22c55e"></i></div>
+                <small>{{ round($S['paidPeople'] / $cp * 100) }}%</small>
+            </div>
+            <div class="yb-prog">
+                <div><span>To'lanmagan / qisman</span><b>{{ $S['unpaidPeople'] }} nafar</b></div>
+                <div class="yb-prog-bar"><i style="width:{{ $S['unpaidPeople'] / $cp * 100 }}%;background:#ef4444"></i></div>
+                <small>{{ round($S['unpaidPeople'] / $cp * 100) }}%</small>
+            </div>
+            @if($S['lastPay'])
+                <div class="yb-next">
+                    <span class="yb-bal-ic" style="width:40px;height:40px;background:#dbeafe">📅</span>
+                    <div><span class="yb-sub">Oxirgi to'lov</span><b style="font-size:16px">{{ $S['lastPay']->paid_at->format('d.m.Y') }}</b><span class="yb-sub">{{ $S['lastPay']->user?->name }} · {{ $fmt($S['lastPay']->amount) }} so'm</span></div>
+                </div>
+            @endif
+        </div>
+    </div>
+
+    <div class="yb-card">
+        <div class="yb-fbar">
+            <div class="yb-f">
+                <label>Oy</label>
+                <div class="yb-month" style="padding:2px 4px"><button type="button" wire:click="ybChangeMonth(-1)">‹</button><span style="min-width:100px">{{ $monthLabel }}</span><button type="button" wire:click="ybChangeMonth(1)">›</button></div>
+            </div>
+            <div class="yb-f">
+                <label>Bo'lim</label>
+                <select wire:model.live="omRole"><option value="">Barchasi</option>@foreach(\App\Filament\Pages\YangiBux::ROLE_LABELS as $rk => $rl)<option value="{{ $rk }}">{{ $rl }}</option>@endforeach</select>
+            </div>
+            <div class="yb-f">
+                <label>Lavozim</label>
+                <select wire:model.live="omPosition"><option value="">Barchasi</option>@foreach($S['positions'] as $pos)<option value="{{ $pos }}">{{ $pos }}</option>@endforeach</select>
+            </div>
+            <div class="yb-f">
+                <label>Holat</label>
+                <select wire:model.live="omStatus"><option value="">Barchasi</option><option value="tolangan">To'langan</option><option value="qisman">Qisman</option><option value="tolanmagan">To'lanmagan</option></select>
+            </div>
+            <div class="yb-f" style="flex:1;min-width:160px"><label>&nbsp;</label><input type="search" wire:model.live.debounce.400ms="omSearch" placeholder="🔍 Xodimni qidirish..."></div>
+            <button type="button" class="yb-btn" style="background:#16a34a;padding:10px 16px" wire:click="openPay">＋ Maosh to'lash</button>
+            <button type="button" class="yb-b2" style="flex:none;padding:9px 14px" wire:click="exportSalary">⬇ Hisobot (Excel)</button>
+        </div>
+
+        <div class="yb-tbl-wrap" style="margin-top:14px">
+        <table class="yb-tbl">
+            <thead><tr><th>#</th><th>Xodim</th><th>Lavozim</th><th>Bo'lim</th><th class="num">Asosiy maosh</th><th class="num">Qo'shimcha</th><th class="num">Jami summa</th><th class="num">To'langan</th><th>To'lov holati</th><th>To'lov sanasi</th><th style="text-align:right">Amallar</th></tr></thead>
+            <tbody>
+            @forelse($S['rows'] as $i => $r)
+                <tr>
+                    <td>{{ $i + 1 }}</td>
+                    <td style="white-space:nowrap"><span class="yb-av" style="display:inline-flex;width:26px;height:26px;font-size:11px;margin-right:6px;vertical-align:middle;background:{{ $avColors[$r['user']->id % 7] }}">{{ $initials($r['user']->name) }}</span><b>{{ $r['user']->name }}</b></td>
+                    <td>{{ $r['position'] }}</td>
+                    <td>{{ $r['role'] }}</td>
+                    <td class="num" style="font-weight:500">{{ $r['base'] > 0 ? $fmt($r['base']) : '—' }}</td>
+                    <td class="num" style="font-weight:500" title="Loyihalardan komissiya">{{ $r['extra'] > 0 ? $fmt($r['extra']) : '—' }}</td>
+                    <td class="num">{{ $fmt($r['total']) }}</td>
+                    <td class="num yb-g" style="font-weight:500">{{ $r['paid'] > 0 ? $fmt($r['paid']) : '—' }}</td>
+                    <td style="white-space:nowrap">
+                        @switch($r['status'])
+                            @case('tolangan') <span class="yb-pill ok">✔ To'langan</span> @break
+                            @case('qisman') <span class="yb-pill" style="background:#fef3c7;color:#b45309">◐ Qisman</span><span class="yb-sub">qoldiq {{ $fmt($r['remaining']) }}</span> @break
+                            @case('tolanmagan') <span class="yb-pill c">⏰ To'lanmagan</span> @break
+                            @default <span class="yb-sub">hisoblanmagan</span>
+                        @endswitch
+                    </td>
+                    <td>{{ $r['paidAt']?->format('d.m.Y') ?? '—' }}</td>
+                    <td style="text-align:right;white-space:nowrap">
+                        @if($r['remaining'] > 0)
+                            <button type="button" class="yb-act" title="Maosh to'lash" wire:click="openPay({{ $r['user']->id }})">💵</button>
+                        @endif
+                        <button type="button" class="yb-act" title="Shu oydagi to'lovlar (tahrirlash/o'chirish)" wire:click="$set('historyUserId', {{ $r['user']->id }})" @disabled(!$r['payCount'])>⋯</button>
+                    </td>
+                </tr>
+            @empty
+                <tr><td colspan="11" class="yb-empty">Xodim topilmadi</td></tr>
+            @endforelse
+            </tbody>
+            @if($S['rows']->isNotEmpty())
+                <tfoot><tr style="font-weight:800;background:var(--yb-soft)">
+                    <td colspan="4" style="padding:11px 8px">Jami:</td>
+                    <td class="num">{{ $fmt($S['rows']->sum('base')) }}</td>
+                    <td class="num">{{ $fmt($S['rows']->sum('extra')) }}</td>
+                    <td class="num">{{ $fmt($S['rows']->sum('total')) }}</td>
+                    <td class="num yb-g">{{ $fmt($S['rows']->sum('paid')) }}</td>
+                    <td colspan="3" class="yb-r" style="padding-left:8px">qoldiq {{ $fmt($S['rows']->sum('remaining')) }}</td>
+                </tr></tfoot>
+            @endif
+        </table>
+        </div>
+        <div class="yb-sub" style="margin-top:8px">Asosiy maosh = xodim okladi; Qo'shimcha = loyihalardan komissiya. Hisob Oylik hisobotdagi "To'lanishi kerak" bilan bir xil. Berilgan maosh Buxgalteriya xarajatlariga avtomatik yoziladi.</div>
+    </div>
+
+    {{-- Shu oydagi to'lovlar tarixi --}}
+    @if($S['historyUser'])
+        <div class="yb-ov" wire:click.self="$set('historyUserId', null)">
+            <div class="yb-modal">
+                <div class="yb-modal-h" style="background:#dbeafe">{{ $S['historyUser']->name }} — {{ $monthLabel }} to'lovlari <button type="button" wire:click="$set('historyUserId', null)">×</button></div>
+                <div class="yb-modal-b">
+                    @forelse($S['history'] as $h)
+                        <div class="yb-li" style="border-bottom:1px solid var(--yb-bd)">
+                            <div style="min-width:0">{{ $h->paid_at->format('d.m.Y') }} · <b class="yb-g">{{ $fmt($h->amount) }} so'm</b><span class="yb-sub">{{ $h->giver?->name }}@if($h->note) · {{ \Illuminate\Support\Str::limit(preg_replace('/^svc:\d+\|/', '', $h->note), 60) }}@endif</span></div>
+                            <span style="margin-left:auto;white-space:nowrap">
+                                <button type="button" class="yb-act" title="Tahrirlash" wire:click="editPay({{ $h->id }})">✏️</button>
+                                <button type="button" class="yb-act del" title="O'chirish" wire:click="deletePay({{ $h->id }})" wire:confirm="Bu to'lovni o'chirasizmi? Oylik hisobot va Buxgalteriyadan ham o'chadi.">🗑</button>
+                            </span>
+                        </div>
+                    @empty
+                        <div class="yb-empty">To'lov yo'q</div>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+    @endif
 
 @elseif($tab === 'hisobotlar')
     <div class="yb-card">
@@ -543,6 +679,49 @@
                 <div style="display:flex;gap:10px;margin-top:6px">
                     <button type="button" class="yb-b2" wire:click="closeChiqim">Bekor qilish</button>
                     <button type="button" class="yb-b2 red" wire:click="saveChiqim" wire:loading.attr="disabled" wire:target="saveChiqim,chFile">Saqlash</button>
+                </div>
+            </div>
+        </div>
+    </div>
+@endif
+
+{{-- ── Maosh to'lash / tahrirlash ── --}}
+@if($showPayModal)
+    <div class="yb-ov" wire:click.self="$set('showPayModal', false)">
+        <div class="yb-modal" style="max-width:440px">
+            <div class="yb-modal-h" style="background:#dcfce7">{{ $payEditId ? "To'lovni tahrirlash" : "Maosh to'lash — " . $monthLabel }} <button type="button" wire:click="$set('showPayModal', false)">×</button></div>
+            <div class="yb-modal-b">
+                <div class="yb-fld">
+                    <label>Xodim <i>*</i></label>
+                    <select class="yb-in" wire:model.live="payUserId" @disabled($payEditId)>
+                        <option value="">— tanlang —</option>
+                        @foreach($payStaff as $ps)<option value="{{ $ps->id }}">{{ $ps->name }}{{ $ps->position ? ' — ' . $ps->position : '' }}</option>@endforeach
+                    </select>
+                    @error('payUserId')<div class="yb-err">{{ $message }}</div>@enderror
+                    @if(!$payEditId && $payUserId)
+                        <div class="yb-sub" style="margin-top:4px">{{ $monthLabel }} uchun qoldiq: <b class="{{ $payRemaining > 0 ? 'yb-r' : 'yb-g' }}">{{ $fmt($payRemaining) }} so'm</b></div>
+                    @endif
+                </div>
+                <div class="yb-grid2">
+                    <div class="yb-fld">
+                        <label>Summa (so'm) <i>*</i></label>
+                        <input type="text" inputmode="numeric" class="yb-in" wire:model="payAmount"
+                               x-data x-on:input="let v=$el.value.replace(/\D/g,'');$el.value=v.replace(/\B(?=(\d{3})+(?!\d))/g,' ')">
+                        @error('payAmount')<div class="yb-err">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="yb-fld">
+                        <label>To'lov sanasi <i>*</i></label>
+                        <input type="date" class="yb-in" wire:model="payDate">
+                    </div>
+                </div>
+                <div class="yb-fld">
+                    <label>Izoh</label>
+                    <input type="text" class="yb-in" wire:model="payNote" placeholder="Masalan: avans">
+                </div>
+                <div class="yb-sub" style="margin-bottom:10px">Qoldiqdan kam summa — "qisman avans" deb yoziladi. Oylik hisobot va Buxgalteriya xarajatlariga ham tushadi.</div>
+                <div style="display:flex;gap:10px">
+                    <button type="button" class="yb-b2" wire:click="$set('showPayModal', false)">Bekor qilish</button>
+                    <button type="button" class="yb-b2" style="background:#16a34a;border-color:#16a34a;color:#fff" wire:click="savePay" wire:loading.attr="disabled">Saqlash</button>
                 </div>
             </div>
         </div>

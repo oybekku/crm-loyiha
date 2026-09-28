@@ -294,19 +294,10 @@ class MonthlyReport extends Page
             'given_by' => auth()->id(),
         ];
 
-        if ($this->salaryPayEditId) {
-            $payment = \App\Models\EmployeeSalaryPayment::find($this->salaryPayEditId);
-            $payment?->update($data);
-        } else {
-            $payment = \App\Models\EmployeeSalaryPayment::create($data);
-        }
-
         // Qoldiqdan kamroq summa kiritilgan bo'lsa — "qisman avans", aks
         // holda "to'liq oylik" deb Buxgalteriyaga yoziladi.
         $isPartial = $this->salaryPayRemaining > 0 && $amount < $this->salaryPayRemaining;
-        if ($payment) {
-            $this->syncSalaryExpense($payment, $isPartial);
-        }
+        \App\Services\SalaryPaymentService::save($data, $this->salaryPayEditId ?: null, $isPartial);
 
         $this->showSalaryPayModal = false;
         Notification::make()->title('Saqlandi! Buxgalteriyaga ham avtomatik yozildi.')->success()->send();
@@ -314,39 +305,13 @@ class MonthlyReport extends Page
 
     public function deleteSalaryPay(int $payId): void
     {
-        \App\Models\Expense::where('salary_payment_id', $payId)->delete();
-        \App\Models\EmployeeSalaryPayment::find($payId)?->delete();
+        \App\Services\SalaryPaymentService::delete($payId);
         Notification::make()->title("O'chirildi! (Buxgalteriyadagi mos xarajat ham o'chirildi)")->warning()->send();
     }
 
-    // Ish haqi to'lovini (EmployeeSalaryPayment) Buxgalteriyaning "Xarajatlar
-    // hisobi" (is_expense_account) belgilangan hisobiga bog'liq xarajat
-    // qatori sifatida yozadi/yangilaydi — to'lov bilan 1:1 bog'langan
-    // (salary_payment_id orqali), shu sabab to'lov tahrirlansa/o'chirilsa
-    // shu qator ham sinxron o'zgaradi. "Xarajatlar hisobi" belgilanmagan
-    // bo'lsa — hech narsa yozilmaydi (jim o'tkazib yuboriladi).
     private function syncSalaryExpense(\App\Models\EmployeeSalaryPayment $payment, bool $isPartial): void
     {
-        $expenseAccountId = \App\Models\FinancialAccount::where('is_expense_account', true)->value('id');
-        if (!$expenseAccountId) return;
-
-        $monthLabel = \Carbon\Carbon::createFromFormat('Y-m', $payment->month)->translatedFormat('F Y');
-        $kind    = $isPartial ? "qisman avans" : 'oylik';
-        $userName = $payment->user?->name ?? $payment->user_id;
-        $comment = "{$userName} — {$monthLabel} oyi uchun {$kind} berildi";
-
-        \App\Models\Expense::updateOrCreate(
-            ['salary_payment_id' => $payment->id],
-            [
-                'account_id'   => $expenseAccountId,
-                'user_id'      => $payment->user_id,
-                'month'        => $payment->month,
-                'amount'       => $payment->amount,
-                'comment'      => $comment,
-                'expense_date' => $payment->paid_at,
-                'created_by'   => auth()->id(),
-            ]
-        );
+        \App\Services\SalaryPaymentService::syncExpense($payment, $isPartial);
     }
 
     public function closeSalaryPayModal(): void

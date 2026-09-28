@@ -70,6 +70,22 @@ class YangiBux extends Page
     public $chFile = null;
     public ?string $chExistingFile  = null;
 
+    // ── Oylik maosh tabi ──
+    public string $omRole     = '';   // bo'lim = tizim roli
+    public string $omPosition = '';   // lavozim
+    public string $omStatus   = '';   // tolangan | qisman | tolanmagan
+    public string $omSearch   = '';
+
+    public bool   $showPayModal = false;
+    public ?int   $payUserId    = null;
+    public string $payAmount    = '';
+    public string $payDate      = '';
+    public string $payNote      = '';
+    public ?int   $payEditId    = null;
+    public float  $payRemaining = 0;
+
+    public ?int $historyUserId = null;
+
     public const TABS = [
         'asosiy'    => "Asosiy ko'rinish",
         'kirim'     => 'Kirim-chiqim',
@@ -237,6 +253,143 @@ class YangiBux extends Page
             Notification::make()->title("Chiqim qo'shildi")->success()->send();
         }
         $this->closeChiqim();
+    }
+
+    // ── Oylik maosh ─────────────────────────────────────────────────────────
+    private function ym(): string
+    {
+        return sprintf('%04d-%02d', $this->ybYear, $this->ybMonth);
+    }
+
+    /** Tanlangan oy uchun xodim qoldig'i (Oylik hisobotdagi yearGrid bilan bir xil). */
+    private function remainingFor(int $userId): float
+    {
+        $row = collect(EmployeePayableService::yearGrid($this->ybYear))->firstWhere('user.id', $userId);
+        return (float) ($row['months'][$this->ybMonth]['remaining'] ?? 0);
+    }
+
+    public function openPay(?int $userId = null): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+        $this->resetValidation();
+        $this->payEditId    = null;
+        $this->payUserId    = $userId;
+        $this->payRemaining = $userId ? $this->remainingFor($userId) : 0;
+        $this->payAmount    = $this->payRemaining > 0 ? number_format($this->payRemaining, 0, '.', ' ') : '';
+        $this->payDate      = now()->format('Y-m-d');
+        $this->payNote      = '';
+        $this->showPayModal = true;
+    }
+
+    // Modalda xodim tanlanganda — qoldiqni avtomatik qo'yish
+    public function updatedPayUserId($value): void
+    {
+        if ($this->payEditId) return;
+        $this->payRemaining = $value ? $this->remainingFor((int) $value) : 0;
+        $this->payAmount    = $this->payRemaining > 0 ? number_format($this->payRemaining, 0, '.', ' ') : '';
+    }
+
+    public function editPay(int $paymentId): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+        $p = EmployeeSalaryPayment::find($paymentId);
+        if (!$p) return;
+        $this->resetValidation();
+        $this->payEditId    = $p->id;
+        $this->payUserId    = $p->user_id;
+        $this->payAmount    = number_format((float) $p->amount, 0, '.', ' ');
+        $this->payDate      = $p->paid_at->format('Y-m-d');
+        $this->payNote      = (string) $p->note;
+        $this->payRemaining = 0;
+        $this->historyUserId = null;
+        $this->showPayModal = true;
+    }
+
+    public function savePay(): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+        $this->payAmount = str_replace([' ', ','], '', $this->payAmount);
+        $this->validate([
+            'payUserId' => 'required|exists:users,id',
+            'payAmount' => 'required|numeric|min:1',
+            'payDate'   => 'required|date',
+        ], ['payUserId.required' => 'Xodimni tanlang', 'payAmount.required' => 'Summani kiriting']);
+
+        $amount = (float) $this->payAmount;
+        $month  = $this->payEditId ? (EmployeeSalaryPayment::find($this->payEditId)?->month ?? $this->ym()) : $this->ym();
+        \App\Services\SalaryPaymentService::save([
+            'user_id'  => $this->payUserId,
+            'month'    => $month,
+            'amount'   => $amount,
+            'paid_at'  => $this->payDate,
+            'note'     => trim($this->payNote) ?: null,
+            'given_by' => auth()->id(),
+        ], $this->payEditId, $this->payRemaining > 0 && $amount < $this->payRemaining);
+
+        $this->showPayModal = false;
+        Notification::make()->title('Maosh saqlandi')->body("Oylik hisobot va Buxgalteriyaga ham yozildi.")->success()->send();
+    }
+
+    public function deletePay(int $paymentId): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+        \App\Services\SalaryPaymentService::delete($paymentId);
+        Notification::make()->title("To'lov o'chirildi")->warning()->send();
+    }
+
+    public function exportSalary()
+    {
+        if (!auth()->user()?->isAdmin()) return null;
+        $rows = $this->salaryRows(EmployeePayableService::yearGrid($this->ybYear));
+        $data = $rows->map(fn ($r, $i) => [
+            $i + 1, $r['user']->name, $r['position'], $r['role'], $r['base'], $r['extra'], $r['total'], $r['paid'],
+            $r['remaining'], $r['statusLabel'], $r['paidAt']?->format('d.m.Y') ?? '',
+        ])->all();
+        $data[] = ['', 'Jami', '', '', $rows->sum('base'), $rows->sum('extra'), $rows->sum('total'), $rows->sum('paid'), $rows->sum('remaining'), '', ''];
+
+        $export = new class($data) implements \Maatwebsite\Excel\Concerns\FromArray, \Maatwebsite\Excel\Concerns\WithHeadings, \Maatwebsite\Excel\Concerns\ShouldAutoSize {
+            public function __construct(private array $rows) {}
+            public function array(): array { return $this->rows; }
+            public function headings(): array
+            {
+                return ['#', 'Xodim', 'Lavozim', "Bo'lim", 'Asosiy maosh', "Qo'shimcha (komissiya)", 'Jami summa', "To'langan", 'Qoldiq', "To'lov holati", "To'lov sanasi"];
+            }
+        };
+
+        return \Maatwebsite\Excel\Facades\Excel::download($export, 'oylik-maosh-' . $this->ym() . '.xlsx');
+    }
+
+    public const ROLE_LABELS = ['admin' => 'Rahbariyat', 'menejer' => 'Menejerlar', 'bajaruvchi' => 'Ijrochilar', 'hisobchi' => 'Buxgalteriya'];
+
+    /** Tanlangan oy bo'yicha har bir xodim qatori (filtrlarsiz). */
+    private function salaryRows(array $grid): Collection
+    {
+        $ym = $this->ym();
+        $pays = EmployeeSalaryPayment::where('month', $ym)->get()->groupBy('user_id');
+
+        return collect($grid)->map(function ($row) use ($pays) {
+            $u    = $row['user'];
+            $cell = $row['months'][$this->ybMonth] ?? ['calc' => 0, 'paid' => 0, 'remaining' => 0];
+            $base = (float) ($u->base_salary ?? 0);
+            $total = (float) $cell['calc'];
+            $paid  = (float) $cell['paid'];
+            $status = $total <= 0 && $paid <= 0 ? 'yoq' : ($paid >= $total ? 'tolangan' : ($paid > 0 ? 'qisman' : 'tolanmagan'));
+            return [
+                'user'        => $u,
+                'position'    => $u->position ?: '—',
+                'role'        => self::ROLE_LABELS[$u->role] ?? ucfirst((string) $u->role),
+                'roleKey'     => $u->role,
+                'base'        => $base,
+                'extra'       => max(0, $total - $base),
+                'total'       => $total,
+                'paid'        => $paid,
+                'remaining'   => max(0, $total - $paid),
+                'status'      => $status,
+                'statusLabel' => ['tolangan' => "To'langan", 'qisman' => 'Qisman', 'tolanmagan' => "To'lanmagan", 'yoq' => 'Hisoblanmagan'][$status],
+                'paidAt'      => $pays->get($u->id)?->max('paid_at'),
+                'payCount'    => $pays->get($u->id)?->count() ?? 0,
+            ];
+        })->values();
     }
 
     public function deleteChiqim(int $id): void
@@ -419,6 +572,73 @@ class YangiBux extends Page
         })->values();
         $staffOwedPositive = $staffOwed->filter(fn ($r) => $r['owed'] > 0)->sortByDesc('owed')->values();
 
+        // ── Oylik maosh tabi ──
+        $salary = null;
+        if ($this->tab === 'oylik') {
+            $all = $this->salaryRows($grid);
+            // Hisoblanmagan (oklad ham, komissiya ham yo'q) xodimlar KPI'ga kirmaydi
+            $counted = $all->where('status', '!=', 'yoq');
+            $fund    = (float) $counted->sum('total');
+            $paidSum = (float) $counted->sum(fn ($r) => min($r['paid'], $r['total']));
+
+            $rows = $all;
+            if ($this->omRole !== '')     $rows = $rows->where('roleKey', $this->omRole);
+            if ($this->omPosition !== '') $rows = $rows->where('position', $this->omPosition);
+            if ($this->omStatus !== '')   $rows = $rows->where('status', $this->omStatus);
+            if (trim($this->omSearch) !== '') {
+                $n = mb_strtolower(trim($this->omSearch));
+                $rows = $rows->filter(fn ($r) => str_contains(mb_strtolower($r['user']->name . ' ' . $r['position']), $n));
+            }
+
+            // So'nggi 6 oy (yil chegarasidan o'tsa — o'tgan yil gridi ham)
+            $grids = [$year => $grid];
+            $six = [];
+            $uzMonths = ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentabr', 'Oktabr', 'Noyabr', 'Dekabr'];
+            for ($k = 5; $k >= 0; $k--) {
+                $d = Carbon::create($year, $month, 1)->subMonths($k);
+                $grids[$d->year] ??= EmployeePayableService::yearGrid($d->year);
+                $calc = $pd = 0.0;
+                foreach ($grids[$d->year] as $r) {
+                    $c = $r['months'][$d->month];
+                    $calc += $c['calc'];
+                    $pd   += min($c['paid'], $c['calc']);
+                }
+                $six[] = ['label' => $uzMonths[$d->month - 1], 'paid' => $pd, 'unpaid' => max(0, $calc - $pd), 'cur' => $k === 0];
+            }
+
+            // Maosh fondi lavozimlar bo'yicha
+            $byPos = $counted->groupBy('position')->map(fn ($g) => (float) $g->sum('total'))->filter()->sortDesc();
+            $posDonut = [];
+            $i = 0;
+            foreach ($byPos as $pos => $sum) {
+                $posDonut[] = ['label' => $pos, 'value' => $sum, 'pct' => $fund > 0 ? $sum / $fund * 100 : 0, 'color' => ['#3b82f6', '#22c55e', '#f59e0b', '#a78bfa', '#ec4899', '#14b8a6'][$i++ % 6]];
+            }
+
+            $lastPay = EmployeeSalaryPayment::with('user')->orderByDesc('paid_at')->orderByDesc('id')->first();
+
+            $salary = [
+                'rows'       => $rows->values(),
+                'staffCount' => $all->count(),
+                'roleCount'  => $all->pluck('roleKey')->unique()->count(),
+                'fund'       => $fund,
+                'paid'       => $paidSum,
+                'unpaid'     => max(0, $fund - $paidSum),
+                'paidPct'    => $fund > 0 ? round($paidSum / $fund * 100) : 0,
+                'paidPeople' => $counted->where('status', 'tolangan')->count(),
+                'unpaidPeople' => $counted->whereIn('status', ['qisman', 'tolanmagan'])->count(),
+                'countedPeople' => $counted->count(),
+                'six'        => $six,
+                'sixMax'     => max(1, ...array_map(fn ($s) => $s['paid'] + $s['unpaid'], $six)),
+                'posDonut'   => $posDonut,
+                'lastPay'    => $lastPay,
+                'positions'  => $all->pluck('position')->unique()->sort()->values(),
+                'history'    => $this->historyUserId
+                    ? EmployeeSalaryPayment::with('giver')->where('user_id', $this->historyUserId)->where('month', $this->ym())->orderByDesc('paid_at')->get()
+                    : collect(),
+                'historyUser'=> $this->historyUserId ? User::find($this->historyUserId) : null,
+            ];
+        }
+
         // 12 oylik grafik (tanlangan yil)
         $incomeByMonth = array_fill(1, 12, 0.0);
         Payment::whereYear('payment_date', $year)->get(['amount', 'payment_date'])
@@ -536,6 +756,8 @@ class YangiBux extends Page
             'allAccounts'  => FinancialAccount::orderBy('type')->orderBy('name')->get(['id', 'name', 'type']),
             'staffUsers'   => User::where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'methodOptions'=> Payment::methodOptions(),
+            'salary'       => $salary,
+            'payStaff'     => $this->showPayModal ? User::where('is_active', true)->orderBy('name')->get(['id', 'name', 'position']) : collect(),
             'yearIncome'   => $yearIncome,
             'yearExpense'  => $yearExpense,
             'salaryPayments' => EmployeeSalaryPayment::with(['user', 'giver'])
