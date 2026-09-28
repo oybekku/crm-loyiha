@@ -8,6 +8,7 @@ class Expense extends Model
 {
     protected $fillable = [
         'account_id', 'user_id', 'salary_payment_id', 'month', 'amount', 'comment', 'expense_date', 'created_by',
+        'project_id', 'responsible_id', 'note', 'attachment',
     ];
 
     protected $casts = [
@@ -28,6 +29,16 @@ class Expense extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function project()
+    {
+        return $this->belongsTo(Project::class, 'project_id');
+    }
+
+    public function responsible()
+    {
+        return $this->belongsTo(User::class, 'responsible_id');
     }
 
     public function salaryPayment()

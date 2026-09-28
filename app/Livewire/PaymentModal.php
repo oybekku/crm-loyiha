@@ -83,6 +83,14 @@ class PaymentModal extends Component
         $this->openPaymentModal($id, $fromQueue);
     }
 
+    // "Yangi bux" → Kirim-chiqim jadvalidagi kirim qatorini tahrirlash —
+    // o'sha PIN/Telegram tasdiqli tahrirlash oynasi ochiladi.
+    #[On('kb-edit-payment')]
+    public function kbEditPayment(int $id): void
+    {
+        $this->openEditPayment($id);
+    }
+
     public function openPaymentModal(int $projectId, bool $fromQueue = false): void
     {
         $this->paymentProjectId = $projectId;

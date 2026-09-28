@@ -3,6 +3,8 @@
     $fmt = fn ($v) => number_format((float) $v, 0, '.', ' ');
     $initials = fn ($s) => mb_strtoupper(mb_substr(trim((string) $s), 0, 1)) ?: '?';
     $avColors = ['#6366f1', '#8b5cf6', '#0ea5e9', '#f97316', '#ef4444', '#10b981', '#64748b'];
+    $curYear  = $this->ybYear;
+    $curMonth = $this->ybMonth;
 @endphp
 <div class="yb">
 <style>
@@ -104,6 +106,38 @@
 .yb-soon{text-align:center;padding:50px 20px;color:var(--yb-mu)}
 .yb-soon div{font-size:40px;margin-bottom:10px}
 .yb-soon b{display:block;color:var(--yb-tx);font-size:16px;margin-bottom:6px}
+
+/* Kirim-chiqim: filtrlar, modallar */
+.yb-fbar{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.yb-f{display:flex;flex-direction:column;gap:4px}
+.yb-f label{font-size:11.5px;color:var(--yb-mu);font-weight:600}
+.yb-f input,.yb-f select,.yb-in{border:1px solid var(--yb-bd);background:var(--yb-card);color:var(--yb-tx);border-radius:8px;padding:8px 10px;font-size:12.5px;outline:none;width:100%}
+.yb-f input:focus,.yb-f select:focus,.yb-in:focus{border-color:#93c5fd;box-shadow:0 0 0 3px #dbeafe}
+.yb-f select{min-width:120px}
+.yb-ov{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:60;display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto}
+.yb-modal{background:var(--yb-card);color:var(--yb-tx);border-radius:14px;width:100%;max-width:520px;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden}
+.yb-modal-h{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;font-weight:800;font-size:15px;color:#111827}
+.dark .yb-modal-h{filter:brightness(.9)}
+.yb-modal-h button{border:none;background:none;font-size:22px;cursor:pointer;color:#6b7280;line-height:1}
+.yb-modal-b{padding:16px 18px}
+.yb-fld{margin-bottom:12px;position:relative}
+.yb-fld>label{display:block;font-size:12px;font-weight:600;color:var(--yb-mu);margin-bottom:4px}
+.yb-fld>label i{color:#dc2626;font-style:normal}
+.yb-grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:520px){.yb-grid2{grid-template-columns:1fr}}
+.yb-err{color:#dc2626;font-size:11px;margin-top:3px}
+.yb-pick{display:flex;justify-content:space-between;gap:10px;padding:9px 10px;border-radius:8px;cursor:pointer;font-size:12.5px}
+.yb-pick:hover{background:var(--yb-soft)}
+.yb-dd{position:absolute;left:0;right:0;top:100%;z-index:5;background:var(--yb-card);border:1px solid var(--yb-bd);border-radius:8px;box-shadow:0 8px 20px rgba(0,0,0,.12);max-height:220px;overflow:auto}
+.yb-upl{display:inline-flex;align-items:center;gap:6px;border:1px dashed var(--yb-bd);border-radius:8px;padding:8px 14px;font-size:12.5px;cursor:pointer;background:var(--yb-soft)}
+.yb-file{display:flex;gap:8px;align-items:center;font-size:12.5px}
+.yb-file a:last-child{color:#dc2626;font-weight:700}
+.yb-b2{flex:1;padding:11px;border-radius:9px;border:1px solid var(--yb-bd);background:var(--yb-card);color:var(--yb-tx);font-weight:700;font-size:13px;cursor:pointer}
+.yb-b2.red{background:#dc2626;border-color:#dc2626;color:#fff}
+.yb-b2.red:hover{background:#b91c1c}
+.yb-act{width:28px;height:28px;border-radius:7px;border:1px solid var(--yb-bd);background:var(--yb-card);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:12px;color:var(--yb-mu)}
+.yb-act:hover{background:var(--yb-soft);color:var(--yb-tx)}
+.yb-act.del:hover{background:#fee2e2;color:#dc2626}
 </style>
 
 @include('filament.partials.report-tabs')
@@ -164,66 +198,9 @@
     </div>
 
     <div class="yb-row yb-row-3">
-        {{-- ── Tushum va xarajatlar grafigi ── --}}
-        <div class="yb-card">
-            <div class="yb-h">
-                <span>Tushum va xarajatlar grafigi ({{ $this->ybYear }})</span>
-                <div class="yb-legend">
-                    <span><i style="background:#22c55e"></i>Tushum</span>
-                    <span><i style="background:#ef4444"></i>Xarajat</span>
-                    <span><i style="background:#3b82f6"></i>Sof foyda</span>
-                </div>
-            </div>
-            <div class="yb-chart">
-                <div class="yb-grid">
-                    @foreach([1, .75, .5, .25, 0] as $g)
-                        <div><span>{{ $chartMax * $g >= 1e6 ? rtrim(rtrim(number_format($chartMax * $g / 1e6, 1, '.', ''), '0'), '.') . 'M' : ($chartMax * $g >= 1e3 ? round($chartMax * $g / 1e3) . 'K' : 0) }}</span></div>
-                    @endforeach
-                </div>
-                @foreach($chart as $c)
-                    <div wire:click="ybSetMonth({{ $c['m'] }})" style="cursor:pointer" class="yb-col {{ $c['m'] === $this->ybMonth ? 'cur' : '' }}"
-                         title="{{ $c['label'] }}: tushum {{ $fmt($c['income']) }}, xarajat {{ $fmt($c['expense']) }}, foyda {{ $fmt($c['profit']) }}">
-                        <div class="yb-bars">
-                            <div class="yb-bar" style="background:#22c55e;height:{{ $c['income'] / $chartMax * 100 }}%"></div>
-                            <div class="yb-bar" style="background:#ef4444;height:{{ $c['expense'] / $chartMax * 100 }}%"></div>
-                            <div class="yb-bar" style="background:#3b82f6;height:{{ max(0, $c['profit']) / $chartMax * 100 }}%"></div>
-                        </div>
-                        <div class="yb-col-l">{{ $c['label'] }}</div>
-                    </div>
-                @endforeach
-            </div>
-        </div>
+        @include('filament.pages.partials.yangi-bux-chart', ['chartTitle' => 'Tushum va xarajatlar grafigi', 'showProfit' => true])
 
-        {{-- ── Tushum manbalari (xizmat turlari) ── --}}
-        <div class="yb-card">
-            <div class="yb-h"><span>Tushum manbalari (xizmatlar bo'yicha)</span></div>
-            @if($donutTotal > 0)
-                <div class="yb-donut-wrap">
-                    <div class="yb-donut">
-                        <svg viewBox="0 0 42 42" width="150" height="150" style="transform:rotate(-90deg)">
-                            <circle cx="21" cy="21" r="15.915" fill="none" stroke="var(--yb-soft)" stroke-width="6"/>
-                            @php $off = 0; @endphp
-                            @foreach($donut as $d)
-                                <circle cx="21" cy="21" r="15.915" fill="none" stroke="{{ $d['color'] }}" stroke-width="6"
-                                        stroke-dasharray="{{ $d['pct'] }} {{ 100 - $d['pct'] }}" stroke-dashoffset="{{ -$off }}"/>
-                                @php $off += $d['pct']; @endphp
-                            @endforeach
-                        </svg>
-                        <div class="yb-donut-c">
-                            <b>{{ $donutTotal >= 1e6 ? round($donutTotal / 1e6, 1) . 'M' : $fmt($donutTotal) }}</b>
-                            <span>so'm</span>
-                        </div>
-                    </div>
-                    <div class="yb-dl">
-                        @foreach($donut as $d)
-                            <div><i style="background:{{ $d['color'] }}"></i>{{ $d['label'] }}<b>{{ round($d['pct']) }}%</b></div>
-                        @endforeach
-                    </div>
-                </div>
-            @else
-                <div class="yb-empty">Bu oyda tushum yo'q</div>
-            @endif
-        </div>
+        @include('filament.pages.partials.yangi-bux-donut', ['donutTitle' => "Tushum manbalari (xizmatlar bo'yicha)"])
 
         {{-- ── Hisoblar qoldig'i ── --}}
         <div class="yb-card">
@@ -243,7 +220,7 @@
                 <span>So'nggi operatsiyalar</span>
                 <div style="display:flex;gap:8px">
                     <button type="button" class="yb-link" wire:click="setTab('kirim')">Barchasini ko'rish →</button>
-                    <a href="{{ \App\Filament\Pages\Buxgalteriya::getUrl() }}" class="yb-btn">＋ Yangi operatsiya</a>
+                    <button type="button" wire:click="setTab('kirim')" class="yb-btn">＋ Yangi operatsiya</button>
                 </div>
             </div>
             @include('filament.pages.partials.yangi-bux-ops', ['rows' => $ops->take(10)])
@@ -278,18 +255,85 @@
     </div>
 
 @elseif($tab === 'kirim')
+    <div class="yb-kpis" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+        @php
+            $kpis3 = [
+                ['l' => 'Kirimlar (jami)',  'v' => $income,  'ic' => '↓', 'bg' => '#dcfce7', 'c' => '#16a34a', 'pct' => $incomePct,  'good' => 1],
+                ['l' => 'Chiqimlar (jami)', 'v' => $expense, 'ic' => '↗', 'bg' => '#fee2e2', 'c' => '#dc2626', 'pct' => $expensePct, 'good' => -1],
+                ['l' => 'Sof foyda',        'v' => $profit,  'ic' => '◔', 'bg' => '#dbeafe', 'c' => '#2563eb', 'pct' => $profitPct,  'good' => 1],
+            ];
+        @endphp
+        @foreach($kpis3 as $k)
+            <div class="yb-card yb-kpi">
+                <div class="yb-kpi-ic" style="background:{{ $k['bg'] }};color:{{ $k['c'] }};font-weight:800">{{ $k['ic'] }}</div>
+                <div style="min-width:0">
+                    <div class="yb-kpi-l">{{ $k['l'] }} · {{ $monthLabel }}</div>
+                    <div class="yb-kpi-v">{{ $fmt($k['v']) }} so'm</div>
+                    <div class="yb-kpi-s">
+                        @if($k['pct'] === null) o'tgan oyda ma'lumot yo'q
+                        @else <span class="{{ ($k['pct'] * $k['good']) >= 0 ? 'yb-up' : 'yb-down' }}">{{ $k['pct'] > 0 ? '+' : '' }}{{ $k['pct'] }}%</span> o'tgan oyga nisbatan
+                        @endif
+                    </div>
+                </div>
+            </div>
+        @endforeach
+    </div>
+
+    <div class="yb-row" style="grid-template-columns:1.7fr 1fr">
+        @include('filament.pages.partials.yangi-bux-chart', ['chartTitle' => 'Kirim va chiqimlar dinamikasi', 'showProfit' => false])
+        @include('filament.pages.partials.yangi-bux-donut', ['donutTitle' => "To'lovlar manbalari (xizmatlar bo'yicha)"])
+    </div>
+
     <div class="yb-card">
-        <div class="yb-h">
-            <span>Kirim-chiqim — {{ $monthLabel }}
-                <span class="yb-sub">Kirim: <b class="yb-g">{{ $fmt($income) }}</b> · Chiqim: <b class="yb-r">{{ $fmt($expense) }}</b> · Farq: <b>{{ $fmt($profit) }}</b> so'm</span>
-            </span>
-            <div class="yb-filters">
-                <button type="button" wire:click="$set('opFilter','all')" class="{{ $opFilter === 'all' ? 'on' : '' }}">Barchasi</button>
-                <button type="button" wire:click="$set('opFilter','kirim')" class="{{ $opFilter === 'kirim' ? 'on' : '' }}">Kirim</button>
-                <button type="button" wire:click="$set('opFilter','chiqim')" class="{{ $opFilter === 'chiqim' ? 'on' : '' }}">Chiqim</button>
+        {{-- Filtrlar --}}
+        <div class="yb-fbar">
+            <div class="yb-f">
+                <label>Sana oralig'i</label>
+                <div style="display:flex;gap:4px;align-items:center">
+                    <input type="date" wire:model.live="opFrom" value="{{ $opFrom }}">
+                    <span style="color:var(--yb-mu)">—</span>
+                    <input type="date" wire:model.live="opTo" value="{{ $opTo }}">
+                </div>
+            </div>
+            <div class="yb-f">
+                <label>Tur</label>
+                <select wire:model.live="opFilter"><option value="all">Barchasi</option><option value="kirim">Kirim</option><option value="chiqim">Chiqim</option></select>
+            </div>
+            <div class="yb-f">
+                <label>To'lov turi</label>
+                <select wire:model.live="opMethod"><option value="">Barchasi</option>@foreach($methodOptions as $mk => $ml)<option value="{{ $mk }}">{{ $ml }}</option>@endforeach</select>
+            </div>
+            <div class="yb-f">
+                <label>Loyiha / Mijoz</label>
+                <input type="text" wire:model.live.debounce.400ms="opProject" placeholder="Ism yoki №">
+            </div>
+            <div class="yb-f">
+                <label>Mas'ul</label>
+                <select wire:model.live="opUser"><option value="">Barchasi</option>@foreach($staffUsers as $su)<option value="{{ $su->id }}">{{ $su->name }}</option>@endforeach</select>
+            </div>
+            <div class="yb-f" style="flex:1;min-width:160px">
+                <label>&nbsp;</label>
+                <input type="search" wire:model.live.debounce.400ms="opSearch" placeholder="🔍 Qidirish...">
             </div>
         </div>
-        @include('filament.pages.partials.yangi-bux-ops', ['rows' => $opFilter === 'all' ? $ops : $ops->where('type', $opFilter)->values()])
+
+        <div class="yb-h" style="margin-top:14px">
+            <span>
+                @if($opFrom || $opTo) {{ $opFrom ? \Carbon\Carbon::parse($opFrom)->format('d.m.Y') : '…' }} — {{ $opTo ? \Carbon\Carbon::parse($opTo)->format('d.m.Y') : '…' }} @else {{ $monthLabel }} @endif
+                <span class="yb-sub">{{ $opsFiltered->count() }} ta operatsiya ·
+                    Kirim: <b class="yb-g">{{ $fmt($opsFiltered->where('type', 'kirim')->sum('amount')) }}</b> ·
+                    Chiqim: <b class="yb-r">{{ $fmt($opsFiltered->where('type', 'chiqim')->sum('amount')) }}</b> so'm
+                    @if($opFrom || $opTo || $opFilter !== 'all' || $opMethod || $opProject || $opUser || $opSearch)
+                        · <a href="#" wire:click.prevent="opResetFilters" style="color:#2563eb">filtrlarni tozalash</a>
+                    @endif
+                </span>
+            </span>
+            <div style="display:flex;gap:8px">
+                <button type="button" class="yb-btn" style="background:#16a34a" wire:click="openKirim">＋ Kirim qo'shish</button>
+                <button type="button" class="yb-btn" style="background:#dc2626" wire:click="openChiqim">＋ Chiqim qo'shish</button>
+            </div>
+        </div>
+        @include('filament.pages.partials.yangi-bux-ops', ['rows' => $opsFiltered, 'actions' => true])
     </div>
 
 @elseif($tab === 'qarzlar')
@@ -393,5 +437,136 @@
     </div>
 @endif
 </div>
+
+{{-- ── Kirim qo'shish: loyiha tanlash ── --}}
+@if($showKirimPicker)
+    <div class="yb-ov" wire:click.self="$set('showKirimPicker', false)">
+        <div class="yb-modal">
+            <div class="yb-modal-h" style="background:#dcfce7">Kirim qo'shish — loyihani tanlang <button type="button" wire:click="$set('showKirimPicker', false)">×</button></div>
+            <div class="yb-modal-b">
+                <input type="search" class="yb-in" wire:model.live.debounce.300ms="kirimSearch" placeholder="Mijoz ismi, №, manzil yoki telefon" autofocus>
+                <div style="margin-top:10px;max-height:360px;overflow:auto">
+                    @forelse($kirimProjects as $kp)
+                        <div class="yb-pick" wire:click="pickKirimProject({{ $kp->id }})">
+                            <div style="min-width:0"><b>№{{ $kp->seq_no }} · {{ $kp->owner_name ?: '—' }}</b><span class="yb-sub">{{ \Illuminate\Support\Str::limit($kp->address ?: $kp->title, 50) }}</span></div>
+                            <span class="yb-sub" style="text-align:right;white-space:nowrap">
+                                @php $dbt = max(0, $kp->total_price - $kp->paid_amount); @endphp
+                                @if($dbt > 0) <b class="yb-r">qarz {{ $fmt($dbt) }}</b> @else <span class="yb-g">to'langan</span> @endif
+                            </span>
+                        </div>
+                    @empty
+                        <div class="yb-empty">Topilmadi</div>
+                    @endforelse
+                </div>
+                <div class="yb-sub" style="margin-top:10px">Loyiha tanlangach, Kanban'dagi o'sha to'lov oynasi ochiladi — komissiya, chek va loyiha qarzi avtomatik hisoblanadi.</div>
+            </div>
+        </div>
+    </div>
+@endif
+
+{{-- ── Chiqim qo'shish / tahrirlash ── --}}
+@if($showChiqimModal)
+    <div class="yb-ov" wire:click.self="closeChiqim">
+        <div class="yb-modal">
+            <div class="yb-modal-h" style="background:#fee2e2">{{ $chiqimId ? 'Chiqimni tahrirlash' : "Chiqim qo'shish" }} <button type="button" wire:click="closeChiqim">×</button></div>
+            <div class="yb-modal-b">
+                <div class="yb-grid2">
+                    <div class="yb-fld">
+                        <label>Sana <i>*</i></label>
+                        <input type="date" class="yb-in" wire:model="chDate">
+                        @error('chDate')<div class="yb-err">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="yb-fld" style="position:relative">
+                        <label>Loyiha / Mijoz</label>
+                        @if($chProject)
+                            <div class="yb-in" style="display:flex;justify-content:space-between;gap:6px"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">№{{ $chProject->seq_no }} · {{ $chProject->owner_name }}</span><a href="#" wire:click.prevent="$set('chProjectId', null)" style="color:#dc2626">×</a></div>
+                        @else
+                            <input type="search" class="yb-in" wire:model.live.debounce.300ms="chProjectSearch" placeholder="Ixtiyoriy — qidirish">
+                            @if($chProjects->isNotEmpty())
+                                <div class="yb-dd">
+                                    @foreach($chProjects as $cp)
+                                        <div class="yb-pick" wire:click="$set('chProjectId', {{ $cp->id }})"><div>№{{ $cp->seq_no }} · {{ $cp->owner_name }}<span class="yb-sub">{{ \Illuminate\Support\Str::limit($cp->address, 40) }}</span></div></div>
+                                    @endforeach
+                                </div>
+                            @endif
+                        @endif
+                    </div>
+                </div>
+                <div class="yb-fld">
+                    <label>Tavsif <i>*</i></label>
+                    <input type="text" class="yb-in" wire:model="chComment" placeholder="Masalan: Qurilish materiali xarid qilindi">
+                    @error('chComment')<div class="yb-err">{{ $message }}</div>@enderror
+                </div>
+                <div class="yb-fld">
+                    <label>Summa (so'm) <i>*</i></label>
+                    <input type="text" inputmode="numeric" class="yb-in" wire:model="chAmount" placeholder="0"
+                           x-data x-on:input="let v=$el.value.replace(/\D/g,'');$el.value=v.replace(/\B(?=(\d{3})+(?!\d))/g,' ')">
+                    @error('chAmount')<div class="yb-err">{{ $message }}</div>@enderror
+                </div>
+                <div class="yb-grid2">
+                    <div class="yb-fld">
+                        <label>To'lov turi (hisob) <i>*</i></label>
+                        <select class="yb-in" wire:model="chAccountId">
+                            <option value="">— tanlang —</option>
+                            @foreach($allAccounts->groupBy('type') as $t => $accs)
+                                <optgroup label="{{ \App\Models\FinancialAccount::typeOptions()[$t] ?? $t }}">
+                                    @foreach($accs as $a)<option value="{{ $a->id }}">{{ $a->name ?: (\App\Models\FinancialAccount::typeOptions()[$t] ?? $t) }}</option>@endforeach
+                                </optgroup>
+                            @endforeach
+                        </select>
+                        @error('chAccountId')<div class="yb-err">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="yb-fld">
+                        <label>Mas'ul</label>
+                        <select class="yb-in" wire:model="chResponsibleId">
+                            <option value="">—</option>
+                            @foreach($staffUsers as $su)<option value="{{ $su->id }}">{{ $su->name }}</option>@endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="yb-fld">
+                    <label>Hujjat (ixtiyoriy) — chek, faktura</label>
+                    @if($chFile)
+                        <div class="yb-file">📎 {{ $chFile->getClientOriginalName() }} <a href="#" wire:click.prevent="removeChiqimFile">×</a></div>
+                    @elseif($chExistingFile)
+                        <div class="yb-file">📎 <a href="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($chExistingFile) }}" target="_blank">{{ basename($chExistingFile) }}</a> <a href="#" wire:click.prevent="removeChiqimFile">×</a></div>
+                    @else
+                        <label class="yb-upl">📁 Fayl tanlash<input type="file" wire:model="chFile" style="display:none" accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx,.xls,.xlsx"></label>
+                        <span wire:loading wire:target="chFile" class="yb-sub">yuklanmoqda…</span>
+                    @endif
+                    @error('chFile')<div class="yb-err">{{ $message }}</div>@enderror
+                </div>
+                <div class="yb-fld">
+                    <label>Qo'shimcha ma'lumot</label>
+                    <textarea class="yb-in" rows="3" wire:model="chNote" placeholder="Kerak bo'lsa izoh yozing..."></textarea>
+                </div>
+                <div style="display:flex;gap:10px;margin-top:6px">
+                    <button type="button" class="yb-b2" wire:click="closeChiqim">Bekor qilish</button>
+                    <button type="button" class="yb-b2 red" wire:click="saveChiqim" wire:loading.attr="disabled" wire:target="saveChiqim,chFile">Saqlash</button>
+                </div>
+            </div>
+        </div>
+    </div>
+@endif
+
+@livewire('payment-modal')
+<div id="kb-notify-box" style="display:none;position:fixed;top:20px;right:20px;z-index:100000;color:#fff;padding:12px 18px;border-radius:10px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.2)"></div>
+@script
+<script>
+    Livewire.on('notify', (data) => {
+        const d = Array.isArray(data) ? data[0] : data;
+        const box = document.getElementById('kb-notify-box');
+        if (!box) return;
+        box.textContent = d.message || '';
+        box.style.background = d.type === 'success' ? '#16a34a' : '#dc2626';
+        box.style.display = 'block';
+        setTimeout(() => box.style.display = 'none', 3500);
+    });
+    Livewire.on('print-receipt', (data) => {
+        const d = Array.isArray(data) ? data[0] : data;
+        if (d && d.paymentId && window.bhOpenChek) window.bhOpenChek(d.paymentId);
+    });
+</script>
+@endscript
 </div>
 </x-filament-panels::page>

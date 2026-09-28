@@ -9,15 +9,26 @@ use App\Models\Payment;
 use App\Models\Project;
 use App\Services\EmployeePayableService;
 use Carbon\Carbon;
+use App\Models\User;
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
+use Livewire\Attributes\On;
+use Livewire\Attributes\Url;
+use Livewire\WithFileUploads;
 
 // "Yangi bux" — Buxgalteriyaning yangi (dashboard ko'rinishidagi) varianti.
-// Faqat O'QIYDI: to'lovlar, xarajatlar, hisoblar va oyliklar mavjud
-// jadvallardan olinadi, hech qanday ma'lumot yozilmaydi/o'zgartirilmaydi.
-// Yangi xarajat/o'tkazma qo'shish hali eski Buxgalteriya sahifasida.
+// Yangi jadval YO'Q — hammasi mavjud jadvallarda, shuning uchun eski
+// Buxgalteriya, Kanban (loyiha to'lov oynasi) va shu sahifa doim sinxron:
+//  - Kirim  = payments (loyiha to'lovi). Qo'shish/tahrirlash Kanban'dagi
+//    aynan o'sha App\Livewire\PaymentModal orqali (komissiya, xizmat
+//    taqsimoti, to'lov logi, chek — hammasi bir xil ishlaydi).
+//  - Chiqim = expenses (eski Buxgalteriyadagi "Xarajatlar" bilan bir jadval).
 class YangiBux extends Page
 {
+    use WithFileUploads;
+
     protected static string  $view            = 'filament.pages.yangi-bux';
     protected static ?string $navigationIcon  = 'heroicon-o-chart-pie';
     protected static ?string $navigationLabel = 'Yangi bux';
@@ -28,11 +39,36 @@ class YangiBux extends Page
     protected ?string $heading    = '';
     protected ?string $subheading = '';
 
+    #[Url]
     public string $tab = 'asosiy';
     public ?int   $ybYear  = null;
     public ?int   $ybMonth = null;
-    // Kirim-chiqim tabidagi filtr: all | kirim | chiqim
-    public string $opFilter = 'all';
+    // ── Kirim-chiqim tabidagi filtrlar ──
+    public string  $opFilter  = 'all';   // all | kirim | chiqim
+    public ?string $opFrom    = null;    // bo'sh = tanlangan oy to'liq
+    public ?string $opTo      = null;
+    public string  $opMethod  = '';      // naqd | bank | karta
+    public string  $opProject = '';      // mijoz ismi / № bo'yicha
+    public string  $opUser    = '';      // mas'ul (user id)
+    public string  $opSearch  = '';
+
+    // ── "Kirim qo'shish" — avval loyiha tanlanadi, keyin PaymentModal ochiladi ──
+    public bool   $showKirimPicker = false;
+    public string $kirimSearch     = '';
+
+    // ── "Chiqim qo'shish"/tahrirlash oynasi ──
+    public bool    $showChiqimModal = false;
+    public ?int    $chiqimId        = null;
+    public string  $chDate          = '';
+    public ?int    $chProjectId     = null;
+    public string  $chProjectSearch = '';
+    public string  $chComment       = '';
+    public string  $chAmount        = '';
+    public ?int    $chAccountId     = null;
+    public ?int    $chResponsibleId = null;
+    public string  $chNote          = '';
+    public $chFile = null;
+    public ?string $chExistingFile  = null;
 
     public const TABS = [
         'asosiy'    => "Asosiy ko'rinish",
@@ -64,12 +100,153 @@ class YangiBux extends Page
         $d = Carbon::create($this->ybYear, $this->ybMonth, 1)->addMonths($delta);
         $this->ybYear  = (int) $d->year;
         $this->ybMonth = (int) $d->month;
+        $this->opFrom = $this->opTo = null;
     }
 
     // Grafikdagi oy ustuni bosilganda — o'sha oyga o'tish
     public function ybSetMonth(int $month): void
     {
         if ($month >= 1 && $month <= 12) $this->ybMonth = $month;
+        $this->opFrom = $this->opTo = null;
+    }
+
+    public function opResetFilters(): void
+    {
+        $this->opFilter = 'all';
+        $this->opFrom = $this->opTo = null;
+        $this->opMethod = $this->opProject = $this->opUser = $this->opSearch = '';
+    }
+
+    // PaymentModal (to'lov qo'shildi/tahrirlandi/o'chirildi) — sahifani yangilash
+    #[On('kb-payment-saved')]
+    public function onPaymentSaved(): void {}
+
+    // ── Kirim qo'shish ──────────────────────────────────────────────────────
+    public function openKirim(): void
+    {
+        $this->kirimSearch = '';
+        $this->showKirimPicker = true;
+    }
+
+    public function pickKirimProject(int $projectId): void
+    {
+        $this->showKirimPicker = false;
+        $this->dispatch('kb-open-payment', id: $projectId);
+    }
+
+    public function editKirim(int $paymentId): void
+    {
+        $this->dispatch('kb-edit-payment', id: $paymentId);
+    }
+
+    // ── Chiqim qo'shish / tahrirlash ────────────────────────────────────────
+    public function openChiqim(?int $id = null): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+        $this->resetValidation();
+        $this->chiqimId = null;
+        $this->chFile = null;
+        $this->chProjectSearch = '';
+
+        if ($id) {
+            $e = Expense::find($id);
+            // Oylikdan avtomatik yozilgan qator — Oylik hisobot orqali boshqariladi
+            if (!$e || $e->is_auto) return;
+            $this->chiqimId        = $e->id;
+            $this->chDate          = $e->expense_date->format('Y-m-d');
+            $this->chProjectId     = $e->project_id;
+            $this->chComment       = (string) $e->comment;
+            $this->chAmount        = (string) (float) $e->amount;
+            $this->chAccountId     = $e->account_id;
+            $this->chResponsibleId = $e->responsible_id;
+            $this->chNote          = (string) $e->note;
+            $this->chExistingFile  = $e->attachment;
+        } else {
+            $isCur = $this->ybYear === (int) now()->year && $this->ybMonth === (int) now()->month;
+            $this->chDate          = $isCur ? now()->format('Y-m-d') : Carbon::create($this->ybYear, $this->ybMonth, 1)->format('Y-m-d');
+            $this->chProjectId     = null;
+            $this->chComment       = '';
+            $this->chAmount        = '';
+            $this->chAccountId     = null;
+            $this->chResponsibleId = auth()->id();
+            $this->chNote          = '';
+            $this->chExistingFile  = null;
+        }
+        $this->showChiqimModal = true;
+    }
+
+    public function closeChiqim(): void
+    {
+        $this->showChiqimModal = false;
+        $this->chFile = null;
+    }
+
+    public function removeChiqimFile(): void
+    {
+        $this->chFile = null;
+        $this->chExistingFile = null;
+    }
+
+    public function saveChiqim(): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+
+        $this->chAmount = str_replace([' ', ','], ['', '.'], $this->chAmount);
+        $this->validate([
+            'chDate'          => 'required|date',
+            'chComment'       => 'required|string|max:255',
+            'chAmount'        => 'required|numeric|min:1',
+            'chAccountId'     => 'required|exists:financial_accounts,id',
+            'chResponsibleId' => 'nullable|exists:users,id',
+            'chProjectId'     => 'nullable|exists:projects,id',
+            'chFile'          => 'nullable|file|max:8192|mimes:jpg,jpeg,png,webp,pdf,doc,docx,xls,xlsx',
+        ], [
+            'chComment.required'   => 'Tavsif kiriting',
+            'chAmount.required'    => 'Summani kiriting',
+            'chAccountId.required' => "Qaysi hisobdan to'langanini tanlang",
+        ]);
+
+        $old = $this->chiqimId ? Expense::find($this->chiqimId) : null;
+        if ($old?->is_auto) return;
+
+        $attachment = $this->chExistingFile;
+        if ($this->chFile) {
+            $attachment = $this->chFile->store('expense-docs', 'public');
+        }
+        // Eski fayl almashtirilgan yoki olib tashlangan bo'lsa — o'chiramiz
+        if ($old?->attachment && $old->attachment !== $attachment) {
+            Storage::disk('public')->delete($old->attachment);
+        }
+
+        $data = [
+            'expense_date'   => $this->chDate,
+            'project_id'     => $this->chProjectId,
+            'comment'        => trim($this->chComment),
+            'amount'         => (float) $this->chAmount,
+            'account_id'     => $this->chAccountId,
+            'responsible_id' => $this->chResponsibleId,
+            'note'           => trim($this->chNote) ?: null,
+            'attachment'     => $attachment,
+        ];
+
+        if ($old) {
+            $old->update($data);
+            Notification::make()->title('Chiqim yangilandi')->success()->send();
+        } else {
+            Expense::create($data + ['created_by' => auth()->id()]);
+            Notification::make()->title("Chiqim qo'shildi")->success()->send();
+        }
+        $this->closeChiqim();
+    }
+
+    public function deleteChiqim(int $id): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+        $e = Expense::find($id);
+        if (!$e || $e->is_auto) return;
+        if ($e->attachment) Storage::disk('public')->delete($e->attachment);
+        $e->delete();
+        Notification::make()->title("Chiqim o'chirildi")->warning()->send();
     }
 
     // ── Yordamchi so'rovlar ─────────────────────────────────────────────────
@@ -104,42 +281,97 @@ class YangiBux extends Page
         return round(($cur - $prev) / abs($prev) * 100, 1);
     }
 
-    /** Oy bo'yicha operatsiyalar (Kirim = to'lov, Chiqim = xarajat), sana bo'yicha kamayish tartibida. */
-    private function operations(int $year, int $month): Collection
+    /**
+     * Operatsiyalar (Kirim = to'lov, Chiqim = xarajat), sana bo'yicha kamayish tartibida.
+     * $from/$to berilmasa — tanlangan oy (xarajatlar Buxgalteriyadagi oy qoidasi bilan).
+     */
+    private function operations(int $year, int $month, array $f = []): Collection
     {
         $methods = Payment::methodOptions();
+        $from = $f['from'] ?? null;
+        $to   = $f['to'] ?? null;
+        $type = $f['type'] ?? 'all';
+        $projectFilter = function ($x, string $pv) {
+            $num = ltrim($pv, '№#');
+            $x->where('owner_name', 'like', "%$pv%")->orWhere('seq_no', ctype_digit($num) ? (int) $num : -1);
+        };
 
-        $kirim = Payment::with(['project', 'account', 'createdBy'])
-            ->whereYear('payment_date', $year)->whereMonth('payment_date', $month)
-            ->get()
-            ->map(fn (Payment $p) => [
+        $kirim = collect();
+        if ($type !== 'chiqim') {
+            $q = Payment::with(['project', 'account', 'createdBy']);
+            if ($from || $to) {
+                if ($from) $q->whereDate('payment_date', '>=', $from);
+                if ($to)   $q->whereDate('payment_date', '<=', $to);
+            } else {
+                $q->whereYear('payment_date', $year)->whereMonth('payment_date', $month);
+            }
+            if (!empty($f['method'])) $q->where('method', $f['method']);
+            if (!empty($f['user']))   $q->where('created_by', $f['user']);
+            if (!empty($f['project'])) $q->whereHas('project', fn ($pq) => $projectFilter($pq, $f['project']));
+            $kirim = $q->get()->map(fn (Payment $p) => [
+                'id'      => $p->id,
                 'date'    => $p->payment_date,
                 'sort'    => $p->payment_date?->format('Y-m-d') . sprintf('%010d', $p->id),
                 'type'    => 'kirim',
                 'who'     => $p->project?->owner_name ?: ('Loyiha #' . ($p->project?->seq_no ?? $p->project_id)),
-                'who_sub' => $p->project?->title ?: $p->project?->address,
-                'desc'    => $p->note ?: 'Loyiha to\'lovi',
+                'who_sub' => $p->project ? ('№' . $p->project->seq_no . ' · ' . ($p->project->address ?: $p->project->title)) : null,
+                'desc'    => $p->note ?: "Loyiha to'lovi",
+                'note'    => null,
                 'amount'  => (float) $p->amount,
                 'method'  => $p->account?->name ?: ($methods[$p->method] ?? $p->method),
+                'mtype'   => $p->account?->type ?? $p->method,
                 'user'    => $p->createdBy?->name,
+                'locked'  => false,
+                'file'    => null,
             ]);
+        }
 
-        $chiqim = Expense::with(['account', 'createdBy', 'user'])
-            ->where($this->expenseScope($year, $month))
-            ->get()
-            ->map(fn (Expense $e) => [
+        $chiqim = collect();
+        if ($type !== 'kirim') {
+            $q = Expense::with(['account', 'createdBy', 'user', 'project', 'responsible']);
+            if ($from || $to) {
+                if ($from) $q->whereDate('expense_date', '>=', $from);
+                if ($to)   $q->whereDate('expense_date', '<=', $to);
+            } else {
+                $q->where($this->expenseScope($year, $month));
+            }
+            if (!empty($f['method'])) $q->whereHas('account', fn ($aq) => $aq->where('type', $f['method']));
+            if (!empty($f['user'])) {
+                $q->where(fn ($uq) => $uq->where('responsible_id', $f['user'])
+                    ->orWhere(fn ($u2) => $u2->whereNull('responsible_id')->where('created_by', $f['user'])));
+            }
+            if (!empty($f['project'])) {
+                $pv = $f['project'];
+                $q->where(fn ($pq) => $pq->whereHas('project', fn ($x) => $projectFilter($x, $pv))
+                    ->orWhereHas('user', fn ($x) => $x->where('name', 'like', "%$pv%")));
+            }
+            $chiqim = $q->get()->map(fn (Expense $e) => [
+                'id'      => $e->id,
                 'date'    => $e->expense_date,
                 'sort'    => $e->expense_date?->format('Y-m-d') . sprintf('%010d', $e->id),
                 'type'    => 'chiqim',
-                'who'     => $e->user?->name ?: 'Xarajat',
-                'who_sub' => $e->user ? 'Xodim' : null,
+                'who'     => $e->project?->owner_name ?: ($e->user?->name ?: 'Xarajat'),
+                'who_sub' => $e->project ? ('№' . $e->project->seq_no . ' · ' . ($e->project->address ?: $e->project->title)) : ($e->user ? 'Xodim oyligi' : null),
                 'desc'    => $e->comment ?: '—',
+                'note'    => $e->note,
                 'amount'  => (float) $e->amount,
                 'method'  => $e->account?->name ?: (FinancialAccount::typeOptions()[$e->account?->type] ?? '—'),
-                'user'    => $e->createdBy?->name,
+                'mtype'   => $e->account?->type,
+                'user'    => $e->responsible?->name ?? $e->createdBy?->name,
+                'locked'  => $e->is_auto,
+                'file'    => $e->attachment,
             ]);
+        }
 
-        return $kirim->concat($chiqim)->sortByDesc('sort')->values();
+        $rows = $kirim->concat($chiqim);
+        if (!empty($f['search'])) {
+            $needle = mb_strtolower($f['search']);
+            $digits = preg_replace('/\D/', '', $f['search']);
+            $rows = $rows->filter(fn ($r) => str_contains(mb_strtolower($r['who'] . ' ' . $r['who_sub'] . ' ' . $r['desc'] . ' ' . $r['note'] . ' ' . $r['method']), $needle)
+                || ($digits !== '' && str_contains((string) (int) $r['amount'], $digits)));
+        }
+
+        return $rows->sortByDesc('sort')->values();
     }
 
     /** Qarzdor loyihalar (bekor qilinmagan, to'xtatilmagan), eng katta qarzdan boshlab. */
@@ -254,6 +486,22 @@ class YangiBux extends Page
         $balanceTotal = array_sum(array_column($balances, 'value'));
 
         $ops = $this->operations($year, $month);
+        $opsFiltered = $this->tab === 'kirim' ? $this->operations($year, $month, [
+            'type' => $this->opFilter, 'from' => $this->opFrom, 'to' => $this->opTo, 'method' => $this->opMethod,
+            'user' => $this->opUser, 'project' => trim($this->opProject), 'search' => trim($this->opSearch),
+        ]) : collect();
+
+        $projectResults = function (string $term) {
+            $term = trim($term);
+            $q = Project::query()->select(['id', 'seq_no', 'owner_name', 'address', 'title', 'total_price', 'paid_amount'])
+                ->where('status', '!=', 'bekor_qilingan');
+            if ($term !== '') {
+                $num = ltrim($term, '№#');
+                $q->where(fn ($x) => $x->where('owner_name', 'like', "%$term%")->orWhere('address', 'like', "%$term%")
+                    ->orWhere('phones', 'like', "%$term%")->orWhere('seq_no', ctype_digit($num) ? (int) $num : -1));
+            }
+            return $q->orderByDesc('id')->limit(12)->get();
+        };
 
         // Hisobotlar tabi — yil bo'yicha jadval
         $yearIncome  = array_sum($incomeByMonth);
@@ -281,6 +529,13 @@ class YangiBux extends Page
             'balances'     => $balances,
             'balanceTotal' => $balanceTotal,
             'ops'          => $ops,
+            'opsFiltered'  => $opsFiltered,
+            'kirimProjects'=> $this->showKirimPicker ? $projectResults($this->kirimSearch) : collect(),
+            'chProjects'   => $this->showChiqimModal && trim($this->chProjectSearch) !== '' ? $projectResults($this->chProjectSearch) : collect(),
+            'chProject'    => $this->chProjectId ? Project::find($this->chProjectId, ['id', 'seq_no', 'owner_name', 'address']) : null,
+            'allAccounts'  => FinancialAccount::orderBy('type')->orderBy('name')->get(['id', 'name', 'type']),
+            'staffUsers'   => User::where('is_active', true)->orderBy('name')->get(['id', 'name']),
+            'methodOptions'=> Payment::methodOptions(),
             'yearIncome'   => $yearIncome,
             'yearExpense'  => $yearExpense,
             'salaryPayments' => EmployeeSalaryPayment::with(['user', 'giver'])
