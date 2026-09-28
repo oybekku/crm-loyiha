@@ -74,6 +74,10 @@
 }
 .acc-card.is-total{background:linear-gradient(135deg,#04351f,#0a4a2c 50%,#0f5c36) !important;border-color:#166534;cursor:default}
 .acc-card.is-total .acc-name{color:#bbf7d0 !important}
+.acc-card.is-expense-total{background:linear-gradient(135deg,#3b0a0a,#5b1111 50%,#7f1d1d) !important;border-color:#991b1b;cursor:default;justify-content:flex-start;gap:14px}
+.acc-card.is-expense-total .acc-name{color:#fecaca !important}
+.acc-card.is-expense-total .exp-tot-l{color:#fecaca !important;opacity:.85}
+.acc-card.is-expense-total .exp-tot-v{color:#fff !important}
 .acc-card.is-contract{background:linear-gradient(135deg,#1e1b4b,#312e81 50%,#3730a3) !important;border-color:#4338ca;cursor:default}
 .acc-card.is-contract .acc-name{color:#c7d2fe !important;text-transform:none;font-size:12.5px}
 
@@ -444,6 +448,35 @@
         </div>
         <div style="padding:18px;border-top:1px solid #f1f5f9">
             <div class="bx-grid">
+                {{-- Umumiy xarajatlar — bazadagi hisob EMAS, faqat ko'rsatkich:
+                     tanlangan oydagi barcha xarajatlar ("Xarajatlar" bo'limidagi
+                     jami bilan bir xil) va qaysi hisobdan qancha sarflangani. --}}
+                @php
+                    $spentByAcc = $allAccs->filter(fn ($a) => (float) $a->expenses_sum_amount > 0)
+                        ->sortByDesc(fn ($a) => (float) $a->expenses_sum_amount)->values();
+                @endphp
+                <div class="acc-card is-expense-total" draggable="false">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                        <span class="acc-icon">🧾</span>
+                    </div>
+                    <div>
+                        <div class="acc-name">Umumiy xarajatlar ({{ $bxMonthLabel }})</div>
+                        <div class="acc-balance" style="font-size:24px;margin-top:8px;color:#fca5a5 !important">− {{ number_format($totalSpent, 0, '.', ' ') }} <span class="exp-tot-l" style="font-size:13px">so'm</span></div>
+                        <div style="margin-top:10px;display:flex;flex-direction:column;gap:4px">
+                            @forelse($spentByAcc->take(4) as $sa)
+                                <div style="display:flex;justify-content:space-between;gap:8px;font-size:11.5px">
+                                    <span class="exp-tot-l" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $sa->name ?: $typeOptions[$sa->type] }}</span>
+                                    <span class="exp-tot-v" style="font-weight:800;white-space:nowrap">{{ number_format($sa->expenses_sum_amount, 0, '.', ' ') }}</span>
+                                </div>
+                            @empty
+                                <div class="exp-tot-l" style="font-size:11.5px">Bu oyda xarajat yo'q</div>
+                            @endforelse
+                            @if($spentByAcc->count() > 4)
+                                <div class="exp-tot-l" style="font-size:11px">+ yana {{ $spentByAcc->count() - 4 }} ta hisob</div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
                 @foreach($secondaryAccs as $acc)
                     @include('filament.pages.partials.buxgalteriya-account-card', ['acc' => $acc])
                 @endforeach
