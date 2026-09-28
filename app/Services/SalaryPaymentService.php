@@ -63,6 +63,7 @@ class SalaryPaymentService
             [
                 'account_id'   => $expenseAccountId,
                 'user_id'      => $payment->user_id,
+                'category'     => Expense::KIND_OYLIK,
                 'month'        => $payment->month,
                 'amount'       => $payment->amount,
                 'comment'      => $comment,

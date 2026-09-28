@@ -155,6 +155,12 @@
 .yb-staff b{color:var(--yb-tx)}
 .yb-staff-n{text-align:right;white-space:nowrap}
 @media (max-width:700px){.yb-staff{grid-template-columns:1fr 1fr}}
+.yb-kind{display:flex;gap:8px}
+.yb-kind-opt{flex:1;text-align:center;padding:10px;border-radius:9px;border:1.5px solid var(--yb-bd);cursor:pointer;font-size:13px;font-weight:700;color:var(--yb-mu);background:var(--yb-card)}
+.yb-kind-opt.on.xarajat{border-color:#dc2626;background:#fef2f2;color:#b91c1c}
+.yb-kind-opt.on.oylik{border-color:#d97706;background:#fffbeb;color:#b45309}
+.yb-pill.o{background:#fef3c7;color:#b45309}
+.dark .yb-pill.o{background:#78350f;color:#fde68a}
 </style>
 
 @include('filament.partials.report-tabs')
@@ -274,12 +280,13 @@
     </div>
 
 @elseif($tab === 'kirim')
-    <div class="yb-kpis" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+    <div class="yb-kpis" style="grid-template-columns:repeat(4,minmax(0,1fr))">
         @php
             $kpis3 = [
-                ['l' => 'Kirimlar (jami)',  'v' => $income,  'ic' => '↓', 'bg' => '#dcfce7', 'c' => '#16a34a', 'pct' => $incomePct,  'good' => 1],
-                ['l' => 'Chiqimlar (jami)', 'v' => $expense, 'ic' => '↗', 'bg' => '#fee2e2', 'c' => '#dc2626', 'pct' => $expensePct, 'good' => -1],
-                ['l' => 'Sof foyda',        'v' => $profit,  'ic' => '◔', 'bg' => '#dbeafe', 'c' => '#2563eb', 'pct' => $profitPct,  'good' => 1],
+                ['l' => 'Kirimlar',       'v' => $income,      'ic' => '↓', 'bg' => '#dcfce7', 'c' => '#16a34a', 'pct' => $incomePct,  'good' => 1],
+                ['l' => 'Xarajatlar',     'v' => $otherSpent,  'ic' => '↗', 'bg' => '#fee2e2', 'c' => '#dc2626', 'sub' => 'oylik va avanslarsiz'],
+                ['l' => 'Oylik / avans',  'v' => $salarySpent, 'ic' => '💵', 'bg' => '#fef3c7', 'c' => '#b45309', 'sub' => 'jami chiqim: ' . $fmt($expense) . " so'm"],
+                ['l' => 'Sof foyda',      'v' => $profit,      'ic' => '◔', 'bg' => '#dbeafe', 'c' => '#2563eb', 'pct' => $profitPct,  'good' => 1],
             ];
         @endphp
         @foreach($kpis3 as $k)
@@ -289,7 +296,8 @@
                     <div class="yb-kpi-l">{{ $k['l'] }} · {{ $monthLabel }}</div>
                     <div class="yb-kpi-v">{{ $fmt($k['v']) }} so'm</div>
                     <div class="yb-kpi-s">
-                        @if($k['pct'] === null) o'tgan oyda ma'lumot yo'q
+                        @if(isset($k['sub'])) {{ $k['sub'] }}
+                        @elseif($k['pct'] === null) o'tgan oyda ma'lumot yo'q
                         @else <span class="{{ ($k['pct'] * $k['good']) >= 0 ? 'yb-up' : 'yb-down' }}">{{ $k['pct'] > 0 ? '+' : '' }}{{ $k['pct'] }}%</span> o'tgan oyga nisbatan
                         @endif
                     </div>
@@ -299,7 +307,7 @@
     </div>
 
     <div class="yb-row" style="grid-template-columns:1.7fr 1fr">
-        @include('filament.pages.partials.yangi-bux-chart', ['chartTitle' => 'Kirim va chiqimlar dinamikasi', 'showProfit' => false])
+        @include('filament.pages.partials.yangi-bux-chart', ['chartTitle' => 'Kirim va chiqimlar dinamikasi', 'showProfit' => false, 'split' => true])
         @include('filament.pages.partials.yangi-bux-donut', ['donutTitle' => "To'lovlar manbalari (xizmatlar bo'yicha)"])
     </div>
 
@@ -319,6 +327,10 @@
             <div class="yb-f">
                 <label>Tur</label>
                 <select wire:model.live="opFilter"><option value="all">Barchasi</option><option value="kirim">Kirim</option><option value="chiqim">Chiqim</option></select>
+            </div>
+            <div class="yb-f">
+                <label>Chiqim turi</label>
+                <select wire:model.live="opKind"><option value="">Barchasi</option><option value="xarajat">Xarajat</option><option value="oylik">Oylik / avans</option></select>
             </div>
             <div class="yb-f">
                 <label>To'lov turi</label>
@@ -344,7 +356,7 @@
                 <span class="yb-sub">{{ $opsFiltered->count() }} ta operatsiya ·
                     Kirim: <b class="yb-g">{{ $fmt($opsFiltered->where('type', 'kirim')->sum('amount')) }}</b> ·
                     Chiqim: <b class="yb-r">{{ $fmt($opsFiltered->where('type', 'chiqim')->sum('amount')) }}</b> so'm
-                    @if($opFrom || $opTo || $opFilter !== 'chiqim' || $opMethod || $opProject || $opUser || $opSearch)
+                    @if($opFrom || $opTo || $opFilter !== 'chiqim' || $opMethod || $opProject || $opUser || $opSearch || $opKind)
                         · <a href="#" wire:click.prevent="opResetFilters" style="color:#2563eb">filtrlarni tozalash</a>
                     @endif
                 </span>
@@ -557,12 +569,14 @@
         <div class="yb-h"><span>{{ $this->ybYear }}-yil hisoboti <span class="yb-sub">Tushum — to'lov sanasi bo'yicha; xarajat — Buxgalteriyadagi qoida bo'yicha</span></span></div>
         <div class="yb-tbl-wrap">
         <table class="yb-tbl">
-            <thead><tr><th>Oy</th><th class="num">Tushum</th><th class="num">Xarajat</th><th class="num">Sof foyda</th><th class="num">Rentabellik</th></tr></thead>
+            <thead><tr><th>Oy</th><th class="num">Tushum</th><th class="num">Xarajat</th><th class="num">Oylik / avans</th><th class="num">Jami chiqim</th><th class="num">Sof foyda</th><th class="num">Rentabellik</th></tr></thead>
             <tbody>
             @foreach($chart as $c)
                 <tr wire:click="ybSetMonth({{ $c['m'] }})" style="cursor:pointer;{{ $c['m'] === $this->ybMonth ? 'font-weight:700' : '' }}">
                     <td>{{ $c['label'] }}</td>
                     <td class="num yb-g">{{ $fmt($c['income']) }}</td>
+                    <td class="num yb-r">{{ $fmt($c['other']) }}</td>
+                    <td class="num" style="color:#b45309">{{ $fmt($c['salary']) }}</td>
                     <td class="num yb-r">{{ $fmt($c['expense']) }}</td>
                     <td class="num {{ $c['profit'] < 0 ? 'yb-r' : '' }}">{{ $fmt($c['profit']) }}</td>
                     <td class="num">{{ $c['income'] > 0 ? round($c['profit'] / $c['income'] * 100) . '%' : '—' }}</td>
@@ -571,6 +585,8 @@
                 <tr style="font-weight:800">
                     <td>Jami</td>
                     <td class="num yb-g">{{ $fmt($yearIncome) }}</td>
+                    <td class="num yb-r">{{ $fmt($yearExpense - $yearSalary) }}</td>
+                    <td class="num" style="color:#b45309">{{ $fmt($yearSalary) }}</td>
                     <td class="num yb-r">{{ $fmt($yearExpense) }}</td>
                     <td class="num">{{ $fmt($yearIncome - $yearExpense) }}</td>
                     <td class="num">{{ $yearIncome > 0 ? round(($yearIncome - $yearExpense) / $yearIncome * 100) . '%' : '—' }}</td>
@@ -624,9 +640,33 @@
         <div class="yb-modal">
             <div class="yb-modal-h" style="background:#fee2e2">{{ $chiqimId ? 'Chiqimni tahrirlash' : "Chiqim qo'shish" }} <button type="button" wire:click="closeChiqim">×</button></div>
             <div class="yb-modal-b">
+                <div class="yb-fld">
+                    <label>Chiqim turi <i>*</i></label>
+                    <div class="yb-kind">
+                        @foreach(\App\Models\Expense::kindOptions() as $kk => $kl)
+                            <label class="yb-kind-opt {{ $chKind === $kk ? 'on' : '' }} {{ $kk }}">
+                                <input type="radio" wire:model.live="chKind" value="{{ $kk }}" style="display:none">
+                                {{ $kk === 'oylik' ? '💵' : '💼' }} {{ $kl }}
+                            </label>
+                        @endforeach
+                    </div>
+                    @error('chKind')<div class="yb-err">{{ $message }}</div>@enderror
+                    @if($chKind === 'oylik' && !$chiqimId)
+                        <div class="yb-sub" style="margin-top:6px">Xodim to'lovlariga (Oylik hisobot) ham yoziladi — xodimning "to'lanishi kerak" summasi kamayadi.</div>
+                    @elseif($chKind === 'oylik' && $chiqimId)
+                        <div class="yb-sub" style="margin-top:6px">Mavjud chiqim — faqat statistika uchun "oylik" deb belgilanadi, Oylik hisobot o'zgarmaydi.</div>
+                    @endif
+                </div>
+                @if($chKind === 'oylik' && !$chiqimId)
+                    <div class="yb-fld">
+                        <label>Qaysi oy uchun <i>*</i></label>
+                        <input type="month" class="yb-in" wire:model="chSalaryMonth">
+                        @error('chSalaryMonth')<div class="yb-err">{{ $message }}</div>@enderror
+                    </div>
+                @endif
                 <div class="yb-grid2">
                     <div class="yb-fld">
-                        <label>Sana <i>*</i></label>
+                        <label>{{ $chKind === 'oylik' && !$chiqimId ? "To'lov sanasi" : 'Sana' }} <i>*</i></label>
                         <input type="date" class="yb-in" wire:model="chDate">
                         @error('chDate')<div class="yb-err">{{ $message }}</div>@enderror
                     </div>
@@ -647,8 +687,8 @@
                     </div>
                 </div>
                 <div class="yb-fld">
-                    <label>Tavsif <i>*</i></label>
-                    <input type="text" class="yb-in" wire:model="chComment" placeholder="Masalan: Qurilish materiali xarid qilindi">
+                    <label>Tavsif @if(!($chKind === 'oylik' && !$chiqimId))<i>*</i>@else (ixtiyoriy)@endif</label>
+                    <input type="text" class="yb-in" wire:model="chComment" placeholder="{{ $chKind === 'oylik' ? 'Masalan: avans' : 'Masalan: Qurilish materiali xarid qilindi' }}">
                     @error('chComment')<div class="yb-err">{{ $message }}</div>@enderror
                 </div>
                 <div class="yb-fld">
@@ -664,13 +704,13 @@
                         @error('chAccountId')<div class="yb-err">{{ $message }}</div>@enderror
                     </div>
                     <div class="yb-fld">
-                        <label>Kim uchun / kim qildi <i>*</i></label>
+                        <label>{{ $chKind === 'oylik' ? 'Xodim (kimga)' : 'Kim uchun / kim qildi' }} <i>*</i></label>
                         <select class="yb-in" wire:model.live="chResponsibleId">
                             <option value="">—</option>
                             @foreach($staffUsers as $su)<option value="{{ $su->id }}">{{ $su->name }}</option>@endforeach
                         </select>
                         @error('chResponsibleId')<div class="yb-err">{{ $message }}</div>@enderror
-                        <div class="yb-sub" style="margin-top:4px">Faqat belgi — balansga ta'sir qilmaydi</div>
+                        @if($chKind !== 'oylik')<div class="yb-sub" style="margin-top:4px">Faqat belgi — balansga ta'sir qilmaydi</div>@endif
                     </div>
                 </div>
                 <div class="yb-fld">

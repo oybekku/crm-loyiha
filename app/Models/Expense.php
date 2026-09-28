@@ -8,8 +8,35 @@ class Expense extends Model
 {
     protected $fillable = [
         'account_id', 'user_id', 'salary_payment_id', 'month', 'amount', 'comment', 'expense_date', 'created_by',
-        'project_id', 'responsible_id', 'note', 'attachment',
+        'project_id', 'responsible_id', 'note', 'attachment', 'category',
     ];
+
+    public const KIND_OYLIK   = 'oylik';     // oylik / avans
+    public const KIND_XARAJAT = 'xarajat';   // qolgan barcha chiqimlar
+
+    public static function kindOptions(): array
+    {
+        return [self::KIND_XARAJAT => 'Xarajat', self::KIND_OYLIK => 'Oylik / avans'];
+    }
+
+    /**
+     * Chiqim turi. category bo'sh bo'lgan eski qatorlarda — oylik tizimidan
+     * (user_id) yozilgan bo'lsa "oylik", aks holda "xarajat". Ma'lumot o'zgarmaydi.
+     */
+    public function getKindAttribute(): string
+    {
+        return $this->category ?: ($this->user_id ? self::KIND_OYLIK : self::KIND_XARAJAT);
+    }
+
+    /** SQL'da ham xuddi getKindAttribute qoidasi */
+    public function scopeOfKind($query, string $kind)
+    {
+        return $kind === self::KIND_OYLIK
+            ? $query->where(fn ($q) => $q->where('category', self::KIND_OYLIK)
+                ->orWhere(fn ($q2) => $q2->whereNull('category')->whereNotNull('user_id')))
+            : $query->where(fn ($q) => $q->where('category', self::KIND_XARAJAT)
+                ->orWhere(fn ($q2) => $q2->whereNull('category')->whereNull('user_id')));
+    }
 
     protected $casts = [
         'amount'       => 'decimal:2',

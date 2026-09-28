@@ -51,6 +51,7 @@ class YangiBux extends Page
     public string  $opProject = '';      // mijoz ismi / № bo'yicha
     public string  $opUser    = '';      // mas'ul (user id)
     public string  $opSearch  = '';
+    public string  $opKind    = '';      // '' | xarajat | oylik
 
     // ── "Kirim qo'shish" — avval loyiha tanlanadi, keyin PaymentModal ochiladi ──
     public bool   $showKirimPicker = false;
@@ -69,6 +70,8 @@ class YangiBux extends Page
     public string  $chNote          = '';
     public $chFile = null;
     public ?string $chExistingFile  = null;
+    public string  $chKind          = '';   // majburiy: 'xarajat' | 'oylik' (oylik/avans)
+    public string  $chSalaryMonth   = '';   // oylik bo'lsa — qaysi oy uchun (Y-m)
 
     // ── Oylik maosh tabi ──
     public string $omRole     = '';   // bo'lim = tizim roli
@@ -138,7 +141,7 @@ class YangiBux extends Page
     {
         $this->opFilter = 'chiqim';
         $this->opFrom = $this->opTo = null;
-        $this->opMethod = $this->opProject = $this->opUser = $this->opSearch = '';
+        $this->opMethod = $this->opProject = $this->opUser = $this->opSearch = $this->opKind = '';
     }
 
     // PaymentModal (to'lov qo'shildi/tahrirlandi/o'chirildi) — sahifani yangilash
@@ -185,6 +188,8 @@ class YangiBux extends Page
             $this->chResponsibleId = $e->responsible_id;
             $this->chNote          = (string) $e->note;
             $this->chExistingFile  = $e->attachment;
+            $this->chKind          = $e->kind;
+            $this->chSalaryMonth   = '';
         } else {
             $isCur = $this->ybYear === (int) now()->year && $this->ybMonth === (int) now()->month;
             $this->chDate          = $isCur ? now()->format('Y-m-d') : Carbon::create($this->ybYear, $this->ybMonth, 1)->format('Y-m-d');
@@ -195,6 +200,8 @@ class YangiBux extends Page
             $this->chResponsibleId = null;   // har safar xodim tanlanishi shart
             $this->chNote          = '';
             $this->chExistingFile  = null;
+            $this->chKind          = '';          // turi har safar tanlanishi shart
+            $this->chSalaryMonth   = $this->ym();
         }
         $this->showChiqimModal = true;
     }
@@ -216,15 +223,21 @@ class YangiBux extends Page
         if (!auth()->user()?->isAdmin()) return;
 
         $this->chAmount = str_replace([' ', ','], ['', '.'], $this->chAmount);
+        // Yangi "Oylik / avans" — oylik tizimiga (xodim to'lovlari) ham yoziladi
+        $newSalary = !$this->chiqimId && $this->chKind === Expense::KIND_OYLIK;
         $this->validate([
+            'chKind'          => 'required|in:' . Expense::KIND_XARAJAT . ',' . Expense::KIND_OYLIK,
+            'chSalaryMonth'   => $newSalary ? ['required', 'regex:/^\d{4}-\d{2}$/'] : 'nullable',
             'chDate'          => 'required|date',
-            'chComment'       => 'required|string|max:255',
+            'chComment'       => ($newSalary ? 'nullable' : 'required') . '|string|max:255',
             'chAmount'        => 'required|numeric|min:1',
             'chAccountId'     => 'required|exists:financial_accounts,id,user_id,NULL',
             'chResponsibleId' => 'required|exists:users,id',
             'chProjectId'     => 'nullable|exists:projects,id',
             'chFile'          => 'nullable|file|max:8192|mimes:jpg,jpeg,png,webp,pdf,doc,docx,xls,xlsx',
         ], [
+            'chKind.required'      => 'Chiqim turini tanlang: Xarajat yoki Oylik / avans',
+            'chSalaryMonth.required' => 'Qaysi oy uchun ekanini tanlang',
             'chComment.required'   => 'Tavsif kiriting',
             'chAmount.required'    => 'Summani kiriting',
             'chAccountId.required' => "Qaysi hisobdan to'langanini tanlang",
@@ -243,7 +256,33 @@ class YangiBux extends Page
             Storage::disk('public')->delete($old->attachment);
         }
 
+        if ($newSalary) {
+            $amount    = (float) $this->chAmount;
+            [$sy, $sm] = explode('-', $this->chSalaryMonth);
+            $row       = collect(EmployeePayableService::yearGrid((int) $sy))->firstWhere('user.id', $this->chResponsibleId);
+            $remaining = (float) ($row['months'][(int) $sm]['remaining'] ?? 0);
+            $payment = \App\Services\SalaryPaymentService::save([
+                'user_id'  => $this->chResponsibleId,
+                'month'    => $this->chSalaryMonth,
+                'amount'   => $amount,
+                'paid_at'  => $this->chDate,
+                'note'     => trim($this->chComment) ?: null,
+                'given_by' => auth()->id(),
+            ], null, $remaining > 0 && $amount < $remaining, $this->chAccountId);
+            // Qo'shimcha maydonlar (loyiha, izoh, hujjat) — bog'liq xarajat qatoriga
+            Expense::where('salary_payment_id', $payment?->id)->update([
+                'responsible_id' => $this->chResponsibleId,
+                'project_id'     => $this->chProjectId,
+                'note'           => trim($this->chNote) ?: null,
+                'attachment'     => $attachment,
+            ]);
+            Notification::make()->title("Oylik / avans yozildi")->body("Xodim to'lovlariga (Oylik hisobot) va tanlangan hisobdan chiqimga yozildi.")->success()->send();
+            $this->closeChiqim();
+            return;
+        }
+
         $data = [
+            'category'       => $this->chKind,
             'expense_date'   => $this->chDate,
             'project_id'     => $this->chProjectId,
             'comment'        => trim($this->chComment),
@@ -513,7 +552,7 @@ class YangiBux extends Page
         };
 
         $kirim = collect();
-        if ($type !== 'chiqim') {
+        if ($type !== 'chiqim' && empty($f['kind'])) {
             $q = Payment::with(['project', 'account', 'createdBy']);
             if ($from || $to) {
                 if ($from) $q->whereDate('payment_date', '>=', $from);
@@ -552,6 +591,7 @@ class YangiBux extends Page
                 $q->where($this->expenseScope($year, $month));
             }
             if (!empty($f['method'])) $q->whereHas('account', fn ($aq) => $aq->where('type', $f['method']));
+            if (!empty($f['kind']))   $q->ofKind($f['kind']);
             if (!empty($f['user'])) {
                 $q->where(fn ($uq) => $uq->where('responsible_id', $f['user'])
                     ->orWhere(fn ($u2) => $u2->whereNull('responsible_id')->where('created_by', $f['user'])));
@@ -575,6 +615,7 @@ class YangiBux extends Page
                 'mtype'   => $e->account?->type,
                 'user'    => $e->responsible?->name ?? $e->createdBy?->name,
                 'locked'  => $e->is_auto,
+                'kind'    => $e->kind,
                 'file'    => $e->attachment,
             ]);
         }
@@ -707,13 +748,15 @@ class YangiBux extends Page
         Payment::whereYear('payment_date', $year)->get(['amount', 'payment_date'])
             ->each(function ($p) use (&$incomeByMonth) { $incomeByMonth[(int) $p->payment_date->month] += (float) $p->amount; });
         $expenseByMonth = array_fill(1, 12, 0.0);
+        $salaryByMonth  = array_fill(1, 12, 0.0);   // shundan oylik / avans
         Expense::where(function ($q) use ($year) {
                 $q->where('month', 'like', $year . '-%')
                   ->orWhere(fn ($q2) => $q2->whereNull('month')->whereYear('expense_date', $year));
-            })->get(['amount', 'month', 'expense_date'])
-            ->each(function ($e) use (&$expenseByMonth) {
+            })->get(['amount', 'month', 'expense_date', 'category', 'user_id'])
+            ->each(function ($e) use (&$expenseByMonth, &$salaryByMonth) {
                 $m = $e->month ? (int) substr($e->month, 5, 2) : (int) $e->expense_date->month;
                 $expenseByMonth[$m] += (float) $e->amount;
+                if ($e->kind === Expense::KIND_OYLIK) $salaryByMonth[$m] += (float) $e->amount;
             });
         $chart = [];
         $monthNames = ['Yan', 'Fev', 'Mar', 'Apr', 'May', 'Iyun', 'Iyul', 'Avg', 'Sen', 'Okt', 'Noy', 'Dek'];
@@ -723,6 +766,8 @@ class YangiBux extends Page
                 'm'       => $m,
                 'income'  => $incomeByMonth[$m],
                 'expense' => $expenseByMonth[$m],
+                'salary'  => $salaryByMonth[$m],
+                'other'   => $expenseByMonth[$m] - $salaryByMonth[$m],
                 'profit'  => $incomeByMonth[$m] - $expenseByMonth[$m],
             ];
         }
@@ -806,7 +851,7 @@ class YangiBux extends Page
 
         $ops = $this->operations($year, $month);
         $opsFiltered = $this->tab === 'kirim' ? $this->operations($year, $month, [
-            'type' => $this->opFilter, 'from' => $this->opFrom, 'to' => $this->opTo, 'method' => $this->opMethod,
+            'type' => $this->opFilter, 'from' => $this->opFrom, 'to' => $this->opTo, 'method' => $this->opMethod, 'kind' => $this->opKind,
             'user' => $this->opUser, 'project' => trim($this->opProject), 'search' => trim($this->opSearch),
         ]) : collect();
 
@@ -834,6 +879,9 @@ class YangiBux extends Page
             'profit'       => $profit,
             'incomePct'    => self::pct($income, $pIncome),
             'expensePct'   => self::pct($expense, $pExpense),
+            'salarySpent'  => $salaryByMonth[$month] ?? 0.0,
+            'otherSpent'   => $expense - ($salaryByMonth[$month] ?? 0.0),
+            'yearSalary'   => array_sum($salaryByMonth),
             'profitPct'    => self::pct($profit, $pProfit),
             'debtTotal'    => (float) $debts->sum('debt'),
             'debtClients'  => $debts->count(),

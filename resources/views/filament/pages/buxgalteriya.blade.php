@@ -387,7 +387,7 @@
                 @else
                 <span class="exp-acc-badge">{{ $exp->account ? ($exp->account->name ?: $typeOptions[$exp->account->type]) : '—' }}</span>
                 @endif
-                <span class="exp-comment">{{ $exp->comment ?: '—' }}@if($exp->responsible)<span style="display:block;font-size:11px;color:#6b7280">👤 {{ $exp->responsible->name }}</span>@endif</span>
+                <span class="exp-comment">@if($exp->kind === 'oylik')<span style="display:inline-block;font-size:10px;font-weight:800;padding:2px 6px;border-radius:5px;background:#fef3c7;color:#b45309;margin-right:6px">OYLIK</span>@endif{{ $exp->comment ?: '—' }}@if($exp->responsible)<span style="display:block;font-size:11px;color:#6b7280">👤 {{ $exp->responsible->name }}</span>@endif</span>
                 <span class="exp-amount">− {{ number_format($exp->amount, 0, '.', ' ') }} so'm</span>
                 @unless($exp->is_auto)
                 <div class="exp-row-actions">
@@ -465,8 +465,13 @@
                     <div>
                         <div class="acc-name">Umumiy xarajatlar ({{ $bxMonthLabel }})</div>
                         <div class="acc-balance exp-tot-sum" style="font-size:24px;margin-top:8px">− {{ number_format($totalSpent, 0, '.', ' ') }} <span class="exp-tot-l" style="font-size:13px">so'm</span></div>
-                        <div style="margin-top:10px;display:flex;flex-direction:column;gap:4px">
-                            @forelse($spentByAcc->take(4) as $sa)
+                        @php $salaryPart = (float) $expenses->filter(fn ($x) => $x->kind === 'oylik')->sum('amount'); @endphp
+                        <div style="margin-top:8px;display:flex;gap:14px;font-size:11.5px">
+                            <span class="exp-tot-l">💼 Xarajat <b class="exp-tot-v">{{ number_format($totalSpent - $salaryPart, 0, '.', ' ') }}</b></span>
+                            <span class="exp-tot-l">💵 Oylik <b class="exp-tot-v" style="color:#fbbf24 !important">{{ number_format($salaryPart, 0, '.', ' ') }}</b></span>
+                        </div>
+                        <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px">
+                            @forelse($spentByAcc->take(3) as $sa)
                                 <div style="display:flex;justify-content:space-between;gap:8px;font-size:11.5px">
                                     <span class="exp-tot-l" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ $sa->name ?: $typeOptions[$sa->type] }}</span>
                                     <span class="exp-tot-v" style="font-weight:800;white-space:nowrap">{{ number_format($sa->expenses_sum_amount, 0, '.', ' ') }}</span>
@@ -474,8 +479,8 @@
                             @empty
                                 <div class="exp-tot-l" style="font-size:11.5px">Bu oyda xarajat yo'q</div>
                             @endforelse
-                            @if($spentByAcc->count() > 4)
-                                <div class="exp-tot-l" style="font-size:11px">+ yana {{ $spentByAcc->count() - 4 }} ta hisob</div>
+                            @if($spentByAcc->count() > 3)
+                                <div class="exp-tot-l" style="font-size:11px">+ yana {{ $spentByAcc->count() - 3 }} ta hisob</div>
                             @endif
                         </div>
                     </div>
@@ -570,7 +575,33 @@
             </div>
 
             <div class="bx-field">
-                <label>Xarajat kim uchun / kim qildi (xodim) <span style="color:#dc2626">*</span></label>
+                <label>Chiqim turi <span style="color:#dc2626">*</span></label>
+                <div class="bx-type-tabs" style="margin-bottom:4px">
+                    @foreach(\App\Models\Expense::kindOptions() as $kk => $kl)
+                    <button type="button" wire:click="$set('expKind', '{{ $kk }}')" class="bx-type-tab {{ $expKind === $kk ? 'active' : '' }}"
+                            @if($expKind === $kk && $kk === 'oylik') style="border-color:#d97706;background:#fffbeb;color:#b45309 !important" @endif>
+                        {{ $kk === 'oylik' ? '💵' : '💼' }} {{ $kl }}
+                    </button>
+                    @endforeach
+                </div>
+                @error('expKind')<span style="font-size:11px;color:#f87171">{{ $message }}</span>@enderror
+                @if($expKind === 'oylik' && !$editExpenseId)
+                    <span style="display:block;font-size:11px;color:#b45309;margin-top:2px">Xodim to'lovlariga (Oylik hisobot) ham yoziladi.</span>
+                @elseif($expKind === 'oylik' && $editExpenseId)
+                    <span style="display:block;font-size:11px;color:#6b7280;margin-top:2px">Mavjud xarajat — faqat statistika uchun "oylik" deb belgilanadi, Oylik hisobot o'zgarmaydi.</span>
+                @endif
+            </div>
+
+            @if($expKind === 'oylik' && !$editExpenseId)
+            <div class="bx-field">
+                <label>Qaysi oy uchun <span style="color:#dc2626">*</span></label>
+                <input type="month" wire:model="expSalaryMonth">
+                @error('expSalaryMonth')<span style="font-size:11px;color:#f87171">{{ $message }}</span>@enderror
+            </div>
+            @endif
+
+            <div class="bx-field">
+                <label>{{ $expKind === 'oylik' ? 'Xodim (kimga)' : 'Xarajat kim uchun / kim qildi (xodim)' }} <span style="color:#dc2626">*</span></label>
                 <select wire:model="expResponsibleId">
                     <option value="">— xodimni tanlang —</option>
                     @foreach($staffUsers as $su)
@@ -578,7 +609,7 @@
                     @endforeach
                 </select>
                 @error('expResponsibleId')<span style="font-size:11px;color:#f87171">{{ $message }}</span>@enderror
-                <span style="display:block;font-size:11px;color:#6b7280;margin-top:4px">Faqat belgi — balansga ta'sir qilmaydi. Elyor/Nursait kartalarida shu bo'yicha jamlanadi.</span>
+                @if($expKind !== 'oylik')<span style="display:block;font-size:11px;color:#6b7280;margin-top:4px">Faqat belgi — balansga ta'sir qilmaydi. Elyor/Nursait kartalarida shu bo'yicha jamlanadi.</span>@endif
             </div>
 
             @php

@@ -66,6 +66,8 @@ class Buxgalteriya extends Page
     public string $expComment       = '';
     public string $expDate          = '';
     public ?int   $expResponsibleId = null;   // kim uchun / kim qildi (majburiy)
+    public string $expKind          = '';     // majburiy: 'xarajat' | 'oylik' (oylik/avans)
+    public string $expSalaryMonth   = '';     // oylik bo'lsa — qaysi oy uchun (Y-m)
 
     // ── Pul o'tkazish oynasi (hisoblar orasida) ──
     public bool   $showTransferModal = false;
@@ -278,8 +280,12 @@ class Buxgalteriya extends Page
             $this->expComment   = (string) $exp->comment;
             $this->expDate      = $exp->expense_date->format('Y-m-d');
             $this->expResponsibleId = $exp->responsible_id;
+            $this->expKind          = $exp->kind;
+            $this->expSalaryMonth   = '';
         } else {
             $this->expResponsibleId = null;
+            $this->expKind          = '';   // turi har safar tanlanishi shart
+            $this->expSalaryMonth   = sprintf('%04d-%02d', $this->bxYear, $this->bxMonth);
             $this->expAccountId = null;
             $this->expAmount    = '';
             $this->expComment   = '';
@@ -306,14 +312,40 @@ class Buxgalteriya extends Page
         // unda Mas'ul talab qilinmaydi. Qolgan barcha xarajatlarda majburiy.
         $isAuto = $this->editExpenseId && Expense::whereKey($this->editExpenseId)->whereNotNull('user_id')->exists();
 
+        // Yangi "Oylik / avans" — xodim to'lovlariga (Oylik hisobot) ham yoziladi
+        $newSalary = !$this->editExpenseId && $this->expKind === Expense::KIND_OYLIK;
+
         $this->validate([
+            'expKind'          => 'required|in:' . Expense::KIND_XARAJAT . ',' . Expense::KIND_OYLIK,
+            'expSalaryMonth'   => $newSalary ? ['required', 'regex:/^\d{4}-\d{2}$/'] : 'nullable',
             'expAccountId'     => 'required|exists:financial_accounts,id,user_id,NULL',   // xodim kartasi pul hisobi emas
             'expAmount'        => 'required|numeric|min:0.01',
             'expDate'          => 'required|date',
             'expResponsibleId' => ($isAuto ? 'nullable' : 'required') . '|exists:users,id',
         ], [
             'expResponsibleId.required' => 'Xarajatni kim qilganini (xodimni) tanlang',
+            'expKind.required'          => 'Chiqim turini tanlang: Xarajat yoki Oylik / avans',
+            'expSalaryMonth.required'   => 'Qaysi oy uchun ekanini tanlang',
         ]);
+
+        if ($newSalary) {
+            $amount    = (float) $this->expAmount;
+            [$sy, $sm] = explode('-', $this->expSalaryMonth);
+            $row       = collect(\App\Services\EmployeePayableService::yearGrid((int) $sy))->firstWhere('user.id', $this->expResponsibleId);
+            $remaining = (float) ($row['months'][(int) $sm]['remaining'] ?? 0);
+            $payment = \App\Services\SalaryPaymentService::save([
+                'user_id'  => $this->expResponsibleId,
+                'month'    => $this->expSalaryMonth,
+                'amount'   => $amount,
+                'paid_at'  => $this->expDate,
+                'note'     => trim($this->expComment) ?: null,
+                'given_by' => auth()->id(),
+            ], null, $remaining > 0 && $amount < $remaining, $this->expAccountId);
+            Expense::where('salary_payment_id', $payment?->id)->update(['responsible_id' => $this->expResponsibleId]);
+            Notification::make()->title('Oylik / avans yozildi')->body("Xodim to'lovlariga (Oylik hisobot) va tanlangan hisobdan xarajatga yozildi.")->success()->send();
+            $this->closeExpenseModal();
+            return;
+        }
 
         $data = [
             'account_id'     => $this->expAccountId,
@@ -321,6 +353,7 @@ class Buxgalteriya extends Page
             'comment'        => trim($this->expComment) ?: null,
             'expense_date'   => $this->expDate,
             'responsible_id' => $this->expResponsibleId,
+            'category'       => $this->expKind,
         ];
 
         if ($this->editExpenseId) {
