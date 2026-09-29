@@ -388,7 +388,8 @@ class YangiBux extends Page
             'chComment'       => ($newSalary ? 'nullable' : 'required') . '|string|max:255',
             'chAmount'        => 'required|numeric|min:1',
             'chAccountId'     => 'required|exists:financial_accounts,id,user_id,NULL',
-            'chResponsibleId' => 'required|exists:users,id',
+            // Xarajatda xodim ixtiyoriy — tanlanmasa firma (umumiy) xarajati
+            'chResponsibleId' => ($this->chKind === Expense::KIND_OYLIK ? 'required' : 'nullable') . '|exists:users,id',
             'chProjectId'     => 'nullable|exists:projects,id',
             'chFile'          => 'nullable|file|max:8192|mimes:jpg,jpeg,png,webp,pdf,doc,docx,xls,xlsx',
         ], [
@@ -399,7 +400,7 @@ class YangiBux extends Page
             'chComment.required'   => 'Tavsif kiriting',
             'chAmount.required'    => 'Summani kiriting',
             'chAccountId.required' => "Qaysi hisobdan to'langanini tanlang",
-            'chResponsibleId.required' => 'Xarajatni kim qilganini (xodimni) tanlang',
+            'chResponsibleId.required' => 'Xodimni tanlang (kimga oylik / avans berildi)',
         ]);
 
         $old = $this->chiqimId ? Expense::find($this->chiqimId) : null;
@@ -765,7 +766,7 @@ class YangiBux extends Page
             if (!empty($f['kind']))   $q->ofKind($f['kind']);
             if (!empty($f['user'])) {
                 $q->where(fn ($uq) => $uq->where('responsible_id', $f['user'])
-                    ->orWhere(fn ($u2) => $u2->whereNull('responsible_id')->where('created_by', $f['user'])));
+                    ->orWhere(fn ($u2) => $u2->whereNull('responsible_id')->whereNull('category')->where('created_by', $f['user'])));
             }
             if (!empty($f['project'])) {
                 $pv = $f['project'];
@@ -784,7 +785,8 @@ class YangiBux extends Page
                 'amount'  => (float) $e->amount,
                 'method'  => $e->account?->name ?: (FinancialAccount::typeOptions()[$e->account?->type] ?? '—'),
                 'mtype'   => $e->account?->type,
-                'user'    => $e->responsible?->name ?? $e->createdBy?->name,
+                // Yangi xarajatda xodim tanlanmagan bo'lsa — firma xarajati
+                'user'    => $e->responsible?->name ?? ($e->category && !$e->user_id ? '🏢 Firma' : $e->createdBy?->name),
                 'locked'  => $e->is_auto,
                 'kind'    => $e->kind,
                 'file'    => $e->attachment,

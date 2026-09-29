@@ -733,13 +733,13 @@
                         @error('chAccountId')<div class="yb-err">{{ $message }}</div>@enderror
                     </div>
                     <div class="yb-fld">
-                        <label>{{ $chKind === 'oylik' ? 'Xodim (kimga)' : 'Kim uchun / kim qildi' }} <i>*</i></label>
+                        <label>{{ $chKind === 'oylik' ? 'Xodim (kimga)' : 'Kim uchun / kim qildi' }} @if($chKind === 'oylik')<i>*</i>@else(ixtiyoriy)@endif</label>
                         <select class="yb-in" wire:model.live="chResponsibleId">
-                            <option value="">—</option>
+                            <option value="">{{ $chKind === 'oylik' ? '—' : '🏢 Firma (umumiy xarajat)' }}</option>
                             @foreach($staffUsers as $su)<option value="{{ $su->id }}">{{ $su->name }}</option>@endforeach
                         </select>
                         @error('chResponsibleId')<div class="yb-err">{{ $message }}</div>@enderror
-                        @if($chKind !== 'oylik')<div class="yb-sub" style="margin-top:4px">Faqat belgi — balansga ta'sir qilmaydi</div>@endif
+                        @if($chKind !== 'oylik')<div class="yb-sub" style="margin-top:4px">Xodim tanlanmasa — firma xarajati. Balansga ta'sir qilmaydi.</div>@endif
                     </div>
                 </div>
                 <div class="yb-fld">
