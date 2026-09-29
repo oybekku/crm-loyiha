@@ -515,10 +515,17 @@ class YangiBux extends Page
 
     // ── Yordamchi so'rovlar ─────────────────────────────────────────────────
 
-    // Tushum — REAL pul kelgan sana (payment_date) bo'yicha.
+    // Tushum — loyiha OCHILGAN oy (projects.created_at) bo'yicha, asosiy oynadagi
+    // statistika bilan bir xil: iyul loyihasiga sentabrda to'lov kelsa ham u
+    // iyul oyida ko'rinadi. Har oy faqat o'z loyihalarining pulini ko'rsatadi.
+    private function paymentsOfMonth(int $year, int $month)
+    {
+        return Payment::whereHas('project', fn ($q) => $q->whereYear('created_at', $year)->whereMonth('created_at', $month));
+    }
+
     private function incomeFor(int $year, int $month): float
     {
-        return (float) Payment::whereYear('payment_date', $year)->whereMonth('payment_date', $month)->sum('amount');
+        return (float) $this->paymentsOfMonth($year, $month)->sum('amount');
     }
 
     // Xarajat — Buxgalteriya bilan bir xil qoida: oylikdan avtomatik yozilgan
@@ -562,12 +569,12 @@ class YangiBux extends Page
 
         $kirim = collect();
         if ($type !== 'chiqim' && empty($f['kind'])) {
-            $q = Payment::with(['project', 'account', 'createdBy']);
             if ($from || $to) {
+                $q = Payment::with(['project', 'account', 'createdBy']);
                 if ($from) $q->whereDate('payment_date', '>=', $from);
                 if ($to)   $q->whereDate('payment_date', '<=', $to);
             } else {
-                $q->whereYear('payment_date', $year)->whereMonth('payment_date', $month);
+                $q = $this->paymentsOfMonth($year, $month)->with(['project', 'account', 'createdBy']);
             }
             if (!empty($f['method'])) $q->where('method', $f['method']);
             if (!empty($f['user']))   $q->where('created_by', $f['user']);
@@ -754,8 +761,10 @@ class YangiBux extends Page
 
         // 12 oylik grafik (tanlangan yil)
         $incomeByMonth = array_fill(1, 12, 0.0);
-        Payment::whereYear('payment_date', $year)->get(['amount', 'payment_date'])
-            ->each(function ($p) use (&$incomeByMonth) { $incomeByMonth[(int) $p->payment_date->month] += (float) $p->amount; });
+        Payment::with('project:id,created_at')
+            ->whereHas('project', fn ($q) => $q->whereYear('created_at', $year))
+            ->get(['id', 'project_id', 'amount'])
+            ->each(function ($p) use (&$incomeByMonth) { $incomeByMonth[(int) $p->project->created_at->month] += (float) $p->amount; });
         $expenseByMonth = array_fill(1, 12, 0.0);
         $salaryByMonth  = array_fill(1, 12, 0.0);   // shundan oylik / avans
         Expense::where(function ($q) use ($year) {
@@ -790,8 +799,7 @@ class YangiBux extends Page
         // xizmatlariga). Faqat hisob; bazadagi to'lovga tegilmaydi.
         $svcLabels = Project::serviceOptions();
         $sources = [];
-        Payment::with('project.services:id,project_id,service_name,final_price')
-            ->whereYear('payment_date', $year)->whereMonth('payment_date', $month)
+        $this->paymentsOfMonth($year, $month)->with('project.services:id,project_id,service_name,final_price')
             ->get(['id', 'project_id', 'amount', 'services', 'service_split'])
             ->each(function ($p) use (&$sources) {
                 $amount = (float) $p->amount;
