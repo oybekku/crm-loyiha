@@ -8,7 +8,7 @@ class Expense extends Model
 {
     protected $fillable = [
         'account_id', 'user_id', 'salary_payment_id', 'month', 'amount', 'comment', 'expense_date', 'created_by',
-        'project_id', 'responsible_id', 'note', 'attachment', 'category',
+        'project_id', 'responsible_id', 'note', 'attachment', 'category', 'recurring_expense_id',
     ];
 
     public const KIND_OYLIK   = 'oylik';     // oylik / avans
@@ -66,6 +66,11 @@ class Expense extends Model
     public function responsible()
     {
         return $this->belongsTo(User::class, 'responsible_id');
+    }
+
+    public function recurringExpense()
+    {
+        return $this->belongsTo(RecurringExpense::class);
     }
 
     public function salaryPayment()

@@ -7,6 +7,7 @@ use App\Models\Expense;
 use App\Models\FinancialAccount;
 use App\Models\Payment;
 use App\Models\Project;
+use App\Models\RecurringExpense;
 use App\Services\EmployeePayableService;
 use Carbon\Carbon;
 use App\Models\User;
@@ -72,6 +73,16 @@ class YangiBux extends Page
     public ?string $chExistingFile  = null;
     public string  $chKind          = '';   // majburiy: 'xarajat' | 'oylik' (oylik/avans)
     public string  $chSalaryMonth   = '';   // oylik bo'lsa — qaysi oy uchun (Y-m)
+    public ?int    $chRecurringId   = null; // doimiy to'lov (arenda, svet...) orqali ochilgan bo'lsa
+
+    // Doimiy to'lov shabloni (qo'shish / tahrirlash)
+    public bool    $showRecModal = false;
+    public ?int    $recId        = null;
+    public string  $recName      = '';
+    public string  $recAmount    = '';
+    public bool    $recFixed     = true;
+    public ?int    $recAccountId = null;
+    public ?string $recDueDay    = null;
 
     // ── Oylik maosh tabi ──
     public string $omRole     = '';   // bo'lim = tizim roli
@@ -190,6 +201,7 @@ class YangiBux extends Page
             $this->chExistingFile  = $e->attachment;
             $this->chKind          = $e->kind;
             $this->chSalaryMonth   = $e->month ?: $e->expense_date->format('Y-m');
+            $this->chRecurringId   = $e->recurring_expense_id;
         } else {
             $isCur = $this->ybYear === (int) now()->year && $this->ybMonth === (int) now()->month;
             $this->chDate          = $isCur ? now()->format('Y-m-d') : Carbon::create($this->ybYear, $this->ybMonth, 1)->format('Y-m-d');
@@ -202,8 +214,120 @@ class YangiBux extends Page
             $this->chExistingFile  = null;
             $this->chKind          = '';          // turi har safar tanlanishi shart
             $this->chSalaryMonth   = $this->ym();
+            $this->chRecurringId   = null;
         }
         $this->showChiqimModal = true;
+    }
+
+    // ── Doimiy to'lovlar (arenda, svet, wi-fi...) ──────────────────────────
+    // "To'lash" — oddiy Chiqim oynasi, maydonlari shablondan to'ldirilgan.
+    public function payRecurring(int $id): void
+    {
+        $r = RecurringExpense::find($id);
+        if (!$r) return;
+        $this->openChiqim();
+        if (!$this->showChiqimModal) return;
+        $this->chKind        = Expense::KIND_XARAJAT;
+        $this->chRecurringId = $r->id;
+        $this->chComment     = $r->name . ' — ' . $this->monthName($this->ybYear, $this->ybMonth);
+        $this->chAmount      = (float) $r->amount > 0 ? number_format((float) $r->amount, 0, '', ' ') : '';
+        $this->chAccountId   = $r->account_id;
+    }
+
+    public function openRec(?int $id = null): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+        $this->resetValidation();
+        $r = $id ? RecurringExpense::find($id) : null;
+        $this->recId        = $r?->id;
+        $this->recName      = (string) $r?->name;
+        $this->recAmount    = $r && (float) $r->amount > 0 ? number_format((float) $r->amount, 0, '', ' ') : '';
+        $this->recFixed     = $r ? $r->is_fixed : true;
+        $this->recAccountId = $r?->account_id;
+        $this->recDueDay    = $r?->due_day ? (string) $r->due_day : null;
+        $this->showRecModal = true;
+    }
+
+    public function saveRec(): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+        $this->recAmount = str_replace([' ', ','], ['', '.'], $this->recAmount);
+        if ($this->recDueDay === '') $this->recDueDay = null;
+        $this->validate([
+            'recName'      => 'required|string|max:100',
+            'recAmount'    => 'required|numeric|min:0',
+            'recAccountId' => 'nullable|exists:financial_accounts,id,user_id,NULL',
+            'recDueDay'    => 'nullable|integer|min:1|max:31',
+        ], [
+            'recName.required'   => 'Nomini kiriting (masalan: Arenda)',
+            'recAmount.required' => 'Summani kiriting',
+        ]);
+        $data = [
+            'name'       => trim($this->recName),
+            'amount'     => (float) $this->recAmount,
+            'is_fixed'   => $this->recFixed,
+            'account_id' => $this->recAccountId,
+            'due_day'    => $this->recDueDay ? (int) $this->recDueDay : null,
+        ];
+        if ($this->recId && ($r = RecurringExpense::find($this->recId))) {
+            $r->update($data);
+            Notification::make()->title("Doimiy to'lov yangilandi")->success()->send();
+        } else {
+            RecurringExpense::create($data + ['sort_order' => (int) RecurringExpense::max('sort_order') + 1]);
+            Notification::make()->title("Doimiy to'lov qo'shildi")->success()->send();
+        }
+        $this->showRecModal = false;
+    }
+
+    // Ro'yxatdan olib tashlash — oldin yozilgan chiqimlar o'z joyida qoladi.
+    public function deleteRec(int $id): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+        RecurringExpense::whereKey($id)->update(['is_active' => false]);
+        $this->showRecModal = false;
+        Notification::make()->title("Doimiy to'lov ro'yxatdan olib tashlandi")->body("Oldin to'langan chiqimlar o'z joyida qoladi.")->warning()->send();
+    }
+
+    private function monthName(int $year, int $month): string
+    {
+        return ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentabr', 'Oktabr', 'Noyabr', 'Dekabr'][$month - 1] . ' ' . $year;
+    }
+
+    /** Tanlangan oy uchun doimiy to'lovlar holati */
+    private function recurringStatus(int $year, int $month): array
+    {
+        $paid = Expense::whereNotNull('recurring_expense_id')
+            ->whereYear('expense_date', $year)->whereMonth('expense_date', $month)
+            ->orderBy('expense_date')->get(['id', 'recurring_expense_id', 'amount', 'expense_date'])
+            ->groupBy('recurring_expense_id');
+
+        $today    = now()->startOfDay();
+        $monthEnd = Carbon::create($year, $month, 1)->endOfMonth();
+        $rows = RecurringExpense::where(fn ($q) => $q->where('is_active', true)->orWhereIn('id', $paid->keys()))
+            ->orderBy('sort_order')->orderBy('id')->get()
+            ->map(function (RecurringExpense $r) use ($paid, $year, $month, $today, $monthEnd) {
+                $list   = $paid->get($r->id, collect());
+                $isPaid = $list->isNotEmpty();
+                $due    = $r->due_day ? Carbon::create($year, $month, min($r->due_day, $monthEnd->day)) : null;
+                return [
+                    'r'         => $r,
+                    'paid'      => $isPaid,
+                    'paidSum'   => (float) $list->sum('amount'),
+                    'paidDate'  => $list->last()?->expense_date,
+                    'expenseId' => $list->last()?->id,
+                    'count'     => $list->count(),
+                    'due'       => $due,
+                    'overdue'   => !$isPaid && $due && $today->gt($due),
+                ];
+            });
+
+        return [
+            'rows'      => $rows,
+            'paidCount' => $rows->where('paid', true)->count(),
+            'total'     => $rows->sum(fn ($x) => $x['paid'] ? $x['paidSum'] : (float) $x['r']->amount),
+            'paid'      => $rows->sum('paidSum'),
+            'left'      => $rows->where('paid', false)->sum(fn ($x) => (float) $x['r']->amount),
+        ];
     }
 
     public function closeChiqim(): void
@@ -306,7 +430,7 @@ class YangiBux extends Page
             }
             Notification::make()->title('Chiqim yangilandi')->success()->send();
         } else {
-            Expense::create($data + ['created_by' => auth()->id()]);
+            Expense::create($data + ['created_by' => auth()->id(), 'recurring_expense_id' => $this->chRecurringId]);
             Notification::make()->title("Chiqim qo'shildi")->success()->send();
         }
         $this->closeChiqim();
@@ -906,6 +1030,8 @@ class YangiBux extends Page
             'chProject'    => $this->chProjectId ? Project::find($this->chProjectId, ['id', 'seq_no', 'owner_name', 'address']) : null,
             'allAccounts'  => $allAccountsSum->values(),
             'staffUsers'   => User::where('is_active', true)->orderBy('name')->get(['id', 'name']),
+            'recurring'    => $this->tab === 'kirim' ? $this->recurringStatus($year, $month) : null,
+            'chRecurring'  => $this->showChiqimModal && $this->chRecurringId ? RecurringExpense::find($this->chRecurringId) : null,
             'methodOptions'=> Payment::methodOptions(),
             'salary'       => $salary,
             'payStaff'     => $this->showPayModal ? User::where('is_active', true)->orderBy('name')->get(['id', 'name', 'position']) : collect(),

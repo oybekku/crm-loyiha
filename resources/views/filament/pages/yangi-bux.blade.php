@@ -155,6 +155,19 @@
 .yb-staff b{color:var(--yb-tx)}
 .yb-staff-n{text-align:right;white-space:nowrap}
 @media (max-width:700px){.yb-staff{grid-template-columns:1fr 1fr}}
+/* Doimiy to'lovlar */
+.yb-rec{display:grid;grid-template-columns:26px minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:10px 6px;border-bottom:1px solid var(--yb-bd);font-size:13px}
+.yb-rec.late{background:#fef2f2}
+.dark .yb-rec.late{background:#3b1414}
+.yb-rec-ic{font-size:15px;text-align:center}
+.yb-rec-n b{color:var(--yb-tx)}
+.yb-rec-v{text-align:right;white-space:nowrap;font-weight:800;color:var(--yb-tx)}
+.yb-rec-v a{color:var(--yb-tx);text-decoration:underline dotted}
+.yb-rec.paid .yb-rec-v a{color:var(--yb-green)}
+.yb-rec-a{display:flex;gap:6px;justify-content:flex-end;align-items:center;min-width:120px}
+.yb-rec-t{padding-top:12px;font-size:13px;color:var(--yb-mu);text-align:right}
+.yb-rec-t b{color:var(--yb-tx)}
+@media (max-width:600px){.yb-rec{grid-template-columns:22px minmax(0,1fr) auto}.yb-rec-a{grid-column:2/-1;min-width:0}}
 .yb-kind{display:flex;gap:8px}
 .yb-kind-opt{flex:1;text-align:center;padding:10px;border-radius:9px;border:1.5px solid var(--yb-bd);cursor:pointer;font-size:13px;font-weight:700;color:var(--yb-mu);background:var(--yb-card)}
 .yb-kind-opt.on.xarajat{border-color:#dc2626;background:#fef2f2;color:#b91c1c}
@@ -320,6 +333,8 @@
             'showAmounts' => true,
         ])
     </div>
+
+    @include('filament.pages.partials.yangi-bux-recurring')
 
     <div style="margin-bottom:16px">@include('filament.pages.partials.yangi-bux-staff-cards')</div>
 
@@ -650,6 +665,9 @@
         <div class="yb-modal">
             <div class="yb-modal-h" style="background:#fee2e2">{{ $chiqimId ? 'Chiqimni tahrirlash' : "Chiqim qo'shish" }} <button type="button" wire:click="closeChiqim">×</button></div>
             <div class="yb-modal-b">
+                @if($chRecurring)
+                    <div class="yb-sub" style="background:#eff6ff;color:#1d4ed8;border-radius:8px;padding:8px 10px;margin-bottom:12px;font-size:12px">🔁 Doimiy to'lov: <b>{{ $chRecurring->name }}</b> — summani kerak bo'lsa o'zgartiring (masalan, svet har oy har xil).</div>
+                @endif
                 <div class="yb-fld">
                     <label>Chiqim turi <i>*</i></label>
                     <div class="yb-kind">
@@ -742,6 +760,56 @@
                 <div style="display:flex;gap:10px;margin-top:6px">
                     <button type="button" class="yb-b2" wire:click="closeChiqim">Bekor qilish</button>
                     <button type="button" class="yb-b2 red" wire:click="saveChiqim" wire:loading.attr="disabled" wire:target="saveChiqim,chFile">Saqlash</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endteleport
+@endif
+
+{{-- ── Doimiy to'lov qo'shish / tahrirlash ── --}}
+@if($showRecModal)
+    @teleport('body')
+    <div class="yb yb-ov" wire:click.self="$set('showRecModal', false)">
+        <div class="yb-modal" style="max-width:440px">
+            <div class="yb-modal-h" style="background:#dbeafe">{{ $recId ? "Doimiy to'lovni tahrirlash" : "Doimiy to'lov qo'shish" }} <button type="button" wire:click="$set('showRecModal', false)">×</button></div>
+            <div class="yb-modal-b">
+                <div class="yb-fld">
+                    <label>Nomi <i>*</i></label>
+                    <input type="text" class="yb-in" wire:model="recName" placeholder="Masalan: Arenda, Svet, Wi-Fi">
+                    @error('recName')<div class="yb-err">{{ $message }}</div>@enderror
+                </div>
+                <div class="yb-fld">
+                    <label>Har oylik summa (so'm) <i>*</i></label>
+                    <input type="text" inputmode="numeric" class="yb-in" wire:model="recAmount" placeholder="0"
+                           x-data x-on:input="let v=$el.value.replace(/\D/g,'');$el.value=v.replace(/\B(?=(\d{3})+(?!\d))/g,' ')">
+                    @error('recAmount')<div class="yb-err">{{ $message }}</div>@enderror
+                </div>
+                <div class="yb-fld">
+                    <div class="yb-kind">
+                        <label class="yb-kind-opt {{ $recFixed ? 'on xarajat' : '' }}"><input type="radio" wire:model.live="recFixed" value="1" style="display:none"> Aniq summa <span class="yb-sub">arenda, wi-fi</span></label>
+                        <label class="yb-kind-opt {{ !$recFixed ? 'on xarajat' : '' }}"><input type="radio" wire:model.live="recFixed" value="0" style="display:none"> Taxminiy (~) <span class="yb-sub">svet, gaz</span></label>
+                    </div>
+                </div>
+                <div class="yb-grid2">
+                    <div class="yb-fld">
+                        <label>Qaysi hisobdan (odatda)</label>
+                        @include('filament.pages.partials.yangi-bux-account-select', ['model' => 'recAccountId', 'accountsList' => $allAccounts, 'selectedId' => $recAccountId])
+                        @error('recAccountId')<div class="yb-err">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="yb-fld">
+                        <label>Har oyning nechanchi sanasigacha</label>
+                        <input type="number" min="1" max="31" class="yb-in" wire:model="recDueDay" placeholder="Masalan: 5">
+                        @error('recDueDay')<div class="yb-err">{{ $message }}</div>@enderror
+                    </div>
+                </div>
+                <div class="yb-sub" style="margin-bottom:10px">Summani o'zgartirish keyingi to'lovlarga ta'sir qiladi. Oldin to'langan chiqimlar o'zgarmaydi.</div>
+                <div style="display:flex;gap:10px;margin-top:6px">
+                    @if($recId)
+                        <button type="button" class="yb-b2" style="flex:0 0 auto;color:#dc2626" wire:click="deleteRec({{ $recId }})" wire:confirm="Ro'yxatdan olib tashlansinmi? Oldin to'langan chiqimlar o'chmaydi.">O'chirish</button>
+                    @endif
+                    <button type="button" class="yb-b2" wire:click="$set('showRecModal', false)">Bekor qilish</button>
+                    <button type="button" class="yb-b2 red" style="background:#2563eb;border-color:#2563eb" wire:click="saveRec" wire:loading.attr="disabled" wire:target="saveRec">Saqlash</button>
                 </div>
             </div>
         </div>
