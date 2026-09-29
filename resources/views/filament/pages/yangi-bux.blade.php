@@ -308,7 +308,12 @@
 
     <div class="yb-row" style="grid-template-columns:1.7fr 1fr">
         @include('filament.pages.partials.yangi-bux-chart', ['chartTitle' => 'Kirim va chiqimlar dinamikasi', 'showProfit' => false, 'split' => true])
-        @include('filament.pages.partials.yangi-bux-donut', ['donutTitle' => "To'lovlar manbalari (xizmatlar bo'yicha)"])
+        @include('filament.pages.partials.yangi-bux-donut', [
+            'donutTitle'  => $monthLabel . " davomida tushgan to'lovlar (loyiha oylari bo'yicha)",
+            'donut'       => $pmDonut,
+            'donutTotal'  => $pmTotal,
+            'showAmounts' => true,
+        ])
     </div>
 
     <div style="margin-bottom:16px">@include('filament.pages.partials.yangi-bux-staff-cards')</div>

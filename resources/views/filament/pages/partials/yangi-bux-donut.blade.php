@@ -21,8 +21,15 @@
             </div>
             <div class="yb-dl">
                 @foreach($donut as $d)
-                    <div><i style="background:{{ $d['color'] }}"></i>{{ $d['label'] }}<b>{{ round($d['pct']) }}%</b></div>
+                    @if(!empty($showAmounts))
+                        <div><i style="background:{{ $d['color'] }}"></i>{{ $d['label'] }}<b>{{ $fmt($d['value']) }} so'm <span style="color:var(--yb-mu);font-weight:500">· {{ round($d['pct']) }}%</span></b></div>
+                    @else
+                        <div><i style="background:{{ $d['color'] }}"></i>{{ $d['label'] }}<b>{{ round($d['pct']) }}%</b></div>
+                    @endif
                 @endforeach
+                @if(!empty($showAmounts))
+                    <div style="border-top:1px solid var(--yb-soft);padding-top:8px;margin-top:4px;font-weight:700">Jami tushum<b>{{ $fmt($donutTotal) }} so'm</b></div>
+                @endif
             </div>
         </div>
     @else

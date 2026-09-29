@@ -838,6 +838,37 @@ class YangiBux extends Page
             ];
         }
 
+        // Shu oyda REAL tushgan to'lovlar (payment_date) — qaysi oyda ochilgan
+        // loyihaga tegishli ekaniga qarab bo'lingan (masalan: Iyun 20M, Iyul 30M...).
+        $fullMonths = ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentabr', 'Oktabr', 'Noyabr', 'Dekabr'];
+        $byProjMonth = [];
+        Payment::with('project:id,created_at')
+            ->whereYear('payment_date', $year)->whereMonth('payment_date', $month)
+            ->get(['id', 'project_id', 'amount'])
+            ->each(function ($p) use (&$byProjMonth) {
+                $key = $p->project?->created_at?->format('Y-m') ?? '_nomalum';
+                $byProjMonth[$key] = ($byProjMonth[$key] ?? 0) + (float) $p->amount;
+            });
+        ksort($byProjMonth);
+        $pmColors = ['#3b82f6', '#22c55e', '#f59e0b', '#a78bfa', '#ef4444', '#14b8a6', '#ec4899', '#84cc16', '#f97316', '#06b6d4', '#8b5cf6', '#64748b'];
+        $pmTotal = array_sum($byProjMonth);
+        $pmDonut = [];
+        $i = 0;
+        foreach ($byProjMonth as $key => $val) {
+            if ($key === '_nomalum') {
+                $label = "Loyihasi o'chirilgan";
+            } else {
+                [$ky, $km] = array_map('intval', explode('-', $key));
+                $label = $fullMonths[$km - 1] . ($ky !== $year ? ' ' . $ky : '') . ' loyihalari';
+            }
+            $pmDonut[] = [
+                'label' => $label,
+                'value' => $val,
+                'pct'   => $pmTotal > 0 ? $val / $pmTotal * 100 : 0,
+                'color' => $pmColors[$i++ % count($pmColors)],
+            ];
+        }
+
         // Hisoblar qoldig'i — barcha vaqt bo'yicha (shaxsiy hisoblar jamiga kirmaydi).
         $allAccountsSum = FinancialAccount::with('owner:id,name')
             ->withSum('payments as payments_sum_amount', 'amount')
@@ -910,6 +941,8 @@ class YangiBux extends Page
             'chartMax'     => $chartMax,
             'donut'        => $donut,
             'donutTotal'   => $srcTotal,
+            'pmDonut'      => $pmDonut,
+            'pmTotal'      => $pmTotal,
             'balances'     => $balances,
             'staffCards'   => $staffCards,
             'accountBalances' => $accountBalances,
