@@ -791,53 +791,6 @@ class YangiBux extends Page
         }
         $chartMax = max(1, ...array_map(fn ($c) => max($c['income'], $c['expense'], $c['profit']), $chart));
 
-        // Tushum manbalari (xizmat turlari bo'yicha). Yangi to'lovlarda aniq
-        // taqsimot (service_split) bor. Undan oldingi (2026-yil avgust oxirigacha)
-        // to'lovlarda faqat `services` ro'yxati yoki hech narsa yo'q — ular
-        // EmployeePayableService::paidAmountForService'dagi kabi xizmat narxi
-        // nisbatida taqsimlanadi (services bo'sh bo'lsa — loyihaning barcha
-        // xizmatlariga). Faqat hisob; bazadagi to'lovga tegilmaydi.
-        $svcLabels = Project::serviceOptions();
-        $sources = [];
-        $this->paymentsOfMonth($year, $month)->with('project.services:id,project_id,service_name,final_price')
-            ->get(['id', 'project_id', 'amount', 'services', 'service_split'])
-            ->each(function ($p) use (&$sources) {
-                $amount = (float) $p->amount;
-                $split  = is_array($p->service_split) ? array_filter($p->service_split, fn ($v) => $v > 0) : [];
-
-                if (empty($split)) {
-                    $priceMap = [];
-                    foreach ($p->project?->services ?? [] as $s) {
-                        $priceMap[$s->service_name] = ($priceMap[$s->service_name] ?? 0) + (float) $s->final_price;
-                    }
-                    $selected = !empty($p->services) ? array_intersect_key($priceMap, array_flip($p->services)) : $priceMap;
-                    $sumSel = array_sum($selected);
-                    if ($sumSel > 0) {
-                        foreach ($selected as $svc => $price) $split[$svc] = $amount * $price / $sumSel;
-                    } elseif (!empty($p->services)) {
-                        // narxi 0 bo'lsa — tanlangan xizmatlarga teng bo'lib
-                        foreach ($p->services as $svc) $split[$svc] = $amount / count($p->services);
-                    }
-                }
-
-                foreach ($split as $svc => $v) $sources[$svc] = ($sources[$svc] ?? 0) + (float) $v;
-                $rest = $amount - array_sum($split);
-                if ($rest > 0.009) $sources['_boshqa'] = ($sources['_boshqa'] ?? 0) + $rest;
-            });
-        arsort($sources);
-        $srcColors = ['#3b82f6', '#22c55e', '#f59e0b', '#a78bfa', '#ef4444', '#14b8a6'];
-        $srcTotal = array_sum($sources);
-        $donut = [];
-        $i = 0;
-        foreach ($sources as $key => $val) {
-            $donut[] = [
-                'label' => $key === '_boshqa' ? 'Boshqa' : ($svcLabels[$key] ?? $key),
-                'value' => $val,
-                'pct'   => $srcTotal > 0 ? $val / $srcTotal * 100 : 0,
-                'color' => $srcColors[$i++ % count($srcColors)],
-            ];
-        }
-
         // Shu oyda REAL tushgan to'lovlar (payment_date) — qaysi oyda ochilgan
         // loyihaga tegishli ekaniga qarab bo'lingan (masalan: Iyun 20M, Iyul 30M...).
         $fullMonths = ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentabr', 'Oktabr', 'Noyabr', 'Dekabr'];
@@ -939,8 +892,6 @@ class YangiBux extends Page
             'staffOwedTotal' => (float) $staffOwedPositive->sum('owed'),
             'chart'        => $chart,
             'chartMax'     => $chartMax,
-            'donut'        => $donut,
-            'donutTotal'   => $srcTotal,
             'pmDonut'      => $pmDonut,
             'pmTotal'      => $pmTotal,
             'balances'     => $balances,

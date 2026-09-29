@@ -223,7 +223,12 @@
     <div class="yb-row yb-row-3">
         @include('filament.pages.partials.yangi-bux-chart', ['chartTitle' => 'Tushum va xarajatlar grafigi', 'showProfit' => true])
 
-        @include('filament.pages.partials.yangi-bux-donut', ['donutTitle' => "Tushum manbalari (xizmatlar bo'yicha)"])
+        @include('filament.pages.partials.yangi-bux-donut', [
+            'donutTitle'  => $monthLabel . " davomida tushgan to'lovlar (loyiha oylari bo'yicha)",
+            'donut'       => $pmDonut,
+            'donutTotal'  => $pmTotal,
+            'showAmounts' => true,
+        ])
 
         {{-- ── Hisoblar qoldig'i ── --}}
         <div class="yb-card">
