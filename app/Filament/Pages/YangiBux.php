@@ -293,6 +293,31 @@ class YangiBux extends Page
         return ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentabr', 'Oktabr', 'Noyabr', 'Dekabr'][$month - 1] . ' ' . $year;
     }
 
+    /**
+     * Har bir hisobning TANLANGAN OY puli: shu oy loyihalaridan shu hisobga
+     * tushgan kirim (Yangi bux qoidasi) + shu oy o'tkazmalari kelgan − ketgan
+     * − shu oyga yozilgan chiqimlar. Chiqim qaysi oy ochiq turgan bo'lsa,
+     * o'sha oy pulidan yechiladi.
+     */
+    private function monthAccountBalances(int $year, int $month): array
+    {
+        $ym = sprintf('%04d-%02d', $year, $month);
+        $in = $this->paymentsOfMonth($year, $month)->whereNotNull('account_id')
+            ->selectRaw('account_id, SUM(amount) s')->groupBy('account_id')->pluck('s', 'account_id');
+        $out = Expense::where($this->expenseScope($year, $month))->whereNotNull('account_id')
+            ->selectRaw('account_id, SUM(amount) s')->groupBy('account_id')->pluck('s', 'account_id');
+        $trScope = fn ($q) => $q->where('month', $ym)
+            ->orWhere(fn ($q2) => $q2->whereNull('month')->whereYear('transfer_date', $year)->whereMonth('transfer_date', $month));
+        $trIn  = \App\Models\AccountTransfer::where($trScope)->selectRaw('to_account_id a, SUM(amount) s')->groupBy('to_account_id')->pluck('s', 'a');
+        $trOut = \App\Models\AccountTransfer::where($trScope)->selectRaw('from_account_id a, SUM(amount) s')->groupBy('from_account_id')->pluck('s', 'a');
+
+        $res = [];
+        foreach ($in->keys()->merge($out->keys())->merge($trIn->keys())->merge($trOut->keys())->unique() as $id) {
+            $res[$id] = (float) ($in[$id] ?? 0) + (float) ($trIn[$id] ?? 0) - (float) ($out[$id] ?? 0) - (float) ($trOut[$id] ?? 0);
+        }
+        return $res;
+    }
+
     /** Tanlangan oy uchun doimiy to'lovlar holati */
     private function recurringStatus(int $year, int $month): array
     {
@@ -355,7 +380,11 @@ class YangiBux extends Page
         $this->validate([
             'chKind'          => 'required|in:' . Expense::KIND_XARAJAT . ',' . Expense::KIND_OYLIK,
             'chSalaryMonth'   => ($newSalary || $attach) ? ['required', 'regex:/^\d{4}-\d{2}$/'] : 'nullable',
-            'chDate'          => 'required|date',
+            'chDate'          => $this->chiqimId ? 'required|date' : [
+                'required', 'date',
+                'after_or_equal:' . Carbon::create($this->ybYear, $this->ybMonth, 1)->format('Y-m-d'),
+                'before_or_equal:' . Carbon::create($this->ybYear, $this->ybMonth, 1)->endOfMonth()->format('Y-m-d'),
+            ],
             'chComment'       => ($newSalary ? 'nullable' : 'required') . '|string|max:255',
             'chAmount'        => 'required|numeric|min:1',
             'chAccountId'     => 'required|exists:financial_accounts,id,user_id,NULL',
@@ -364,6 +393,8 @@ class YangiBux extends Page
             'chFile'          => 'nullable|file|max:8192|mimes:jpg,jpeg,png,webp,pdf,doc,docx,xls,xlsx',
         ], [
             'chKind.required'      => 'Chiqim turini tanlang: Xarajat yoki Oylik / avans',
+            'chDate.after_or_equal'  => 'Sana ochiq turgan oy ichida bo\'lishi kerak — chiqim shu oy pulidan yechiladi',
+            'chDate.before_or_equal' => 'Sana ochiq turgan oy ichida bo\'lishi kerak — chiqim shu oy pulidan yechiladi',
             'chSalaryMonth.required' => 'Qaysi oy uchun ekanini tanlang',
             'chComment.required'   => 'Tavsif kiriting',
             'chAmount.required'    => 'Summani kiriting',
@@ -955,6 +986,7 @@ class YangiBux extends Page
             ->orderBy('type')->orderBy('name')
             ->get();
         $accountBalances = $allAccountsSum->mapWithKeys(fn ($a) => [$a->id => (float) $a->balance]);
+        $monthAccountBalances = $this->monthAccountBalances($year, $month);
         $accounts = $allAccountsSum->where('is_personal', false)->whereNull('user_id');
 
         // Xodim kartalari (egasi belgilangan hisoblar) — pul hisobi emas: shu oyda
@@ -1021,6 +1053,7 @@ class YangiBux extends Page
             'balances'     => $balances,
             'staffCards'   => $staffCards,
             'accountBalances' => $accountBalances,
+            'monthAccountBalances' => $monthAccountBalances,
             'mainAccounts' => $allAccountsSum->where('is_personal', false)->whereNull('user_id')->values(),
             'balanceTotal' => $balanceTotal,
             'ops'          => $ops,

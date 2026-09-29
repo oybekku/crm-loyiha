@@ -695,7 +695,8 @@
                 <div class="yb-grid2">
                     <div class="yb-fld">
                         <label>{{ $chKind === 'oylik' && !$chiqimId ? "To'lov sanasi" : 'Sana' }} <i>*</i></label>
-                        <input type="date" class="yb-in" wire:model="chDate">
+                        <input type="date" class="yb-in" wire:model="chDate" @unless($chiqimId) min="{{ sprintf('%04d-%02d-01', $curYear, $curMonth) }}" max="{{ \Carbon\Carbon::create($curYear, $curMonth, 1)->endOfMonth()->format('Y-m-d') }}" @endunless>
+                        @unless($chiqimId)<div class="yb-sub" style="margin-top:3px">{{ $monthLabel }} pulidan yechiladi</div>@endunless
                         @error('chDate')<div class="yb-err">{{ $message }}</div>@enderror
                     </div>
                     <div class="yb-fld" style="position:relative">
@@ -728,7 +729,7 @@
                 <div class="yb-grid2">
                     <div class="yb-fld">
                         <label>Qaysi hisobdan (pul qayerdan chiqdi) <i>*</i></label>
-                        @include('filament.pages.partials.yangi-bux-account-select', ['model' => 'chAccountId', 'accountsList' => $allAccounts, 'selectedId' => $chAccountId])
+                        @include('filament.pages.partials.yangi-bux-account-select', ['model' => 'chAccountId', 'accountsList' => $allAccounts, 'selectedId' => $chAccountId, 'monthMode' => true])
                         @error('chAccountId')<div class="yb-err">{{ $message }}</div>@enderror
                     </div>
                     <div class="yb-fld">
@@ -794,7 +795,7 @@
                 <div class="yb-grid2">
                     <div class="yb-fld">
                         <label>Qaysi hisobdan (odatda)</label>
-                        @include('filament.pages.partials.yangi-bux-account-select', ['model' => 'recAccountId', 'accountsList' => $allAccounts, 'selectedId' => $recAccountId])
+                        @include('filament.pages.partials.yangi-bux-account-select', ['model' => 'recAccountId', 'accountsList' => $allAccounts, 'selectedId' => $recAccountId, 'noBalance' => true])
                         @error('recAccountId')<div class="yb-err">{{ $message }}</div>@enderror
                     </div>
                     <div class="yb-fld">
@@ -849,7 +850,7 @@
                 </div>
                 <div class="yb-fld">
                     <label>Qaysi hisobdan berildi <i>*</i></label>
-                    @include('filament.pages.partials.yangi-bux-account-select', ['model' => 'payAccountId', 'accountsList' => $allAccounts, 'selectedId' => $payAccountId])
+                    @include('filament.pages.partials.yangi-bux-account-select', ['model' => 'payAccountId', 'accountsList' => $allAccounts, 'selectedId' => $payAccountId, 'monthMode' => true])
                     @error('payAccountId')<div class="yb-err">{{ $message }}</div>@enderror
                 </div>
                 <div class="yb-fld">
