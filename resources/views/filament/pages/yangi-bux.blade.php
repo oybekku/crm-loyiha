@@ -539,7 +539,7 @@
 
         <div class="yb-tbl-wrap" style="margin-top:14px">
         <table class="yb-tbl">
-            <thead><tr><th>#</th><th>Xodim</th><th>Lavozim</th><th>Bo'lim</th><th class="num">Asosiy maosh</th><th class="num" title="Oylik hisobotdagi 'Hisoblangan' — shu oy loyihalaridagi barcha ishlar ulushi (tugallangan + kutayotgan)">Hisoblangan (ishlar)</th><th class="num">Jami summa</th><th class="num">To'langan</th><th>To'lov holati</th><th>To'lov sanasi</th><th style="text-align:right">Amallar</th></tr></thead>
+            <thead><tr><th>#</th><th>Xodim</th><th>Lavozim</th><th>Bo'lim</th><th class="num">Asosiy maosh</th><th class="num" style="color:#d97706" title="Shu oy loyihalaridagi barcha ishlar ulushi — tugallangan va kutayotgan birga">Hisoblangan</th><th class="num" style="color:#dc2626" title="Xodimga mijoz to'lagan ulushidan ko'proq berilgan ishbay pul (ma'muriy oylik kirmaydi)">Ortiqcha to'langan</th><th class="num" style="color:#16a34a" title="Mijoz to'lagan ulushga mutanosib ochilgan summa (+ oklad) − berilgani. Mijoz hali to'lamagan qismi kirmaydi.">To'lanishi kerak</th><th class="num" style="color:#2563eb">To'landi</th><th class="num" style="color:#f97316">Kutayotgan</th><th>To'lov holati</th><th>To'lov sanasi</th><th style="text-align:right">Amallar</th></tr></thead>
             <tbody>
             @php $grpPrev = null; $grpNo = 0; @endphp
             @forelse($S['rows'] as $r)
@@ -550,25 +550,25 @@
                         $gMam = $r['roleKey'] === 'mamuriy';
                     @endphp
                     <tr class="yb-grp {{ $gMam ? 'mam' : '' }}">
-                        <td colspan="6">
+                        <td colspan="5">
                             {{ $gMam ? "🏢 Ma'muriy oylik" : '🛠 Ishbay oylik' }}
                             <span>{{ $gMam ? "direktor, admin, menejer, buxgalter — firma foydasidan" : "toposyomka, ariza, eskiz loyiha — ishdan (komissiya)" }} · {{ $gRows->count() }} nafar
                                 </span>
                         </td>
-                        <td class="num">{{ $fmt($gRows->sum('total')) }}</td>
-                        <td class="num">{{ $fmt($gRows->sum('paid')) }}</td>
-                        <td colspan="3">@if($gRows->sum('remaining') > 0)<span class="yb-r">qoldiq {{ $fmt($gRows->sum('remaining')) }}</span>@endif</td>
+                        <td class="num" style="color:#d97706">{{ $fmt($gRows->sum('workTotal')) }}</td>
+                        <td class="num" style="color:#dc2626">{{ $gRows->sum('overpaid') > 0 ? $fmt($gRows->sum('overpaid')) : '—' }}</td>
+                        <td class="num" style="color:#16a34a">{{ $gRows->sum('remaining') > 0 ? $fmt($gRows->sum('remaining')) : '—' }}</td>
+                        <td class="num" style="color:#2563eb">{{ $fmt($gRows->sum('paid')) }}</td>
+                        <td class="num" style="color:#f97316">{{ $gRows->sum('pendingComm') > 0 ? $fmt($gRows->sum('pendingComm')) : '—' }}</td>
+                        <td colspan="3"></td>
                     </tr>
                 @endif
                 @php $grpNo++; $isMam = $r['roleKey'] === 'mamuriy'; @endphp
                 <tr>
                     <td>{{ $grpNo }}</td>
                     <td style="white-space:nowrap"><span class="yb-av" style="display:inline-flex;width:26px;height:26px;font-size:11px;margin-right:6px;vertical-align:middle;background:{{ $avColors[$r['user']->id % 7] }}">{{ $initials($r['user']->name) }}</span><b>{{ $r['user']->name }}</b>
-                        @if(($w = $r['work']) || $r['earned'] > 0)
-                            <span class="yb-work">
-                                @if($w){{ $w['done_projects'] + $w['pending_count'] }} ta ish @if($w['pending_count'] > 0) · tugallangan {{ $fmt($w['done_comm']) }} · {{ $w['pending_count'] }} ta kutayotgan @endif<br>@endif
-                                <span title="Mijozlar to'lagan pulga to'g'ri keladigan ulush — hozir to'lash mumkin bo'lgan qism">mijoz to'lagani bo'yicha <b>{{ $fmt($r['earned']) }}</b></span>
-                            </span>
+                        @if($w = $r['work'])
+                            <span class="yb-work">{{ $w['done_projects'] + $w['pending_count'] }} ta ish · {{ $w['done_projects'] }} tugallangan @if($w['pending_count'] > 0) · {{ $w['pending_count'] }} kutayotgan @endif</span>
                         @endif
                     </td>
                     <td>{{ $r['position'] }}</td>
@@ -576,13 +576,20 @@
                               wire:confirm="{{ $r['user']->name }} — {{ $isMam ? 'ISHBAY' : "MA'MURIY" }} guruhiga o'tkazilsinmi? Turi tanlanmagan eski to'lovlari ham shu turga o'tadi."
                               title="Bosib boshqa guruhga o'tkazing">{{ $isMam ? "🏢 Ma'muriy" : '🛠 Ishbay' }}</span></td>
                     <td class="num" style="font-weight:500">{{ $r['base'] > 0 ? $fmt($r['base']) : '—' }}</td>
-                    <td class="num" style="font-weight:500" title="Loyihalardan komissiya">{{ $r['extra'] > 0 ? $fmt($r['extra']) : '—' }}</td>
-                    <td class="num">{{ $fmt($r['total']) }}</td>
-                    <td class="num yb-g" style="font-weight:500">{{ $r['paid'] > 0 ? $fmt($r['paid']) : '—' }}</td>
+                    <td class="num" style="color:#d97706">
+                        {{ $r['workTotal'] > 0 ? $fmt($r['workTotal']) : '—' }}
+                        @if($r['work'] && $r['work']['pending_count'] > 0)<span class="yb-sub">tugallangan: {{ $fmt($r['work']['done_comm']) }}</span>@endif
+                    </td>
+                    <td class="num" style="color:#dc2626">{{ $r['overpaid'] > 0 ? $fmt($r['overpaid']) : '—' }}</td>
+                    <td class="num" style="color:#16a34a">{{ $r['remaining'] > 0 ? $fmt($r['remaining']) : '—' }}</td>
+                    <td class="num" style="color:#2563eb">{{ $r['paid'] > 0 ? $fmt($r['paid']) : '—' }}</td>
+                    <td class="num" style="color:#f97316">
+                        @if($r['pendingCount'] > 0) {{ $r['pendingCount'] }} ta <span class="yb-sub" style="color:#f97316">{{ $fmt($r['pendingComm']) }}</span> @else — @endif
+                    </td>
                     <td style="white-space:nowrap">
                         @switch($r['status'])
                             @case('tolangan') <span class="yb-pill ok">✔ To'langan</span> @break
-                            @case('qisman') <span class="yb-pill" style="background:#fef3c7;color:#b45309">◐ Qisman</span><span class="yb-sub">qoldiq {{ $fmt($r['remaining']) }}</span> @break
+                            @case('qisman') <span class="yb-pill" style="background:#fef3c7;color:#b45309">◐ Qisman</span> @break
                             @case('tolanmagan') <span class="yb-pill c">⏰ To'lanmagan</span> @break
                             @default <span class="yb-sub">hisoblanmagan</span>
                         @endswitch
@@ -596,22 +603,24 @@
                     </td>
                 </tr>
             @empty
-                <tr><td colspan="11" class="yb-empty">Xodim topilmadi</td></tr>
+                <tr><td colspan="13" class="yb-empty">Xodim topilmadi</td></tr>
             @endforelse
             </tbody>
             @if($S['rows']->isNotEmpty())
                 <tfoot><tr style="font-weight:800;background:var(--yb-soft)">
                     <td colspan="4" style="padding:11px 8px">Jami:</td>
                     <td class="num">{{ $fmt($S['rows']->sum('base')) }}</td>
-                    <td class="num">{{ $fmt($S['rows']->sum('extra')) }}</td>
-                    <td class="num">{{ $fmt($S['rows']->sum('total')) }}</td>
-                    <td class="num yb-g">{{ $fmt($S['rows']->sum('paid')) }}</td>
-                    <td colspan="3" class="yb-r" style="padding-left:8px">qoldiq {{ $fmt($S['rows']->sum('remaining')) }}</td>
+                    <td class="num" style="color:#d97706">{{ $fmt($S['rows']->sum('workTotal')) }}</td>
+                    <td class="num" style="color:#dc2626">{{ $fmt($S['rows']->sum('overpaid')) }}</td>
+                    <td class="num" style="color:#16a34a">{{ $fmt($S['rows']->sum('remaining')) }}</td>
+                    <td class="num" style="color:#2563eb">{{ $fmt($S['rows']->sum('paid')) }}</td>
+                    <td class="num" style="color:#f97316">{{ $fmt($S['rows']->sum('pendingComm')) }}</td>
+                    <td colspan="3"></td>
                 </tr></tfoot>
             @endif
         </table>
         </div>
-        <div class="yb-sub" style="margin-top:8px">Asosiy maosh = xodim okladi; Hisoblangan = shu oy loyihalaridagi barcha ishlar ulushi (Oylik hisobotdagi "Hisoblangan" bilan bir xil); Jami summa = ikkalasi. "Mijoz to'lagani bo'yicha" — mijozlar to'lagan pulga to'g'ri keladigan, hozir to'lash mumkin bo'lgan qism. Berilgan maosh Buxgalteriya xarajatlariga avtomatik yoziladi.</div>
+        <div class="yb-sub" style="margin-top:8px">Ustunlar Oylik hisobot bilan bir xil: Hisoblangan — shu oy loyihalaridagi barcha ishlar ulushi; To'lanishi kerak — mijoz to'lagan ulushga mutanosib ochilgan summa (+ oklad) − berilgani; Ortiqcha to'langan — ochilgan ulushdan ko'p berilgan ishbay pul (ma'muriy oylik kirmaydi); Kutayotgan — hali tugallanmagan ishlar. Berilgan maosh Buxgalteriya xarajatlariga avtomatik yoziladi.</div>
     </div>
 
     {{-- Shu oydagi to'lovlar tarixi --}}

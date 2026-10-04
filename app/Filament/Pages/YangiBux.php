@@ -577,11 +577,32 @@ class YangiBux extends Page
         return sprintf('%04d-%02d', $this->ybYear, $this->ybMonth);
     }
 
-    /** Tanlangan oy uchun xodim qoldig'i (Oylik hisobotdagi yearGrid bilan bir xil). */
+    /**
+     * Oylik hisobot qoidasi: To'lanishi kerak = mijoz to'lagan ulushga mutanosib
+     * ochilgan komissiya (+ oklad) − berilgan ishbay oylik; oshib ketsa — Ortiqcha
+     * to'langan. Ma'muriy to'lovlar ortiqchaga kirmaydi (ma'muriy xodim okladi
+     * ma'muriy to'lovlardan yopiladi). $calc = yearGrid 'calc' (ochilgan komissiya + oklad).
+     * @return array{0: float, 1: float} [to'lanishi kerak, ortiqcha to'langan]
+     */
+    private static function payableSplit(User $u, float $calc, Collection $pays): array
+    {
+        $paidMam = (float) $pays->filter(fn ($p) => $p->type === EmployeeSalaryPayment::TYPE_MAMURIY)->sum('amount');
+        $paidIsh = (float) $pays->sum('amount') - $paidMam;
+        $base    = (float) ($u->base_salary ?? 0);
+        if (EmployeeSalaryPayment::typeForUser($u) === EmployeeSalaryPayment::TYPE_MAMURIY) {
+            $comm = $calc - $base;
+            return [max(0, $comm - $paidIsh) + max(0, $base - $paidMam), max(0, $paidIsh - $comm)];
+        }
+        return [max(0, $calc - $paidIsh), max(0, $paidIsh - $calc)];
+    }
+
+    /** Tanlangan oy uchun "To'lanishi kerak" (Oylik maosh jadvalidagi bilan bir xil). */
     private function remainingFor(int $userId): float
     {
         $row = collect(EmployeePayableService::yearGrid($this->ybYear))->firstWhere('user.id', $userId);
-        return (float) ($row['months'][$this->ybMonth]['remaining'] ?? 0);
+        if (!$row) return 0;
+        $pays = EmployeeSalaryPayment::with('user')->where('user_id', $userId)->where('month', $this->ym())->get();
+        return self::payableSplit($row['user'], (float) ($row['months'][$this->ybMonth]['calc'] ?? 0), $pays)[0];
     }
 
     /** Hisoblangan (oklad + shu oy barcha ishlari ulushi) bo'yicha qoldiq */
@@ -695,17 +716,17 @@ class YangiBux extends Page
         if (!auth()->user()?->isAdmin()) return null;
         $rows = $this->salaryRows(EmployeePayableService::yearGrid($this->ybYear));
         $data = $rows->map(fn ($r, $i) => [
-            $i + 1, $r['user']->name, $r['position'], $r['role'], $r['base'], $r['workTotal'], $r['earned'], $r['total'], $r['paid'],
-            $r['remaining'], $r['statusLabel'], $r['paidAt']?->format('d.m.Y') ?? '',
+            $i + 1, $r['user']->name, $r['position'], $r['role'], $r['base'], $r['workTotal'], $r['overpaid'], $r['remaining'], $r['paid'],
+            $r['pendingCount'] ? $r['pendingCount'] . ' ta · ' . number_format($r['pendingComm'], 0, '.', ' ') : '', $r['statusLabel'], $r['paidAt']?->format('d.m.Y') ?? '',
         ])->all();
-        $data[] = ['', 'Jami', '', '', $rows->sum('base'), $rows->sum('workTotal'), $rows->sum('earned'), $rows->sum('total'), $rows->sum('paid'), $rows->sum('remaining'), '', ''];
+        $data[] = ['', 'Jami', '', '', $rows->sum('base'), $rows->sum('workTotal'), $rows->sum('overpaid'), $rows->sum('remaining'), $rows->sum('paid'), number_format($rows->sum('pendingComm'), 0, '.', ' '), '', ''];
 
         $export = new class($data) implements \Maatwebsite\Excel\Concerns\FromArray, \Maatwebsite\Excel\Concerns\WithHeadings, \Maatwebsite\Excel\Concerns\ShouldAutoSize {
             public function __construct(private array $rows) {}
             public function array(): array { return $this->rows; }
             public function headings(): array
             {
-                return ['#', 'Xodim', 'Lavozim', "Bo'lim", 'Asosiy maosh', 'Hisoblangan (jami ish)', "Mijoz to'lagani bo'yicha", 'Jami summa', "To'langan", 'Qoldiq', "To'lov holati", "To'lov sanasi"];
+                return ['#', 'Xodim', 'Lavozim', "Bo'lim", 'Asosiy maosh', 'Hisoblangan', "Ortiqcha to'langan", "To'lanishi kerak", "To'landi", 'Kutayotgan', "To'lov holati", "To'lov sanasi"];
             }
         };
 
@@ -718,7 +739,7 @@ class YangiBux extends Page
     private function salaryRows(array $grid): Collection
     {
         $ym = $this->ym();
-        $pays = EmployeeSalaryPayment::where('month', $ym)->get()->groupBy('user_id');
+        $pays = EmployeeSalaryPayment::with('user')->where('month', $ym)->get()->groupBy('user_id');
         // Ish hajmi — Oylik hisobotdagi "Hisoblangan" bilan bir xil
         $work = EmployeePayableService::workSummaryForMonth($this->ybYear, $this->ybMonth);
 
@@ -733,7 +754,8 @@ class YangiBux extends Page
             $earned    = max(0, (float) $cell['calc'] - $base);
             $total = $base + $workTotal;
             $paid  = (float) $cell['paid'];
-            $status = $total <= 0 && $paid <= 0 ? 'yoq' : ($paid >= $total ? 'tolangan' : ($paid > 0 ? 'qisman' : 'tolanmagan'));
+            [$kerak, $ortiqcha] = self::payableSplit($u, (float) $cell['calc'], $pays->get($u->id, collect()));
+            $status = $total <= 0 && $paid <= 0 ? 'yoq' : ($kerak > 0 ? ($paid > 0 ? 'qisman' : 'tolanmagan') : 'tolangan');
             return [
                 'user'        => $u,
                 'position'    => $u->position ?: '—',
@@ -746,7 +768,10 @@ class YangiBux extends Page
                 'payable'     => max(0, (float) $cell['calc'] - $paid),   // mijoz to'lagani bo'yicha hozir to'lash mumkin
                 'total'       => $total,
                 'paid'        => $paid,
-                'remaining'   => max(0, $total - $paid),
+                'remaining'   => $kerak,      // To'lanishi kerak (Oylik hisobotdagi kabi)
+                'overpaid'    => $ortiqcha,   // Ortiqcha to'langan (faqat ishbay to'lovlar)
+                'pendingCount'=> (int) ($work[$u->id]['pending_count'] ?? 0),
+                'pendingComm' => (float) ($work[$u->id]['pending_comm'] ?? 0),
                 'status'      => $status,
                 'statusLabel' => ['tolangan' => "To'langan", 'qisman' => 'Qisman', 'tolanmagan' => "To'lanmagan", 'yoq' => 'Hisoblanmagan'][$status],
                 'paidAt'      => $pays->get($u->id)?->max('paid_at'),
