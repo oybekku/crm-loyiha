@@ -90,6 +90,11 @@
 .yb-cell-link:hover{opacity:.75}
 .yb-stype{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;font-size:10.5px;font-weight:700;cursor:pointer;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;vertical-align:middle}
 .yb-stype.mam{background:#f5f3ff;color:#7c3aed;border-color:#ddd6fe}
+.yb-tbl tr.yb-grp td{background:#eff6ff;color:#1d4ed8;font-weight:800;font-size:13px;padding:9px 8px;border-top:2px solid #bfdbfe}
+.yb-tbl tr.yb-grp.mam td{background:#f5f3ff;color:#6d28d9;border-top-color:#ddd6fe}
+.yb-tbl tr.yb-grp td span{font-weight:400;font-size:11px;color:var(--yb-mu);margin-left:6px}
+.dark .yb-tbl tr.yb-grp td{background:rgba(37,99,235,.15)}
+.dark .yb-tbl tr.yb-grp.mam td{background:rgba(124,58,237,.15)}
 .yb-sub{display:block;font-size:10.5px;color:var(--yb-mu);font-weight:400}
 .yb-pill{display:inline-block;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700}
 .yb-pill.k{background:#dcfce7;color:#15803d}.yb-pill.c{background:#fee2e2;color:#b91c1c}
@@ -472,7 +477,7 @@
         </div>
 
         {{-- Lavozimlar bo'yicha --}}
-        @include('filament.pages.partials.yangi-bux-donut', ['donutTitle' => "Maosh fondi lavozimlar bo'yicha", 'donut' => $S['posDonut'], 'donutTotal' => $S['fund']])
+        @include('filament.pages.partials.yangi-bux-donut', ['donutTitle' => "To'langan oylik turlar bo'yicha", 'donut' => $S['posDonut'], 'donutTotal' => $S['paidAll']])
 
         {{-- To'lov holati --}}
         <div class="yb-card">
@@ -505,7 +510,7 @@
             </div>
             <div class="yb-f">
                 <label>Bo'lim</label>
-                <select wire:model.live="omRole"><option value="">Barchasi</option>@foreach(\App\Filament\Pages\YangiBux::ROLE_LABELS as $rk => $rl)<option value="{{ $rk }}">{{ $rl }}</option>@endforeach</select>
+                <select wire:model.live="omRole"><option value="">Barchasi</option>@foreach(\App\Models\EmployeeSalaryPayment::typeOptions() as $rk => $rl)<option value="{{ $rk }}">{{ $rl }}</option>@endforeach</select>
             </div>
             <div class="yb-f">
                 <label>Lavozim</label>
@@ -524,16 +529,32 @@
         <table class="yb-tbl">
             <thead><tr><th>#</th><th>Xodim</th><th>Lavozim</th><th>Bo'lim</th><th class="num">Asosiy maosh</th><th class="num">Qo'shimcha</th><th class="num">Jami summa</th><th class="num">To'langan</th><th>To'lov holati</th><th>To'lov sanasi</th><th style="text-align:right">Amallar</th></tr></thead>
             <tbody>
-            @forelse($S['rows'] as $i => $r)
+            @php $grpPrev = null; $grpNo = 0; @endphp
+            @forelse($S['rows'] as $r)
+                @if($r['roleKey'] !== $grpPrev)
+                    @php
+                        $grpPrev = $r['roleKey']; $grpNo = 0;
+                        $gRows = $S['rows']->where('roleKey', $r['roleKey']);
+                        $gMam = $r['roleKey'] === 'mamuriy';
+                    @endphp
+                    <tr class="yb-grp {{ $gMam ? 'mam' : '' }}">
+                        <td colspan="6">
+                            {{ $gMam ? "🏢 Ma'muriy oylik" : '🛠 Ishbay oylik' }}
+                            <span>{{ $gMam ? "direktor, admin, menejer, buxgalter — firma foydasidan" : "toposyomka, ariza, eskiz loyiha — ishdan (komissiya)" }} · {{ $gRows->count() }} nafar</span>
+                        </td>
+                        <td class="num">{{ $fmt($gRows->sum('total')) }}</td>
+                        <td class="num">{{ $fmt($gRows->sum('paid')) }}</td>
+                        <td colspan="3">@if($gRows->sum('remaining') > 0)<span class="yb-r">qoldiq {{ $fmt($gRows->sum('remaining')) }}</span>@endif</td>
+                    </tr>
+                @endif
+                @php $grpNo++; $isMam = $r['roleKey'] === 'mamuriy'; @endphp
                 <tr>
-                    <td>{{ $i + 1 }}</td>
-                    <td style="white-space:nowrap"><span class="yb-av" style="display:inline-flex;width:26px;height:26px;font-size:11px;margin-right:6px;vertical-align:middle;background:{{ $avColors[$r['user']->id % 7] }}">{{ $initials($r['user']->name) }}</span><b>{{ $r['user']->name }}</b>
-                        @php $isMam = $r['user']->salary_type === 'mamuriy'; @endphp
-                        <span class="yb-stype {{ $isMam ? 'mam' : '' }}" wire:click="toggleUserSalaryType({{ $r['user']->id }})"
-                              wire:confirm="{{ $r['user']->name }} — maosh turi {{ $isMam ? 'ISHBAY' : "MA'MURIY" }} qilinsinmi? Turi tanlanmagan eski to'lovlari ham shu turga o'tadi."
-                              title="Xodimning standart maosh turi — bosib almashtiring">{{ $isMam ? "Ma'muriy" : 'Ishbay' }}</span></td>
+                    <td>{{ $grpNo }}</td>
+                    <td style="white-space:nowrap"><span class="yb-av" style="display:inline-flex;width:26px;height:26px;font-size:11px;margin-right:6px;vertical-align:middle;background:{{ $avColors[$r['user']->id % 7] }}">{{ $initials($r['user']->name) }}</span><b>{{ $r['user']->name }}</b></td>
                     <td>{{ $r['position'] }}</td>
-                    <td>{{ $r['role'] }}</td>
+                    <td><span class="yb-stype {{ $isMam ? 'mam' : '' }}" style="margin-left:0" wire:click="toggleUserSalaryType({{ $r['user']->id }})"
+                              wire:confirm="{{ $r['user']->name }} — {{ $isMam ? 'ISHBAY' : "MA'MURIY" }} guruhiga o'tkazilsinmi? Turi tanlanmagan eski to'lovlari ham shu turga o'tadi."
+                              title="Bosib boshqa guruhga o'tkazing">{{ $isMam ? "🏢 Ma'muriy" : '🛠 Ishbay' }}</span></td>
                     <td class="num" style="font-weight:500">{{ $r['base'] > 0 ? $fmt($r['base']) : '—' }}</td>
                     <td class="num" style="font-weight:500" title="Loyihalardan komissiya">{{ $r['extra'] > 0 ? $fmt($r['extra']) : '—' }}</td>
                     <td class="num">{{ $fmt($r['total']) }}</td>

@@ -86,7 +86,7 @@ class YangiBux extends Page
     public ?string $recDueDay    = null;
 
     // ── Oylik maosh tabi ──
-    public string $omRole     = '';   // bo'lim = tizim roli
+    public string $omRole     = '';   // bo'lim = maosh turi: ishbay | mamuriy
     public string $omPosition = '';   // lavozim
     public string $omStatus   = '';   // tolangan | qisman | tolanmagan
     public string $omSearch   = '';
@@ -703,8 +703,9 @@ class YangiBux extends Page
             return [
                 'user'        => $u,
                 'position'    => $u->position ?: '—',
-                'role'        => self::ROLE_LABELS[$u->role] ?? ucfirst((string) $u->role),
-                'roleKey'     => $u->role,
+                // Bo'lim = maosh turi (ishbay — toposyomka/ariza/eskiz; ma'muriy — firma foydasidan)
+                'role'        => EmployeeSalaryPayment::typeOptions()[EmployeeSalaryPayment::typeForUser($u)],
+                'roleKey'     => EmployeeSalaryPayment::typeForUser($u),
                 'base'        => $base,
                 'extra'       => max(0, $total - $base),
                 'total'       => $total,
@@ -715,7 +716,7 @@ class YangiBux extends Page
                 'paidAt'      => $pays->get($u->id)?->max('paid_at'),
                 'payCount'    => $pays->get($u->id)?->count() ?? 0,
             ];
-        })->values();
+        })->sortBy(fn ($r) => $r['roleKey'] === EmployeeSalaryPayment::TYPE_MAMURIY ? 1 : 0)->values();
     }
 
     public function deleteChiqim(int $id): void
@@ -942,12 +943,12 @@ class YangiBux extends Page
                 $six[] = ['label' => $uzMonths[$d->month - 1], 'paid' => $pd, 'unpaid' => max(0, $calc - $pd), 'cur' => $k === 0];
             }
 
-            // Maosh fondi lavozimlar bo'yicha
-            $byPos = $counted->groupBy('position')->map(fn ($g) => (float) $g->sum('total'))->filter()->sortDesc();
+            // To'langan oylik turlar bo'yicha: ishbay / ma'muriy
+            $paidAll  = (float) $all->sum('paid');
             $posDonut = [];
-            $i = 0;
-            foreach ($byPos as $pos => $sum) {
-                $posDonut[] = ['label' => $pos, 'value' => $sum, 'pct' => $fund > 0 ? $sum / $fund * 100 : 0, 'color' => ['#3b82f6', '#22c55e', '#f59e0b', '#a78bfa', '#ec4899', '#14b8a6'][$i++ % 6]];
+            foreach ([EmployeeSalaryPayment::TYPE_ISHBAY => '#2563eb', EmployeeSalaryPayment::TYPE_MAMURIY => '#7c3aed'] as $tk => $tc) {
+                $sum = (float) $all->where('roleKey', $tk)->sum('paid');
+                if ($sum > 0) $posDonut[] = ['label' => EmployeeSalaryPayment::typeOptions()[$tk], 'value' => $sum, 'pct' => $paidAll > 0 ? $sum / $paidAll * 100 : 0, 'color' => $tc];
             }
 
             $lastPay = EmployeeSalaryPayment::with('user')->orderByDesc('paid_at')->orderByDesc('id')->first();
@@ -956,6 +957,7 @@ class YangiBux extends Page
                 'rows'       => $rows->values(),
                 'staffCount' => $all->count(),
                 'roleCount'  => $all->pluck('roleKey')->unique()->count(),
+                'paidAll'    => $paidAll,
                 'fund'       => $fund,
                 'paid'       => $paidSum,
                 'unpaid'     => max(0, $fund - $paidSum),
