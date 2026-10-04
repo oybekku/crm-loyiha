@@ -73,6 +73,7 @@ class YangiBux extends Page
     public ?string $chExistingFile  = null;
     public string  $chKind          = '';   // majburiy: 'xarajat' | 'oylik' (oylik/avans)
     public string  $chSalaryMonth   = '';   // oylik bo'lsa — qaysi oy uchun (Y-m)
+    public string  $chSalaryType    = '';   // oylik bo'lsa — ishbay | mamuriy (xodimdan avtomatik)
     public ?int    $chRecurringId   = null; // doimiy to'lov (arenda, svet...) orqali ochilgan bo'lsa
 
     // Doimiy to'lov shabloni (qo'shish / tahrirlash)
@@ -98,6 +99,7 @@ class YangiBux extends Page
     public ?int   $payEditId    = null;
     public float  $payRemaining = 0;
     public ?int   $payAccountId = null;   // oylik qaysi hisobdan berildi
+    public string $paySalaryType = EmployeeSalaryPayment::TYPE_ISHBAY;
 
     // ── Xodimga xarajat kartasi ochish ──
     public bool   $showNewCardModal = false;
@@ -114,7 +116,7 @@ class YangiBux extends Page
 
     public function openRepDetail(int $month, string $kind): void
     {
-        if ($month < 1 || $month > 12 || !in_array($kind, [Expense::KIND_XARAJAT, Expense::KIND_OYLIK], true)) return;
+        if ($month < 1 || $month > 12 || !in_array($kind, [Expense::KIND_XARAJAT, EmployeeSalaryPayment::TYPE_ISHBAY, EmployeeSalaryPayment::TYPE_MAMURIY], true)) return;
         $this->repMonth = $month;
         $this->repKind  = $kind;
     }
@@ -131,7 +133,7 @@ class YangiBux extends Page
         if (!$this->repMonth) return;
         $this->ybMonth = $this->repMonth;
         $this->opResetFilters();
-        $this->opKind = $this->repKind;
+        $this->opKind = $this->repKind === Expense::KIND_XARAJAT ? Expense::KIND_XARAJAT : Expense::KIND_OYLIK;
         $this->closeRepDetail();
         $this->tab = 'kirim';
     }
@@ -229,6 +231,8 @@ class YangiBux extends Page
             $this->chExistingFile  = $e->attachment;
             $this->chKind          = $e->kind;
             $this->chSalaryMonth   = $e->month ?: $e->expense_date->format('Y-m');
+            $this->chSalaryType    = $e->kind === Expense::KIND_OYLIK ? $e->salary_type
+                : EmployeeSalaryPayment::typeForUser($e->responsible);
             $this->chRecurringId   = $e->recurring_expense_id;
         } else {
             $isCur = $this->ybYear === (int) now()->year && $this->ybMonth === (int) now()->month;
@@ -242,9 +246,16 @@ class YangiBux extends Page
             $this->chExistingFile  = null;
             $this->chKind          = '';          // turi har safar tanlanishi shart
             $this->chSalaryMonth   = $this->ym();
+            $this->chSalaryType    = '';
             $this->chRecurringId   = null;
         }
         $this->showChiqimModal = true;
+    }
+
+    // Xodim tanlanganda — oylik turi xodimning standart turidan olinadi
+    public function updatedChResponsibleId($value): void
+    {
+        $this->chSalaryType = $value ? EmployeeSalaryPayment::typeForUser(User::find($value)) : '';
     }
 
     // ── Doimiy to'lovlar (arenda, svet, wi-fi...) ──────────────────────────
@@ -408,6 +419,7 @@ class YangiBux extends Page
         $this->validate([
             'chKind'          => 'required|in:' . Expense::KIND_XARAJAT . ',' . Expense::KIND_OYLIK,
             'chSalaryMonth'   => ($newSalary || $attach) ? ['required', 'regex:/^\d{4}-\d{2}$/'] : 'nullable',
+            'chSalaryType'    => ($newSalary || $attach) ? 'required|in:' . implode(',', array_keys(EmployeeSalaryPayment::typeOptions())) : 'nullable',
             'chDate'          => $this->chiqimId ? 'required|date' : [
                 'required', 'date',
                 'after_or_equal:' . Carbon::create($this->ybYear, $this->ybMonth, 1)->format('Y-m-d'),
@@ -425,6 +437,7 @@ class YangiBux extends Page
             'chDate.after_or_equal'  => 'Sana ochiq turgan oy ichida bo\'lishi kerak — chiqim shu oy pulidan yechiladi',
             'chDate.before_or_equal' => 'Sana ochiq turgan oy ichida bo\'lishi kerak — chiqim shu oy pulidan yechiladi',
             'chSalaryMonth.required' => 'Qaysi oy uchun ekanini tanlang',
+            'chSalaryType.required'  => "Oylik turini tanlang: Ishbay yoki Ma'muriy",
             'chComment.required'   => 'Tavsif kiriting',
             'chAmount.required'    => 'Summani kiriting',
             'chAccountId.required' => "Qaysi hisobdan to'langanini tanlang",
@@ -452,10 +465,11 @@ class YangiBux extends Page
                 'user_id'  => $this->chResponsibleId,
                 'month'    => $this->chSalaryMonth,
                 'amount'   => $amount,
+                'salary_type' => $this->chSalaryType,
                 'paid_at'  => $this->chDate,
                 'note'     => trim($this->chComment) ?: null,
                 'given_by' => auth()->id(),
-            ], null, $remaining > 0 && $amount < $remaining, $this->chAccountId);
+            ], null, $this->chSalaryType === EmployeeSalaryPayment::TYPE_ISHBAY && $remaining > 0 && $amount < $remaining, $this->chAccountId);
             // Qo'shimcha maydonlar (loyiha, izoh, hujjat) — bog'liq xarajat qatoriga
             Expense::where('salary_payment_id', $payment?->id)->update([
                 'responsible_id' => $this->chResponsibleId,
@@ -483,7 +497,7 @@ class YangiBux extends Page
         if ($old) {
             $old->update($data);
             if ($attach) {
-                \App\Services\SalaryPaymentService::attachExpense($old->fresh(), (int) $this->chResponsibleId, $this->chSalaryMonth);
+                \App\Services\SalaryPaymentService::attachExpense($old->fresh(), (int) $this->chResponsibleId, $this->chSalaryMonth, $this->chSalaryType);
                 Notification::make()->title('Oylik / avansga aylantirildi')->body("Xodim to'lovlariga (Oylik maosh, Oylik hisobot) qo'shildi. Chiqim ikki marta hisoblanmaydi.")->success()->send();
                 $this->closeChiqim();
                 return;
@@ -567,15 +581,29 @@ class YangiBux extends Page
         $this->payDate      = now()->format('Y-m-d');
         $this->payNote      = '';
         $this->payAccountId = null;   // har safar admin o'zi tanlaydi (naqd yoki karta)
+        $this->paySalaryType = EmployeeSalaryPayment::typeForUser($userId ? User::find($userId) : null);
         $this->showPayModal = true;
     }
 
-    // Modalda xodim tanlanganda — qoldiqni avtomatik qo'yish
+    // Modalda xodim tanlanganda — qoldiq va oylik turini avtomatik qo'yish
     public function updatedPayUserId($value): void
     {
         if ($this->payEditId) return;
+        $this->paySalaryType = EmployeeSalaryPayment::typeForUser($value ? User::find($value) : null);
         $this->payRemaining = $value ? $this->remainingFor((int) $value) : 0;
         $this->payAmount    = $this->payRemaining > 0 ? number_format($this->payRemaining, 0, '.', ' ') : '';
+    }
+
+    // Xodimning standart maosh turi (Ishbay ↔ Ma'muriy). Turi yozilmagan eski
+    // to'lovlar shu turdan olinadi; turi yozilgan to'lovlar o'zgarmaydi.
+    public function toggleUserSalaryType(int $userId): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+        $u = User::find($userId);
+        if (!$u) return;
+        $new = $u->salary_type === EmployeeSalaryPayment::TYPE_MAMURIY ? null : EmployeeSalaryPayment::TYPE_MAMURIY;
+        $u->update(['salary_type' => $new]);
+        Notification::make()->title("{$u->name} — " . ($new ? "Ma'muriy oylik" : 'Ishbay oylik'))->success()->send();
     }
 
     public function editPay(int $paymentId): void
@@ -591,6 +619,7 @@ class YangiBux extends Page
         $this->payNote      = (string) $p->note;
         $this->payRemaining = 0;
         $this->payAccountId = Expense::where('salary_payment_id', $p->id)->value('account_id');
+        $this->paySalaryType = $p->type;
         $this->historyUserId = null;
         $this->showPayModal = true;
     }
@@ -604,6 +633,7 @@ class YangiBux extends Page
             'payAmount' => 'required|numeric|min:1',
             'payDate'   => 'required|date',
             'payAccountId' => 'required|exists:financial_accounts,id,user_id,NULL',
+            'paySalaryType' => 'required|in:' . implode(',', array_keys(EmployeeSalaryPayment::typeOptions())),
         ], [
             'payUserId.required'    => 'Xodimni tanlang',
             'payAmount.required'    => 'Summani kiriting',
@@ -616,6 +646,7 @@ class YangiBux extends Page
             'user_id'  => $this->payUserId,
             'month'    => $month,
             'amount'   => $amount,
+            'salary_type' => $this->paySalaryType,
             'paid_at'  => $this->payDate,
             'note'     => trim($this->payNote) ?: null,
             'given_by' => auth()->id(),
@@ -951,15 +982,20 @@ class YangiBux extends Page
             ->get(['id', 'project_id', 'amount'])
             ->each(function ($p) use (&$incomeByMonth) { $incomeByMonth[(int) $p->project->created_at->month] += (float) $p->amount; });
         $expenseByMonth = array_fill(1, 12, 0.0);
-        $salaryByMonth  = array_fill(1, 12, 0.0);   // shundan oylik / avans
-        Expense::where(function ($q) use ($year) {
+        $salaryByMonth  = array_fill(1, 12, 0.0);   // shundan oylik / avans (ikkala tur)
+        $mamuriyByMonth = array_fill(1, 12, 0.0);   // shundan ma'muriy oylik (direktor, admin...)
+        Expense::with(['salaryPayment:id,salary_type', 'user:id,salary_type', 'responsible:id,salary_type'])
+            ->where(function ($q) use ($year) {
                 $q->where('month', 'like', $year . '-%')
                   ->orWhere(fn ($q2) => $q2->whereNull('month')->whereYear('expense_date', $year));
-            })->get(['amount', 'month', 'expense_date', 'category', 'user_id'])
-            ->each(function ($e) use (&$expenseByMonth, &$salaryByMonth) {
+            })->get(['id', 'amount', 'month', 'expense_date', 'category', 'user_id', 'responsible_id', 'salary_payment_id'])
+            ->each(function ($e) use (&$expenseByMonth, &$salaryByMonth, &$mamuriyByMonth) {
                 $m = $e->month ? (int) substr($e->month, 5, 2) : (int) $e->expense_date->month;
                 $expenseByMonth[$m] += (float) $e->amount;
-                if ($e->kind === Expense::KIND_OYLIK) $salaryByMonth[$m] += (float) $e->amount;
+                if ($e->kind === Expense::KIND_OYLIK) {
+                    $salaryByMonth[$m] += (float) $e->amount;
+                    if ($e->salary_type === EmployeeSalaryPayment::TYPE_MAMURIY) $mamuriyByMonth[$m] += (float) $e->amount;
+                }
             });
         $chart = [];
         $monthNames = ['Yan', 'Fev', 'Mar', 'Apr', 'May', 'Iyun', 'Iyul', 'Avg', 'Sen', 'Okt', 'Noy', 'Dek'];
@@ -970,6 +1006,8 @@ class YangiBux extends Page
                 'income'  => $incomeByMonth[$m],
                 'expense' => $expenseByMonth[$m],
                 'salary'  => $salaryByMonth[$m],
+                'ishbay'  => $salaryByMonth[$m] - $mamuriyByMonth[$m],
+                'mamuriy' => $mamuriyByMonth[$m],
                 'other'   => $expenseByMonth[$m] - $salaryByMonth[$m],
                 'profit'  => $incomeByMonth[$m] - $expenseByMonth[$m],
             ];
@@ -1061,7 +1099,21 @@ class YangiBux extends Page
         // Oylik "to'lanishi kerak" — shu oy loyihalaridagi bajarilgan ishlar
         // uchun mijoz TO'LIQ to'lasa beriladigan komissiya + oklad. Tizim
         // ishlamagan (birinchi loyihadan oldingi) va hali kelmagan oylar — yo'q.
+        // Ishbay "kerak" = ish komissiyasi (har kimniki) + ishbay xodimlar okladi;
+        // Ma'muriy "kerak" = ma'muriy xodimlar okladi (belgilangan bo'lsa).
+        $isMam = fn ($u) => EmployeeSalaryPayment::typeForUser($u) === EmployeeSalaryPayment::TYPE_MAMURIY;
+        $dueParts = function (array $r, int $m) use ($isMam): array {
+            $base = (float) ($r['user']->base_salary ?? 0);
+            $cell = $r['months'][$m] ?? ['full' => 0, 'calc' => 0];
+            $mam  = $isMam($r['user']);
+            return [
+                'ishbay'        => (float) $cell['full'] - $base + ($mam ? 0 : $base),
+                'ishbay_earned' => (float) $cell['calc'] - $base + ($mam ? 0 : $base),
+                'mamuriy'       => $mam ? $base : 0.0,
+            ];
+        };
         $salaryDue = array_fill(1, 12, null);
+        $mamuriyDue = array_fill(1, 12, null);
         if ($this->tab === 'hisobotlar') {
             $firstYm = Project::min('created_at');
             $firstYm = $firstYm ? Carbon::parse($firstYm)->format('Y-m') : null;
@@ -1069,7 +1121,8 @@ class YangiBux extends Page
             for ($m = 1; $m <= 12; $m++) {
                 $ymM = sprintf('%04d-%02d', $year, $m);
                 if (!$firstYm || $ymM < $firstYm || $ymM > $nowYm) continue;
-                $salaryDue[$m] = (float) collect($grid)->sum(fn ($r) => $r['months'][$m]['full'] ?? 0);
+                $salaryDue[$m]  = (float) collect($grid)->sum(fn ($r) => $dueParts($r, $m)['ishbay']);
+                $mamuriyDue[$m] = (float) collect($grid)->sum(fn ($r) => $dueParts($r, $m)['mamuriy']);
             }
         }
 
@@ -1077,28 +1130,34 @@ class YangiBux extends Page
         $repDetail = null;
         if ($this->tab === 'hisobotlar' && $this->repMonth && $this->repKind) {
             $rm = $this->repMonth;
-            $list = Expense::with(['project:id,seq_no,owner_name', 'responsible:id,name', 'user:id,name', 'account:id,name,type', 'recurringExpense:id,name'])
-                ->where($this->expenseScope($year, $rm))->ofKind($this->repKind)
+            $isSalary = $this->repKind !== Expense::KIND_XARAJAT;
+            $list = Expense::with(['project:id,seq_no,owner_name', 'responsible:id,name,salary_type', 'user:id,name,salary_type', 'account:id,name,type', 'recurringExpense:id,name', 'salaryPayment:id,salary_type'])
+                ->where($this->expenseScope($year, $rm))->ofKind($isSalary ? Expense::KIND_OYLIK : Expense::KIND_XARAJAT)
                 ->orderByDesc('amount')->get();
+            if ($isSalary) $list = $list->filter(fn ($e) => $e->salary_type === $this->repKind)->values();
             $repDetail = [
-                'title' => $fullMonths[$rm - 1] . ' ' . $year . ' — ' . ($this->repKind === Expense::KIND_OYLIK ? 'Oylik / avans' : 'Xarajatlar'),
+                'title' => $fullMonths[$rm - 1] . ' ' . $year . ' — ' . ['xarajat' => 'Xarajatlar', 'ishbay' => 'Ishbay oylik', 'mamuriy' => "Ma'muriy oylik"][$this->repKind],
                 'list'  => $list,
                 'total' => (float) $list->sum('amount'),
             ];
-            if ($this->repKind === Expense::KIND_XARAJAT) {
+            if (!$isSalary) {
                 // Turlar bo'yicha qisqacha: doimiy to'lov nomi / loyiha xarajati / boshqa
                 $repDetail['groups'] = $list->groupBy(fn ($e) => $e->recurringExpense?->name ?? ($e->project_id ? 'Loyiha xarajatlari' : 'Boshqa xarajatlar'))
                     ->map(fn ($g, $k) => ['label' => $k, 'sum' => (float) $g->sum('amount'), 'count' => $g->count()])
                     ->sortByDesc('sum')->values();
             } else {
                 // Har bir xodim: kerak (to'liq) / mijoz to'lagani bo'yicha / berilgan
+                $ish = $this->repKind === EmployeeSalaryPayment::TYPE_ISHBAY;
                 $givenBy = $list->groupBy(fn ($e) => $e->user_id ?: $e->responsible_id)->map(fn ($g) => (float) $g->sum('amount'));
-                $repDetail['staff'] = collect($grid)->map(fn ($r) => [
-                    'user'   => $r['user'],
-                    'full'   => (float) ($r['months'][$rm]['full'] ?? 0),
-                    'earned' => (float) ($r['months'][$rm]['calc'] ?? 0),
-                    'given'  => (float) ($givenBy[$r['user']->id] ?? 0),
-                ])->filter(fn ($x) => $x['full'] > 0 || $x['given'] > 0);
+                $repDetail['staff'] = collect($grid)->map(function ($r) use ($dueParts, $rm, $ish, $givenBy) {
+                    $p = $dueParts($r, $rm);
+                    return [
+                        'user'   => $r['user'],
+                        'full'   => $ish ? $p['ishbay'] : $p['mamuriy'],
+                        'earned' => $ish ? $p['ishbay_earned'] : $p['mamuriy'],
+                        'given'  => (float) ($givenBy[$r['user']->id] ?? 0),
+                    ];
+                })->filter(fn ($x) => $x['full'] > 0 || $x['given'] > 0);
                 // Ishdan bo'shagan (gridda yo'q) xodimga berilgan oylik ham ko'rinsin
                 $inGrid = $repDetail['staff']->pluck('user.id')->all();
                 foreach ($givenBy as $uid => $sum) {
@@ -1107,8 +1166,8 @@ class YangiBux extends Page
                     if ($u) $repDetail['staff']->push(['user' => $u, 'full' => 0.0, 'earned' => 0.0, 'given' => $sum]);
                 }
                 $repDetail['staff'] = $repDetail['staff']->map(fn ($x) => $x + ['left' => max(0, $x['full'] - $x['given'])])
-                  ->sortByDesc('full')->values();
-                $repDetail['due'] = $salaryDue[$rm];
+                  ->sortByDesc(fn ($x) => [$x['full'], $x['given']])->values();
+                $repDetail['due'] = $ish ? $salaryDue[$rm] : $mamuriyDue[$rm];
             }
         }
 
@@ -1155,6 +1214,9 @@ class YangiBux extends Page
             'yearIncome'   => $yearIncome,
             'yearExpense'  => $yearExpense,
             'salaryDue'    => $salaryDue,
+            'mamuriyDue'   => $mamuriyDue,
+            'mamuriySpent' => $mamuriyByMonth[$month] ?? 0.0,
+            'yearMamuriy'  => array_sum($mamuriyByMonth),
             'repDetail'    => $repDetail,
             'salaryPayments' => EmployeeSalaryPayment::with(['user', 'giver'])
                 ->where('month', sprintf('%04d-%02d', $year, $month))

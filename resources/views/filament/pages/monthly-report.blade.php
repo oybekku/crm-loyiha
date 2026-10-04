@@ -382,7 +382,9 @@
                 <td>
                     <div style="display:flex;align-items:center;gap:8px">
                         <div>
-                            <div style="font-weight:600;color:#111827">{{ $stat['user']->name }}</div>
+                            <div style="font-weight:600;color:#111827">{{ $stat['user']->name }}
+                                @if($stat['user']->salary_type === 'mamuriy')<span title="Ma'muriy oylik — ishga bog'liq emas, firma daromadidan" style="margin-left:4px;background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe;border-radius:999px;padding:0 7px;font-size:10px;font-weight:700">Ma'muriy</span>@endif
+                            </div>
                             <div style="font-size:11px;color:#9ca3af">
                                 {{ $stat['user']->role_name ?? ucfirst($stat['user']->role) }}
                                 @if(!in_array($stat['user']->role, ['admin', 'menejer']))
@@ -452,6 +454,9 @@
                 <td style="text-align:right">
                     @if($paidTotalRow > 0)
                     <span style="font-weight:700;color:#2563eb">{{ number_format($paidTotalRow, 0, '.', ' ') }} so'm</span>
+                    @if(($stat['paid_mamuriy'] ?? 0) > 0)
+                    <div style="font-size:10px;color:#7c3aed;margin-top:1px" title="Ma'muriy oylik — ortiqcha to'lov hisoblanmaydi">shundan ma'muriy: {{ number_format($stat['paid_mamuriy'], 0, '.', ' ') }}</div>
+                    @endif
                     @else
                     <span style="color:#d1d5db;font-size:12px">—</span>
                     @endif
@@ -982,7 +987,10 @@
     // to'langan bo'lsa ham (yuqoridagi "Ortiqcha to'langan"), bu yerda yana
     // "to'lash kerak" summasi ko'rsatilib, ikkalasi bir vaqtda chiqib
     // chalkashlik tug'dirardi.
-    $dToLanishiKerak = max(0, $dToLandiJami - $dPaidTotal);
+    // Ma'muriy oylik ishga bog'liq emas — ortiqcha/kerak faqat ishbay to'lovlardan
+    $dPaidMamuriy    = $ds['paid_mamuriy'] ?? 0;
+    $dPaidIshbay     = $ds['paid_ishbay'] ?? $dPaidTotal;
+    $dToLanishiKerak = max(0, $dToLandiJami - $dPaidIshbay);
 @endphp
 <div style="position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
 <div style="background:#fff;border-radius:16px;width:100%;max-width:860px;margin:auto;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
@@ -1132,10 +1140,16 @@
             <div style="font-size:11px;color:#6b7280">To'lab berildi</div>
             <div style="font-size:16px;font-weight:800;color:#2563eb">{{ number_format($dPaidTotal,0,'.',' ') }} so'm</div>
         </div>
-        @if($dPaidTotal > $dToLandiJami)
+        @if($dPaidMamuriy > 0)
+        <div style="text-align:right">
+            <div style="font-size:11px;color:#7c3aed">Shundan ma'muriy oylik</div>
+            <div style="font-size:16px;font-weight:800;color:#7c3aed">{{ number_format($dPaidMamuriy,0,'.',' ') }} so'm</div>
+        </div>
+        @endif
+        @if($dPaidIshbay > $dToLandiJami)
         <div style="text-align:right">
             <div style="font-size:11px;color:#dc2626">Ortiqcha to'langan</div>
-            <div style="font-size:16px;font-weight:800;color:#dc2626">{{ number_format($dPaidTotal - $dToLandiJami,0,'.',' ') }} so'm</div>
+            <div style="font-size:16px;font-weight:800;color:#dc2626">{{ number_format($dPaidIshbay - $dToLandiJami,0,'.',' ') }} so'm</div>
         </div>
         @endif
         <div style="text-align:right;padding:8px 16px;background:#dcfce7;border-radius:8px;border:1px solid #86efac">
@@ -1168,6 +1182,11 @@
             <div style="display:flex;align-items:center;gap:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px">
                 <div style="font-size:14px;font-weight:700;color:#111827">{{ number_format($sp->amount,0,'.',' ') }} so'm</div>
                 <div style="font-size:12px;color:#6b7280">{{ $sp->paid_at->format('d.m.Y') }}</div>
+                @if($sp->type === 'mamuriy')
+                <span style="background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe;border-radius:999px;padding:0 7px;font-size:10px;font-weight:700">Ma'muriy</span>
+                @else
+                <span style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:999px;padding:0 7px;font-size:10px;font-weight:700">Ishbay</span>
+                @endif
                 @if($sp->note)
                 <div style="font-size:11px;color:#9ca3af;flex:1">{{ $sp->note }}</div>
                 @else
@@ -1264,6 +1283,7 @@
             @endif
         </div>
         @endif
+        @include('filament.pages.partials.salary-type-pick', ['model' => 'salaryPaySalaryType', 'value' => $salaryPaySalaryType])
         <div>
             <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px">Summa (so'm) *</label>
             <input wire:model="salaryPayAmount" type="number" min="1"
@@ -1419,6 +1439,10 @@
                    onfocus="this.style.borderColor='#a21caf'" onblur="this.style.borderColor='#e2e8f0'">
             @error('salaryBaseEditValue')<span style="font-size:11px;color:#dc2626">{{ $message }}</span>@enderror
             <div style="font-size:11px;color:#94a3b8;margin-top:4px">Ishlamagan oyda ham "To'lanishi kerak"ga har oy avtomatik qo'shiladi (o'tgan oylarga ham).</div>
+        </div>
+        <div>
+            @include('filament.pages.partials.salary-type-pick', ['model' => 'salaryTypeEditValue', 'value' => $salaryTypeEditValue])
+            <div style="font-size:11px;color:#94a3b8;margin-top:-6px">Yangi oylik to'lovida shu tur avtomatik tanlanadi. Turi belgilanmagan eski to'lovlar ham shu turdan olinadi.</div>
         </div>
     </div>
     <div style="padding:14px 20px;border-top:1px solid #e5e7eb;display:flex;flex-direction:column;gap:10px">

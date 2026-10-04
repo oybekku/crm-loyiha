@@ -31,6 +31,7 @@ class User extends Authenticatable implements FilamentUser
         'commission_rate',
         'monthly_norm',
         'base_salary',
+        'salary_type',
         'telegram_chat_id',
         'telegram_link_token',
     ];

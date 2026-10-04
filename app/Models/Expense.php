@@ -78,6 +78,13 @@ class Expense extends Model
         return $this->belongsTo(EmployeeSalaryPayment::class, 'salary_payment_id');
     }
 
+    /** Oylik qatori uchun maosh turi (ishbay | mamuriy): to'lovniki, bo'lmasa xodimniki */
+    public function getSalaryTypeAttribute(): string
+    {
+        return $this->salaryPayment?->salary_type
+            ?: EmployeeSalaryPayment::typeForUser($this->user ?? $this->responsible);
+    }
+
     /**
      * Xodimga berilgan REAL ish haqi to'lovidan (EmployeeSalaryPayment)
      * avtomatik yozilgan xarajat qatormi — bunday qatorlar qo'lda

@@ -51,6 +51,8 @@ class MonthlyReport extends Page
     // "Xizmat ulushini to'lash"dan ochilganda izoh (svc:ID|...) o'zgarmasligi
     // kerak — shu belgi bo'yicha xizmat "to'langan" deb ko'rsatiladi.
     public ?string $salaryPayLockedNote = null;
+    // Oylik turi: ishbay | mamuriy — xodimning standart turidan avtomatik
+    public string $salaryPaySalaryType = 'ishbay';
 
     // "Hammasini to'la" — avval hisobni so'raydigan tasdiq oynasi
     public int   $payAllUserId    = 0;
@@ -76,6 +78,7 @@ class MonthlyReport extends Page
     public string $roleEditValue     = '';
     public string $positionEditValue = '';
     public string $salaryBaseEditValue = ''; // shu oynada oklad ham birga tahrirlanadi
+    public string $salaryTypeEditValue = 'ishbay'; // maosh turi: ishbay | mamuriy
 
     public function openRoleEditor(int $uid): void
     {
@@ -88,6 +91,7 @@ class MonthlyReport extends Page
         $this->roleEditValue       = $user->role;
         $this->positionEditValue   = (string) $user->position;
         $this->salaryBaseEditValue = (string) (float) $user->base_salary;
+        $this->salaryTypeEditValue = \App\Models\EmployeeSalaryPayment::typeForUser($user);
         $this->showRoleEditor      = true;
     }
 
@@ -108,6 +112,7 @@ class MonthlyReport extends Page
             'roleEditValue'       => 'required|in:admin,menejer,hisobchi,bajaruvchi',
             'positionEditValue'   => 'nullable|string|max:50',
             'salaryBaseEditValue' => 'nullable|numeric|min:0',
+            'salaryTypeEditValue' => 'required|in:ishbay,mamuriy',
         ]);
 
         $user = User::find($this->roleEditUserId);
@@ -127,6 +132,7 @@ class MonthlyReport extends Page
             'role'        => $this->roleEditValue,
             'position'    => trim($this->positionEditValue) ?: null,
             'base_salary' => max(0, (float) str_replace([' ', ','], '', $this->salaryBaseEditValue ?: '0')),
+            'salary_type' => $this->salaryTypeEditValue === 'mamuriy' ? 'mamuriy' : null,
         ]);
 
         $this->closeRoleEditor();
@@ -255,6 +261,7 @@ class MonthlyReport extends Page
         $this->salaryPayEditId    = 0;
         $this->salaryPayAccountId = null;
         $this->salaryPayLockedNote = null;
+        $this->salaryPaySalaryType = \App\Models\EmployeeSalaryPayment::typeForUser(User::find($userId));
         $this->resetValidation();
         $this->showSalaryPayModal = true;
     }
@@ -273,6 +280,7 @@ class MonthlyReport extends Page
         $this->salaryPayEditId    = 0;
         $this->salaryPayAccountId = null;
         $this->salaryPayLockedNote = null;
+        $this->salaryPaySalaryType = \App\Models\EmployeeSalaryPayment::typeForUser(User::find($userId));
         $this->resetValidation();
         $this->showSalaryPayModal = true;
     }
@@ -292,6 +300,7 @@ class MonthlyReport extends Page
         // to'lovda bo'sh — saqlash uchun tanlash shart.
         $this->salaryPayAccountId = \App\Models\Expense::where('salary_payment_id', $payId)->value('account_id');
         $this->salaryPayLockedNote = str_starts_with((string) $pay->note, 'svc:') ? $pay->note : null;
+        $this->salaryPaySalaryType = $pay->type;
         $this->resetValidation();
         $this->showSalaryPayModal = true;
     }
@@ -304,6 +313,7 @@ class MonthlyReport extends Page
 
         $this->validate([
             'salaryPayAccountId' => 'required|exists:financial_accounts,id,user_id,NULL',
+            'salaryPaySalaryType' => 'required|in:ishbay,mamuriy',
         ], [
             'salaryPayAccountId.required' => 'Qaysi hisobdan berilganini tanlang',
         ]);
@@ -312,6 +322,7 @@ class MonthlyReport extends Page
             'user_id'  => $this->salaryPayUserId,
             'month'    => $this->salaryPayMonth ?: $this->selectedMonth,
             'amount'   => $amount,
+            'salary_type' => $this->salaryPaySalaryType,
             'paid_at'  => $this->salaryPayDate ?: now()->toDateString(),
             'note'     => $this->salaryPayLockedNote ?? (trim($this->salaryPayNote) ?: null),
             'given_by' => auth()->id(),
@@ -600,15 +611,21 @@ class MonthlyReport extends Page
             $penalty   = (float) ($this->penalties[$uid] ?? 0);
 
             // Ish haqi to'lovlari (DB dan)
-            $salaryPays = \App\Models\EmployeeSalaryPayment::where('user_id', $uid)
+            $salaryPays = \App\Models\EmployeeSalaryPayment::with('user')->where('user_id', $uid)
                 ->where('month', $this->selectedMonth)
                 ->orderBy('paid_at')
                 ->get();
             $paidTotal = (float) $salaryPays->sum('amount');
+            // Ma'muriy oylik (direktor, admin...) ishga bog'liq emas — "ortiqcha
+            // to'langan" va "to'lanishi kerak" faqat ishbay to'lovlardan hisoblanadi.
+            $paidMamuriy = (float) $salaryPays->filter(fn ($p) => $p->type === \App\Models\EmployeeSalaryPayment::TYPE_MAMURIY)->sum('amount');
+            $paidIshbay  = $paidTotal - $paidMamuriy;
 
             $stat['penalty']      = $penalty;
             $stat['salary_pays']  = $salaryPays;
             $stat['paid_total']   = $paidTotal;
+            $stat['paid_mamuriy'] = $paidMamuriy;
+            $stat['paid_ishbay']  = $paidIshbay;
             $stat['net_payable']  = max(0, $stat['commission'] - $stat['advance_total'] - $penalty);
 
             // Mijoz to'lagan ulushga mutanosib "ochilgan" komissiya — bu haqiqatda
@@ -618,12 +635,12 @@ class MonthlyReport extends Page
             // bilan bir xil formula — comm_paid har bir tugallangan xizmat uchun
             // allaqachon shu tarzda hisoblangan (yuqorida, umumiy sikl ichida).
             $stat['client_payable'] = collect($stat['services'])->sum('comm_paid');
-            $stat['overpaid']       = max(0, $stat['paid_total'] - $stat['client_payable']);
+            $stat['overpaid']       = max(0, $paidIshbay - $stat['client_payable']);
             // Hali to'lanmagan qism — allaqachon to'langanini ayirib tashlaymiz,
             // aks holda hodimga ortiqcha to'langan bo'lsa ham (yuqoridagi
             // "Ortiqcha to'langan"), bu yerda yana "to'lash kerak" summasi
             // chiqib, ikkalasi bir vaqtda ko'rsatilib chalkashlik tug'dirardi.
-            $stat['payable_remaining'] = max(0, $stat['client_payable'] - $stat['paid_total']);
+            $stat['payable_remaining'] = max(0, $stat['client_payable'] - $paidIshbay);
 
             // Kutayotgan ishlar — LOYIHA shu oyda ochilgan bo'lsa, hali TUGATILMAGAN
             // xizmatlar (loyiha arxivga o'tgan bo'lsa ham ko'rsatilmaydi — u holda ish

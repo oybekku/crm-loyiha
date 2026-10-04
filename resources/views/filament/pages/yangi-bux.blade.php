@@ -88,6 +88,8 @@
 .yb-tbl .num{text-align:right;white-space:nowrap;font-weight:700}
 .yb-cell-link{cursor:pointer;border-bottom:1px dashed currentColor;padding-bottom:1px}
 .yb-cell-link:hover{opacity:.75}
+.yb-stype{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;font-size:10.5px;font-weight:700;cursor:pointer;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;vertical-align:middle}
+.yb-stype.mam{background:#f5f3ff;color:#7c3aed;border-color:#ddd6fe}
 .yb-sub{display:block;font-size:10.5px;color:var(--yb-mu);font-weight:400}
 .yb-pill{display:inline-block;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700}
 .yb-pill.k{background:#dcfce7;color:#15803d}.yb-pill.c{background:#fee2e2;color:#b91c1c}
@@ -305,7 +307,7 @@
             $kpis3 = [
                 ['l' => 'Kirimlar',       'v' => $income,      'ic' => '↓', 'bg' => '#dcfce7', 'c' => '#16a34a', 'pct' => $incomePct,  'good' => 1],
                 ['l' => 'Xarajatlar',     'v' => $otherSpent,  'ic' => '↗', 'bg' => '#fee2e2', 'c' => '#dc2626', 'sub' => 'oylik va avanslarsiz'],
-                ['l' => 'Oylik / avans',  'v' => $salarySpent, 'ic' => '💵', 'bg' => '#fef3c7', 'c' => '#b45309', 'sub' => 'jami chiqim: ' . $fmt($expense) . " so'm"],
+                ['l' => 'Oylik / avans',  'v' => $salarySpent, 'ic' => '💵', 'bg' => '#fef3c7', 'c' => '#b45309', 'sub' => 'ishbay ' . $fmt($salarySpent - $mamuriySpent) . " · ma'muriy " . $fmt($mamuriySpent)],
                 ['l' => 'Sof foyda',      'v' => $profit,      'ic' => '◔', 'bg' => '#dbeafe', 'c' => '#2563eb', 'pct' => $profitPct,  'good' => 1],
             ];
         @endphp
@@ -525,7 +527,11 @@
             @forelse($S['rows'] as $i => $r)
                 <tr>
                     <td>{{ $i + 1 }}</td>
-                    <td style="white-space:nowrap"><span class="yb-av" style="display:inline-flex;width:26px;height:26px;font-size:11px;margin-right:6px;vertical-align:middle;background:{{ $avColors[$r['user']->id % 7] }}">{{ $initials($r['user']->name) }}</span><b>{{ $r['user']->name }}</b></td>
+                    <td style="white-space:nowrap"><span class="yb-av" style="display:inline-flex;width:26px;height:26px;font-size:11px;margin-right:6px;vertical-align:middle;background:{{ $avColors[$r['user']->id % 7] }}">{{ $initials($r['user']->name) }}</span><b>{{ $r['user']->name }}</b>
+                        @php $isMam = $r['user']->salary_type === 'mamuriy'; @endphp
+                        <span class="yb-stype {{ $isMam ? 'mam' : '' }}" wire:click="toggleUserSalaryType({{ $r['user']->id }})"
+                              wire:confirm="{{ $r['user']->name }} — maosh turi {{ $isMam ? 'ISHBAY' : "MA'MURIY" }} qilinsinmi? Turi tanlanmagan eski to'lovlari ham shu turga o'tadi."
+                              title="Xodimning standart maosh turi — bosib almashtiring">{{ $isMam ? "Ma'muriy" : 'Ishbay' }}</span></td>
                     <td>{{ $r['position'] }}</td>
                     <td>{{ $r['role'] }}</td>
                     <td class="num" style="font-weight:500">{{ $r['base'] > 0 ? $fmt($r['base']) : '—' }}</td>
@@ -596,21 +602,26 @@
         <div class="yb-h"><span>{{ $this->ybYear }}-yil hisoboti <span class="yb-sub">Tushum — to'lov sanasi bo'yicha; xarajat — Buxgalteriyadagi qoida bo'yicha. Xarajat yoki oylik summasini bosing — ro'yxati ochiladi.</span></span></div>
         <div class="yb-tbl-wrap">
         <table class="yb-tbl">
-            <thead><tr><th>Oy</th><th class="num">Tushum</th><th class="num">Xarajat</th><th class="num" title="Kerak — bajarilgan ishlar uchun mijozlar to'liq to'lasa beriladigan oylik (komissiya + oklad). To'langan — xodimlarga haqiqatda berilgan.">Oylik: kerak / to'langan</th><th class="num">Jami chiqim</th><th class="num">Sof foyda</th><th class="num">Rentabellik</th></tr></thead>
+            <thead><tr><th>Oy</th><th class="num">Tushum</th><th class="num">Xarajat</th><th class="num" title="Toposyomka, ariza, eskiz ishlaridan. Kerak — bajarilgan ishlar uchun mijozlar to'liq to'lasa beriladigan oylik. To'langan — haqiqatda berilgan.">Ishbay oylik: kerak / to'langan</th><th class="num" title="Direktor, admin, buxgalter va h.k. — ishga bog'liq emas, firma daromadidan">Ma'muriy oylik</th><th class="num">Jami chiqim</th><th class="num">Sof foyda</th><th class="num">Rentabellik</th></tr></thead>
             <tbody>
             @foreach($chart as $c)
-                @php $due = $salaryDue[$c['m']] ?? null; @endphp
+                @php $due = $salaryDue[$c['m']] ?? null; $mDue = $mamuriyDue[$c['m']] ?? null; @endphp
                 <tr wire:click="ybSetMonth({{ $c['m'] }})" style="cursor:pointer;{{ $c['m'] === $this->ybMonth ? 'font-weight:700' : '' }}">
                     <td>{{ $c['label'] }}</td>
                     <td class="num yb-g">{{ $fmt($c['income']) }}</td>
                     <td class="num yb-r"><span class="yb-cell-link" wire:click.stop="openRepDetail({{ $c['m'] }}, 'xarajat')" title="Xarajatlar ro'yxati">{{ $fmt($c['other']) }}</span></td>
                     <td class="num" style="color:#b45309">
-                        <span class="yb-cell-link" wire:click.stop="openRepDetail({{ $c['m'] }}, 'oylik')" title="Oylik / avans ro'yxati">
-                            @if($due !== null && $due > 0)<span style="color:var(--yb-mu);font-weight:600">{{ $fmt($due) }}</span> / @endif{{ $fmt($c['salary']) }}
+                        <span class="yb-cell-link" wire:click.stop="openRepDetail({{ $c['m'] }}, 'ishbay')" title="Ishbay oylik ro'yxati">
+                            @if($due !== null && $due > 0)<span style="color:var(--yb-mu);font-weight:600">{{ $fmt($due) }}</span> / @endif{{ $fmt($c['ishbay']) }}
                         </span>
-                        @if($due !== null && $due > $c['salary'])
-                            <span class="yb-sub">qoldiq {{ $fmt($due - $c['salary']) }}</span>
+                        @if($due !== null && $due > $c['ishbay'])
+                            <span class="yb-sub">qoldiq {{ $fmt($due - $c['ishbay']) }}</span>
                         @endif
+                    </td>
+                    <td class="num" style="color:#7c3aed">
+                        <span class="yb-cell-link" wire:click.stop="openRepDetail({{ $c['m'] }}, 'mamuriy')" title="Ma'muriy oylik ro'yxati">
+                            @if($mDue !== null && $mDue > 0)<span style="color:var(--yb-mu);font-weight:600">{{ $fmt($mDue) }}</span> / @endif{{ $fmt($c['mamuriy']) }}
+                        </span>
                     </td>
                     <td class="num yb-r">{{ $fmt($c['expense']) }}</td>
                     <td class="num {{ $c['profit'] < 0 ? 'yb-r' : '' }}">{{ $fmt($c['profit']) }}</td>
@@ -621,11 +632,12 @@
                     <td>Jami</td>
                     <td class="num yb-g">{{ $fmt($yearIncome) }}</td>
                     <td class="num yb-r">{{ $fmt($yearExpense - $yearSalary) }}</td>
-                    @php $yearDue = array_sum(array_filter($salaryDue, fn ($v) => $v !== null)); @endphp
+                    @php $yearDue = array_sum(array_filter($salaryDue, fn ($v) => $v !== null)); $yearIsh = $yearSalary - $yearMamuriy; @endphp
                     <td class="num" style="color:#b45309">
-                        @if($yearDue > 0)<span style="color:var(--yb-mu);font-weight:600">{{ $fmt($yearDue) }}</span> / @endif{{ $fmt($yearSalary) }}
-                        @if($yearDue > $yearSalary)<span class="yb-sub">qoldiq {{ $fmt($yearDue - $yearSalary) }}</span>@endif
+                        @if($yearDue > 0)<span style="color:var(--yb-mu);font-weight:600">{{ $fmt($yearDue) }}</span> / @endif{{ $fmt($yearIsh) }}
+                        @if($yearDue > $yearIsh)<span class="yb-sub">qoldiq {{ $fmt($yearDue - $yearIsh) }}</span>@endif
                     </td>
+                    <td class="num" style="color:#7c3aed">{{ $fmt($yearMamuriy) }}</td>
                     <td class="num yb-r">{{ $fmt($yearExpense) }}</td>
                     <td class="num">{{ $fmt($yearIncome - $yearExpense) }}</td>
                     <td class="num">{{ $yearIncome > 0 ? round(($yearIncome - $yearExpense) / $yearIncome * 100) . '%' : '—' }}</td>
@@ -636,30 +648,39 @@
     </div>
 
     @if($repDetail)
+        @php $sal = $repKind !== 'xarajat'; $mam = $repKind === 'mamuriy'; $sc = $mam ? '#7c3aed' : '#b45309'; @endphp
         @teleport('body')
         <div class="yb yb-ov" wire:click.self="closeRepDetail">
             <div class="yb-modal" style="max-width:820px">
-                <div class="yb-modal-h" style="background:{{ $repKind === 'oylik' ? '#fef3c7' : '#fee2e2' }}">{{ $repDetail['title'] }} <button type="button" wire:click="closeRepDetail">×</button></div>
+                <div class="yb-modal-h" style="background:{{ $mam ? '#ede9fe' : ($sal ? '#fef3c7' : '#fee2e2') }}">{{ $repDetail['title'] }} <button type="button" wire:click="closeRepDetail">×</button></div>
                 <div class="yb-modal-b" style="max-height:72vh;overflow:auto">
-                    @if($repKind === 'oylik')
+                    @if($sal)
+                        <div class="yb-sub" style="font-size:11.5px;margin-bottom:8px">
+                            @if($mam) Direktor, admin, buxgalter va h.k. — ishga bog'liq emas, firma daromadidan beriladi. "Kerak" = belgilangan oklad.
+                            @else Toposyomka, ariza, eskiz ishlaridan. "Kerak" = bajarilgan ishlar uchun mijoz to'liq to'lasa beriladigan oylik.
+                            @endif
+                        </div>
                         @if(($repDetail['due'] ?? 0) > 0)
                             <div style="font-size:12.5px;margin-bottom:10px">
                                 To'lanishi kerak: <b>{{ $fmt($repDetail['due']) }}</b> ·
-                                to'langan: <b style="color:#b45309">{{ $fmt($repDetail['total']) }}</b> ·
+                                to'langan: <b style="color:{{ $sc }}">{{ $fmt($repDetail['total']) }}</b> ·
                                 qoldiq: <b class="yb-r">{{ $fmt(max(0, $repDetail['due'] - $repDetail['total'])) }}</b>
                             </div>
                         @endif
                         <div class="yb-tbl-wrap">
                         <table class="yb-tbl">
-                            <thead><tr><th>Xodim</th><th class="num" title="Bajarilgan ishlar uchun mijoz to'liq to'lasa (komissiya + oklad)">Kerak (to'liq)</th><th class="num" title="Mijozlar hozirgacha to'lagan qismiga to'g'ri keladigan oylik">Mijoz to'lagani bo'yicha</th><th class="num">Berilgan</th><th class="num">Qoldiq</th></tr></thead>
+                            <thead><tr><th>Xodim</th>
+                                <th class="num">{{ $mam ? 'Oklad (kerak)' : "Kerak (to'liq)" }}</th>
+                                @unless($mam)<th class="num" title="Mijozlar hozirgacha to'lagan qismiga to'g'ri keladigan oylik">Mijoz to'lagani bo'yicha</th>@endunless
+                                <th class="num">Berilgan</th><th class="num">Qoldiq</th></tr></thead>
                             <tbody>
                             @forelse($repDetail['staff'] as $s)
                                 <tr>
                                     <td>{{ $s['user']->name }}@if(!$s['user']->is_active)<span class="yb-sub">ishdan bo'shagan</span>@endif</td>
-                                    <td class="num">{{ $fmt($s['full']) }}</td>
-                                    <td class="num" style="color:var(--yb-mu)">{{ $fmt($s['earned']) }}</td>
-                                    <td class="num" style="color:#b45309">{{ $fmt($s['given']) }}</td>
-                                    <td class="num {{ $s['left'] > 0 ? 'yb-r' : '' }}">{{ $fmt($s['left']) }}</td>
+                                    <td class="num">{{ $s['full'] > 0 ? $fmt($s['full']) : '—' }}</td>
+                                    @unless($mam)<td class="num" style="color:var(--yb-mu)">{{ $fmt($s['earned']) }}</td>@endunless
+                                    <td class="num" style="color:{{ $sc }}">{{ $fmt($s['given']) }}</td>
+                                    <td class="num {{ $s['left'] > 0 ? 'yb-r' : '' }}">{{ $s['full'] > 0 ? $fmt($s['left']) : '—' }}</td>
                                 </tr>
                             @empty
                                 <tr><td colspan="5" class="yb-empty">Ma'lumot yo'q</td></tr>
@@ -678,12 +699,12 @@
 
                     <div class="yb-tbl-wrap">
                     <table class="yb-tbl">
-                        <thead><tr><th>Sana</th><th>{{ $repKind === 'oylik' ? 'Xodim' : 'Sabab' }}</th><th>{{ $repKind === 'oylik' ? 'Izoh' : 'Loyiha / xodim' }}</th><th>Hisob</th><th class="num">Summa</th></tr></thead>
+                        <thead><tr><th>Sana</th><th>{{ $sal ? 'Xodim' : 'Sabab' }}</th><th>{{ $sal ? 'Izoh' : 'Loyiha / xodim' }}</th><th>Hisob</th><th class="num">Summa</th></tr></thead>
                         <tbody>
                         @forelse($repDetail['list'] as $e)
                             <tr>
                                 <td style="white-space:nowrap">{{ $e->expense_date?->format('d.m.Y') }}</td>
-                                @if($repKind === 'oylik')
+                                @if($sal)
                                     <td>{{ $e->user?->name ?? $e->responsible?->name ?? '—' }}</td>
                                     <td>{{ \Illuminate\Support\Str::limit(preg_replace('/^svc:\d+\|/', '', (string) $e->comment), 60) ?: '—' }}</td>
                                 @else
@@ -694,7 +715,7 @@
                                     </td>
                                 @endif
                                 <td style="font-size:12px;color:var(--yb-mu)">{{ $e->account?->name ?? '—' }}</td>
-                                <td class="num {{ $repKind === 'oylik' ? '' : 'yb-r' }}" @if($repKind === 'oylik') style="color:#b45309" @endif>{{ $fmt($e->amount) }}</td>
+                                <td class="num {{ $sal ? '' : 'yb-r' }}" @if($sal) style="color:{{ $sc }}" @endif>{{ $fmt($e->amount) }}</td>
                             </tr>
                         @empty
                             <tr><td colspan="5" class="yb-empty">Bu oyda yozuv yo'q</td></tr>
@@ -784,6 +805,8 @@
                         <input type="month" class="yb-in" wire:model="chSalaryMonth">
                         @error('chSalaryMonth')<div class="yb-err">{{ $message }}</div>@enderror
                     </div>
+                    @include('filament.pages.partials.salary-type-pick', ['model' => 'chSalaryType', 'value' => $chSalaryType])
+                    @error('chSalaryType')<div class="yb-err" style="margin-top:-8px;margin-bottom:10px">{{ $message }}</div>@enderror
                 @endif
                 <div class="yb-grid2">
                     <div class="yb-fld">
@@ -929,6 +952,7 @@
                         <div class="yb-sub" style="margin-top:4px">{{ $monthLabel }} uchun qoldiq: <b class="{{ $payRemaining > 0 ? 'yb-r' : 'yb-g' }}">{{ $fmt($payRemaining) }} so'm</b></div>
                     @endif
                 </div>
+                @include('filament.pages.partials.salary-type-pick', ['model' => 'paySalaryType', 'value' => $paySalaryType])
                 <div class="yb-grid2">
                     <div class="yb-fld">
                         <label>Summa (so'm) <i>*</i></label>

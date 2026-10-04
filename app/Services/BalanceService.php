@@ -110,21 +110,24 @@ class BalanceService
             $salariesQ->where('month', $monthStr);
             $advancesQ->where('month', $monthStr);
         }
-        $salaries = $salariesQ->get();
+        $salaries = $salariesQ->with('user')->get();
         $advances = $advancesQ->get();
 
         $withdrawn = 0.0;
         foreach ($salaries as $p) {
-            $withdrawn += (float) $p->amount;
+            // Ma'muriy oylik ishga bog'liq emas — ish balansidan yechilmaydi
+            // (aks holda "ortiqcha to'langan" bo'lib ko'rinardi), faqat ro'yxatda.
+            $mam = $p->type === EmployeeSalaryPayment::TYPE_MAMURIY;
+            if (!$mam) $withdrawn += (float) $p->amount;
             $txns[] = [
                 'type'    => 'oylik',
                 'dir'     => 'out',
                 'date'    => $p->paid_at,
-                'owner'   => 'Oylik to\'lov',
+                'owner'   => $mam ? "Ma'muriy oylik" : 'Oylik to\'lov',
                 'number'  => $p->month ?? '',
                 'service' => 'oylik',
                 'amount'  => (float) $p->amount,
-                'status'  => 'yechib olingan',
+                'status'  => $mam ? "balansga kirmaydi" : 'yechib olingan',
             ];
         }
         foreach ($advances as $a) {

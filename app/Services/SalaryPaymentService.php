@@ -38,12 +38,13 @@ class SalaryPaymentService
      * bog'lanadi (yangi xarajat YARATILMAYDI — pul ikki marta hisoblanmaydi).
      * Summa, sana va hisob chiqimdagidek qoladi.
      */
-    public static function attachExpense(Expense $expense, int $userId, string $month): EmployeeSalaryPayment
+    public static function attachExpense(Expense $expense, int $userId, string $month, ?string $salaryType = null): EmployeeSalaryPayment
     {
         $payment = EmployeeSalaryPayment::create([
             'user_id'  => $userId,
             'month'    => $month,
             'amount'   => $expense->amount,
+            'salary_type' => $salaryType,
             'paid_at'  => $expense->expense_date,
             'note'     => $expense->comment,
             'given_by' => auth()->id(),
