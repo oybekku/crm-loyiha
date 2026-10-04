@@ -53,6 +53,8 @@ class YangiBux extends Page
     public string  $opUser    = '';      // mas'ul (user id)
     public string  $opSearch  = '';
     public string  $opKind    = '';      // '' | xarajat | oylik
+    public string  $opSort    = 'new';   // new — oxirgi qo'shilgan/o'zgargan birinchi | date — sana bo'yicha
+    public ?string $opJustSaved = null;  // hozirgina saqlangan qator ("kirim:ID" | "chiqim:ID") — ajratib ko'rsatiladi
 
     // ── "Kirim qo'shish" — avval loyiha tanlanadi, keyin PaymentModal ochiladi ──
     public bool   $showKirimPicker = false;
@@ -178,6 +180,11 @@ class YangiBux extends Page
         $this->opFrom = $this->opTo = null;
     }
 
+    private function markChiqim(?int $expenseId): void
+    {
+        $this->opJustSaved = $expenseId ? 'chiqim:' . $expenseId : null;
+    }
+
     public function opResetFilters(): void
     {
         $this->opFilter = 'chiqim';
@@ -187,7 +194,11 @@ class YangiBux extends Page
 
     // PaymentModal (to'lov qo'shildi/tahrirlandi/o'chirildi) — sahifani yangilash
     #[On('kb-payment-saved')]
-    public function onPaymentSaved(): void {}
+    public function onPaymentSaved(): void
+    {
+        $id = Payment::orderByDesc('updated_at')->orderByDesc('id')->value('id');
+        $this->opJustSaved = $id ? 'kirim:' . $id : null;
+    }
 
     // ── Kirim qo'shish ──────────────────────────────────────────────────────
     public function openKirim(): void
@@ -471,6 +482,7 @@ class YangiBux extends Page
                 'given_by' => auth()->id(),
             ], null, $this->chSalaryType === EmployeeSalaryPayment::TYPE_ISHBAY && $remaining > 0 && $amount < $remaining, $this->chAccountId);
             // Qo'shimcha maydonlar (loyiha, izoh, hujjat) — bog'liq xarajat qatoriga
+            $this->markChiqim(Expense::where('salary_payment_id', $payment?->id)->value('id'));
             Expense::where('salary_payment_id', $payment?->id)->update([
                 'responsible_id' => $this->chResponsibleId,
                 'project_id'     => $this->chProjectId,
@@ -496,6 +508,7 @@ class YangiBux extends Page
 
         if ($old) {
             $old->update($data);
+            $this->markChiqim($old->id);
             if ($attach) {
                 \App\Services\SalaryPaymentService::attachExpense($old->fresh(), (int) $this->chResponsibleId, $this->chSalaryMonth, $this->chSalaryType);
                 Notification::make()->title('Oylik / avansga aylantirildi')->body("Xodim to'lovlariga (Oylik maosh, Oylik hisobot) qo'shildi. Chiqim ikki marta hisoblanmaydi.")->success()->send();
@@ -504,7 +517,7 @@ class YangiBux extends Page
             }
             Notification::make()->title('Chiqim yangilandi')->success()->send();
         } else {
-            Expense::create($data + ['created_by' => auth()->id(), 'recurring_expense_id' => $this->chRecurringId]);
+            $this->markChiqim(Expense::create($data + ['created_by' => auth()->id(), 'recurring_expense_id' => $this->chRecurringId])->id);
             Notification::make()->title("Chiqim qo'shildi")->success()->send();
         }
         $this->closeChiqim();
@@ -642,7 +655,7 @@ class YangiBux extends Page
 
         $amount = (float) $this->payAmount;
         $month  = $this->payEditId ? (EmployeeSalaryPayment::find($this->payEditId)?->month ?? $this->ym()) : $this->ym();
-        \App\Services\SalaryPaymentService::save([
+        $savedPay = \App\Services\SalaryPaymentService::save([
             'user_id'  => $this->payUserId,
             'month'    => $month,
             'amount'   => $amount,
@@ -652,6 +665,7 @@ class YangiBux extends Page
             'given_by' => auth()->id(),
         ], $this->payEditId, $this->payRemaining > 0 && $amount < $this->payRemaining, $this->payAccountId);
 
+        $this->markChiqim(Expense::where('salary_payment_id', $savedPay?->id)->value('id'));
         $this->showPayModal = false;
         Notification::make()->title('Maosh saqlandi')->body("Oylik hisobotga va tanlangan hisobdan xarajat sifatida yozildi.")->success()->send();
     }
@@ -799,6 +813,7 @@ class YangiBux extends Page
                 'id'      => $p->id,
                 'date'    => $p->payment_date,
                 'sort'    => $p->payment_date?->format('Y-m-d') . sprintf('%010d', $p->id),
+                'touched' => ($p->updated_at ?? $p->created_at)?->format('Y-m-d H:i:s') . sprintf('%010d', $p->id),
                 'type'    => 'kirim',
                 'who'     => $p->project?->owner_name ?: ('Loyiha #' . ($p->project?->seq_no ?? $p->project_id)),
                 'who_sub' => $p->project ? ('№' . $p->project->seq_no . ' · ' . ($p->project->address ?: $p->project->title)) : null,
@@ -837,6 +852,7 @@ class YangiBux extends Page
                 'id'      => $e->id,
                 'date'    => $e->expense_date,
                 'sort'    => $e->expense_date?->format('Y-m-d') . sprintf('%010d', $e->id),
+                'touched' => ($e->updated_at ?? $e->created_at)?->format('Y-m-d H:i:s') . sprintf('%010d', $e->id),
                 'type'    => 'chiqim',
                 'who'     => $e->project?->owner_name ?: ($e->user?->name ?: 'Xarajat'),
                 'who_sub' => $e->project ? ('№' . $e->project->seq_no . ' · ' . ($e->project->address ?: $e->project->title)) : ($e->user ? 'Xodim oyligi' : null),
@@ -861,7 +877,9 @@ class YangiBux extends Page
                 || ($digits !== '' && str_contains((string) (int) $r['amount'], $digits)));
         }
 
-        return $rows->sortByDesc('sort')->values();
+        // "new" — oxirgi qo'shilgan/o'zgartirilgan birinchi (yangi yozuv ro'yxat boshida
+        // turadi, uni qidirish shart emas); "date" — operatsiya sanasi bo'yicha.
+        return $rows->sortByDesc(($f['sort'] ?? 'date') === 'new' ? 'touched' : 'sort')->values();
     }
 
     /** Qarzdor loyihalar (bekor qilinmagan, to'xtatilmagan), eng katta qarzdan boshlab. */
@@ -1079,7 +1097,7 @@ class YangiBux extends Page
         $ops = $this->operations($year, $month);
         $opsFiltered = $this->tab === 'kirim' ? $this->operations($year, $month, [
             'type' => $this->opFilter, 'from' => $this->opFrom, 'to' => $this->opTo, 'method' => $this->opMethod, 'kind' => $this->opKind,
-            'user' => $this->opUser, 'project' => trim($this->opProject), 'search' => trim($this->opSearch),
+            'user' => $this->opUser, 'project' => trim($this->opProject), 'search' => trim($this->opSearch), 'sort' => $this->opSort,
         ]) : collect();
 
         $projectResults = function (string $term) {

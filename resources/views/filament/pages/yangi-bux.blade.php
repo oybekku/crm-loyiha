@@ -88,6 +88,10 @@
 .yb-tbl .num{text-align:right;white-space:nowrap;font-weight:700}
 .yb-cell-link{cursor:pointer;border-bottom:1px dashed currentColor;padding-bottom:1px}
 .yb-cell-link:hover{opacity:.75}
+.yb-tbl tr.yb-just td{background:#fef9c3 !important;animation:ybJust 1.2s ease-in-out 2}
+.dark .yb-tbl tr.yb-just td{background:rgba(234,179,8,.18) !important}
+@keyframes ybJust{50%{background:#fde047}}
+.yb-just-tag{display:inline-block;margin-left:4px;padding:0 6px;border-radius:999px;background:#eab308;color:#fff;font-size:9.5px;font-weight:800;vertical-align:middle}
 .yb-stype{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;font-size:10.5px;font-weight:700;cursor:pointer;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;vertical-align:middle}
 .yb-stype.mam{background:#f5f3ff;color:#7c3aed;border-color:#ddd6fe}
 .yb-tbl tr.yb-grp td{background:#eff6ff;color:#1d4ed8;font-weight:800;font-size:13px;padding:9px 8px;border-top:2px solid #bfdbfe}
@@ -378,6 +382,10 @@
                 <label>Mas'ul</label>
                 <select wire:model.live="opUser"><option value="">Barchasi</option>@foreach($staffUsers as $su)<option value="{{ $su->id }}">{{ $su->name }}</option>@endforeach</select>
             </div>
+            <div class="yb-f">
+                <label>Tartib</label>
+                <select wire:model.live="opSort"><option value="new">Oxirgi qo'shilgan birinchi</option><option value="date">Sana bo'yicha</option></select>
+            </div>
             <div class="yb-f" style="flex:1;min-width:160px">
                 <label>&nbsp;</label>
                 <input type="search" wire:model.live.debounce.400ms="opSearch" placeholder="🔍 Qidirish...">
@@ -400,7 +408,7 @@
                 <button type="button" class="yb-btn" style="background:#dc2626" wire:click="openChiqim">＋ Chiqim qo'shish</button>
             </div>
         </div>
-        @include('filament.pages.partials.yangi-bux-ops', ['rows' => $opsFiltered, 'actions' => true])
+        @include('filament.pages.partials.yangi-bux-ops', ['rows' => $opsFiltered, 'actions' => true, 'justSaved' => $opJustSaved])
     </div>
 
 @elseif($tab === 'qarzlar')

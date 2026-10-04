@@ -1,11 +1,12 @@
-@php $actions ??= false; @endphp
+@php $actions ??= false; $justSaved ??= null; @endphp
 <div class="yb-tbl-wrap">
 <table class="yb-tbl">
     <thead><tr><th>#</th><th>Sana</th><th>Tur</th><th>Mijoz / Loyiha</th><th>Tavsif</th><th class="num">Kirim (so'm)</th><th class="num">Chiqim (so'm)</th><th>To'lov turi</th><th>Mas'ul</th><th>Holat</th>@if($actions)<th>Hujjat</th><th style="text-align:right">Amallar</th>@endif</tr></thead>
     <tbody>
     @forelse($rows as $i => $r)
-        <tr>
-            <td>{{ $i + 1 }}</td>
+        @php $isJust = $justSaved && $justSaved === $r['type'] . ':' . $r['id']; @endphp
+        <tr @class(['yb-just' => $isJust]) wire:key="op-{{ $r['type'] }}-{{ $r['id'] }}">
+            <td>{{ $i + 1 }}@if($isJust)<span class="yb-just-tag">yangi</span>@endif</td>
             <td style="white-space:nowrap">{{ $r['date']?->format('d.m.Y') }}</td>
             <td>@if($r['type'] === 'kirim')<span class="yb-pill k">Kirim</span>@elseif(($r['kind'] ?? '') === 'oylik')<span class="yb-pill o">Oylik</span>@else<span class="yb-pill c">Xarajat</span>@endif</td>
             <td>{{ $r['who'] }}@if($r['who_sub'])<span class="yb-sub">{{ \Illuminate\Support\Str::limit($r['who_sub'], 30) }}</span>@endif</td>
