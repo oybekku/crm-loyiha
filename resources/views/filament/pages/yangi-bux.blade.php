@@ -674,7 +674,7 @@
                         </span>
                     </td>
                     <td class="num yb-r">{{ $fmt($c['expense']) }}</td>
-                    <td class="num {{ $c['profit'] < 0 ? 'yb-r' : '' }}">{{ $fmt($c['profit']) }}</td>
+                    <td class="num {{ $c['profit'] < 0 ? 'yb-r' : '' }}">@if($c['income'] != 0 || $c['expense'] != 0)<span class="yb-cell-link" wire:click.stop="openWallet({{ $c['m'] }})" title="Qaysi hamyonda qancha — Naqd, Karta, Bank">{{ $fmt($c['profit']) }}</span>@else{{ $fmt($c['profit']) }}@endif</td>
                     <td class="num">{{ $c['income'] > 0 ? round($c['profit'] / $c['income'] * 100) . '%' : '—' }}</td>
                 </tr>
             @endforeach
@@ -696,6 +696,54 @@
         </table>
         </div>
     </div>
+
+    @if($wallet)
+        @teleport('body')
+        <div class="yb yb-ov" wire:click.self="closeWallet">
+            <div class="yb-modal" style="max-width:760px">
+                <div class="yb-modal-h" style="background:#dbeafe">{{ $wallet['title'] }} — sof foyda hamyonlar bo'yicha <button type="button" wire:click="closeWallet">×</button></div>
+                <div class="yb-modal-b" style="max-height:72vh;overflow:auto">
+                    <div class="yb-sub" style="font-size:11.5px;margin-bottom:10px">Har bir hamyon: shu oy loyihalaridan tushgan kirim − shu oyga yozilgan chiqim ± hamyonlar orasidagi o'tkazmalar. Qoldiqlar yig'indisi = oyning sof foydasi.</div>
+                    @php
+                        $wIc = ['naqd' => '💵', 'karta' => '💳', 'bank' => '🏦'];
+                        $wGroups = ['company' => 'Kompaniya hamyonlari', 'personal' => 'Shaxsiy hisoblar (ulush)', 'person' => 'Xodim kartalari', 'none' => 'Boshqa'];
+                        $wPrev = null;
+                    @endphp
+                    <div class="yb-tbl-wrap">
+                    <table class="yb-tbl">
+                        <thead><tr><th>Hamyon</th><th class="num">Kirim</th><th class="num">Chiqim</th><th class="num" title="Hamyonlar orasidagi o'tkazmalar (+ kelgan, − ketgan)">O'tkazma</th><th class="num">Qoldiq</th></tr></thead>
+                        <tbody>
+                        @forelse($wallet['rows'] as $w)
+                            @if($w['group'] !== $wPrev && count(array_unique(array_column($wallet['rows'], 'group'))) > 1)
+                                @php $wPrev = $w['group']; @endphp
+                                <tr class="yb-grp"><td colspan="5">{{ $wGroups[$w['group']] }}</td></tr>
+                            @endif
+                            <tr>
+                                <td><b>{{ $wIc[$w['type']] ?? ($w['group'] === 'none' ? '❔' : '👛') }} {{ $w['name'] }}</b>
+                                    @if($w['group'] === 'none')<span class="yb-sub">eski yozuvlar — qaysi hamyondan ekani belgilanmagan</span>@endif</td>
+                                <td class="num yb-g">{{ $w['in'] ? $fmt($w['in']) : '—' }}</td>
+                                <td class="num yb-r">{{ $w['out'] ? $fmt($w['out']) : '—' }}</td>
+                                <td class="num" style="color:var(--yb-mu)">{{ $w['tr'] ? ($w['tr'] > 0 ? '+' : '−') . $fmt(abs($w['tr'])) : '—' }}</td>
+                                <td class="num {{ $w['net'] < 0 ? 'yb-r' : '' }}" style="font-size:14px">{{ $w['net'] < 0 ? '−' : '' }}{{ $fmt(abs($w['net'])) }}</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="5" class="yb-empty">Bu oyda harakat yo'q</td></tr>
+                        @endforelse
+                        </tbody>
+                        <tfoot><tr style="font-weight:800;background:var(--yb-soft)">
+                            <td>Jami (sof foyda)</td>
+                            <td class="num yb-g">{{ $fmt(array_sum(array_column($wallet['rows'], 'in'))) }}</td>
+                            <td class="num yb-r">{{ $fmt(array_sum(array_column($wallet['rows'], 'out'))) }}</td>
+                            <td class="num" style="color:var(--yb-mu)">{{ $fmt(array_sum(array_column($wallet['rows'], 'tr'))) }}</td>
+                            <td class="num" style="font-size:15px">{{ $fmt(array_sum(array_column($wallet['rows'], 'net'))) }}</td>
+                        </tr></tfoot>
+                    </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endteleport
+    @endif
 
     @if($repDetail)
         @php $sal = $repKind !== 'xarajat'; $mam = $repKind === 'mamuriy'; $sc = $mam ? '#7c3aed' : '#b45309'; @endphp

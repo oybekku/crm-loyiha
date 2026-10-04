@@ -124,6 +124,19 @@ class YangiBux extends Page
         $this->repKind  = $kind;
     }
 
+    // Hisobotlar: "Sof foyda" bosilganda — o'sha oy puli qaysi hamyonda qancha
+    public ?int $walletMonth = null;
+
+    public function openWallet(int $month): void
+    {
+        if ($month >= 1 && $month <= 12) $this->walletMonth = $month;
+    }
+
+    public function closeWallet(): void
+    {
+        $this->walletMonth = null;
+    }
+
     public function closeRepDetail(): void
     {
         $this->repMonth = null;
@@ -367,6 +380,43 @@ class YangiBux extends Page
             $res[$id] = (float) ($in[$id] ?? 0) + (float) ($trIn[$id] ?? 0) - (float) ($out[$id] ?? 0) - (float) ($trOut[$id] ?? 0);
         }
         return $res;
+    }
+
+    /**
+     * Oy puli hamyonlar bo'yicha: har bir hisobga shu oy loyihalaridan tushgan
+     * kirim − shu oyga yozilgan chiqim ± shu oy o'tkazmalari (monthAccountBalances
+     * bilan bir xil qoida). Hisobi ko'rsatilmagan eski yozuvlar alohida qatorda.
+     * Barcha qatorlar qoldig'i yig'indisi = shu oyning sof foydasi.
+     */
+    private function monthWalletBreakdown(int $year, int $month): array
+    {
+        $ym = sprintf('%04d-%02d', $year, $month);
+        $key = fn ($v) => $v === null ? 'none' : (int) $v;
+        $in  = $this->paymentsOfMonth($year, $month)->selectRaw('account_id, SUM(amount) s')->groupBy('account_id')->get()->mapWithKeys(fn ($r) => [$key($r->account_id) => (float) $r->s]);
+        $out = Expense::where($this->expenseScope($year, $month))->selectRaw('account_id, SUM(amount) s')->groupBy('account_id')->get()->mapWithKeys(fn ($r) => [$key($r->account_id) => (float) $r->s]);
+        $trScope = fn ($q) => $q->where('month', $ym)
+            ->orWhere(fn ($q2) => $q2->whereNull('month')->whereYear('transfer_date', $year)->whereMonth('transfer_date', $month));
+        $trIn  = \App\Models\AccountTransfer::where($trScope)->selectRaw('to_account_id a, SUM(amount) s')->groupBy('to_account_id')->pluck('s', 'a');
+        $trOut = \App\Models\AccountTransfer::where($trScope)->selectRaw('from_account_id a, SUM(amount) s')->groupBy('from_account_id')->pluck('s', 'a');
+
+        $accounts = FinancialAccount::with('owner:id,name')->get()->keyBy('id');
+        $rows = [];
+        foreach ($in->keys()->merge($out->keys())->merge($trIn->keys())->merge($trOut->keys())->unique() as $id) {
+            $a = $id === 'none' ? null : $accounts->get($id);
+            $r = [
+                'name'  => $id === 'none' ? "Hisobi ko'rsatilmagan" : ($a?->name ?: (FinancialAccount::typeOptions()[$a?->type] ?? '#' . $id)),
+                'type'  => $a?->type,
+                'group' => $id === 'none' ? 'none' : ($a?->user_id ? 'person' : ($a?->is_personal ? 'personal' : 'company')),
+                'in'    => (float) ($in[$id] ?? 0),
+                'out'   => (float) ($out[$id] ?? 0),
+                'tr'    => (float) ($trIn[$id] ?? 0) - (float) ($trOut[$id] ?? 0),
+            ];
+            $r['net'] = $r['in'] - $r['out'] + $r['tr'];
+            if (abs($r['in']) + abs($r['out']) + abs($r['tr']) > 0) $rows[] = $r;
+        }
+        $order = ['company' => 0, 'personal' => 1, 'person' => 2, 'none' => 3];
+        usort($rows, fn ($x, $y) => [$order[$x['group']], -$x['net']] <=> [$order[$y['group']], -$y['net']]);
+        return $rows;
     }
 
     /** Tanlangan oy uchun doimiy to'lovlar holati */
@@ -1292,6 +1342,11 @@ class YangiBux extends Page
             'mamuriySpent' => $mamuriyByMonth[$month] ?? 0.0,
             'yearMamuriy'  => array_sum($mamuriyByMonth),
             'repDetail'    => $repDetail,
+            'wallet'       => $this->tab === 'hisobotlar' && $this->walletMonth ? [
+                'title' => $fullMonths[$this->walletMonth - 1] . ' ' . $year,
+                'rows'  => $this->monthWalletBreakdown($year, $this->walletMonth),
+                'profit'=> $incomeByMonth[$this->walletMonth] - $expenseByMonth[$this->walletMonth],
+            ] : null,
             'salaryPayments' => EmployeeSalaryPayment::with(['user', 'giver'])
                 ->where('month', sprintf('%04d-%02d', $year, $month))
                 ->orderByDesc('paid_at')->get(),
