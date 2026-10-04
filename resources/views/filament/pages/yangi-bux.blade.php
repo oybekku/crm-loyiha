@@ -719,7 +719,7 @@
                     <table class="yb-tbl">
                         <thead><tr><th></th><th class="num">To'liq<span class="yb-sub">mijozlar to'liq to'lasa</span></th><th class="num">Hozirgi<span class="yb-sub">tushgan pul bo'yicha</span></th></tr></thead>
                         <tbody>
-                            <tr><td><b>Loyihalar</b> <span class="yb-sub">{{ $P['projCount'] }} ta loyiha shu oyda ochilgan</span></td>
+                            <tr><td><b>Loyihalar</b> <span class="yb-sub">{{ $P['projCount'] }} ta loyiha shu oyda ochilgan @if($P['projOther']) · + {{ $P['projOther'] }} ta to'xtatilgan/bekor — faqat to'lagani ({{ $fmt($P['projOtherSum']) }}) @endif</span></td>
                                 <td class="num yb-g">{{ $fmt($P['projSum']) }}<span class="yb-sub">loyihalar summasi</span></td>
                                 <td class="num yb-g">{{ $fmt($P['income']) }}<span class="yb-sub">tushgan pul</span></td></tr>
                             <tr><td>− Xarajat</td><td class="num yb-r">{{ $fmt($P['other']) }}</td><td class="num yb-r">{{ $fmt($P['other']) }}</td></tr>

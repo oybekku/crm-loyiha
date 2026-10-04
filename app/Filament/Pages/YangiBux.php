@@ -1267,12 +1267,19 @@ class YangiBux extends Page
             //   to'liq  = loyihalar summasi − xarajat − ishbay oylik (hisoblangan)
             //   hozirgi = tushgan pul      − xarajat − ishbay oylik (mijoz to'lagani bo'yicha
             //             — xodimga berilgan-berilmaganidan qat'i nazar, chunki u ham foyda emas)
-            $proj = Project::excludePaused()->where('status', '!=', 'bekor_qilingan')->whereYear('created_at', $year)
-                ->selectRaw('MONTH(created_at) m, COUNT(*) c, SUM(total_price) s')->groupBy('m')->get()->keyBy('m');
+            // To'xtatilgan / bekor qilingan loyihalar endi to'lamaydi — "to'liq" ga faqat
+            // ular to'lagan qismi kiradi (tushgan puli baribir tushumda bor).
+            $active = "timer_paused_at IS NULL AND status <> 'bekor_qilingan'";
+            $proj = Project::whereYear('created_at', $year)
+                ->selectRaw("MONTH(created_at) m, SUM(CASE WHEN $active THEN 1 ELSE 0 END) c, SUM(CASE WHEN $active THEN 0 ELSE 1 END) oc,
+                             SUM(CASE WHEN $active THEN total_price ELSE paid_amount END) s, SUM(CASE WHEN $active THEN 0 ELSE paid_amount END) os")
+                ->groupBy('m')->get()->keyBy('m');
             foreach ($chart as &$cr) {
                 $m = $cr['m'];
                 $cr['projCount']  = (int) ($proj[$m]->c ?? 0);
                 $cr['projSum']    = (float) ($proj[$m]->s ?? 0);
+                $cr['projOther']  = (int) ($proj[$m]->oc ?? 0);       // to'xtatilgan/bekor (faqat to'lagani)
+                $cr['projOtherSum'] = (float) ($proj[$m]->os ?? 0);
                 $cr['ishbayDue']  = (float) ($salaryDue[$m] ?? 0);
                 $cr['ishbayEarned'] = $salaryDue[$m] === null ? $cr['ishbay']
                     : (float) collect($grid)->sum(fn ($r) => $dueParts($r, $m)['ishbay_earned']);
