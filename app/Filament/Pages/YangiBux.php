@@ -126,6 +126,18 @@ class YangiBux extends Page
 
     // Hisobotlar: "Sof foyda" bosilganda — o'sha oy puli qaysi hamyonda qancha
     public ?int $walletMonth = null;
+    // "Sof foyda" bosilganda — hisob-kitob oynasi
+    public ?int $profitMonth = null;
+
+    public function openProfit(int $month): void
+    {
+        if ($month >= 1 && $month <= 12) $this->profitMonth = $month;
+    }
+
+    public function closeProfit(): void
+    {
+        $this->profitMonth = null;
+    }
 
     public function openWallet(int $month): void
     {
@@ -1248,6 +1260,26 @@ class YangiBux extends Page
                 $salaryDue[$m]  = (float) collect($grid)->sum(fn ($r) => $dueParts($r, $m)['ishbay']);
                 $mamuriyDue[$m] = (float) collect($grid)->sum(fn ($r) => $dueParts($r, $m)['mamuriy']);
             }
+
+            // Sof foyda — shu oyda ochilgan loyihalar bo'yicha (Dashboard'dagi kabi,
+            // to'xtatilgan va bekor qilinganlarsiz). Faqat ISHBAY oylik ayriladi,
+            // ma'muriy oylik kirmaydi.
+            //   to'liq  = loyihalar summasi − xarajat − ishbay oylik (hisoblangan)
+            //   hozirgi = tushgan pul      − xarajat − ishbay oylik (mijoz to'lagani bo'yicha
+            //             — xodimga berilgan-berilmaganidan qat'i nazar, chunki u ham foyda emas)
+            $proj = Project::excludePaused()->where('status', '!=', 'bekor_qilingan')->whereYear('created_at', $year)
+                ->selectRaw('MONTH(created_at) m, COUNT(*) c, SUM(total_price) s')->groupBy('m')->get()->keyBy('m');
+            foreach ($chart as &$cr) {
+                $m = $cr['m'];
+                $cr['projCount']  = (int) ($proj[$m]->c ?? 0);
+                $cr['projSum']    = (float) ($proj[$m]->s ?? 0);
+                $cr['ishbayDue']  = (float) ($salaryDue[$m] ?? 0);
+                $cr['ishbayEarned'] = $salaryDue[$m] === null ? $cr['ishbay']
+                    : (float) collect($grid)->sum(fn ($r) => $dueParts($r, $m)['ishbay_earned']);
+                $cr['fullProfit'] = $cr['projSum'] - $cr['other'] - $cr['ishbayDue'];
+                $cr['curProfit']  = $cr['income'] - $cr['other'] - $cr['ishbayEarned'];
+            }
+            unset($cr);
         }
 
         // Katak bosilganda — o'sha oy xarajatlari / oyliklari ro'yxati
@@ -1342,6 +1374,7 @@ class YangiBux extends Page
             'mamuriySpent' => $mamuriyByMonth[$month] ?? 0.0,
             'yearMamuriy'  => array_sum($mamuriyByMonth),
             'repDetail'    => $repDetail,
+            'profitInfo'   => $this->tab === 'hisobotlar' && $this->profitMonth ? ($chart[$this->profitMonth - 1] + ['title' => $fullMonths[$this->profitMonth - 1] . ' ' . $year]) : null,
             'wallet'       => $this->tab === 'hisobotlar' && $this->walletMonth ? [
                 'title' => $fullMonths[$this->walletMonth - 1] . ' ' . $year,
                 'rows'  => $this->monthWalletBreakdown($year, $this->walletMonth),

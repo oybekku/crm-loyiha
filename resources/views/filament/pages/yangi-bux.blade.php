@@ -652,7 +652,7 @@
         <div class="yb-h"><span>{{ $this->ybYear }}-yil hisoboti <span class="yb-sub">Tushum — to'lov sanasi bo'yicha; xarajat — Buxgalteriyadagi qoida bo'yicha. Xarajat yoki oylik summasini bosing — ro'yxati ochiladi.</span></span></div>
         <div class="yb-tbl-wrap">
         <table class="yb-tbl">
-            <thead><tr><th>Oy</th><th class="num">Tushum</th><th class="num">Xarajat</th><th class="num" title="Toposyomka, ariza, eskiz ishlaridan. Kerak — shu oy loyihalaridagi barcha ishlar ulushi (Oylik hisobotdagi 'Hisoblangan'). To'langan — haqiqatda berilgan.">Ishbay oylik: kerak / to'langan</th><th class="num" title="Direktor, admin, buxgalter va h.k. — ishga bog'liq emas, firma daromadidan">Ma'muriy oylik</th><th class="num">Jami chiqim</th><th class="num">Sof foyda</th><th class="num">Rentabellik</th></tr></thead>
+            <thead><tr><th>Oy</th><th class="num">Tushum</th><th class="num">Xarajat</th><th class="num" title="Toposyomka, ariza, eskiz ishlaridan. Kerak — shu oy loyihalaridagi barcha ishlar ulushi (Oylik hisobotdagi 'Hisoblangan'). To'langan — haqiqatda berilgan.">Ishbay oylik: kerak / to'langan</th><th class="num" title="Direktor, admin, buxgalter va h.k. — ishga bog'liq emas, firma daromadidan">Ma'muriy oylik</th><th class="num">Jami chiqim</th><th class="num" title="Tushum − jami chiqim: shu oy puli hamyonlarda qancha qoldi (bosing — Naqd, Karta, Bank)">Qoldiq</th><th class="num" title="To'liq — loyihalar summasi − xarajat − ishbay oylik (hisoblangan); Hozirgi — tushgan pul − xarajat − ishbay oylik (mijoz to'lagani bo'yicha, berilgan-berilmaganidan qat'i nazar). Ma'muriy oylik kirmaydi.">Sof foyda: to'liq / hozirgi</th><th class="num" title="Hozirgi sof foyda / tushum">Rentabellik</th></tr></thead>
             <tbody>
             @foreach($chart as $c)
                 @php $due = $salaryDue[$c['m']] ?? null; $mDue = $mamuriyDue[$c['m']] ?? null; @endphp
@@ -675,7 +675,16 @@
                     </td>
                     <td class="num yb-r">{{ $fmt($c['expense']) }}</td>
                     <td class="num {{ $c['profit'] < 0 ? 'yb-r' : '' }}">@if($c['income'] != 0 || $c['expense'] != 0)<span class="yb-cell-link" wire:click.stop="openWallet({{ $c['m'] }})" title="Qaysi hamyonda qancha — Naqd, Karta, Bank">{{ $fmt($c['profit']) }}</span>@else{{ $fmt($c['profit']) }}@endif</td>
-                    <td class="num">{{ $c['income'] > 0 ? round($c['profit'] / $c['income'] * 100) . '%' : '—' }}</td>
+                    <td class="num">
+                        @if($c['projSum'] != 0 || $c['income'] != 0 || $c['expense'] != 0)
+                            <span class="yb-cell-link" wire:click.stop="openProfit({{ $c['m'] }})" title="Hisob-kitobni ko'rish">
+                                <span style="color:{{ $c['fullProfit'] < 0 ? '#dc2626' : '#15803d' }}">{{ $c['fullProfit'] < 0 ? '−' : '' }}{{ $fmt(abs($c['fullProfit'])) }}</span>
+                                / <span style="color:{{ $c['curProfit'] < 0 ? '#dc2626' : 'inherit' }}">{{ $c['curProfit'] < 0 ? '−' : '' }}{{ $fmt(abs($c['curProfit'])) }}</span>
+                            </span>
+                            <span class="yb-sub">{{ $c['projCount'] }} ta loyiha</span>
+                        @else 0 @endif
+                    </td>
+                    <td class="num">{{ $c['income'] > 0 ? round($c['curProfit'] / $c['income'] * 100) . '%' : '—' }}</td>
                 </tr>
             @endforeach
                 <tr style="font-weight:800">
@@ -690,20 +699,58 @@
                     <td class="num" style="color:#7c3aed">{{ $fmt($yearMamuriy) }}</td>
                     <td class="num yb-r">{{ $fmt($yearExpense) }}</td>
                     <td class="num">{{ $fmt($yearIncome - $yearExpense) }}</td>
-                    <td class="num">{{ $yearIncome > 0 ? round(($yearIncome - $yearExpense) / $yearIncome * 100) . '%' : '—' }}</td>
+                    @php $yFull = array_sum(array_column($chart, 'fullProfit')); $yCur = array_sum(array_column($chart, 'curProfit')); @endphp
+                    <td class="num"><span style="color:{{ $yFull < 0 ? '#dc2626' : '#15803d' }}">{{ $yFull < 0 ? '−' : '' }}{{ $fmt(abs($yFull)) }}</span> / {{ $yCur < 0 ? '−' : '' }}{{ $fmt(abs($yCur)) }}<span class="yb-sub">{{ array_sum(array_column($chart, 'projCount')) }} ta loyiha</span></td>
+                    <td class="num">{{ $yearIncome > 0 ? round($yCur / $yearIncome * 100) . '%' : '—' }}</td>
                 </tr>
             </tbody>
         </table>
         </div>
     </div>
 
+    @if($profitInfo)
+        @php $P = $profitInfo; @endphp
+        @teleport('body')
+        <div class="yb yb-ov" wire:click.self="closeProfit">
+            <div class="yb-modal" style="max-width:640px">
+                <div class="yb-modal-h" style="background:#dcfce7">{{ $P['title'] }} — sof foyda <button type="button" wire:click="closeProfit">×</button></div>
+                <div class="yb-modal-b">
+                    <div class="yb-tbl-wrap">
+                    <table class="yb-tbl">
+                        <thead><tr><th></th><th class="num">To'liq<span class="yb-sub">mijozlar to'liq to'lasa</span></th><th class="num">Hozirgi<span class="yb-sub">tushgan pul bo'yicha</span></th></tr></thead>
+                        <tbody>
+                            <tr><td><b>Loyihalar</b> <span class="yb-sub">{{ $P['projCount'] }} ta loyiha shu oyda ochilgan</span></td>
+                                <td class="num yb-g">{{ $fmt($P['projSum']) }}<span class="yb-sub">loyihalar summasi</span></td>
+                                <td class="num yb-g">{{ $fmt($P['income']) }}<span class="yb-sub">tushgan pul</span></td></tr>
+                            <tr><td>− Xarajat</td><td class="num yb-r">{{ $fmt($P['other']) }}</td><td class="num yb-r">{{ $fmt($P['other']) }}</td></tr>
+                            <tr><td>− Ishbay oylik <span class="yb-sub">toposyomka, ariza, eskiz</span></td>
+                                <td class="num yb-r">{{ $fmt($P['ishbayDue']) }}<span class="yb-sub">hisoblangan</span></td>
+                                <td class="num yb-r">{{ $fmt($P['ishbayEarned']) }}<span class="yb-sub">mijoz to'lagani bo'yicha · berilgan {{ $fmt($P['ishbay']) }}</span></td></tr>
+                        </tbody>
+                        <tfoot><tr style="font-weight:800;background:var(--yb-soft)">
+                            <td style="font-size:14px">= Sof foyda</td>
+                            <td class="num" style="font-size:15px;color:{{ $P['fullProfit'] < 0 ? '#dc2626' : '#15803d' }}">{{ $P['fullProfit'] < 0 ? '−' : '' }}{{ $fmt(abs($P['fullProfit'])) }}</td>
+                            <td class="num" style="font-size:15px;color:{{ $P['curProfit'] < 0 ? '#dc2626' : 'inherit' }}">{{ $P['curProfit'] < 0 ? '−' : '' }}{{ $fmt(abs($P['curProfit'])) }}</td>
+                        </tr></tfoot>
+                    </table>
+                    </div>
+                    @if($P['projSum'] > $P['income'])
+                        <div class="yb-sub" style="font-size:12px;margin-top:10px">Farq <b>{{ $fmt($P['fullProfit'] - $P['curProfit']) }}</b> — mijozlar hali to'lamagan <b>{{ $fmt($P['projSum'] - $P['income']) }}</b> so'm (qarz) hisobidan; ular to'lagach, hozirgi foyda to'liq foydaga yetadi.</div>
+                    @endif
+                    <div class="yb-sub" style="font-size:12px;margin-top:6px">Ma'muriy oylik ({{ $fmt($P['mamuriy']) }}) bu hisobga kirmaydi — u "Qoldiq" ustunida (hamyonlardagi pul) hisobga olingan.</div>
+                </div>
+            </div>
+        </div>
+        @endteleport
+    @endif
+
     @if($wallet)
         @teleport('body')
         <div class="yb yb-ov" wire:click.self="closeWallet">
             <div class="yb-modal" style="max-width:760px">
-                <div class="yb-modal-h" style="background:#dbeafe">{{ $wallet['title'] }} — sof foyda hamyonlar bo'yicha <button type="button" wire:click="closeWallet">×</button></div>
+                <div class="yb-modal-h" style="background:#dbeafe">{{ $wallet['title'] }} — qoldiq hamyonlar bo'yicha <button type="button" wire:click="closeWallet">×</button></div>
                 <div class="yb-modal-b" style="max-height:72vh;overflow:auto">
-                    <div class="yb-sub" style="font-size:11.5px;margin-bottom:10px">Har bir hamyon: shu oy loyihalaridan tushgan kirim − shu oyga yozilgan chiqim ± hamyonlar orasidagi o'tkazmalar. Qoldiqlar yig'indisi = oyning sof foydasi.</div>
+                    <div class="yb-sub" style="font-size:11.5px;margin-bottom:10px">Har bir hamyon: shu oy loyihalaridan tushgan kirim − shu oyga yozilgan chiqim ± hamyonlar orasidagi o'tkazmalar. Qoldiqlar yig'indisi = jadvaldagi "Qoldiq" (tushum − jami chiqim).</div>
                     @php
                         $wIc = ['naqd' => '💵', 'karta' => '💳', 'bank' => '🏦'];
                         $wGroups = ['company' => 'Kompaniya hamyonlari', 'personal' => 'Shaxsiy hisoblar (ulush)', 'person' => 'Xodim kartalari', 'none' => 'Boshqa'];
@@ -731,7 +778,7 @@
                         @endforelse
                         </tbody>
                         <tfoot><tr style="font-weight:800;background:var(--yb-soft)">
-                            <td>Jami (sof foyda)</td>
+                            <td>Jami (qoldiq)</td>
                             <td class="num yb-g">{{ $fmt(array_sum(array_column($wallet['rows'], 'in'))) }}</td>
                             <td class="num yb-r">{{ $fmt(array_sum(array_column($wallet['rows'], 'out'))) }}</td>
                             <td class="num" style="color:var(--yb-mu)">{{ $fmt(array_sum(array_column($wallet['rows'], 'tr'))) }}</td>
