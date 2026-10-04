@@ -99,7 +99,8 @@ class YangiBux extends Page
     public string $payDate      = '';
     public string $payNote      = '';
     public ?int   $payEditId    = null;
-    public float  $payRemaining = 0;
+    public float  $payRemaining = 0;      // mijoz to'lagani bo'yicha hozir to'lash mumkin
+    public float  $payFullRemaining = 0;  // hisoblangan (barcha ishlar) bo'yicha qoldiq
     public ?int   $payAccountId = null;   // oylik qaysi hisobdan berildi
     public string $paySalaryType = EmployeeSalaryPayment::TYPE_ISHBAY;
 
@@ -583,6 +584,16 @@ class YangiBux extends Page
         return (float) ($row['months'][$this->ybMonth]['remaining'] ?? 0);
     }
 
+    /** Hisoblangan (oklad + shu oy barcha ishlari ulushi) bo'yicha qoldiq */
+    private function fullRemainingFor(int $userId): float
+    {
+        $u = User::find($userId);
+        if (!$u) return 0;
+        $work = EmployeePayableService::workSummaryForMonth($this->ybYear, $this->ybMonth);
+        $paid = (float) EmployeeSalaryPayment::where('user_id', $userId)->where('month', $this->ym())->sum('amount');
+        return max(0, (float) ($u->base_salary ?? 0) + (float) ($work[$userId]['total'] ?? 0) - $paid);
+    }
+
     public function openPay(?int $userId = null): void
     {
         if (!auth()->user()?->isAdmin()) return;
@@ -590,6 +601,7 @@ class YangiBux extends Page
         $this->payEditId    = null;
         $this->payUserId    = $userId;
         $this->payRemaining = $userId ? $this->remainingFor($userId) : 0;
+        $this->payFullRemaining = $userId ? $this->fullRemainingFor($userId) : 0;
         $this->payAmount    = $this->payRemaining > 0 ? number_format($this->payRemaining, 0, '.', ' ') : '';
         $this->payDate      = now()->format('Y-m-d');
         $this->payNote      = '';
@@ -604,6 +616,7 @@ class YangiBux extends Page
         if ($this->payEditId) return;
         $this->paySalaryType = EmployeeSalaryPayment::typeForUser($value ? User::find($value) : null);
         $this->payRemaining = $value ? $this->remainingFor((int) $value) : 0;
+        $this->payFullRemaining = $value ? $this->fullRemainingFor((int) $value) : 0;
         $this->payAmount    = $this->payRemaining > 0 ? number_format($this->payRemaining, 0, '.', ' ') : '';
     }
 
@@ -682,17 +695,17 @@ class YangiBux extends Page
         if (!auth()->user()?->isAdmin()) return null;
         $rows = $this->salaryRows(EmployeePayableService::yearGrid($this->ybYear));
         $data = $rows->map(fn ($r, $i) => [
-            $i + 1, $r['user']->name, $r['position'], $r['role'], $r['workTotal'], $r['base'], $r['extra'], $r['total'], $r['paid'],
+            $i + 1, $r['user']->name, $r['position'], $r['role'], $r['base'], $r['workTotal'], $r['earned'], $r['total'], $r['paid'],
             $r['remaining'], $r['statusLabel'], $r['paidAt']?->format('d.m.Y') ?? '',
         ])->all();
-        $data[] = ['', 'Jami', '', '', $rows->sum('workTotal'), $rows->sum('base'), $rows->sum('extra'), $rows->sum('total'), $rows->sum('paid'), $rows->sum('remaining'), '', ''];
+        $data[] = ['', 'Jami', '', '', $rows->sum('base'), $rows->sum('workTotal'), $rows->sum('earned'), $rows->sum('total'), $rows->sum('paid'), $rows->sum('remaining'), '', ''];
 
         $export = new class($data) implements \Maatwebsite\Excel\Concerns\FromArray, \Maatwebsite\Excel\Concerns\WithHeadings, \Maatwebsite\Excel\Concerns\ShouldAutoSize {
             public function __construct(private array $rows) {}
             public function array(): array { return $this->rows; }
             public function headings(): array
             {
-                return ['#', 'Xodim', 'Lavozim', "Bo'lim", 'Hisoblangan (jami ish)', 'Asosiy maosh', "Qo'shimcha (komissiya)", 'Jami summa', "To'langan", 'Qoldiq', "To'lov holati", "To'lov sanasi"];
+                return ['#', 'Xodim', 'Lavozim', "Bo'lim", 'Asosiy maosh', 'Hisoblangan (jami ish)', "Mijoz to'lagani bo'yicha", 'Jami summa', "To'langan", 'Qoldiq', "To'lov holati", "To'lov sanasi"];
             }
         };
 
@@ -713,7 +726,12 @@ class YangiBux extends Page
             $u    = $row['user'];
             $cell = $row['months'][$this->ybMonth] ?? ['calc' => 0, 'paid' => 0, 'remaining' => 0];
             $base = (float) ($u->base_salary ?? 0);
-            $total = (float) $cell['calc'];
+            // Jami summa = oklad + HISOBLANGAN (shu oy loyihalaridagi barcha ishlar
+            // ulushi — Oylik hisobotdagi kabi). Mijoz to'lagan qismga to'g'ri keladigani
+            // ($earned) alohida — "hozir to'lash mumkin" ma'lumoti sifatida.
+            $workTotal = (float) ($work[$u->id]['total'] ?? 0);
+            $earned    = max(0, (float) $cell['calc'] - $base);
+            $total = $base + $workTotal;
             $paid  = (float) $cell['paid'];
             $status = $total <= 0 && $paid <= 0 ? 'yoq' : ($paid >= $total ? 'tolangan' : ($paid > 0 ? 'qisman' : 'tolanmagan'));
             return [
@@ -723,7 +741,9 @@ class YangiBux extends Page
                 'role'        => EmployeeSalaryPayment::typeOptions()[EmployeeSalaryPayment::typeForUser($u)],
                 'roleKey'     => EmployeeSalaryPayment::typeForUser($u),
                 'base'        => $base,
-                'extra'       => max(0, $total - $base),
+                'extra'       => $workTotal,
+                'earned'      => $earned,
+                'payable'     => max(0, (float) $cell['calc'] - $paid),   // mijoz to'lagani bo'yicha hozir to'lash mumkin
                 'total'       => $total,
                 'paid'        => $paid,
                 'remaining'   => max(0, $total - $paid),
@@ -732,7 +752,7 @@ class YangiBux extends Page
                 'paidAt'      => $pays->get($u->id)?->max('paid_at'),
                 'payCount'    => $pays->get($u->id)?->count() ?? 0,
                 'work'        => $work[$u->id] ?? null,
-                'workTotal'   => (float) ($work[$u->id]['total'] ?? 0),
+                'workTotal'   => $workTotal,
             ];
         })->sortBy(fn ($r) => $r['roleKey'] === EmployeeSalaryPayment::TYPE_MAMURIY ? 1 : 0)->values();
     }
@@ -956,11 +976,13 @@ class YangiBux extends Page
             for ($k = 5; $k >= 0; $k--) {
                 $d = Carbon::create($year, $month, 1)->subMonths($k);
                 $grids[$d->year] ??= EmployeePayableService::yearGrid($d->year);
+                $wk = EmployeePayableService::workSummaryForMonth($d->year, $d->month);
                 $calc = $pd = 0.0;
                 foreach ($grids[$d->year] as $r) {
-                    $c = $r['months'][$d->month];
-                    $calc += $c['calc'];
-                    $pd   += min($c['paid'], $c['calc']);
+                    $c   = $r['months'][$d->month];
+                    $due = (float) ($r['user']->base_salary ?? 0) + (float) ($wk[$r['user']->id]['total'] ?? 0);
+                    $calc += $due;
+                    $pd   += min($c['paid'], $due);
                 }
                 $six[] = ['label' => $uzMonths[$d->month - 1], 'paid' => $pd, 'unpaid' => max(0, $calc - $pd), 'cur' => $k === 0];
             }
@@ -1123,15 +1145,18 @@ class YangiBux extends Page
         // Oylik "to'lanishi kerak" — shu oy loyihalaridagi bajarilgan ishlar
         // uchun mijoz TO'LIQ to'lasa beriladigan komissiya + oklad. Tizim
         // ishlamagan (birinchi loyihadan oldingi) va hali kelmagan oylar — yo'q.
-        // Ishbay "kerak" = ish komissiyasi (har kimniki) + ishbay xodimlar okladi;
+        // Ishbay "kerak" = hisoblangan (har kimning ishlari) + ishbay xodimlar okladi;
         // Ma'muriy "kerak" = ma'muriy xodimlar okladi (belgilangan bo'lsa).
         $isMam = fn ($u) => EmployeeSalaryPayment::typeForUser($u) === EmployeeSalaryPayment::TYPE_MAMURIY;
-        $dueParts = function (array $r, int $m) use ($isMam): array {
+        // Ishbay "kerak" = Oylik hisobotdagi "Hisoblangan" (tugallangan + kutayotgan ishlar)
+        $workCache = [];
+        $dueParts = function (array $r, int $m) use ($isMam, $year, &$workCache): array {
+            $workCache[$m] ??= EmployeePayableService::workSummaryForMonth($year, $m);
             $base = (float) ($r['user']->base_salary ?? 0);
             $cell = $r['months'][$m] ?? ['full' => 0, 'calc' => 0];
             $mam  = $isMam($r['user']);
             return [
-                'ishbay'        => (float) $cell['full'] - $base + ($mam ? 0 : $base),
+                'ishbay'        => (float) ($workCache[$m][$r['user']->id]['total'] ?? 0) + ($mam ? 0 : $base),
                 'ishbay_earned' => (float) $cell['calc'] - $base + ($mam ? 0 : $base),
                 'mamuriy'       => $mam ? $base : 0.0,
             ];

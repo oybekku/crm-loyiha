@@ -539,7 +539,7 @@
 
         <div class="yb-tbl-wrap" style="margin-top:14px">
         <table class="yb-tbl">
-            <thead><tr><th>#</th><th>Xodim</th><th>Lavozim</th><th>Bo'lim</th><th class="num">Asosiy maosh</th><th class="num">Qo'shimcha</th><th class="num">Jami summa</th><th class="num">To'langan</th><th>To'lov holati</th><th>To'lov sanasi</th><th style="text-align:right">Amallar</th></tr></thead>
+            <thead><tr><th>#</th><th>Xodim</th><th>Lavozim</th><th>Bo'lim</th><th class="num">Asosiy maosh</th><th class="num" title="Oylik hisobotdagi 'Hisoblangan' — shu oy loyihalaridagi barcha ishlar ulushi (tugallangan + kutayotgan)">Hisoblangan (ishlar)</th><th class="num">Jami summa</th><th class="num">To'langan</th><th>To'lov holati</th><th>To'lov sanasi</th><th style="text-align:right">Amallar</th></tr></thead>
             <tbody>
             @php $grpPrev = null; $grpNo = 0; @endphp
             @forelse($S['rows'] as $r)
@@ -553,7 +553,7 @@
                         <td colspan="6">
                             {{ $gMam ? "🏢 Ma'muriy oylik" : '🛠 Ishbay oylik' }}
                             <span>{{ $gMam ? "direktor, admin, menejer, buxgalter — firma foydasidan" : "toposyomka, ariza, eskiz loyiha — ishdan (komissiya)" }} · {{ $gRows->count() }} nafar
-                                @if($gRows->sum('workTotal') > 0) · hisoblangan {{ $fmt($gRows->sum('workTotal')) }}@endif</span>
+                                </span>
                         </td>
                         <td class="num">{{ $fmt($gRows->sum('total')) }}</td>
                         <td class="num">{{ $fmt($gRows->sum('paid')) }}</td>
@@ -564,10 +564,10 @@
                 <tr>
                     <td>{{ $grpNo }}</td>
                     <td style="white-space:nowrap"><span class="yb-av" style="display:inline-flex;width:26px;height:26px;font-size:11px;margin-right:6px;vertical-align:middle;background:{{ $avColors[$r['user']->id % 7] }}">{{ $initials($r['user']->name) }}</span><b>{{ $r['user']->name }}</b>
-                        @if($w = $r['work'])
-                            <span class="yb-work" title="Oylik hisobotdagi 'Hisoblangan' — shu oy loyihalaridagi barcha ishlar ulushi (tugallangan + kutayotgan)">
-                                {{ $w['done_projects'] + $w['pending_count'] }} ta ish · hisoblangan <b>{{ $fmt($w['total']) }}</b>
-                                @if($w['pending_count'] > 0)<br>tugallangan {{ $fmt($w['done_comm']) }} · {{ $w['pending_count'] }} ta kutayotgan @endif
+                        @if(($w = $r['work']) || $r['earned'] > 0)
+                            <span class="yb-work">
+                                @if($w){{ $w['done_projects'] + $w['pending_count'] }} ta ish @if($w['pending_count'] > 0) · tugallangan {{ $fmt($w['done_comm']) }} · {{ $w['pending_count'] }} ta kutayotgan @endif<br>@endif
+                                <span title="Mijozlar to'lagan pulga to'g'ri keladigan ulush — hozir to'lash mumkin bo'lgan qism">mijoz to'lagani bo'yicha <b>{{ $fmt($r['earned']) }}</b></span>
                             </span>
                         @endif
                     </td>
@@ -611,7 +611,7 @@
             @endif
         </table>
         </div>
-        <div class="yb-sub" style="margin-top:8px">Asosiy maosh = xodim okladi; Qo'shimcha = loyihalardan komissiya. Hisob Oylik hisobotdagi "To'lanishi kerak" bilan bir xil. Berilgan maosh Buxgalteriya xarajatlariga avtomatik yoziladi.</div>
+        <div class="yb-sub" style="margin-top:8px">Asosiy maosh = xodim okladi; Hisoblangan = shu oy loyihalaridagi barcha ishlar ulushi (Oylik hisobotdagi "Hisoblangan" bilan bir xil); Jami summa = ikkalasi. "Mijoz to'lagani bo'yicha" — mijozlar to'lagan pulga to'g'ri keladigan, hozir to'lash mumkin bo'lgan qism. Berilgan maosh Buxgalteriya xarajatlariga avtomatik yoziladi.</div>
     </div>
 
     {{-- Shu oydagi to'lovlar tarixi --}}
@@ -643,7 +643,7 @@
         <div class="yb-h"><span>{{ $this->ybYear }}-yil hisoboti <span class="yb-sub">Tushum — to'lov sanasi bo'yicha; xarajat — Buxgalteriyadagi qoida bo'yicha. Xarajat yoki oylik summasini bosing — ro'yxati ochiladi.</span></span></div>
         <div class="yb-tbl-wrap">
         <table class="yb-tbl">
-            <thead><tr><th>Oy</th><th class="num">Tushum</th><th class="num">Xarajat</th><th class="num" title="Toposyomka, ariza, eskiz ishlaridan. Kerak — bajarilgan ishlar uchun mijozlar to'liq to'lasa beriladigan oylik. To'langan — haqiqatda berilgan.">Ishbay oylik: kerak / to'langan</th><th class="num" title="Direktor, admin, buxgalter va h.k. — ishga bog'liq emas, firma daromadidan">Ma'muriy oylik</th><th class="num">Jami chiqim</th><th class="num">Sof foyda</th><th class="num">Rentabellik</th></tr></thead>
+            <thead><tr><th>Oy</th><th class="num">Tushum</th><th class="num">Xarajat</th><th class="num" title="Toposyomka, ariza, eskiz ishlaridan. Kerak — shu oy loyihalaridagi barcha ishlar ulushi (Oylik hisobotdagi 'Hisoblangan'). To'langan — haqiqatda berilgan.">Ishbay oylik: kerak / to'langan</th><th class="num" title="Direktor, admin, buxgalter va h.k. — ishga bog'liq emas, firma daromadidan">Ma'muriy oylik</th><th class="num">Jami chiqim</th><th class="num">Sof foyda</th><th class="num">Rentabellik</th></tr></thead>
             <tbody>
             @foreach($chart as $c)
                 @php $due = $salaryDue[$c['m']] ?? null; $mDue = $mamuriyDue[$c['m']] ?? null; @endphp
@@ -698,7 +698,7 @@
                     @if($sal)
                         <div class="yb-sub" style="font-size:11.5px;margin-bottom:8px">
                             @if($mam) Direktor, admin, buxgalter va h.k. — ishga bog'liq emas, firma daromadidan beriladi. "Kerak" = belgilangan oklad.
-                            @else Toposyomka, ariza, eskiz ishlaridan. "Kerak" = bajarilgan ishlar uchun mijoz to'liq to'lasa beriladigan oylik.
+                            @else Toposyomka, ariza, eskiz ishlaridan. "Kerak" = shu oy loyihalaridagi barcha ishlar ulushi (Oylik hisobotdagi "Hisoblangan"), "Mijoz to'lagani bo'yicha" = hozir to'lash mumkin bo'lgan qism.
                             @endif
                         </div>
                         @if(($repDetail['due'] ?? 0) > 0)
@@ -711,7 +711,7 @@
                         <div class="yb-tbl-wrap">
                         <table class="yb-tbl">
                             <thead><tr><th>Xodim</th>
-                                <th class="num">{{ $mam ? 'Oklad (kerak)' : "Kerak (to'liq)" }}</th>
+                                <th class="num">{{ $mam ? 'Oklad (kerak)' : 'Kerak (hisoblangan)' }}</th>
                                 @unless($mam)<th class="num" title="Mijozlar hozirgacha to'lagan qismiga to'g'ri keladigan oylik">Mijoz to'lagani bo'yicha</th>@endunless
                                 <th class="num">Berilgan</th><th class="num">Qoldiq</th></tr></thead>
                             <tbody>
@@ -990,7 +990,8 @@
                     </select>
                     @error('payUserId')<div class="yb-err">{{ $message }}</div>@enderror
                     @if(!$payEditId && $payUserId)
-                        <div class="yb-sub" style="margin-top:4px">{{ $monthLabel }} uchun qoldiq: <b class="{{ $payRemaining > 0 ? 'yb-r' : 'yb-g' }}">{{ $fmt($payRemaining) }} so'm</b></div>
+                        <div class="yb-sub" style="margin-top:4px">{{ $monthLabel }} uchun qoldiq (hisoblangan bo'yicha): <b class="{{ $payFullRemaining > 0 ? 'yb-r' : 'yb-g' }}">{{ $fmt($payFullRemaining) }} so'm</b></div>
+                        <div class="yb-sub">shundan mijoz to'lagani bo'yicha hozir to'lash mumkin: <b class="{{ $payRemaining > 0 ? 'yb-r' : 'yb-g' }}">{{ $fmt($payRemaining) }} so'm</b></div>
                     @endif
                 </div>
                 @include('filament.pages.partials.salary-type-pick', ['model' => 'paySalaryType', 'value' => $paySalaryType])
