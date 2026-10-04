@@ -410,7 +410,7 @@
                 <button type="button" class="yb-btn" style="background:#dc2626" wire:click="openChiqim">＋ Chiqim qo'shish</button>
             </div>
         </div>
-        @include('filament.pages.partials.yangi-bux-ops', ['rows' => $opsFiltered, 'actions' => true, 'justSaved' => $opJustSaved])
+        @include('filament.pages.partials.yangi-bux-ops', ['rows' => $opsFiltered, 'actions' => true, 'justSaved' => $opJustSaved, 'collapse' => 4])
     </div>
 
 @elseif($tab === 'qarzlar')

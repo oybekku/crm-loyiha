@@ -1,11 +1,18 @@
-@php $actions ??= false; $justSaved ??= null; @endphp
+@php
+    $actions ??= false; $justSaved ??= null;
+    // $collapse berilsa — dastlab shuncha qator ko'rinadi, qolgani tugma bilan ochiladi
+    $collapse ??= null;
+    $opsMore = $collapse ? max(0, count($rows) - $collapse) : 0;
+@endphp
+<div @if($opsMore) x-data="{ open: (() => { try { return localStorage.getItem('yb-ops-open') === '1' } catch (e) { return false } })(),
+                             toggle() { this.open = !this.open; try { localStorage.setItem('yb-ops-open', this.open ? '1' : '0') } catch (e) {} } }" @endif>
 <div class="yb-tbl-wrap">
 <table class="yb-tbl">
     <thead><tr><th>#</th><th>Sana</th><th>Tur</th><th>Mijoz / Loyiha</th><th>Tavsif</th><th class="num">Kirim (so'm)</th><th class="num">Chiqim (so'm)</th><th>To'lov turi</th><th>Mas'ul</th><th>Holat</th>@if($actions)<th>Hujjat</th><th style="text-align:right">Amallar</th>@endif</tr></thead>
     <tbody>
     @forelse($rows as $i => $r)
         @php $isJust = $justSaved && $justSaved === $r['type'] . ':' . $r['id']; @endphp
-        <tr @class(['yb-just' => $isJust]) wire:key="op-{{ $r['type'] }}-{{ $r['id'] }}">
+        <tr @class(['yb-just' => $isJust]) wire:key="op-{{ $r['type'] }}-{{ $r['id'] }}" @if($opsMore && $i >= $collapse && !$isJust) x-show="open" x-cloak @endif>
             <td>{{ $i + 1 }}@if($isJust)<span class="yb-just-tag">yangi</span>@endif</td>
             <td style="white-space:nowrap">{{ $r['date']?->format('d.m.Y') }}</td>
             <td>@if($r['type'] === 'kirim')<span class="yb-pill k">Kirim</span>@elseif(($r['kind'] ?? '') === 'oylik')<span class="yb-pill o">Oylik</span>@else<span class="yb-pill c">Xarajat</span>@endif</td>
@@ -42,4 +49,11 @@
     @endforelse
     </tbody>
 </table>
+</div>
+@if($opsMore)
+    <button type="button" class="yb-rec-more" @click="toggle()">
+        <span x-show="!open">▾ Yana {{ $opsMore }} tasini ko'rsatish</span>
+        <span x-show="open" x-cloak>▴ Yig'ish</span>
+    </button>
+@endif
 </div>
