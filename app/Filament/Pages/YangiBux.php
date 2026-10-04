@@ -682,17 +682,17 @@ class YangiBux extends Page
         if (!auth()->user()?->isAdmin()) return null;
         $rows = $this->salaryRows(EmployeePayableService::yearGrid($this->ybYear));
         $data = $rows->map(fn ($r, $i) => [
-            $i + 1, $r['user']->name, $r['position'], $r['role'], $r['base'], $r['extra'], $r['total'], $r['paid'],
+            $i + 1, $r['user']->name, $r['position'], $r['role'], $r['workTotal'], $r['base'], $r['extra'], $r['total'], $r['paid'],
             $r['remaining'], $r['statusLabel'], $r['paidAt']?->format('d.m.Y') ?? '',
         ])->all();
-        $data[] = ['', 'Jami', '', '', $rows->sum('base'), $rows->sum('extra'), $rows->sum('total'), $rows->sum('paid'), $rows->sum('remaining'), '', ''];
+        $data[] = ['', 'Jami', '', '', $rows->sum('workTotal'), $rows->sum('base'), $rows->sum('extra'), $rows->sum('total'), $rows->sum('paid'), $rows->sum('remaining'), '', ''];
 
         $export = new class($data) implements \Maatwebsite\Excel\Concerns\FromArray, \Maatwebsite\Excel\Concerns\WithHeadings, \Maatwebsite\Excel\Concerns\ShouldAutoSize {
             public function __construct(private array $rows) {}
             public function array(): array { return $this->rows; }
             public function headings(): array
             {
-                return ['#', 'Xodim', 'Lavozim', "Bo'lim", 'Asosiy maosh', "Qo'shimcha (komissiya)", 'Jami summa', "To'langan", 'Qoldiq', "To'lov holati", "To'lov sanasi"];
+                return ['#', 'Xodim', 'Lavozim', "Bo'lim", 'Hisoblangan (jami ish)', 'Asosiy maosh', "Qo'shimcha (komissiya)", 'Jami summa', "To'langan", 'Qoldiq', "To'lov holati", "To'lov sanasi"];
             }
         };
 
@@ -706,8 +706,10 @@ class YangiBux extends Page
     {
         $ym = $this->ym();
         $pays = EmployeeSalaryPayment::where('month', $ym)->get()->groupBy('user_id');
+        // Ish hajmi — Oylik hisobotdagi "Hisoblangan" bilan bir xil
+        $work = EmployeePayableService::workSummaryForMonth($this->ybYear, $this->ybMonth);
 
-        return collect($grid)->map(function ($row) use ($pays) {
+        return collect($grid)->map(function ($row) use ($pays, $work) {
             $u    = $row['user'];
             $cell = $row['months'][$this->ybMonth] ?? ['calc' => 0, 'paid' => 0, 'remaining' => 0];
             $base = (float) ($u->base_salary ?? 0);
@@ -729,6 +731,8 @@ class YangiBux extends Page
                 'statusLabel' => ['tolangan' => "To'langan", 'qisman' => 'Qisman', 'tolanmagan' => "To'lanmagan", 'yoq' => 'Hisoblanmagan'][$status],
                 'paidAt'      => $pays->get($u->id)?->max('paid_at'),
                 'payCount'    => $pays->get($u->id)?->count() ?? 0,
+                'work'        => $work[$u->id] ?? null,
+                'workTotal'   => (float) ($work[$u->id]['total'] ?? 0),
             ];
         })->sortBy(fn ($r) => $r['roleKey'] === EmployeeSalaryPayment::TYPE_MAMURIY ? 1 : 0)->values();
     }

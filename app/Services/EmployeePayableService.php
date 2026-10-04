@@ -264,6 +264,51 @@ class EmployeePayableService
      *
      * @return array<int, array{user: \App\Models\User, months: array<int, array{calc: float, paid: float, remaining: float, month_str: string}>, year_calc: float, year_paid: float, year_remaining: float}>
      */
+    /**
+     * Oy bo'yicha xodimlarning ish hajmi — Oylik hisobotdagi "Loyihalar (jami)"
+     * va "Hisoblangan" ustunlari bilan AYNAN BIR XIL qoida: shu oyda OCHILGAN
+     * loyihalardagi tugallangan ishlarning to'liq ulushi + hali kutayotgan
+     * (tugallanmagan, loyiha arxivda emas) ishlarning ulushi.
+     * Natija: user_id => [done_projects, done_comm, pending_count, pending_comm, total]
+     */
+    public static function workSummaryForMonth(int $year, int $month): array
+    {
+        $res = [];
+        $row = function (int $uid) use (&$res) {
+            $res[$uid] ??= ['done_projects' => [], 'done_comm' => 0.0, 'pending_count' => 0, 'pending_comm' => 0.0];
+        };
+
+        ProjectService::with(['assignedUser', 'project.services', 'project.payments'])
+            ->whereNotNull('completed_at')->whereNotNull('assigned_user_id')
+            ->whereHas('project', fn ($q) => $q->whereYear('created_at', $year)->whereMonth('created_at', $month)
+                ->where('status', '!=', 'bekor_qilingan'))
+            ->get()
+            ->each(function ($s) use (&$res, $row) {
+                if (!$s->assignedUser || !$s->project) return;
+                $row($s->assigned_user_id);
+                $res[$s->assigned_user_id]['done_projects'][$s->project_id] = true;
+                $res[$s->assigned_user_id]['done_comm'] += self::commissionForService($s, $s->project)['commission'];
+            });
+
+        ProjectService::with(['assignedUser', 'project:id,created_at,status'])
+            ->whereNull('completed_at')->whereNotNull('assigned_user_id')
+            ->whereHas('project', fn ($q) => $q->whereNotIn('status', ['tugallangan', 'taqdim_etilgan', 'bekor_qilingan'])
+                ->whereYear('created_at', $year)->whereMonth('created_at', $month))
+            ->get()
+            ->each(function ($s) use (&$res, $row) {
+                $row($s->assigned_user_id);
+                $rate = self::rateFor($s->assignedUser, $s->project?->created_at?->format('Y-m') ?? now()->format('Y-m'));
+                $res[$s->assigned_user_id]['pending_count']++;
+                $res[$s->assigned_user_id]['pending_comm'] += round((float) $s->final_price * $rate / 100, 0);
+            });
+
+        foreach ($res as &$r) {
+            $r['done_projects'] = count($r['done_projects']);
+            $r['total'] = $r['done_comm'] + $r['pending_comm'];
+        }
+        return $res;
+    }
+
     public static function yearGrid(int $year, bool $activeOnly = true): array
     {
         $monthStrings = [];

@@ -88,6 +88,8 @@
 .yb-tbl .num{text-align:right;white-space:nowrap;font-weight:700}
 .yb-cell-link{cursor:pointer;border-bottom:1px dashed currentColor;padding-bottom:1px}
 .yb-cell-link:hover{opacity:.75}
+.yb-work{display:block;margin:3px 0 0 32px;font-size:10.5px;line-height:1.35;color:var(--yb-mu);font-weight:400;white-space:normal}
+.yb-work b{color:#d97706;font-weight:700}
 .yb-tbl tr.yb-just td{background:#fef9c3 !important;animation:ybJust 1.2s ease-in-out 2}
 .dark .yb-tbl tr.yb-just td{background:rgba(234,179,8,.18) !important}
 @keyframes ybJust{50%{background:#fde047}}
@@ -550,7 +552,8 @@
                     <tr class="yb-grp {{ $gMam ? 'mam' : '' }}">
                         <td colspan="6">
                             {{ $gMam ? "🏢 Ma'muriy oylik" : '🛠 Ishbay oylik' }}
-                            <span>{{ $gMam ? "direktor, admin, menejer, buxgalter — firma foydasidan" : "toposyomka, ariza, eskiz loyiha — ishdan (komissiya)" }} · {{ $gRows->count() }} nafar</span>
+                            <span>{{ $gMam ? "direktor, admin, menejer, buxgalter — firma foydasidan" : "toposyomka, ariza, eskiz loyiha — ishdan (komissiya)" }} · {{ $gRows->count() }} nafar
+                                @if($gRows->sum('workTotal') > 0) · hisoblangan {{ $fmt($gRows->sum('workTotal')) }}@endif</span>
                         </td>
                         <td class="num">{{ $fmt($gRows->sum('total')) }}</td>
                         <td class="num">{{ $fmt($gRows->sum('paid')) }}</td>
@@ -560,7 +563,14 @@
                 @php $grpNo++; $isMam = $r['roleKey'] === 'mamuriy'; @endphp
                 <tr>
                     <td>{{ $grpNo }}</td>
-                    <td style="white-space:nowrap"><span class="yb-av" style="display:inline-flex;width:26px;height:26px;font-size:11px;margin-right:6px;vertical-align:middle;background:{{ $avColors[$r['user']->id % 7] }}">{{ $initials($r['user']->name) }}</span><b>{{ $r['user']->name }}</b></td>
+                    <td style="white-space:nowrap"><span class="yb-av" style="display:inline-flex;width:26px;height:26px;font-size:11px;margin-right:6px;vertical-align:middle;background:{{ $avColors[$r['user']->id % 7] }}">{{ $initials($r['user']->name) }}</span><b>{{ $r['user']->name }}</b>
+                        @if($w = $r['work'])
+                            <span class="yb-work" title="Oylik hisobotdagi 'Hisoblangan' — shu oy loyihalaridagi barcha ishlar ulushi (tugallangan + kutayotgan)">
+                                {{ $w['done_projects'] + $w['pending_count'] }} ta ish · hisoblangan <b>{{ $fmt($w['total']) }}</b>
+                                @if($w['pending_count'] > 0)<br>tugallangan {{ $fmt($w['done_comm']) }} · {{ $w['pending_count'] }} ta kutayotgan @endif
+                            </span>
+                        @endif
+                    </td>
                     <td>{{ $r['position'] }}</td>
                     <td><span class="yb-stype {{ $isMam ? 'mam' : '' }}" style="margin-left:0" wire:click="toggleUserSalaryType({{ $r['user']->id }})"
                               wire:confirm="{{ $r['user']->name }} — {{ $isMam ? 'ISHBAY' : "MA'MURIY" }} guruhiga o'tkazilsinmi? Turi tanlanmagan eski to'lovlari ham shu turga o'tadi."
