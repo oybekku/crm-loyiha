@@ -1272,7 +1272,10 @@ class YangiBux extends Page
             $active = "timer_paused_at IS NULL AND status <> 'bekor_qilingan'";
             $proj = Project::whereYear('created_at', $year)
                 ->selectRaw("MONTH(created_at) m, SUM(CASE WHEN $active THEN 1 ELSE 0 END) c, SUM(CASE WHEN $active THEN 0 ELSE 1 END) oc,
-                             SUM(CASE WHEN $active THEN total_price ELSE paid_amount END) s, SUM(CASE WHEN $active THEN 0 ELSE paid_amount END) os")
+                             SUM(CASE WHEN $active THEN total_price ELSE paid_amount END) s, SUM(CASE WHEN $active THEN 0 ELSE paid_amount END) os,
+                             SUM(CASE WHEN timer_paused_at IS NULL THEN 1 ELSE 0 END) ac, SUM(CASE WHEN timer_paused_at IS NULL THEN total_price ELSE 0 END) asum,
+                             SUM(CASE WHEN timer_paused_at IS NULL AND status = 'bekor_qilingan' THEN total_price ELSE 0 END) csum,
+                             SUM(CASE WHEN $active THEN GREATEST(total_price - paid_amount, 0) ELSE 0 END) debt")
                 ->groupBy('m')->get()->keyBy('m');
             foreach ($chart as &$cr) {
                 $m = $cr['m'];
@@ -1280,6 +1283,11 @@ class YangiBux extends Page
                 $cr['projSum']    = (float) ($proj[$m]->s ?? 0);
                 $cr['projOther']  = (int) ($proj[$m]->oc ?? 0);       // to'xtatilgan/bekor (faqat to'lagani)
                 $cr['projOtherSum'] = (float) ($proj[$m]->os ?? 0);
+                // "Loyihalar summasi" ustuni — Dashboard'dagi kabi (to'xtatilganlarsiz, bekor qilinganlar bilan)
+                $cr['allCount']   = (int) ($proj[$m]->ac ?? 0);
+                $cr['allSum']     = (float) ($proj[$m]->asum ?? 0);
+                $cr['cancelSum']  = (float) ($proj[$m]->csum ?? 0);
+                $cr['debtSum']    = (float) ($proj[$m]->debt ?? 0);
                 $cr['ishbayDue']  = (float) ($salaryDue[$m] ?? 0);
                 $cr['ishbayEarned'] = $salaryDue[$m] === null ? $cr['ishbay']
                     : (float) collect($grid)->sum(fn ($r) => $dueParts($r, $m)['ishbay_earned']);

@@ -652,12 +652,16 @@
         <div class="yb-h"><span>{{ $this->ybYear }}-yil hisoboti <span class="yb-sub">Tushum — to'lov sanasi bo'yicha; xarajat — Buxgalteriyadagi qoida bo'yicha. Xarajat yoki oylik summasini bosing — ro'yxati ochiladi.</span></span></div>
         <div class="yb-tbl-wrap">
         <table class="yb-tbl">
-            <thead><tr><th>Oy</th><th class="num">Tushum</th><th class="num">Xarajat</th><th class="num" title="Toposyomka, ariza, eskiz ishlaridan. Kerak — shu oy loyihalaridagi barcha ishlar ulushi (Oylik hisobotdagi 'Hisoblangan'). To'langan — haqiqatda berilgan.">Ishbay oylik: kerak / to'langan</th><th class="num" title="Direktor, admin, buxgalter va h.k. — ishga bog'liq emas, firma daromadidan">Ma'muriy oylik</th><th class="num">Jami chiqim</th><th class="num" title="Tushum − jami chiqim: shu oy puli hamyonlarda qancha qoldi (bosing — Naqd, Karta, Bank)">Qoldiq</th><th class="num" title="To'liq — loyihalar summasi − xarajat − ishbay oylik (hisoblangan); Hozirgi — tushgan pul − xarajat − ishbay oylik (mijoz to'lagani bo'yicha, berilgan-berilmaganidan qat'i nazar). Ma'muriy oylik kirmaydi.">Sof foyda: to'liq / hozirgi</th><th class="num" title="Hozirgi sof foyda / tushum">Rentabellik</th></tr></thead>
+            <thead><tr><th>Oy</th><th class="num" style="color:#0f766e" title="Shu oyda ochilgan loyihalarning shartnoma summasi (Dashboard'dagi kabi). Ostida: bekor qilingan va mijozlar qarzi">Loyihalar summasi</th><th class="num" title="Shu oy loyihalari uchun mijozlardan haqiqatda kelgan pul">Tushum (kelgan pul)</th><th class="num">Xarajat</th><th class="num" title="Toposyomka, ariza, eskiz ishlaridan. Kerak — shu oy loyihalaridagi barcha ishlar ulushi (Oylik hisobotdagi 'Hisoblangan'). To'langan — haqiqatda berilgan.">Ishbay oylik: kerak / to'langan</th><th class="num" title="Direktor, admin, buxgalter va h.k. — ishga bog'liq emas, firma daromadidan">Ma'muriy oylik</th><th class="num">Jami chiqim</th><th class="num" title="Tushum − jami chiqim: shu oy puli hamyonlarda qancha qoldi (bosing — Naqd, Karta, Bank)">Qoldiq</th><th class="num" title="To'liq — loyihalar summasi − xarajat − ishbay oylik (hisoblangan); Hozirgi — tushgan pul − xarajat − ishbay oylik (mijoz to'lagani bo'yicha, berilgan-berilmaganidan qat'i nazar). Ma'muriy oylik kirmaydi.">Sof foyda: to'liq / hozirgi</th><th class="num" title="Hozirgi sof foyda / tushum">Rentabellik</th></tr></thead>
             <tbody>
             @foreach($chart as $c)
                 @php $due = $salaryDue[$c['m']] ?? null; $mDue = $mamuriyDue[$c['m']] ?? null; @endphp
                 <tr wire:click="ybSetMonth({{ $c['m'] }})" style="cursor:pointer;{{ $c['m'] === $this->ybMonth ? 'font-weight:700' : '' }}">
                     <td>{{ $c['label'] }}</td>
+                    <td class="num" style="color:#0f766e">
+                        {{ $fmt($c['allSum']) }}
+                        @if($c['allCount'])<span class="yb-sub">{{ $c['allCount'] }} ta @if($c['cancelSum'] > 0) · bekor {{ $fmt($c['cancelSum']) }} @endif @if($c['debtSum'] > 0) · qarz {{ $fmt($c['debtSum']) }} @endif</span>@endif
+                    </td>
                     <td class="num yb-g">{{ $fmt($c['income']) }}</td>
                     <td class="num yb-r"><span class="yb-cell-link" wire:click.stop="openRepDetail({{ $c['m'] }}, 'xarajat')" title="Xarajatlar ro'yxati">{{ $fmt($c['other']) }}</span></td>
                     <td class="num" style="color:#b45309">
@@ -689,6 +693,7 @@
             @endforeach
                 <tr style="font-weight:800">
                     <td>Jami</td>
+                    <td class="num" style="color:#0f766e">{{ $fmt(array_sum(array_column($chart, 'allSum'))) }}<span class="yb-sub">{{ array_sum(array_column($chart, 'allCount')) }} ta · qarz {{ $fmt(array_sum(array_column($chart, 'debtSum'))) }}</span></td>
                     <td class="num yb-g">{{ $fmt($yearIncome) }}</td>
                     <td class="num yb-r">{{ $fmt($yearExpense - $yearSalary) }}</td>
                     @php $yearDue = array_sum(array_filter($salaryDue, fn ($v) => $v !== null)); $yearIsh = $yearSalary - $yearMamuriy; @endphp
