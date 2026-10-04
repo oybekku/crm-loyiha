@@ -272,6 +272,7 @@ class EmployeePayableService
         }
 
         $calcByUserMonth = [];
+        $fullByUserMonth = [];
         for ($m = 1; $m <= 12; $m++) {
             $completedServices = ProjectService::with(['assignedUser', 'project'])
                 ->whereNotNull('completed_at')
@@ -288,6 +289,8 @@ class EmployeePayableService
 
                 $calc = self::commissionForService($service, $project);
                 $calcByUserMonth[$user->id][$m] = ($calcByUserMonth[$user->id][$m] ?? 0) + $calc['comm_paid'];
+                // Mijoz to'liq to'lasa beriladigan komissiya (faqat ko'rsatish uchun)
+                $fullByUserMonth[$user->id][$m] = ($fullByUserMonth[$user->id][$m] ?? 0) + $calc['commission'];
             }
         }
 
@@ -324,6 +327,7 @@ class EmployeePayableService
                 $remaining = max(0, $calc - $paid);
                 $months[$m] = [
                     'calc'      => $calc,
+                    'full'      => ($fullByUserMonth[$uid][$m] ?? 0.0) + $baseSalary,
                     'paid'      => $paid,
                     'remaining' => $remaining,
                     'month_str' => $monthStrings[$m],

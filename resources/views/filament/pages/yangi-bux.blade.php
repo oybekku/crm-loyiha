@@ -86,6 +86,8 @@
 .yb-tbl td{padding:10px 8px;border-bottom:1px solid var(--yb-bd);vertical-align:middle;color:var(--yb-tx)}
 .yb-tbl tr:hover td{background:var(--yb-soft)}
 .yb-tbl .num{text-align:right;white-space:nowrap;font-weight:700}
+.yb-cell-link{cursor:pointer;border-bottom:1px dashed currentColor;padding-bottom:1px}
+.yb-cell-link:hover{opacity:.75}
 .yb-sub{display:block;font-size:10.5px;color:var(--yb-mu);font-weight:400}
 .yb-pill{display:inline-block;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700}
 .yb-pill.k{background:#dcfce7;color:#15803d}.yb-pill.c{background:#fee2e2;color:#b91c1c}
@@ -591,17 +593,25 @@
 
 @elseif($tab === 'hisobotlar')
     <div class="yb-card">
-        <div class="yb-h"><span>{{ $this->ybYear }}-yil hisoboti <span class="yb-sub">Tushum — to'lov sanasi bo'yicha; xarajat — Buxgalteriyadagi qoida bo'yicha</span></span></div>
+        <div class="yb-h"><span>{{ $this->ybYear }}-yil hisoboti <span class="yb-sub">Tushum — to'lov sanasi bo'yicha; xarajat — Buxgalteriyadagi qoida bo'yicha. Xarajat yoki oylik summasini bosing — ro'yxati ochiladi.</span></span></div>
         <div class="yb-tbl-wrap">
         <table class="yb-tbl">
-            <thead><tr><th>Oy</th><th class="num">Tushum</th><th class="num">Xarajat</th><th class="num">Oylik / avans</th><th class="num">Jami chiqim</th><th class="num">Sof foyda</th><th class="num">Rentabellik</th></tr></thead>
+            <thead><tr><th>Oy</th><th class="num">Tushum</th><th class="num">Xarajat</th><th class="num" title="Kerak — bajarilgan ishlar uchun mijozlar to'liq to'lasa beriladigan oylik (komissiya + oklad). To'langan — xodimlarga haqiqatda berilgan.">Oylik: kerak / to'langan</th><th class="num">Jami chiqim</th><th class="num">Sof foyda</th><th class="num">Rentabellik</th></tr></thead>
             <tbody>
             @foreach($chart as $c)
+                @php $due = $salaryDue[$c['m']] ?? null; @endphp
                 <tr wire:click="ybSetMonth({{ $c['m'] }})" style="cursor:pointer;{{ $c['m'] === $this->ybMonth ? 'font-weight:700' : '' }}">
                     <td>{{ $c['label'] }}</td>
                     <td class="num yb-g">{{ $fmt($c['income']) }}</td>
-                    <td class="num yb-r">{{ $fmt($c['other']) }}</td>
-                    <td class="num" style="color:#b45309">{{ $fmt($c['salary']) }}</td>
+                    <td class="num yb-r"><span class="yb-cell-link" wire:click.stop="openRepDetail({{ $c['m'] }}, 'xarajat')" title="Xarajatlar ro'yxati">{{ $fmt($c['other']) }}</span></td>
+                    <td class="num" style="color:#b45309">
+                        <span class="yb-cell-link" wire:click.stop="openRepDetail({{ $c['m'] }}, 'oylik')" title="Oylik / avans ro'yxati">
+                            @if($due !== null && $due > 0)<span style="color:var(--yb-mu);font-weight:600">{{ $fmt($due) }}</span> / @endif{{ $fmt($c['salary']) }}
+                        </span>
+                        @if($due !== null && $due > $c['salary'])
+                            <span class="yb-sub">qoldiq {{ $fmt($due - $c['salary']) }}</span>
+                        @endif
+                    </td>
                     <td class="num yb-r">{{ $fmt($c['expense']) }}</td>
                     <td class="num {{ $c['profit'] < 0 ? 'yb-r' : '' }}">{{ $fmt($c['profit']) }}</td>
                     <td class="num">{{ $c['income'] > 0 ? round($c['profit'] / $c['income'] * 100) . '%' : '—' }}</td>
@@ -611,7 +621,11 @@
                     <td>Jami</td>
                     <td class="num yb-g">{{ $fmt($yearIncome) }}</td>
                     <td class="num yb-r">{{ $fmt($yearExpense - $yearSalary) }}</td>
-                    <td class="num" style="color:#b45309">{{ $fmt($yearSalary) }}</td>
+                    @php $yearDue = array_sum(array_filter($salaryDue, fn ($v) => $v !== null)); @endphp
+                    <td class="num" style="color:#b45309">
+                        @if($yearDue > 0)<span style="color:var(--yb-mu);font-weight:600">{{ $fmt($yearDue) }}</span> / @endif{{ $fmt($yearSalary) }}
+                        @if($yearDue > $yearSalary)<span class="yb-sub">qoldiq {{ $fmt($yearDue - $yearSalary) }}</span>@endif
+                    </td>
                     <td class="num yb-r">{{ $fmt($yearExpense) }}</td>
                     <td class="num">{{ $fmt($yearIncome - $yearExpense) }}</td>
                     <td class="num">{{ $yearIncome > 0 ? round(($yearIncome - $yearExpense) / $yearIncome * 100) . '%' : '—' }}</td>
@@ -620,6 +634,85 @@
         </table>
         </div>
     </div>
+
+    @if($repDetail)
+        @teleport('body')
+        <div class="yb yb-ov" wire:click.self="closeRepDetail">
+            <div class="yb-modal" style="max-width:820px">
+                <div class="yb-modal-h" style="background:{{ $repKind === 'oylik' ? '#fef3c7' : '#fee2e2' }}">{{ $repDetail['title'] }} <button type="button" wire:click="closeRepDetail">×</button></div>
+                <div class="yb-modal-b" style="max-height:72vh;overflow:auto">
+                    @if($repKind === 'oylik')
+                        @if(($repDetail['due'] ?? 0) > 0)
+                            <div style="font-size:12.5px;margin-bottom:10px">
+                                To'lanishi kerak: <b>{{ $fmt($repDetail['due']) }}</b> ·
+                                to'langan: <b style="color:#b45309">{{ $fmt($repDetail['total']) }}</b> ·
+                                qoldiq: <b class="yb-r">{{ $fmt(max(0, $repDetail['due'] - $repDetail['total'])) }}</b>
+                            </div>
+                        @endif
+                        <div class="yb-tbl-wrap">
+                        <table class="yb-tbl">
+                            <thead><tr><th>Xodim</th><th class="num" title="Bajarilgan ishlar uchun mijoz to'liq to'lasa (komissiya + oklad)">Kerak (to'liq)</th><th class="num" title="Mijozlar hozirgacha to'lagan qismiga to'g'ri keladigan oylik">Mijoz to'lagani bo'yicha</th><th class="num">Berilgan</th><th class="num">Qoldiq</th></tr></thead>
+                            <tbody>
+                            @forelse($repDetail['staff'] as $s)
+                                <tr>
+                                    <td>{{ $s['user']->name }}@if(!$s['user']->is_active)<span class="yb-sub">ishdan bo'shagan</span>@endif</td>
+                                    <td class="num">{{ $fmt($s['full']) }}</td>
+                                    <td class="num" style="color:var(--yb-mu)">{{ $fmt($s['earned']) }}</td>
+                                    <td class="num" style="color:#b45309">{{ $fmt($s['given']) }}</td>
+                                    <td class="num {{ $s['left'] > 0 ? 'yb-r' : '' }}">{{ $fmt($s['left']) }}</td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="5" class="yb-empty">Ma'lumot yo'q</td></tr>
+                            @endforelse
+                            </tbody>
+                        </table>
+                        </div>
+                        <div style="font-weight:800;margin:16px 0 6px">Berilgan to'lovlar ({{ $repDetail['list']->count() }} ta)</div>
+                    @elseif(count($repDetail['groups']) > 1)
+                        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
+                            @foreach($repDetail['groups'] as $g)
+                                <span style="background:var(--yb-soft);border:1px solid var(--yb-bd);border-radius:999px;padding:4px 10px;font-size:12px">{{ $g['label'] }} · <b class="yb-r">{{ $fmt($g['sum']) }}</b> <span style="color:var(--yb-mu)">({{ $g['count'] }})</span></span>
+                            @endforeach
+                        </div>
+                    @endif
+
+                    <div class="yb-tbl-wrap">
+                    <table class="yb-tbl">
+                        <thead><tr><th>Sana</th><th>{{ $repKind === 'oylik' ? 'Xodim' : 'Sabab' }}</th><th>{{ $repKind === 'oylik' ? 'Izoh' : 'Loyiha / xodim' }}</th><th>Hisob</th><th class="num">Summa</th></tr></thead>
+                        <tbody>
+                        @forelse($repDetail['list'] as $e)
+                            <tr>
+                                <td style="white-space:nowrap">{{ $e->expense_date?->format('d.m.Y') }}</td>
+                                @if($repKind === 'oylik')
+                                    <td>{{ $e->user?->name ?? $e->responsible?->name ?? '—' }}</td>
+                                    <td>{{ \Illuminate\Support\Str::limit(preg_replace('/^svc:\d+\|/', '', (string) $e->comment), 60) ?: '—' }}</td>
+                                @else
+                                    <td>{{ $e->comment ?: '—' }}@if($e->note)<span class="yb-sub">{{ \Illuminate\Support\Str::limit($e->note, 80) }}</span>@endif</td>
+                                    <td>
+                                        @if($e->project)№{{ $e->project->seq_no }} · {{ $e->project->owner_name }}@endif
+                                        <span class="yb-sub">{{ $e->responsible?->name ?? ($e->category ? '🏢 Firma' : '') }}</span>
+                                    </td>
+                                @endif
+                                <td style="font-size:12px;color:var(--yb-mu)">{{ $e->account?->name ?? '—' }}</td>
+                                <td class="num {{ $repKind === 'oylik' ? '' : 'yb-r' }}" @if($repKind === 'oylik') style="color:#b45309" @endif>{{ $fmt($e->amount) }}</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="5" class="yb-empty">Bu oyda yozuv yo'q</td></tr>
+                        @endforelse
+                        </tbody>
+                        @if($repDetail['list']->isNotEmpty())
+                            <tfoot><tr style="font-weight:800"><td colspan="4">Jami</td><td class="num">{{ $fmt($repDetail['total']) }}</td></tr></tfoot>
+                        @endif
+                    </table>
+                    </div>
+                    <div style="margin-top:12px;text-align:right">
+                        <button type="button" class="yb-btn" wire:click="repToOps">Kirim-chiqimda ochish →</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endteleport
+    @endif
 
 @else
     <div class="yb-card yb-soon">

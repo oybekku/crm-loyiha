@@ -108,6 +108,34 @@ class YangiBux extends Page
 
     public ?int $historyUserId = null;
 
+    // ── Hisobotlar: katak bosilganda tafsilot (qaysi oy, xarajat|oylik) ──
+    public ?int   $repMonth = null;
+    public string $repKind  = '';
+
+    public function openRepDetail(int $month, string $kind): void
+    {
+        if ($month < 1 || $month > 12 || !in_array($kind, [Expense::KIND_XARAJAT, Expense::KIND_OYLIK], true)) return;
+        $this->repMonth = $month;
+        $this->repKind  = $kind;
+    }
+
+    public function closeRepDetail(): void
+    {
+        $this->repMonth = null;
+        $this->repKind  = '';
+    }
+
+    // Tafsilotdan Kirim-chiqim tabiga o'sha oy + tur filtri bilan o'tish
+    public function repToOps(): void
+    {
+        if (!$this->repMonth) return;
+        $this->ybMonth = $this->repMonth;
+        $this->opResetFilters();
+        $this->opKind = $this->repKind;
+        $this->closeRepDetail();
+        $this->tab = 'kirim';
+    }
+
     public const TABS = [
         'asosiy'    => "Asosiy ko'rinish",
         'kirim'     => 'Kirim-chiqim',
@@ -1030,6 +1058,60 @@ class YangiBux extends Page
         $yearIncome  = array_sum($incomeByMonth);
         $yearExpense = array_sum($expenseByMonth);
 
+        // Oylik "to'lanishi kerak" — shu oy loyihalaridagi bajarilgan ishlar
+        // uchun mijoz TO'LIQ to'lasa beriladigan komissiya + oklad. Tizim
+        // ishlamagan (birinchi loyihadan oldingi) va hali kelmagan oylar — yo'q.
+        $salaryDue = array_fill(1, 12, null);
+        if ($this->tab === 'hisobotlar') {
+            $firstYm = Project::min('created_at');
+            $firstYm = $firstYm ? Carbon::parse($firstYm)->format('Y-m') : null;
+            $nowYm   = now()->format('Y-m');
+            for ($m = 1; $m <= 12; $m++) {
+                $ymM = sprintf('%04d-%02d', $year, $m);
+                if (!$firstYm || $ymM < $firstYm || $ymM > $nowYm) continue;
+                $salaryDue[$m] = (float) collect($grid)->sum(fn ($r) => $r['months'][$m]['full'] ?? 0);
+            }
+        }
+
+        // Katak bosilganda — o'sha oy xarajatlari / oyliklari ro'yxati
+        $repDetail = null;
+        if ($this->tab === 'hisobotlar' && $this->repMonth && $this->repKind) {
+            $rm = $this->repMonth;
+            $list = Expense::with(['project:id,seq_no,owner_name', 'responsible:id,name', 'user:id,name', 'account:id,name,type', 'recurringExpense:id,name'])
+                ->where($this->expenseScope($year, $rm))->ofKind($this->repKind)
+                ->orderByDesc('amount')->get();
+            $repDetail = [
+                'title' => $fullMonths[$rm - 1] . ' ' . $year . ' — ' . ($this->repKind === Expense::KIND_OYLIK ? 'Oylik / avans' : 'Xarajatlar'),
+                'list'  => $list,
+                'total' => (float) $list->sum('amount'),
+            ];
+            if ($this->repKind === Expense::KIND_XARAJAT) {
+                // Turlar bo'yicha qisqacha: doimiy to'lov nomi / loyiha xarajati / boshqa
+                $repDetail['groups'] = $list->groupBy(fn ($e) => $e->recurringExpense?->name ?? ($e->project_id ? 'Loyiha xarajatlari' : 'Boshqa xarajatlar'))
+                    ->map(fn ($g, $k) => ['label' => $k, 'sum' => (float) $g->sum('amount'), 'count' => $g->count()])
+                    ->sortByDesc('sum')->values();
+            } else {
+                // Har bir xodim: kerak (to'liq) / mijoz to'lagani bo'yicha / berilgan
+                $givenBy = $list->groupBy(fn ($e) => $e->user_id ?: $e->responsible_id)->map(fn ($g) => (float) $g->sum('amount'));
+                $repDetail['staff'] = collect($grid)->map(fn ($r) => [
+                    'user'   => $r['user'],
+                    'full'   => (float) ($r['months'][$rm]['full'] ?? 0),
+                    'earned' => (float) ($r['months'][$rm]['calc'] ?? 0),
+                    'given'  => (float) ($givenBy[$r['user']->id] ?? 0),
+                ])->filter(fn ($x) => $x['full'] > 0 || $x['given'] > 0);
+                // Ishdan bo'shagan (gridda yo'q) xodimga berilgan oylik ham ko'rinsin
+                $inGrid = $repDetail['staff']->pluck('user.id')->all();
+                foreach ($givenBy as $uid => $sum) {
+                    if (!$uid || in_array($uid, $inGrid)) continue;
+                    $u = User::find($uid);
+                    if ($u) $repDetail['staff']->push(['user' => $u, 'full' => 0.0, 'earned' => 0.0, 'given' => $sum]);
+                }
+                $repDetail['staff'] = $repDetail['staff']->map(fn ($x) => $x + ['left' => max(0, $x['full'] - $x['given'])])
+                  ->sortByDesc('full')->values();
+                $repDetail['due'] = $salaryDue[$rm];
+            }
+        }
+
         return [
             'tabs'         => self::TABS,
             'monthLabel'   => ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentabr', 'Oktabr', 'Noyabr', 'Dekabr'][$month - 1] . ' ' . $year,
@@ -1072,6 +1154,8 @@ class YangiBux extends Page
             'payStaff'     => $this->showPayModal ? User::where('is_active', true)->orderBy('name')->get(['id', 'name', 'position']) : collect(),
             'yearIncome'   => $yearIncome,
             'yearExpense'  => $yearExpense,
+            'salaryDue'    => $salaryDue,
+            'repDetail'    => $repDetail,
             'salaryPayments' => EmployeeSalaryPayment::with(['user', 'giver'])
                 ->where('month', sprintf('%04d-%02d', $year, $month))
                 ->orderByDesc('paid_at')->get(),
