@@ -178,6 +178,8 @@
 .yb-rec-v a{color:var(--yb-tx);text-decoration:underline dotted}
 .yb-rec.paid .yb-rec-v a{color:var(--yb-green)}
 .yb-rec-a{display:flex;gap:6px;justify-content:flex-end;align-items:center;min-width:120px}
+.yb-rec-more{display:block;width:100%;margin-top:6px;padding:8px;border:1px dashed var(--yb-bd);border-radius:9px;background:transparent;color:#2563eb;font-size:12.5px;font-weight:700;cursor:pointer}
+.yb-rec-more:hover{background:var(--yb-soft)}
 .yb-rec-t{padding-top:12px;font-size:13px;color:var(--yb-mu);text-align:right}
 .yb-rec-t b{color:var(--yb-tx)}
 @media (max-width:600px){.yb-rec{grid-template-columns:22px minmax(0,1fr) auto}.yb-rec-a{grid-column:2/-1;min-width:0}}
