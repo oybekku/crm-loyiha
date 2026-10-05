@@ -16,7 +16,6 @@ use Filament\Pages\Page;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\On;
-use Livewire\Attributes\Session;
 use Livewire\Attributes\Url;
 use Livewire\WithFileUploads;
 
@@ -125,15 +124,25 @@ class YangiBux extends Page
         $this->repKind  = $kind;
     }
 
-    // Hisobotlar: 👁 bilan yashirilgan oylar (Jamiga kirmaydi). Sessiyada eslab qolinadi.
-    #[Session]
-    public array $repHidden = [];
+    // Hisobotlar: 👁 bilan yashirilgan oylar (Jamiga kirmaydi). Bazada UMUMIY
+    // saqlanadi (yil bo'yicha) — bir admin yashirsa, hamma adminlarda bir xil.
+    private function repHiddenKey(): string
+    {
+        return 'yangi_bux.hidden_months.' . $this->ybYear;
+    }
+
+    private function repHiddenMonths(): array
+    {
+        return array_values(array_map('intval', (array) \App\Models\AppSetting::get($this->repHiddenKey(), [])));
+    }
 
     public function toggleRepMonth(int $month): void
     {
-        if ($month < 1 || $month > 12) return;
-        $h = array_map('intval', $this->repHidden);
-        $this->repHidden = in_array($month, $h, true) ? array_values(array_diff($h, [$month])) : array_merge($h, [$month]);
+        if (!auth()->user()?->isAdmin() || $month < 1 || $month > 12) return;
+        $h = $this->repHiddenMonths();
+        $h = in_array($month, $h, true) ? array_diff($h, [$month]) : array_merge($h, [$month]);
+        sort($h);
+        \App\Models\AppSetting::put($this->repHiddenKey(), array_values($h));
     }
 
     // Hisobotlar: "Sof foyda" bosilganda — o'sha oy puli qaysi hamyonda qancha
@@ -1401,6 +1410,7 @@ class YangiBux extends Page
             'mamuriySpent' => $mamuriyByMonth[$month] ?? 0.0,
             'yearMamuriy'  => array_sum($mamuriyByMonth),
             'repDetail'    => $repDetail,
+            'repHidden'    => $this->tab === 'hisobotlar' ? $this->repHiddenMonths() : [],
             'profitInfo'   => $this->tab === 'hisobotlar' && $this->profitMonth ? ($chart[$this->profitMonth - 1] + ['title' => $fullMonths[$this->profitMonth - 1] . ' ' . $year]) : null,
             'wallet'       => $this->tab === 'hisobotlar' && $this->walletMonth ? [
                 'title' => $fullMonths[$this->walletMonth - 1] . ' ' . $year,
