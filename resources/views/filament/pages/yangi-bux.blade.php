@@ -88,6 +88,17 @@
 .yb-tbl .num{text-align:right;white-space:nowrap;font-weight:700}
 .yb-cell-link{cursor:pointer;border-bottom:1px dashed currentColor;padding-bottom:1px}
 .yb-cell-link:hover{opacity:.75}
+/* Hisobotlar: yig'iladigan ustunlar */
+.yb-rep th.yb-colh{padding:0 !important;vertical-align:bottom}
+.yb-rep th.yb-colh button{all:unset;box-sizing:border-box;display:flex;align-items:center;justify-content:flex-end;gap:6px;width:100%;padding:9px 8px;cursor:pointer;border-radius:6px;transition:background .15s}
+.yb-rep th.yb-colh button:hover{background:var(--yb-bd)}
+.yb-rep th.yb-colh button:hover .yb-colh-c{opacity:1;color:var(--cc)}
+.yb-rep .yb-colh-l{border-bottom:2px solid var(--cc);padding-bottom:2px}
+.yb-rep .yb-colh-c{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:4px;font-size:10px;opacity:.35;transition:opacity .15s}
+.yb-rep th.yb-colh.cx{width:34px;min-width:34px;max-width:34px;background:var(--yb-soft)}
+.yb-rep th.yb-colh.cx button{flex-direction:column;justify-content:flex-start;align-items:center;padding:8px 0;gap:6px;min-height:150px}
+.yb-rep th.yb-colh.cx .yb-colh-c{opacity:1;background:var(--cc);color:#fff;font-size:9px}
+.yb-rep .yb-colh-v{writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;font-size:11px;font-weight:700;color:var(--cc)}
 .yb-eye{border:none;background:none;cursor:pointer;font-size:13px;padding:0 4px 0 0;opacity:.45;vertical-align:middle}
 .yb-eye:hover{opacity:1}
 .yb-eye.off{opacity:.9}
@@ -655,8 +666,45 @@
     <div class="yb-card">
         <div class="yb-h"><span>{{ $this->ybYear }}-yil hisoboti <span class="yb-sub">Tushum — to'lov sanasi bo'yicha; xarajat — Buxgalteriyadagi qoida bo'yicha. Xarajat yoki oylik summasini bosing — ro'yxati ochiladi.</span></span></div>
         <div class="yb-tbl-wrap">
-        <table class="yb-tbl">
-            <thead><tr><th>Oy</th><th class="num" style="color:#0f766e" title="Shu oyda ochilgan loyihalarning shartnoma summasi (Dashboard'dagi kabi). Ostida: bekor qilingan va mijozlar qarzi">Loyihalar summasi</th><th class="num" title="Shu oy loyihalari uchun mijozlardan haqiqatda kelgan pul">Tushum (kelgan pul)</th><th class="num">Xarajat</th><th class="num" title="Toposyomka, ariza, eskiz ishlaridan. Kerak — shu oy loyihalaridagi barcha ishlar ulushi (Oylik hisobotdagi 'Hisoblangan'). To'langan — haqiqatda berilgan.">Ishbay oylik: kerak / to'langan</th><th class="num" title="Direktor, admin, buxgalter va h.k. — ishga bog'liq emas, firma daromadidan">Ma'muriy oylik</th><th class="num">Jami chiqim</th><th class="num" title="To'liq — loyihalar summasi − xarajat − ishbay oylik (hisoblangan); Hozirgi — tushgan pul − xarajat − ishbay oylik (mijoz to'lagani bo'yicha, berilgan-berilmaganidan qat'i nazar). Ma'muriy oylik kirmaydi.">Sof foyda: to'liq / hozirgi</th><th class="num" title="Tushum − jami chiqim: shu oy puli hamyonlarda qancha qoldi (bosing — Naqd, Karta, Bank)">Qoldiq</th></tr></thead>
+                    @php
+                // Yig'iladigan ustunlar (tartib jadvaldagi bilan bir xil). Yig'ilgani hamma adminlarda bir xil.
+                $repCols = [
+                    'loyiha'  => ["Loyihalar summasi", "Shu oyda ochilgan loyihalarning shartnoma summasi (Dashboard'dagi kabi). Ostida: bekor qilingan va mijozlar qarzi", '#0f766e'],
+                    'tushum'  => ["Tushum (kelgan pul)", "Shu oy loyihalari uchun mijozlardan haqiqatda kelgan pul", '#15803d'],
+                    'xarajat' => ["Xarajat", "Oylik va avanslarsiz chiqimlar — bosing: ro'yxat", '#dc2626'],
+                    'ishbay'  => ["Ishbay oylik: kerak / to'langan", "Toposyomka, ariza, eskiz ishlaridan. Kerak — shu oy loyihalaridagi barcha ishlar ulushi (Oylik hisobotdagi 'Hisoblangan'). To'langan — haqiqatda berilgan.", '#b45309'],
+                    'mamuriy' => ["Ma'muriy oylik", "Direktor, admin, buxgalter va h.k. — ishga bog'liq emas, firma daromadidan", '#7c3aed'],
+                    'chiqim'  => ["Jami chiqim", "Xarajat + barcha oyliklar", '#dc2626'],
+                    'foyda'   => ["Sof foyda: to'liq / hozirgi", "To'liq — loyihalar summasi − xarajat − ishbay oylik (hisoblangan); Hozirgi — tushgan pul − xarajat − ishbay oylik (mijoz to'lagani bo'yicha). Ma'muriy oylik kirmaydi.", '#15803d'],
+                    'qoldiq'  => ["Qoldiq", "Tushum − jami chiqim: shu oy puli hamyonlarda qancha qoldi (bosing — Naqd, Karta, Bank)", '#2563eb'],
+                ];
+                $colX = array_values(array_intersect(array_keys($repCols), $repColsHidden));
+            @endphp
+            @if($colX)
+                <style>
+                    @foreach(array_keys($repCols) as $ci => $ck)
+                        @if(in_array($ck, $colX, true))
+                            .yb-rep tr:not(.yb-hid-row) > td:nth-child({{ $ci + 2 }}){width:34px;min-width:34px;max-width:34px;padding:0 !important;font-size:0 !important;background:repeating-linear-gradient(180deg,transparent 0 6px,var(--yb-soft) 6px 12px)}
+                            .yb-rep tr:not(.yb-hid-row) > td:nth-child({{ $ci + 2 }}) > *{display:none !important}
+                        @endif
+                    @endforeach
+                </style>
+            @endif
+        <table class="yb-tbl yb-rep">
+            <thead><tr><th>Oy</th>
+                @foreach($repCols as $ck => [$cl, $ct, $cc])
+                    @php $isX = in_array($ck, $colX, true); @endphp
+                    <th class="num yb-colh {{ $isX ? 'cx' : '' }}" title="{{ $isX ? $cl . ' — yoyish uchun bosing' : $ct }}">
+                        <button type="button" wire:click="toggleRepCol('{{ $ck }}')" style="--cc:{{ $cc }}">
+                            @if($isX)
+                                <span class="yb-colh-c">▸</span><span class="yb-colh-v">{{ $cl }}</span>
+                            @else
+                                <span class="yb-colh-l">{{ $cl }}</span><span class="yb-colh-c" title="Ustunni yig'ish">◂</span>
+                            @endif
+                        </button>
+                    </th>
+                @endforeach
+            </tr></thead>
             <tbody>
             @php
                 // 👁 bilan yashirilgan oylar "Jami"ga kirmaydi (boshqa oyga ham qo'shilmaydi)

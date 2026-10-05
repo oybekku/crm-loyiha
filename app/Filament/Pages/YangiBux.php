@@ -136,6 +136,22 @@ class YangiBux extends Page
         return array_values(array_map('intval', (array) \App\Models\AppSetting::get($this->repHiddenKey(), [])));
     }
 
+    // Hisobotlar: yig'ilgan ustunlar — hamma adminlarda bir xil (bazada umumiy)
+    public const REP_COLS = ['loyiha', 'tushum', 'xarajat', 'ishbay', 'mamuriy', 'chiqim', 'foyda', 'qoldiq'];
+
+    private function repColsHidden(): array
+    {
+        return array_values(array_intersect(self::REP_COLS, (array) \App\Models\AppSetting::get('yangi_bux.hidden_cols', [])));
+    }
+
+    public function toggleRepCol(string $col): void
+    {
+        if (!auth()->user()?->isAdmin() || !in_array($col, self::REP_COLS, true)) return;
+        $h = $this->repColsHidden();
+        $h = in_array($col, $h, true) ? array_diff($h, [$col]) : array_merge($h, [$col]);
+        \App\Models\AppSetting::put('yangi_bux.hidden_cols', array_values($h));
+    }
+
     public function toggleRepMonth(int $month): void
     {
         if (!auth()->user()?->isAdmin() || $month < 1 || $month > 12) return;
@@ -1410,6 +1426,7 @@ class YangiBux extends Page
             'mamuriySpent' => $mamuriyByMonth[$month] ?? 0.0,
             'yearMamuriy'  => array_sum($mamuriyByMonth),
             'repDetail'    => $repDetail,
+            'repColsHidden'=> $this->tab === 'hisobotlar' ? $this->repColsHidden() : [],
             'repHidden'    => $this->tab === 'hisobotlar' ? $this->repHiddenMonths() : [],
             'profitInfo'   => $this->tab === 'hisobotlar' && $this->profitMonth ? ($chart[$this->profitMonth - 1] + ['title' => $fullMonths[$this->profitMonth - 1] . ' ' . $year]) : null,
             'wallet'       => $this->tab === 'hisobotlar' && $this->walletMonth ? [
