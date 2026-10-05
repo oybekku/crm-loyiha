@@ -16,6 +16,7 @@ use Filament\Pages\Page;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Session;
 use Livewire\Attributes\Url;
 use Livewire\WithFileUploads;
 
@@ -122,6 +123,17 @@ class YangiBux extends Page
         if ($month < 1 || $month > 12 || !in_array($kind, [Expense::KIND_XARAJAT, EmployeeSalaryPayment::TYPE_ISHBAY, EmployeeSalaryPayment::TYPE_MAMURIY], true)) return;
         $this->repMonth = $month;
         $this->repKind  = $kind;
+    }
+
+    // Hisobotlar: 👁 bilan yashirilgan oylar (Jamiga kirmaydi). Sessiyada eslab qolinadi.
+    #[Session]
+    public array $repHidden = [];
+
+    public function toggleRepMonth(int $month): void
+    {
+        if ($month < 1 || $month > 12) return;
+        $h = array_map('intval', $this->repHidden);
+        $this->repHidden = in_array($month, $h, true) ? array_values(array_diff($h, [$month])) : array_merge($h, [$month]);
     }
 
     // Hisobotlar: "Sof foyda" bosilganda — o'sha oy puli qaysi hamyonda qancha

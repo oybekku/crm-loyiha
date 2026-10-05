@@ -88,6 +88,10 @@
 .yb-tbl .num{text-align:right;white-space:nowrap;font-weight:700}
 .yb-cell-link{cursor:pointer;border-bottom:1px dashed currentColor;padding-bottom:1px}
 .yb-cell-link:hover{opacity:.75}
+.yb-eye{border:none;background:none;cursor:pointer;font-size:13px;padding:0 4px 0 0;opacity:.45;vertical-align:middle}
+.yb-eye:hover{opacity:1}
+.yb-eye.off{opacity:.9}
+.yb-tbl tr.yb-hid-row td{background:repeating-linear-gradient(45deg,transparent 0 8px,var(--yb-soft) 8px 16px);color:var(--yb-mu)}
 .yb-work{display:block;margin:3px 0 0 32px;font-size:10.5px;line-height:1.35;color:var(--yb-mu);font-weight:400;white-space:normal}
 .yb-work b{color:#d97706;font-weight:700}
 .yb-tbl tr.yb-just td{background:#fef9c3 !important;animation:ybJust 1.2s ease-in-out 2}
@@ -654,10 +658,22 @@
         <table class="yb-tbl">
             <thead><tr><th>Oy</th><th class="num" style="color:#0f766e" title="Shu oyda ochilgan loyihalarning shartnoma summasi (Dashboard'dagi kabi). Ostida: bekor qilingan va mijozlar qarzi">Loyihalar summasi</th><th class="num" title="Shu oy loyihalari uchun mijozlardan haqiqatda kelgan pul">Tushum (kelgan pul)</th><th class="num">Xarajat</th><th class="num" title="Toposyomka, ariza, eskiz ishlaridan. Kerak — shu oy loyihalaridagi barcha ishlar ulushi (Oylik hisobotdagi 'Hisoblangan'). To'langan — haqiqatda berilgan.">Ishbay oylik: kerak / to'langan</th><th class="num" title="Direktor, admin, buxgalter va h.k. — ishga bog'liq emas, firma daromadidan">Ma'muriy oylik</th><th class="num">Jami chiqim</th><th class="num" title="Tushum − jami chiqim: shu oy puli hamyonlarda qancha qoldi (bosing — Naqd, Karta, Bank)">Qoldiq</th><th class="num" title="To'liq — loyihalar summasi − xarajat − ishbay oylik (hisoblangan); Hozirgi — tushgan pul − xarajat − ishbay oylik (mijoz to'lagani bo'yicha, berilgan-berilmaganidan qat'i nazar). Ma'muriy oylik kirmaydi.">Sof foyda: to'liq / hozirgi</th><th class="num" title="Hozirgi sof foyda / tushum">Rentabellik</th></tr></thead>
             <tbody>
+            @php
+                // 👁 bilan yashirilgan oylar "Jami"ga kirmaydi (boshqa oyga ham qo'shilmaydi)
+                $hid = array_map('intval', $repHidden);
+                $vis = array_values(array_filter($chart, fn ($c) => !in_array($c['m'], $hid, true)));
+            @endphp
             @foreach($chart as $c)
-                @php $due = $salaryDue[$c['m']] ?? null; $mDue = $mamuriyDue[$c['m']] ?? null; @endphp
+                @php $due = $salaryDue[$c['m']] ?? null; $mDue = $mamuriyDue[$c['m']] ?? null; $isHid = in_array($c['m'], $hid, true); @endphp
+                @if($isHid)
+                <tr class="yb-hid-row">
+                    <td style="white-space:nowrap"><button type="button" class="yb-eye off" wire:click.stop="toggleRepMonth({{ $c['m'] }})" title="Ko'rsatish">🙈</button> {{ $c['label'] }}</td>
+                    <td colspan="9" style="color:var(--yb-mu);font-size:12px">••• yashirilgan — "Jami"ga qo'shilmaydi. Ko'rsatish uchun 🙈 ni bosing.</td>
+                </tr>
+                @continue
+                @endif
                 <tr wire:click="ybSetMonth({{ $c['m'] }})" style="cursor:pointer;{{ $c['m'] === $this->ybMonth ? 'font-weight:700' : '' }}">
-                    <td>{{ $c['label'] }}</td>
+                    <td style="white-space:nowrap"><button type="button" class="yb-eye" wire:click.stop="toggleRepMonth({{ $c['m'] }})" title="Bu oyni yashirish (Jamiga kirmaydi)">👁</button> {{ $c['label'] }}</td>
                     <td class="num" style="color:#0f766e">
                         {{ $fmt($c['allSum']) }}
                         @if($c['allCount'])<span class="yb-sub">{{ $c['allCount'] }} ta @if($c['cancelSum'] > 0) · bekor {{ $fmt($c['cancelSum']) }} @endif @if($c['debtSum'] > 0) · qarz {{ $fmt($c['debtSum']) }} @endif</span>@endif
@@ -691,22 +707,26 @@
                     <td class="num">{{ $c['income'] > 0 ? round($c['curProfit'] / $c['income'] * 100) . '%' : '—' }}</td>
                 </tr>
             @endforeach
+                @php
+                    $sum = fn ($k) => array_sum(array_column($vis, $k));
+                    $yearDue = array_sum(array_map(fn ($c) => (float) ($salaryDue[$c['m']] ?? 0), $vis));
+                    $yIncome = $sum('income'); $yExpense = $sum('expense'); $yIsh = $sum('ishbay');
+                    $yFull = $sum('fullProfit'); $yCur = $sum('curProfit');
+                @endphp
                 <tr style="font-weight:800">
-                    <td>Jami</td>
-                    <td class="num" style="color:#0f766e">{{ $fmt(array_sum(array_column($chart, 'allSum'))) }}<span class="yb-sub">{{ array_sum(array_column($chart, 'allCount')) }} ta · qarz {{ $fmt(array_sum(array_column($chart, 'debtSum'))) }}</span></td>
-                    <td class="num yb-g">{{ $fmt($yearIncome) }}</td>
-                    <td class="num yb-r">{{ $fmt($yearExpense - $yearSalary) }}</td>
-                    @php $yearDue = array_sum(array_filter($salaryDue, fn ($v) => $v !== null)); $yearIsh = $yearSalary - $yearMamuriy; @endphp
+                    <td>Jami @if($hid)<span class="yb-sub">{{ count($hid) }} oy yashirilgan</span>@endif</td>
+                    <td class="num" style="color:#0f766e">{{ $fmt($sum('allSum')) }}<span class="yb-sub">{{ $sum('allCount') }} ta · qarz {{ $fmt($sum('debtSum')) }}</span></td>
+                    <td class="num yb-g">{{ $fmt($yIncome) }}</td>
+                    <td class="num yb-r">{{ $fmt($sum('other')) }}</td>
                     <td class="num" style="color:#b45309">
-                        @if($yearDue > 0)<span style="color:var(--yb-mu);font-weight:600">{{ $fmt($yearDue) }}</span> / @endif{{ $fmt($yearIsh) }}
-                        @if($yearDue > $yearIsh)<span class="yb-sub">qoldiq {{ $fmt($yearDue - $yearIsh) }}</span>@endif
+                        @if($yearDue > 0)<span style="color:var(--yb-mu);font-weight:600">{{ $fmt($yearDue) }}</span> / @endif{{ $fmt($yIsh) }}
+                        @if($yearDue > $yIsh)<span class="yb-sub">qoldiq {{ $fmt($yearDue - $yIsh) }}</span>@endif
                     </td>
-                    <td class="num" style="color:#7c3aed">{{ $fmt($yearMamuriy) }}</td>
-                    <td class="num yb-r">{{ $fmt($yearExpense) }}</td>
-                    <td class="num">{{ $fmt($yearIncome - $yearExpense) }}</td>
-                    @php $yFull = array_sum(array_column($chart, 'fullProfit')); $yCur = array_sum(array_column($chart, 'curProfit')); @endphp
-                    <td class="num"><span style="color:{{ $yFull < 0 ? '#dc2626' : '#15803d' }}">{{ $yFull < 0 ? '−' : '' }}{{ $fmt(abs($yFull)) }}</span> / {{ $yCur < 0 ? '−' : '' }}{{ $fmt(abs($yCur)) }}<span class="yb-sub">{{ array_sum(array_column($chart, 'projCount')) }} ta loyiha</span></td>
-                    <td class="num">{{ $yearIncome > 0 ? round($yCur / $yearIncome * 100) . '%' : '—' }}</td>
+                    <td class="num" style="color:#7c3aed">{{ $fmt($sum('mamuriy')) }}</td>
+                    <td class="num yb-r">{{ $fmt($yExpense) }}</td>
+                    <td class="num">{{ $fmt($yIncome - $yExpense) }}</td>
+                    <td class="num"><span style="color:{{ $yFull < 0 ? '#dc2626' : '#15803d' }}">{{ $yFull < 0 ? '−' : '' }}{{ $fmt(abs($yFull)) }}</span> / {{ $yCur < 0 ? '−' : '' }}{{ $fmt(abs($yCur)) }}<span class="yb-sub">{{ $sum('projCount') }} ta loyiha</span></td>
+                    <td class="num">{{ $yIncome > 0 ? round($yCur / $yIncome * 100) . '%' : '—' }}</td>
                 </tr>
             </tbody>
         </table>
