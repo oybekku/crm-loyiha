@@ -161,6 +161,85 @@ class YangiBux extends Page
         \App\Models\AppSetting::put($this->repHiddenKey(), array_values($h));
     }
 
+    // ── Oydan oyga o'tkazma (masalan: avgust Naqd ortig'i → sentabr Karta) ──
+    public bool    $showMt     = false;
+    public string  $mtFromYm   = '';
+    public ?int    $mtFromAcc  = null;
+    public string  $mtToYm     = '';
+    public ?int    $mtToAcc    = null;
+    public string  $mtAmount   = '';
+    public string  $mtComment  = '';
+
+    public function openMonthTransfer(?int $fromMonth = null): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+        $this->resetValidation();
+        $from = Carbon::create($this->ybYear, $fromMonth ?: $this->ybMonth, 1);
+        $this->mtFromYm  = $from->format('Y-m');
+        $this->mtToYm    = now()->format('Y-m') > $this->mtFromYm ? now()->format('Y-m') : $from->copy()->addMonth()->format('Y-m');
+        $this->mtFromAcc = $this->mtToAcc = null;
+        $this->mtAmount  = $this->mtComment = '';
+        $this->showMt    = true;
+    }
+
+    public function saveMonthTransfer(): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+        $this->mtAmount = str_replace([' ', ','], ['', '.'], $this->mtAmount);
+        $acc = 'required|exists:financial_accounts,id,user_id,NULL';
+        $this->validate([
+            'mtFromYm'  => ['required', 'regex:/^\d{4}-\d{2}$/'],
+            'mtToYm'    => ['required', 'regex:/^\d{4}-\d{2}$/', 'different:mtFromYm'],
+            'mtFromAcc' => $acc,
+            'mtToAcc'   => $acc,
+            'mtAmount'  => 'required|numeric|min:1',
+        ], [
+            'mtToYm.different'   => 'Boshqa oyni tanlang (bir oy ichida o\'tkazma uchun Buxgalteriyadagi "Pul o\'tkazish")',
+            'mtFromAcc.required' => 'Qaysi hamyondan',
+            'mtToAcc.required'   => 'Qaysi hamyonga',
+            'mtAmount.required'  => 'Summani kiriting',
+        ]);
+        [$fy, $fm] = array_map('intval', explode('-', $this->mtFromYm));
+        $avail = (float) ($this->monthAccountBalances($fy, $fm)[$this->mtFromAcc] ?? 0);
+        if ((float) $this->mtAmount > $avail + 0.01) {
+            $this->addError('mtAmount', $this->monthName($fy, $fm) . ' — bu hamyonda faqat ' . number_format(max(0, $avail), 0, '.', ' ') . " so'm bor");
+            return;
+        }
+        \App\Models\AccountTransfer::create([
+            'from_account_id' => $this->mtFromAcc,
+            'to_account_id'   => $this->mtToAcc,
+            'amount'          => (float) $this->mtAmount,
+            'transfer_date'   => now()->toDateString(),
+            'month'           => $this->mtFromYm,
+            'to_month'        => $this->mtToYm,
+            'comment'         => trim($this->mtComment) ?: 'Oydan oyga o\'tkazma',
+            'created_by'      => auth()->id(),
+        ]);
+        $this->showMt = false;
+        Notification::make()->title("O'tkazildi")->body(number_format((float) $this->mtAmount, 0, '.', ' ') . " so'm: " . $this->mtFromYm . ' → ' . $this->mtToYm)->success()->send();
+    }
+
+    public function deleteMonthTransfer(int $id): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+        $t = \App\Models\AccountTransfer::find($id);
+        if (!$t || !$t->is_cross_month) return;
+        $t->delete();
+        Notification::make()->title("O'tkazma bekor qilindi")->warning()->send();
+    }
+
+    /** Yil bo'yicha har oyning oydan-oyga o'tkazmalar sofi (kelgan − ketgan) */
+    private function crossMonthNet(int $year): array
+    {
+        $net = array_fill(1, 12, 0.0);
+        \App\Models\AccountTransfer::whereNotNull('to_month')->get()->filter->is_cross_month->each(function ($t) use (&$net, $year) {
+            $from = $t->month ?: $t->transfer_date->format('Y-m');
+            if (str_starts_with($from, $year . '-'))         $net[(int) substr($from, 5, 2)] -= (float) $t->amount;
+            if (str_starts_with($t->to_month, $year . '-'))  $net[(int) substr($t->to_month, 5, 2)] += (float) $t->amount;
+        });
+        return $net;
+    }
+
     // Hisobotlar: "Sof foyda" bosilganda — o'sha oy puli qaysi hamyonda qancha
     public ?int $walletMonth = null;
     // "Sof foyda" bosilganda — hisob-kitob oynasi
@@ -419,10 +498,9 @@ class YangiBux extends Page
             ->selectRaw('account_id, SUM(amount) s')->groupBy('account_id')->pluck('s', 'account_id');
         $out = Expense::where($this->expenseScope($year, $month))->whereNotNull('account_id')
             ->selectRaw('account_id, SUM(amount) s')->groupBy('account_id')->pluck('s', 'account_id');
-        $trScope = fn ($q) => $q->where('month', $ym)
-            ->orWhere(fn ($q2) => $q2->whereNull('month')->whereYear('transfer_date', $year)->whereMonth('transfer_date', $month));
-        $trIn  = \App\Models\AccountTransfer::where($trScope)->selectRaw('to_account_id a, SUM(amount) s')->groupBy('to_account_id')->pluck('s', 'a');
-        $trOut = \App\Models\AccountTransfer::where($trScope)->selectRaw('from_account_id a, SUM(amount) s')->groupBy('from_account_id')->pluck('s', 'a');
+        // O'tkazma: chiqqan oyda (month) manbadan ayiriladi, kirgan oyda (to_month) qo'shiladi
+        $trIn  = \App\Models\AccountTransfer::intoMonth($ym)->selectRaw('to_account_id a, SUM(amount) s')->groupBy('to_account_id')->pluck('s', 'a');
+        $trOut = \App\Models\AccountTransfer::outOfMonth($ym)->selectRaw('from_account_id a, SUM(amount) s')->groupBy('from_account_id')->pluck('s', 'a');
 
         $res = [];
         foreach ($in->keys()->merge($out->keys())->merge($trIn->keys())->merge($trOut->keys())->unique() as $id) {
@@ -435,7 +513,7 @@ class YangiBux extends Page
      * Oy puli hamyonlar bo'yicha: har bir hisobga shu oy loyihalaridan tushgan
      * kirim − shu oyga yozilgan chiqim ± shu oy o'tkazmalari (monthAccountBalances
      * bilan bir xil qoida). Hisobi ko'rsatilmagan eski yozuvlar alohida qatorda.
-     * Barcha qatorlar qoldig'i yig'indisi = shu oyning sof foydasi.
+     * Barcha qatorlar qoldig'i yig'indisi = shu oyning "Qoldiq"i (oydan oyga o'tkazmalar bilan).
      */
     private function monthWalletBreakdown(int $year, int $month): array
     {
@@ -443,10 +521,9 @@ class YangiBux extends Page
         $key = fn ($v) => $v === null ? 'none' : (int) $v;
         $in  = $this->paymentsOfMonth($year, $month)->selectRaw('account_id, SUM(amount) s')->groupBy('account_id')->get()->mapWithKeys(fn ($r) => [$key($r->account_id) => (float) $r->s]);
         $out = Expense::where($this->expenseScope($year, $month))->selectRaw('account_id, SUM(amount) s')->groupBy('account_id')->get()->mapWithKeys(fn ($r) => [$key($r->account_id) => (float) $r->s]);
-        $trScope = fn ($q) => $q->where('month', $ym)
-            ->orWhere(fn ($q2) => $q2->whereNull('month')->whereYear('transfer_date', $year)->whereMonth('transfer_date', $month));
-        $trIn  = \App\Models\AccountTransfer::where($trScope)->selectRaw('to_account_id a, SUM(amount) s')->groupBy('to_account_id')->pluck('s', 'a');
-        $trOut = \App\Models\AccountTransfer::where($trScope)->selectRaw('from_account_id a, SUM(amount) s')->groupBy('from_account_id')->pluck('s', 'a');
+        // O'tkazma: chiqqan oyda (month) manbadan ayiriladi, kirgan oyda (to_month) qo'shiladi
+        $trIn  = \App\Models\AccountTransfer::intoMonth($ym)->selectRaw('to_account_id a, SUM(amount) s')->groupBy('to_account_id')->pluck('s', 'a');
+        $trOut = \App\Models\AccountTransfer::outOfMonth($ym)->selectRaw('from_account_id a, SUM(amount) s')->groupBy('from_account_id')->pluck('s', 'a');
 
         $accounts = FinancialAccount::with('owner:id,name')->get()->keyBy('id');
         $rows = [];
@@ -1167,6 +1244,7 @@ class YangiBux extends Page
                     if ($e->salary_type === EmployeeSalaryPayment::TYPE_MAMURIY) $mamuriyByMonth[$m] += (float) $e->amount;
                 }
             });
+        $crossNet = $this->crossMonthNet($year);
         $chart = [];
         $monthNames = ['Yan', 'Fev', 'Mar', 'Apr', 'May', 'Iyun', 'Iyul', 'Avg', 'Sen', 'Okt', 'Noy', 'Dek'];
         for ($m = 1; $m <= 12; $m++) {
@@ -1180,6 +1258,8 @@ class YangiBux extends Page
                 'mamuriy' => $mamuriyByMonth[$m],
                 'other'   => $expenseByMonth[$m] - $salaryByMonth[$m],
                 'profit'  => $incomeByMonth[$m] - $expenseByMonth[$m],
+                'qoldiq'  => $incomeByMonth[$m] - $expenseByMonth[$m] + ($crossNet[$m] ?? 0),
+                'cross'   => $crossNet[$m] ?? 0,
             ];
         }
         $chartMax = max(1, ...array_map(fn ($c) => max($c['income'], $c['expense'], $c['profit']), $chart));
@@ -1429,7 +1509,13 @@ class YangiBux extends Page
             'repColsHidden'=> $this->tab === 'hisobotlar' ? $this->repColsHidden() : [],
             'repHidden'    => $this->tab === 'hisobotlar' ? $this->repHiddenMonths() : [],
             'profitInfo'   => $this->tab === 'hisobotlar' && $this->profitMonth ? ($chart[$this->profitMonth - 1] + ['title' => $fullMonths[$this->profitMonth - 1] . ' ' . $year]) : null,
+            'mtFromBal'    => $this->showMt && $this->mtFromYm ? $this->monthAccountBalances(...array_map('intval', explode('-', $this->mtFromYm))) : [],
+            'mtToBal'      => $this->showMt && $this->mtToYm ? $this->monthAccountBalances(...array_map('intval', explode('-', $this->mtToYm))) : [],
             'wallet'       => $this->tab === 'hisobotlar' && $this->walletMonth ? [
+                'm'     => $this->walletMonth,
+                'cross' => \App\Models\AccountTransfer::with(['fromAccount', 'toAccount', 'createdBy'])->whereNotNull('to_month')
+                    ->where(fn ($q) => $q->outOfMonth(sprintf('%04d-%02d', $year, $this->walletMonth))->orWhere('to_month', sprintf('%04d-%02d', $year, $this->walletMonth)))
+                    ->orderByDesc('id')->get()->filter->is_cross_month->values(),
                 'title' => $fullMonths[$this->walletMonth - 1] . ' ' . $year,
                 'rows'  => $this->monthWalletBreakdown($year, $this->walletMonth),
                 'profit'=> $incomeByMonth[$this->walletMonth] - $expenseByMonth[$this->walletMonth],

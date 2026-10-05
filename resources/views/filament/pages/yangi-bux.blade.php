@@ -688,7 +688,7 @@
                     'mamuriy' => ['mamuriy'],
                     'chiqim'  => ['expense'],
                     'foyda'   => ['fullProfit', 'curProfit', 'projCount', 'projSum'],
-                    'qoldiq'  => ['profit'],
+                    'qoldiq'  => ['qoldiq', 'cross'],
                 ];
                 $hid = array_map('intval', $repHidden);
                 $chartV = array_map(function ($c) use ($hid, $colX, $colFields) {
@@ -756,7 +756,10 @@
                             <span class="yb-sub">{{ $c['projCount'] }} ta loyiha</span>
                         @else 0 @endif
                     </td>
-                    <td class="num {{ $c['profit'] < 0 ? 'yb-r' : '' }}">@if($c['income'] != 0 || $c['expense'] != 0)<span class="yb-cell-link" wire:click.stop="openWallet({{ $c['m'] }})" title="Qaysi hamyonda qancha — Naqd, Karta, Bank">{{ $fmt($c['profit']) }}</span>@else{{ $fmt($c['profit']) }}@endif</td>
+                    <td class="num {{ $c['qoldiq'] < 0 ? 'yb-r' : '' }}">
+                        @if($c['income'] != 0 || $c['expense'] != 0 || $c['cross'] != 0)<span class="yb-cell-link" wire:click.stop="openWallet({{ $c['m'] }})" title="Qaysi hamyonda qancha — Naqd, Karta, Bank">{{ $c['qoldiq'] < 0 ? '−' : '' }}{{ $fmt(abs($c['qoldiq'])) }}</span>@else{{ $fmt($c['qoldiq']) }}@endif
+                        @if($c['cross'] != 0)<span class="yb-sub" title="Boshqa oylarga / oylardan o'tkazilgan pul">{{ $c['cross'] > 0 ? '⇠ +' : '⇢ −' }}{{ $fmt(abs($c['cross'])) }} o'tkazma</span>@endif
+                    </td>
                 </tr>
             @endforeach
                 @php
@@ -777,7 +780,7 @@
                     <td class="num" style="color:#7c3aed">{{ $fmt($sum('mamuriy')) }}</td>
                     <td class="num yb-r">{{ $fmt($yExpense) }}</td>
                     <td class="num"><span style="color:{{ $yFull < 0 ? '#dc2626' : '#15803d' }}">{{ $yFull < 0 ? '−' : '' }}{{ $fmt(abs($yFull)) }}</span> / {{ $yCur < 0 ? '−' : '' }}{{ $fmt(abs($yCur)) }}<span class="yb-sub">{{ $sum('projCount') }} ta loyiha</span></td>
-                    <td class="num">{{ $fmt($yIncome - $yExpense) }}</td>
+                    <td class="num">{{ $fmt($sum('qoldiq')) }}</td>
                 </tr>
             </tbody>
         </table>
@@ -862,6 +865,25 @@
                         </tr></tfoot>
                     </table>
                     </div>
+
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin:16px 0 8px">
+                        <b>⇄ Oydan oyga o'tkazmalar</b>
+                        <button type="button" class="yb-btn" wire:click="openMonthTransfer({{ $wallet['m'] }})">⇄ Boshqa oyga o'tkazish</button>
+                    </div>
+                    @forelse($wallet['cross'] as $t)
+                        @php $tFrom = $t->month ?: $t->transfer_date->format('Y-m'); $isOut = $tFrom === sprintf('%04d-%02d', $this->ybYear, $wallet['m']); @endphp
+                        <div class="yb-li" style="border-bottom:1px solid var(--yb-bd);gap:10px">
+                            <span class="yb-pill {{ $isOut ? 'c' : 'k' }}" style="white-space:nowrap">{{ $isOut ? 'ketdi' : 'keldi' }}</span>
+                            <div style="min-width:0;flex:1">
+                                <b>{{ \Carbon\Carbon::createFromFormat('Y-m', $tFrom)->translatedFormat('F') }} · {{ $t->fromAccount?->name }}</b> → <b>{{ \Carbon\Carbon::createFromFormat('Y-m', $t->to_month)->translatedFormat('F') }} · {{ $t->toAccount?->name }}</b>
+                                <span class="yb-sub">{{ $t->transfer_date->format('d.m.Y') }} · {{ $t->createdBy?->name }}@if($t->comment) · {{ $t->comment }}@endif</span>
+                            </div>
+                            <b class="{{ $isOut ? 'yb-r' : 'yb-g' }}" style="white-space:nowrap">{{ $isOut ? '−' : '+' }}{{ $fmt($t->amount) }}</b>
+                            <button type="button" class="yb-act del" title="Bekor qilish" wire:click="deleteMonthTransfer({{ $t->id }})" wire:confirm="Bu o'tkazmani bekor qilasizmi? Pul o'z oyiga qaytadi.">🗑</button>
+                        </div>
+                    @empty
+                        <div class="yb-sub" style="font-size:12px">Bu oyda oydan oyga o'tkazma yo'q. Ortiqcha pulni keyingi oyning Naqd yoki Kartasiga o'tkazish uchun yuqoridagi tugmani bosing.</div>
+                    @endforelse
                 </div>
             </div>
         </div>
@@ -964,6 +986,70 @@
     </div>
 @endif
 </div>
+
+{{-- ── Oydan oyga o'tkazma ── --}}
+@if($showMt)
+    @teleport('body')
+    <div class="yb yb-ov">{{-- ma'lumot kiritiladi — tashqariga bosilganda yopilmaydi --}}
+        <div class="yb-modal" style="max-width:520px">
+            <div class="yb-modal-h" style="background:#dbeafe">⇄ Oydan oyga o'tkazish <button type="button" wire:click="$set('showMt', false)">×</button></div>
+            <div class="yb-modal-b">
+                @php
+                    $mtAccs = $allAccounts->filter(fn ($a) => !$a->is_personal && !$a->user_id);
+                    $mtName = fn ($ym) => $ym ? \Carbon\Carbon::createFromFormat('Y-m', $ym)->translatedFormat('F Y') : '';
+                @endphp
+                <div class="yb-grid2">
+                    <div class="yb-fld">
+                        <label>Qaysi oydan <i>*</i></label>
+                        <input type="month" class="yb-in" wire:model.live="mtFromYm">
+                        @error('mtFromYm')<div class="yb-err">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="yb-fld">
+                        <label>Qaysi oyga <i>*</i></label>
+                        <input type="month" class="yb-in" wire:model.live="mtToYm">
+                        @error('mtToYm')<div class="yb-err">{{ $message }}</div>@enderror
+                    </div>
+                </div>
+                <div class="yb-grid2">
+                    <div class="yb-fld">
+                        <label>Qaysi hamyondan <i>*</i></label>
+                        <select class="yb-in" wire:model.live="mtFromAcc">
+                            <option value="">— tanlang —</option>
+                            @foreach($mtAccs as $a)<option value="{{ $a->id }}">{{ $a->name }} · {{ $fmt($mtFromBal[$a->id] ?? 0) }}</option>@endforeach
+                        </select>
+                        @if($mtFromAcc)<div class="yb-sub" style="margin-top:4px">{{ $mtName($mtFromYm) }} puli: <b class="{{ ($mtFromBal[$mtFromAcc] ?? 0) > 0 ? 'yb-g' : 'yb-r' }}">{{ $fmt($mtFromBal[$mtFromAcc] ?? 0) }} so'm</b></div>@endif
+                        @error('mtFromAcc')<div class="yb-err">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="yb-fld">
+                        <label>Qaysi hamyonga <i>*</i></label>
+                        <select class="yb-in" wire:model.live="mtToAcc">
+                            <option value="">— tanlang —</option>
+                            @foreach($mtAccs as $a)<option value="{{ $a->id }}">{{ $a->name }} · {{ $fmt($mtToBal[$a->id] ?? 0) }}</option>@endforeach
+                        </select>
+                        @if($mtToAcc)<div class="yb-sub" style="margin-top:4px">{{ $mtName($mtToYm) }} puli: <b class="{{ ($mtToBal[$mtToAcc] ?? 0) < 0 ? 'yb-r' : 'yb-g' }}">{{ $fmt($mtToBal[$mtToAcc] ?? 0) }} so'm</b></div>@endif
+                        @error('mtToAcc')<div class="yb-err">{{ $message }}</div>@enderror
+                    </div>
+                </div>
+                <div class="yb-fld">
+                    <label>Summa (so'm) <i>*</i></label>
+                    <input type="text" inputmode="numeric" class="yb-in" wire:model="mtAmount" placeholder="0"
+                           x-data x-on:input="let v=$el.value.replace(/\D/g,'');$el.value=v.replace(/\B(?=(\d{3})+(?!\d))/g,' ')">
+                    @error('mtAmount')<div class="yb-err">{{ $message }}</div>@enderror
+                </div>
+                <div class="yb-fld">
+                    <label>Izoh</label>
+                    <input type="text" class="yb-in" wire:model="mtComment" placeholder="Masalan: avgust ortig'i sentabrga">
+                </div>
+                <div class="yb-sub" style="margin-bottom:10px">Pul {{ $mtName($mtFromYm) ?: 'tanlangan oy' }} hamyonidan ayirilib, {{ $mtName($mtToYm) ?: 'tanlangan oy' }} hamyoniga qo'shiladi. Hamyonlarning umumiy qoldig'i va sof foyda o'zgarmaydi — faqat oylar "Qoldiq"i.</div>
+                <div style="display:flex;gap:10px">
+                    <button type="button" class="yb-b2" wire:click="$set('showMt', false)">Bekor qilish</button>
+                    <button type="button" class="yb-b2" style="background:#2563eb;border-color:#2563eb;color:#fff" wire:click="saveMonthTransfer" wire:loading.attr="disabled">O'tkazish</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endteleport
+@endif
 
 {{-- ── Kirim qo'shish: loyiha tanlash ── --}}
 @if($showKirimPicker)
