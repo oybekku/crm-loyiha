@@ -656,7 +656,7 @@
         <div class="yb-h"><span>{{ $this->ybYear }}-yil hisoboti <span class="yb-sub">Tushum — to'lov sanasi bo'yicha; xarajat — Buxgalteriyadagi qoida bo'yicha. Xarajat yoki oylik summasini bosing — ro'yxati ochiladi.</span></span></div>
         <div class="yb-tbl-wrap">
         <table class="yb-tbl">
-            <thead><tr><th>Oy</th><th class="num" style="color:#0f766e" title="Shu oyda ochilgan loyihalarning shartnoma summasi (Dashboard'dagi kabi). Ostida: bekor qilingan va mijozlar qarzi">Loyihalar summasi</th><th class="num" title="Shu oy loyihalari uchun mijozlardan haqiqatda kelgan pul">Tushum (kelgan pul)</th><th class="num">Xarajat</th><th class="num" title="Toposyomka, ariza, eskiz ishlaridan. Kerak — shu oy loyihalaridagi barcha ishlar ulushi (Oylik hisobotdagi 'Hisoblangan'). To'langan — haqiqatda berilgan.">Ishbay oylik: kerak / to'langan</th><th class="num" title="Direktor, admin, buxgalter va h.k. — ishga bog'liq emas, firma daromadidan">Ma'muriy oylik</th><th class="num">Jami chiqim</th><th class="num" title="Tushum − jami chiqim: shu oy puli hamyonlarda qancha qoldi (bosing — Naqd, Karta, Bank)">Qoldiq</th><th class="num" title="To'liq — loyihalar summasi − xarajat − ishbay oylik (hisoblangan); Hozirgi — tushgan pul − xarajat − ishbay oylik (mijoz to'lagani bo'yicha, berilgan-berilmaganidan qat'i nazar). Ma'muriy oylik kirmaydi.">Sof foyda: to'liq / hozirgi</th><th class="num" title="Hozirgi sof foyda / tushum">Rentabellik</th></tr></thead>
+            <thead><tr><th>Oy</th><th class="num" style="color:#0f766e" title="Shu oyda ochilgan loyihalarning shartnoma summasi (Dashboard'dagi kabi). Ostida: bekor qilingan va mijozlar qarzi">Loyihalar summasi</th><th class="num" title="Shu oy loyihalari uchun mijozlardan haqiqatda kelgan pul">Tushum (kelgan pul)</th><th class="num">Xarajat</th><th class="num" title="Toposyomka, ariza, eskiz ishlaridan. Kerak — shu oy loyihalaridagi barcha ishlar ulushi (Oylik hisobotdagi 'Hisoblangan'). To'langan — haqiqatda berilgan.">Ishbay oylik: kerak / to'langan</th><th class="num" title="Direktor, admin, buxgalter va h.k. — ishga bog'liq emas, firma daromadidan">Ma'muriy oylik</th><th class="num">Jami chiqim</th><th class="num" title="To'liq — loyihalar summasi − xarajat − ishbay oylik (hisoblangan); Hozirgi — tushgan pul − xarajat − ishbay oylik (mijoz to'lagani bo'yicha, berilgan-berilmaganidan qat'i nazar). Ma'muriy oylik kirmaydi.">Sof foyda: to'liq / hozirgi</th><th class="num" title="Hozirgi sof foyda / tushum">Rentabellik</th><th class="num" title="Tushum − jami chiqim: shu oy puli hamyonlarda qancha qoldi (bosing — Naqd, Karta, Bank)">Qoldiq</th></tr></thead>
             <tbody>
             @php
                 // 👁 bilan yashirilgan oylar "Jami"ga kirmaydi (boshqa oyga ham qo'shilmaydi)
@@ -694,7 +694,6 @@
                         </span>
                     </td>
                     <td class="num yb-r">{{ $fmt($c['expense']) }}</td>
-                    <td class="num {{ $c['profit'] < 0 ? 'yb-r' : '' }}">@if($c['income'] != 0 || $c['expense'] != 0)<span class="yb-cell-link" wire:click.stop="openWallet({{ $c['m'] }})" title="Qaysi hamyonda qancha — Naqd, Karta, Bank">{{ $fmt($c['profit']) }}</span>@else{{ $fmt($c['profit']) }}@endif</td>
                     <td class="num">
                         @if($c['projSum'] != 0 || $c['income'] != 0 || $c['expense'] != 0)
                             <span class="yb-cell-link" wire:click.stop="openProfit({{ $c['m'] }})" title="Hisob-kitobni ko'rish">
@@ -705,6 +704,7 @@
                         @else 0 @endif
                     </td>
                     <td class="num">{{ $c['income'] > 0 ? round($c['curProfit'] / $c['income'] * 100) . '%' : '—' }}</td>
+                    <td class="num {{ $c['profit'] < 0 ? 'yb-r' : '' }}">@if($c['income'] != 0 || $c['expense'] != 0)<span class="yb-cell-link" wire:click.stop="openWallet({{ $c['m'] }})" title="Qaysi hamyonda qancha — Naqd, Karta, Bank">{{ $fmt($c['profit']) }}</span>@else{{ $fmt($c['profit']) }}@endif</td>
                 </tr>
             @endforeach
                 @php
@@ -724,9 +724,9 @@
                     </td>
                     <td class="num" style="color:#7c3aed">{{ $fmt($sum('mamuriy')) }}</td>
                     <td class="num yb-r">{{ $fmt($yExpense) }}</td>
-                    <td class="num">{{ $fmt($yIncome - $yExpense) }}</td>
                     <td class="num"><span style="color:{{ $yFull < 0 ? '#dc2626' : '#15803d' }}">{{ $yFull < 0 ? '−' : '' }}{{ $fmt(abs($yFull)) }}</span> / {{ $yCur < 0 ? '−' : '' }}{{ $fmt(abs($yCur)) }}<span class="yb-sub">{{ $sum('projCount') }} ta loyiha</span></td>
                     <td class="num">{{ $yIncome > 0 ? round($yCur / $yIncome * 100) . '%' : '—' }}</td>
+                    <td class="num">{{ $fmt($yIncome - $yExpense) }}</td>
                 </tr>
             </tbody>
         </table>
