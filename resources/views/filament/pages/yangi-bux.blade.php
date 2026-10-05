@@ -640,7 +640,7 @@
     {{-- Shu oydagi to'lovlar tarixi --}}
     @if($S['historyUser'])
         @teleport('body')
-        <div class="yb yb-ov" wire:click.self="$set('historyUserId', null)">
+        <div class="yb yb-ov" x-data="{ d: false }" @mousedown.self="d = true" @mouseup.self="if (d) $wire.$set('historyUserId', null); d = false">
             <div class="yb-modal">
                 <div class="yb-modal-h" style="background:#dbeafe">{{ $S['historyUser']->name }} — {{ $monthLabel }} to'lovlari <button type="button" wire:click="$set('historyUserId', null)">×</button></div>
                 <div class="yb-modal-b">
@@ -787,7 +787,7 @@
     @if($profitInfo)
         @php $P = $profitInfo; @endphp
         @teleport('body')
-        <div class="yb yb-ov" wire:click.self="closeProfit">
+        <div class="yb yb-ov" x-data="{ d: false }" @mousedown.self="d = true" @mouseup.self="if (d) $wire.closeProfit(); d = false">
             <div class="yb-modal" style="max-width:640px">
                 <div class="yb-modal-h" style="background:#dcfce7">{{ $P['title'] }} — sof foyda <button type="button" wire:click="closeProfit">×</button></div>
                 <div class="yb-modal-b">
@@ -822,7 +822,7 @@
 
     @if($wallet)
         @teleport('body')
-        <div class="yb yb-ov" wire:click.self="closeWallet">
+        <div class="yb yb-ov" x-data="{ d: false }" @mousedown.self="d = true" @mouseup.self="if (d) $wire.closeWallet(); d = false">
             <div class="yb-modal" style="max-width:760px">
                 <div class="yb-modal-h" style="background:#dbeafe">{{ $wallet['title'] }} — qoldiq hamyonlar bo'yicha <button type="button" wire:click="closeWallet">×</button></div>
                 <div class="yb-modal-b" style="max-height:72vh;overflow:auto">
@@ -871,7 +871,7 @@
     @if($repDetail)
         @php $sal = $repKind !== 'xarajat'; $mam = $repKind === 'mamuriy'; $sc = $mam ? '#7c3aed' : '#b45309'; @endphp
         @teleport('body')
-        <div class="yb yb-ov" wire:click.self="closeRepDetail">
+        <div class="yb yb-ov" x-data="{ d: false }" @mousedown.self="d = true" @mouseup.self="if (d) $wire.closeRepDetail(); d = false">
             <div class="yb-modal" style="max-width:820px">
                 <div class="yb-modal-h" style="background:{{ $mam ? '#ede9fe' : ($sal ? '#fef3c7' : '#fee2e2') }}">{{ $repDetail['title'] }} <button type="button" wire:click="closeRepDetail">×</button></div>
                 <div class="yb-modal-b" style="max-height:72vh;overflow:auto">
@@ -968,7 +968,7 @@
 {{-- ── Kirim qo'shish: loyiha tanlash ── --}}
 @if($showKirimPicker)
     @teleport('body')
-    <div class="yb yb-ov" wire:click.self="$set('showKirimPicker', false)">
+    <div class="yb yb-ov">{{-- ma'lumot kiritiladi — tashqariga bosilganda yopilmaydi (matn belgilab sichqoncha tashqarida qo'yilsa ham) --}}
         <div class="yb-modal">
             <div class="yb-modal-h" style="background:#dcfce7">Kirim qo'shish — loyihani tanlang <button type="button" wire:click="$set('showKirimPicker', false)">×</button></div>
             <div class="yb-modal-b">
@@ -996,7 +996,7 @@
 {{-- ── Chiqim qo'shish / tahrirlash ── --}}
 @if($showChiqimModal)
     @teleport('body')
-    <div class="yb yb-ov" wire:click.self="closeChiqim">
+    <div class="yb yb-ov">{{-- ma'lumot kiritiladi — tashqariga bosilganda yopilmaydi (matn belgilab sichqoncha tashqarida qo'yilsa ham) --}}
         <div class="yb-modal">
             <div class="yb-modal-h" style="background:#fee2e2">{{ $chiqimId ? 'Chiqimni tahrirlash' : "Chiqim qo'shish" }} <button type="button" wire:click="closeChiqim">×</button></div>
             <div class="yb-modal-b">
@@ -1108,7 +1108,7 @@
 {{-- ── Doimiy to'lov qo'shish / tahrirlash ── --}}
 @if($showRecModal)
     @teleport('body')
-    <div class="yb yb-ov" wire:click.self="$set('showRecModal', false)">
+    <div class="yb yb-ov">{{-- ma'lumot kiritiladi — tashqariga bosilganda yopilmaydi (matn belgilab sichqoncha tashqarida qo'yilsa ham) --}}
         <div class="yb-modal" style="max-width:440px">
             <div class="yb-modal-h" style="background:#dbeafe">{{ $recId ? "Doimiy to'lovni tahrirlash" : "Doimiy to'lov qo'shish" }} <button type="button" wire:click="$set('showRecModal', false)">×</button></div>
             <div class="yb-modal-b">
@@ -1158,7 +1158,7 @@
 {{-- ── Maosh to'lash / tahrirlash ── --}}
 @if($showPayModal)
     @teleport('body')
-    <div class="yb yb-ov" wire:click.self="$set('showPayModal', false)">
+    <div class="yb yb-ov">{{-- ma'lumot kiritiladi — tashqariga bosilganda yopilmaydi (matn belgilab sichqoncha tashqarida qo'yilsa ham) --}}
         <div class="yb-modal" style="max-width:440px">
             <div class="yb-modal-h" style="background:#dcfce7">{{ $payEditId ? "To'lovni tahrirlash" : "Maosh to'lash — " . $monthLabel }} <button type="button" wire:click="$set('showPayModal', false)">×</button></div>
             <div class="yb-modal-b">
@@ -1210,7 +1210,7 @@
 {{-- ── Xodimga xarajat kartasi ochish ── --}}
 @if($showNewCardModal)
     @teleport('body')
-    <div class="yb yb-ov" wire:click.self="$set('showNewCardModal', false)">
+    <div class="yb yb-ov">{{-- ma'lumot kiritiladi — tashqariga bosilganda yopilmaydi (matn belgilab sichqoncha tashqarida qo'yilsa ham) --}}
         <div class="yb-modal" style="max-width:440px">
             <div class="yb-modal-h" style="background:#f3f4f6">Xodimni ko'rsatish (xarajatlar kartasi) <button type="button" wire:click="$set('showNewCardModal', false)">×</button></div>
             <div class="yb-modal-b">
