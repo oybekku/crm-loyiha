@@ -94,15 +94,14 @@
 .yb-rep th.yb-colh button:hover{background:var(--yb-bd)}
 .yb-rep th.yb-colh button:hover .yb-colh-c{opacity:1;color:var(--cc)}
 .yb-rep .yb-colh-l{border-bottom:2px solid var(--cc);padding-bottom:2px}
-.yb-rep .yb-colh-c{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:4px;font-size:10px;opacity:.35;transition:opacity .15s}
-.yb-rep th.yb-colh.cx{width:34px;min-width:34px;max-width:34px;background:var(--yb-soft)}
-.yb-rep th.yb-colh.cx button{flex-direction:column;justify-content:flex-start;align-items:center;padding:8px 0;gap:6px;min-height:150px}
-.yb-rep th.yb-colh.cx .yb-colh-c{opacity:1;background:var(--cc);color:#fff;font-size:9px}
-.yb-rep .yb-colh-v{writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;font-size:11px;font-weight:700;color:var(--cc)}
+.yb-rep .yb-colh-c{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;font-size:11px;opacity:.35;transition:opacity .15s}
+.yb-rep th.yb-colh.cx .yb-colh-l{opacity:.45;border-bottom-style:dashed}
+.yb-rep th.yb-colh.cx .yb-colh-c{opacity:.9}
+.yb-rep tr.yb-zero-row .yb-cell-link{pointer-events:none;border-bottom-color:transparent}
 .yb-eye{border:none;background:none;cursor:pointer;font-size:13px;padding:0 4px 0 0;opacity:.45;vertical-align:middle}
 .yb-eye:hover{opacity:1}
 .yb-eye.off{opacity:.9}
-.yb-tbl tr.yb-hid-row td{background:repeating-linear-gradient(45deg,transparent 0 8px,var(--yb-soft) 8px 16px);color:var(--yb-mu)}
+
 .yb-work{display:block;margin:3px 0 0 32px;font-size:10.5px;line-height:1.35;color:var(--yb-mu);font-weight:400;white-space:normal}
 .yb-work b{color:#d97706;font-weight:700}
 .yb-tbl tr.yb-just td{background:#fef9c3 !important;animation:ybJust 1.2s ease-in-out 2}
@@ -679,14 +678,32 @@
                     'qoldiq'  => ["Qoldiq", "Tushum − jami chiqim: shu oy puli hamyonlarda qancha qoldi (bosing — Naqd, Karta, Bank)", '#2563eb'],
                 ];
                 $colX = array_values(array_intersect(array_keys($repCols), $repColsHidden));
+                // Yashirilgan ustun / oy — qatori va ustuni joyida qoladi, faqat qiymatlar 0
+                // ko'rsatiladi va "Jami"ga ham 0 bo'lib kiradi (bazadagi ma'lumot o'zgarmaydi).
+                $colFields = [
+                    'loyiha'  => ['allSum', 'allCount', 'cancelSum', 'debtSum'],
+                    'tushum'  => ['income'],
+                    'xarajat' => ['other'],
+                    'ishbay'  => ['ishbay', 'ishbayDue', 'ishbayEarned'],
+                    'mamuriy' => ['mamuriy'],
+                    'chiqim'  => ['expense'],
+                    'foyda'   => ['fullProfit', 'curProfit', 'projCount', 'projSum'],
+                    'qoldiq'  => ['profit'],
+                ];
+                $hid = array_map('intval', $repHidden);
+                $chartV = array_map(function ($c) use ($hid, $colX, $colFields) {
+                    $c['hidden'] = in_array($c['m'], $hid, true);
+                    foreach ($colFields as $ck => $fields) {
+                        if ($c['hidden'] || in_array($ck, $colX, true)) foreach ($fields as $fk) $c[$fk] = 0;
+                    }
+                    return $c;
+                }, $chart);
+                $colIdx = array_flip(array_keys($repCols));
             @endphp
             @if($colX)
                 <style>
-                    @foreach(array_keys($repCols) as $ci => $ck)
-                        @if(in_array($ck, $colX, true))
-                            .yb-rep tr:not(.yb-hid-row) > td:nth-child({{ $ci + 2 }}){width:34px;min-width:34px;max-width:34px;padding:0 !important;font-size:0 !important;background:repeating-linear-gradient(180deg,transparent 0 6px,var(--yb-soft) 6px 12px)}
-                            .yb-rep tr:not(.yb-hid-row) > td:nth-child({{ $ci + 2 }}) > *{display:none !important}
-                        @endif
+                    @foreach($colX as $ck)
+                        .yb-rep td:nth-child({{ $colIdx[$ck] + 2 }}) .yb-cell-link{pointer-events:none;border-bottom-color:transparent}
                     @endforeach
                 </style>
             @endif
@@ -694,34 +711,22 @@
             <thead><tr><th>Oy</th>
                 @foreach($repCols as $ck => [$cl, $ct, $cc])
                     @php $isX = in_array($ck, $colX, true); @endphp
-                    <th class="num yb-colh {{ $isX ? 'cx' : '' }}" title="{{ $isX ? $cl . ' — yoyish uchun bosing' : $ct }}">
+                    <th class="num yb-colh {{ $isX ? 'cx' : '' }}" title="{{ $isX ? $cl . ' — yashirilgan, ko\'rsatish uchun bosing' : $ct }}">
                         <button type="button" wire:click="toggleRepCol('{{ $ck }}')" style="--cc:{{ $cc }}">
-                            @if($isX)
-                                <span class="yb-colh-c">▸</span><span class="yb-colh-v">{{ $cl }}</span>
-                            @else
-                                <span class="yb-colh-l">{{ $cl }}</span><span class="yb-colh-c" title="Ustunni yig'ish">◂</span>
-                            @endif
+                            <span class="yb-colh-l">{{ $cl }}</span><span class="yb-colh-c" title="{{ $isX ? 'Ko\'rsatish' : 'Yashirish (qiymatlar 0 bo\'ladi)' }}">{{ $isX ? '🙈' : '👁' }}</span>
                         </button>
                     </th>
                 @endforeach
             </tr></thead>
             <tbody>
-            @php
-                // 👁 bilan yashirilgan oylar "Jami"ga kirmaydi (boshqa oyga ham qo'shilmaydi)
-                $hid = array_map('intval', $repHidden);
-                $vis = array_values(array_filter($chart, fn ($c) => !in_array($c['m'], $hid, true)));
-            @endphp
-            @foreach($chart as $c)
-                @php $due = $salaryDue[$c['m']] ?? null; $mDue = $mamuriyDue[$c['m']] ?? null; $isHid = in_array($c['m'], $hid, true); @endphp
-                @if($isHid)
-                <tr class="yb-hid-row">
-                    <td style="white-space:nowrap"><button type="button" class="yb-eye off" wire:click.stop="toggleRepMonth({{ $c['m'] }})" title="Ko'rsatish">🙈</button> {{ $c['label'] }}</td>
-                    <td colspan="8" style="color:var(--yb-mu);font-size:12px">••• yashirilgan — "Jami"ga qo'shilmaydi. Ko'rsatish uchun 🙈 ni bosing.</td>
-                </tr>
-                @continue
-                @endif
-                <tr wire:click="ybSetMonth({{ $c['m'] }})" style="cursor:pointer;{{ $c['m'] === $this->ybMonth ? 'font-weight:700' : '' }}">
-                    <td style="white-space:nowrap"><button type="button" class="yb-eye" wire:click.stop="toggleRepMonth({{ $c['m'] }})" title="Bu oyni yashirish (Jamiga kirmaydi)">👁</button> {{ $c['label'] }}</td>
+            @foreach($chartV as $c)
+                @php
+                    $isHid = $c['hidden'];
+                    $due  = $isHid || in_array('ishbay', $colX, true) ? null : ($salaryDue[$c['m']] ?? null);
+                    $mDue = $isHid || in_array('mamuriy', $colX, true) ? null : ($mamuriyDue[$c['m']] ?? null);
+                @endphp
+                <tr wire:click="ybSetMonth({{ $c['m'] }})" @class(['yb-zero-row' => $isHid]) style="cursor:pointer;{{ $c['m'] === $this->ybMonth ? 'font-weight:700' : '' }}">
+                    <td style="white-space:nowrap"><button type="button" @class(['yb-eye', 'off' => $isHid]) wire:click.stop="toggleRepMonth({{ $c['m'] }})" title="{{ $isHid ? 'Ko\'rsatish' : 'Bu oyni yashirish (qiymatlar 0 bo\'ladi)' }}">{{ $isHid ? '🙈' : '👁' }}</button> {{ $c['label'] }}</td>
                     <td class="num" style="color:#0f766e">
                         {{ $fmt($c['allSum']) }}
                         @if($c['allCount'])<span class="yb-sub">{{ $c['allCount'] }} ta @if($c['cancelSum'] > 0) · bekor {{ $fmt($c['cancelSum']) }} @endif @if($c['debtSum'] > 0) · qarz {{ $fmt($c['debtSum']) }} @endif</span>@endif
@@ -755,8 +760,8 @@
                 </tr>
             @endforeach
                 @php
-                    $sum = fn ($k) => array_sum(array_column($vis, $k));
-                    $yearDue = array_sum(array_map(fn ($c) => (float) ($salaryDue[$c['m']] ?? 0), $vis));
+                    $sum = fn ($k) => array_sum(array_column($chartV, $k));
+                    $yearDue = in_array('ishbay', $colX, true) ? 0 : array_sum(array_map(fn ($c) => $c['hidden'] ? 0 : (float) ($salaryDue[$c['m']] ?? 0), $chartV));
                     $yIncome = $sum('income'); $yExpense = $sum('expense'); $yIsh = $sum('ishbay');
                     $yFull = $sum('fullProfit'); $yCur = $sum('curProfit');
                 @endphp
