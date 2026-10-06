@@ -333,37 +333,14 @@ class ProjectResource extends Resource
                     ->label('Ish ko\'rsatkichi')
                     ->html()
                     ->state(function (Project $record): string {
-                        $record->loadMissing(['services.assignedUser', 'statusLogs']);
+                        // Faqat "Xizmat: Mas'ul" — kun/muddat yorliqlari (⏳ 0/7 kun va h.k.) olib tashlandi
+                        $record->loadMissing(['services.assignedUser']);
                         $rows = '';
                         foreach ($record->services as $svc) {
                             if (!$svc->assigned_user_id) continue;
-                            $name     = $svc->assignedUser?->name ?? '—';
-                            $log      = $record->statusLogs->where('status', $svc->service_name)->first();
-                            $svcLabel = \App\Models\Project::serviceOptions()[$svc->service_name] ?? $svc->service_name;
-                            $given    = $svc->deadline_days;
-                            if ($svc->work_started_at && $svc->deadline_days) {
-                                if ($log?->left_at) {
-                                    $took  = (int) \Carbon\Carbon::parse($svc->work_started_at)->diffInDays($log->left_at);
-                                    $diff  = $took - $given;
-                                    $badge = $diff <= 0
-                                        ? "<span style='background:#dcfce7;color:#16a34a;border-radius:4px;padding:1px 5px;font-size:10px;font-weight:700'>✓ {$took}/{$given} kun</span>"
-                                        : "<span style='background:#fee2e2;color:#dc2626;border-radius:4px;padding:1px 5px;font-size:10px;font-weight:700'>+{$diff} kun kechikdi</span>";
-                                } else {
-                                    $elapsed = (int) \Carbon\Carbon::parse($svc->work_started_at)->diffInDays(now());
-                                    $diff    = $elapsed - $given;
-                                    $remaining = $given - $elapsed;
-                                    if ($diff > 0) {
-                                        $badge = "<span style='background:#fee2e2;color:#dc2626;border-radius:4px;padding:1px 5px;font-size:10px;font-weight:700;animation:blink-warn 1s ease-in-out infinite;display:inline-block'>+{$diff} kun!</span>";
-                                    } elseif ($remaining <= 3) {
-                                        $badge = "<span style='background:#fee2e2;color:#dc2626;border-radius:4px;padding:1px 5px;font-size:10px;font-weight:700;animation:blink-warn 1s ease-in-out infinite;display:inline-block'>{$remaining} kun</span>";
-                                    } else {
-                                        $badge = "<span style='background:#e0f2fe;color:#0284c7;border-radius:4px;padding:1px 5px;font-size:10px;font-weight:700'>⏳ {$elapsed}/{$given} kun</span>";
-                                    }
-                                }
-                            } else {
-                                $badge = "<span style='background:#f3f4f6;color:#9ca3af;border-radius:4px;padding:1px 5px;font-size:10px'>—</span>";
-                            }
-                            $rows .= "<div style='font-size:11px;line-height:1.35;margin:1px 0'><span style='color:#6b7280'>{$svcLabel}:</span> <span style='font-weight:600'>{$name}</span> {$badge}</div>";
+                            $name     = e($svc->assignedUser?->name ?? '—');
+                            $svcLabel = e(\App\Models\Project::serviceOptions()[$svc->service_name] ?? $svc->service_name);
+                            $rows .= "<div style='font-size:11px;line-height:1.35;margin:1px 0'><span style='color:#6b7280'>{$svcLabel}:</span> <span style='font-weight:600'>{$name}</span></div>";
                         }
                         return $rows ?: '<span style="color:#d1d5db;font-size:11px">—</span>';
                     })
