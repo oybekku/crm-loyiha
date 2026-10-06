@@ -326,7 +326,8 @@ class ProjectResource extends Resource
                 Tables\Columns\TextColumn::make('owner_name')
                     ->label('Egasi')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->extraAttributes(['class' => 'pl-owner-name']), // 30% kattaroq (list-projects.blade.php)
 
                 Tables\Columns\TextColumn::make('services_performance')
                     ->label('Ish ko\'rsatkichi')
@@ -362,7 +363,7 @@ class ProjectResource extends Resource
                             } else {
                                 $badge = "<span style='background:#f3f4f6;color:#9ca3af;border-radius:4px;padding:1px 5px;font-size:10px'>—</span>";
                             }
-                            $rows .= "<div style='font-size:11px;margin-bottom:3px'><span style='color:#6b7280'>{$svcLabel}:</span> <span style='font-weight:600'>{$name}</span> {$badge}</div>";
+                            $rows .= "<div style='font-size:11px;line-height:1.35;margin:1px 0'><span style='color:#6b7280'>{$svcLabel}:</span> <span style='font-weight:600'>{$name}</span> {$badge}</div>";
                         }
                         return $rows ?: '<span style="color:#d1d5db;font-size:11px">—</span>';
                     })

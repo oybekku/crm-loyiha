@@ -12,7 +12,14 @@
     {{ $this->table }}
 
     {{-- Kategoriya ustunidagi "Jarayonda" yorlig'ining aylanuvchi halqasi --}}
-    <style>@keyframes pg-spin { to { transform: rotate(360deg); } }</style>
+    <style>
+        @keyframes pg-spin { to { transform: rotate(360deg); } }
+        /* Qatorlar ixchamroq — Filament standarti py-4 (16px) o'rniga 6px */
+        .fi-ta-table .fi-ta-text,
+        .fi-ta-table .fi-ta-selection-cell > div { padding-top: 6px !important; padding-bottom: 6px !important; }
+        /* Egasi (FISH) — 30% kattaroq (14px → 18px) */
+        .pl-owner-name, .pl-owner-name .fi-ta-text-item-label { font-size: 18px !important; line-height: 1.3; }
+    </style>
 
     {{-- Qatorga bosilganda ochiladigan tahrirlash oynasi (Kanbandagi bilan bir xil) --}}
     @livewire('project-edit-modal')

@@ -37,6 +37,7 @@ class ListProjectsRowClickTest extends TestCase
         $c->assertOk()->assertSee('TEST ListModal')->assertSee('Jarayonda');
         // Filtrlar jadval ustida ochiq turadi (yashirin tugma ichida emas)
         $c->assertSeeHtml('fi-ta-filters-above-content-ctn');
+        $c->assertSeeHtml('pl-owner-name'); // FISH kattaroq shrift klassi
 
         // Kategoriya: status → Tayyor / Jarayonda / To'xtatilgan
         $this->assertSame('jarayonda', Project::progressGroup('yangi'));
