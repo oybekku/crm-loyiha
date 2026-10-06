@@ -373,22 +373,23 @@ class ProjectResource extends Resource
                     ->searchable()
                     ->limit(30),
 
-                Tables\Columns\BadgeColumn::make('category')
+                // Umumiy holat: Tayyor (ko'k) / Jarayonda (sariq) / To'xtatilgan (qizil)
+                // — Project::progressGroup() statusdan hisoblaydi.
+                Tables\Columns\TextColumn::make('progress_group')
                     ->label('Kategoriya')
-                    ->formatStateUsing(fn($state) => Project::categoryOptions()[$state] ?? $state)
-                    ->colors(['primary' => fn() => true]),
+                    ->html()
+                    ->state(fn (Project $record) => Project::progressGroup($record->status))
+                    ->formatStateUsing(function ($state) {
+                        $g = Project::progressGroupOptions()[$state];
+                        $c = $g['color'];
+                        return "<span style='display:inline-block;white-space:nowrap;font-size:12px;font-weight:600;padding:2px 10px;border-radius:20px;background:{$c}1a;color:{$c};border:1px solid {$c}55'>" . e($g['label']) . "</span>";
+                    }),
 
-                // Kanban ustunlari (ProjectStatus) nomi va rangi bilan — xom kalit
-                // (yangi_toposyomka) emas, "Yangi Toposyomka" ko'rinadi.
+                // Kanban ustuni nomi (xom kalit emas) — oddiy matn, rangsiz
                 Tables\Columns\TextColumn::make('status')
                     ->label('Holat')
-                    ->html()
-                    ->formatStateUsing(function ($state) {
-                        $s     = \App\Models\ProjectStatus::allOrdered()->firstWhere('key', $state);
-                        $label = e($s?->label ?? (Project::statusOptions()[$state] ?? $state));
-                        $c     = preg_match('/^#[0-9a-fA-F]{6}$/', (string) $s?->color) ? $s->color : '#6b7280';
-                        return "<span style='display:inline-block;white-space:nowrap;font-size:12px;font-weight:600;padding:2px 10px;border-radius:20px;background:{$c}1f;color:{$c};border:1px solid {$c}55'>{$label}</span>";
-                    }),
+                    ->formatStateUsing(fn ($state) => \App\Models\ProjectStatus::allOrdered()->firstWhere('key', $state)?->label
+                        ?? (Project::statusOptions()[$state] ?? $state)),
 
                 Tables\Columns\TextColumn::make('total_price')
                     ->label('Umumiy')
@@ -442,9 +443,12 @@ class ProjectResource extends Resource
                     ->label('Holat')
                     ->options(fn () => \App\Models\ProjectStatus::asOptions() ?: Project::statusOptions()),
 
-                SelectFilter::make('category')
+                SelectFilter::make('progress_group')
                     ->label('Kategoriya')
-                    ->options(Project::categoryOptions()),
+                    ->options(collect(Project::progressGroupOptions())->map(fn ($g) => $g['label'])->all())
+                    ->query(fn (Builder $query, array $data) => filled($data['value'] ?? null)
+                        ? $query->progressGroup($data['value'])
+                        : $query),
 
                 SelectFilter::make('assignedUsers')
                     ->label("Hodim")

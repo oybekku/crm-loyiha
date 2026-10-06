@@ -34,7 +34,16 @@ class ListProjectsRowClickTest extends TestCase
 
         $c = Livewire::test(ListProjects::class);
         $c->call('loadTable');
-        $c->assertOk()->assertSee('TEST ListModal');
+        $c->assertOk()->assertSee('TEST ListModal')->assertSee('Jarayonda');
+
+        // Kategoriya: status → Tayyor / Jarayonda / To'xtatilgan
+        $this->assertSame('jarayonda', Project::progressGroup('yangi'));
+        $this->assertSame('jarayonda', Project::progressGroup('eskiz_loyiha'));
+        $this->assertSame('tayyor', Project::progressGroup('tugallangan'));
+        $this->assertSame('toxtatilgan', Project::progressGroup('vaxtincha_toxtatilgan'));
+        $c->filterTable('progress_group', 'jarayonda')->assertCanSeeTableRecords([$project]);
+        $c->filterTable('progress_group', 'tayyor')->assertCanNotSeeTableRecords([$project]);
+        $c->resetTableFilters();
         $c->assertSeeHtml("openProjectEditModal(&#039;{$project->id}&#039;)");
         $c->call('openProjectEditModal', (string) $project->id)
           ->assertDispatched('open-edit-modal', id: $project->id);

@@ -366,6 +366,39 @@ class Project extends Model
         return $query->whereNull('timer_paused_at');
     }
 
+    // Loyihalar ro'yxatidagi umumiy holat: tayyor / jarayonda / to'xtatilgan.
+    // Ariza, Toposyomka, Eskiz loyiha va h.k. — hammasi "jarayonda".
+    public const PROGRESS_TAYYOR_STATUSES      = ['tugallangan', 'didox', 'taqdim_etilgan'];
+    public const PROGRESS_TOXTATILGAN_STATUSES = ['vaxtincha_toxtatilgan', 'bekor_qilingan'];
+
+    public static function progressGroup(?string $status): string
+    {
+        return match (true) {
+            in_array($status, self::PROGRESS_TAYYOR_STATUSES, true)      => 'tayyor',
+            in_array($status, self::PROGRESS_TOXTATILGAN_STATUSES, true) => 'toxtatilgan',
+            default                                                      => 'jarayonda',
+        };
+    }
+
+    // Ro'yxat filtri uchun — progressGroup() bilan bir xil qoida, SQL ko'rinishida
+    public function scopeProgressGroup($query, string $group)
+    {
+        return match ($group) {
+            'tayyor'      => $query->whereIn('status', self::PROGRESS_TAYYOR_STATUSES),
+            'toxtatilgan' => $query->whereIn('status', self::PROGRESS_TOXTATILGAN_STATUSES),
+            default       => $query->whereNotIn('status', [...self::PROGRESS_TAYYOR_STATUSES, ...self::PROGRESS_TOXTATILGAN_STATUSES]),
+        };
+    }
+
+    public static function progressGroupOptions(): array
+    {
+        return [
+            'tayyor'      => ['label' => 'Tayyor',        'color' => '#2563eb'], // ko'k
+            'jarayonda'   => ['label' => 'Jarayonda',     'color' => '#d97706'], // sariq
+            'toxtatilgan' => ['label' => "To'xtatilgan",  'color' => '#dc2626'], // qizil
+        ];
+    }
+
     public static function categoryOptions(): array
     {
         return [
