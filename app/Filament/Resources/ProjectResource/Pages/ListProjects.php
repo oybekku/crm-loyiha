@@ -8,6 +8,7 @@ use App\Models\Project;
 use App\Traits\HandlesProjectEditModalActions;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\On;
@@ -56,7 +57,12 @@ class ListProjects extends ListRecords
     {
         return parent::table($table)
             ->recordUrl(null)
-            ->recordAction('openProjectEditModal');
+            ->recordAction('openProjectEditModal')
+            // Filtrlar yashirin tugma ichida emas — qidiruv ustida doim ochiq turadi,
+            // tanlangan zahoti qo'llanadi ("Qo'llash" tugmasini bosish shart emas)
+            ->filtersLayout(FiltersLayout::AboveContent)
+            ->filtersFormColumns(3)
+            ->deferFilters(false);
     }
 
     public function openProjectEditModal(string $recordKey): void

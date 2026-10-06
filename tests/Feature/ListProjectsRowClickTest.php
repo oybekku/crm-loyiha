@@ -35,6 +35,8 @@ class ListProjectsRowClickTest extends TestCase
         $c = Livewire::test(ListProjects::class);
         $c->call('loadTable');
         $c->assertOk()->assertSee('TEST ListModal')->assertSee('Jarayonda');
+        // Filtrlar jadval ustida ochiq turadi (yashirin tugma ichida emas)
+        $c->assertSeeHtml('fi-ta-filters-above-content-ctn');
 
         // Kategoriya: status → Tayyor / Jarayonda / To'xtatilgan
         $this->assertSame('jarayonda', Project::progressGroup('yangi'));

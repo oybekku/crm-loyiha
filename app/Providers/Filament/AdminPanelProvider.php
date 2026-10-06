@@ -431,6 +431,12 @@ body, .fi-main p, .fi-main span, .fi-main h1, .fi-main h2, .fi-main h3,
     background-color: #1f2937 !important;
     color: #F3F4F6 !important;
 }
+/* Oddiy <select> ochilganda chiqadigan ro'yxat (option) brauzerning oq fonida
+   qolib, oq matn ko'rinmay qolardi — option'larni ham qorong'i qilamiz. */
+.fi-dropdown-panel select option {
+    background-color: #1f2937 !important;
+    color: #F3F4F6 !important;
+}
 .fi-dropdown-panel .choices__list--dropdown .choices__item.is-highlighted {
     background-color: rgba(255,255,255,0.1) !important;
 }
