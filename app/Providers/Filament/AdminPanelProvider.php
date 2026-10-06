@@ -835,6 +835,11 @@ HTML;
             $href = e(\App\Filament\Pages\KanbanBoard::getUrl());
             $projectLinks = "<a href=\"{$href}\" wire:navigate class=\"bsr-item bsr-item-top\" data-exact-href=\"{$href}\">Loyihalar</a>";
         }
+        // "Loyihalar ro'yxati" (jadval ko'rinishi) — Kanban linki tagida
+        if (\App\Filament\Resources\ProjectResource::canViewAny()) {
+            $href = e(\App\Filament\Resources\ProjectResource::getUrl('index'));
+            $projectLinks .= "<a href=\"{$href}\" wire:navigate class=\"bsr-item bsr-item-top\" data-exact-href=\"{$href}\">Loyihalar ro'yxati</a>";
+        }
 
         // Sonlar va linklar hozir ko'rinib turgan oyga mos bo'lishi uchun — agar
         // joriy sahifa ?year=&month= bilan ochilgan bo'lsa (masalan shu panelning
@@ -964,7 +969,7 @@ HTML;
             el.classList.toggle('active', onBoard && el.dataset.employeeId === emp);
         });
         document.querySelectorAll('.bh-status-rail .bsr-item-top').forEach(function(el){
-            var linkPath = el.getAttribute('href').split('?')[0];
+            var linkPath = new URL(el.href, window.location.origin).pathname;
             el.classList.toggle('active', !onBoard && url.pathname === linkPath);
         });
     }

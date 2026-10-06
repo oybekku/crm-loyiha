@@ -28,6 +28,10 @@ class ListProjectsRowClickTest extends TestCase
             'phones'     => ['+998900000000'],
         ]);
 
+        // Chap panelda "Loyihalar" tagida "Loyihalar ro'yxati" linki bor
+        $this->get('/admin/projects')->assertOk()
+            ->assertSeeInOrder(['bsr-top-nav', '>Loyihalar</a>', "bsr-item-top\" data-exact-href=\"" . url('/admin/projects') . "\">Loyihalar ro'yxati</a>", 'Loyiha holatlari'], false);
+
         $c = Livewire::test(ListProjects::class);
         $c->call('loadTable');
         $c->assertOk()->assertSee('TEST ListModal');
