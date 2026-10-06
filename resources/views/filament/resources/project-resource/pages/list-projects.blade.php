@@ -11,6 +11,9 @@
 
     {{ $this->table }}
 
+    {{-- Kategoriya ustunidagi "Jarayonda" yorlig'ining aylanuvchi halqasi --}}
+    <style>@keyframes pg-spin { to { transform: rotate(360deg); } }</style>
+
     {{-- Qatorga bosilganda ochiladigan tahrirlash oynasi (Kanbandagi bilan bir xil) --}}
     @livewire('project-edit-modal')
     @livewire('payment-modal')

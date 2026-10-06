@@ -382,7 +382,12 @@ class ProjectResource extends Resource
                     ->formatStateUsing(function ($state) {
                         $g = Project::progressGroupOptions()[$state];
                         $c = $g['color'];
-                        return "<span style='display:inline-block;white-space:nowrap;font-size:12px;font-weight:600;padding:2px 10px;border-radius:20px;background:{$c}1a;color:{$c};border:1px solid {$c}55'>" . e($g['label']) . "</span>";
+                        // "Jarayonda" — MyGOV'dagi "В обработке" kabi kichik aylanuvchi halqa
+                        // (@keyframes pg-spin — list-projects.blade.php'da)
+                        $spinner = $state === 'jarayonda'
+                            ? "<span style='display:inline-block;width:10px;height:10px;border:2px solid {$c}40;border-top-color:{$c};border-radius:50%;animation:pg-spin .8s linear infinite;flex-shrink:0'></span>"
+                            : '';
+                        return "<span style='display:inline-flex;align-items:center;gap:6px;white-space:nowrap;font-size:12px;font-weight:600;padding:2px 10px;border-radius:20px;background:{$c}1a;color:{$c};border:1px solid {$c}55'>{$spinner}" . e($g['label']) . "</span>";
                     }),
 
                 // Kanban ustuni nomi (xom kalit emas) — oddiy matn, rangsiz
