@@ -10,6 +10,7 @@ use App\Models\ProjectService;
 use App\Models\ProjectStatusLog;
 use App\Models\ServicePriceTier;
 use App\Models\User;
+use App\Traits\HandlesProjectEditModalActions;
 use App\Traits\HasMenuPermission;
 use Filament\Pages\Page;
 use Livewire\Attributes\Computed;
@@ -17,7 +18,7 @@ use Livewire\WithFileUploads;
 
 class KanbanBoard extends Page
 {
-    use WithFileUploads, HasMenuPermission;
+    use WithFileUploads, HasMenuPermission, HandlesProjectEditModalActions;
 
     protected static string $view = 'filament.pages.kanban-board';
     protected static ?string $navigationIcon = 'heroicon-o-view-columns';
@@ -346,37 +347,6 @@ class KanbanBoard extends Page
         $this->showServiceAssignModal = false;
     }
 
-    public function markComplete(int $projectId): void
-    {
-        if (!auth()->user()?->isAdmin() && !auth()->user()?->isMenejer()) return;
-
-        $project = Project::findOrFail($projectId);
-        $oldStatus = $project->status;
-        $project->status = 'tugallangan';
-        $project->saveQuietly();
-
-        ProjectStatusLog::where('project_id', $projectId)
-            ->whereNull('left_at')
-            ->update(['left_at' => now()]);
-
-        ProjectStatusLog::create([
-            'project_id' => $projectId,
-            'status'     => 'tugallangan',
-            'entered_at' => now(),
-            'changed_by' => auth()->id(),
-        ]);
-
-        // Loyiha tugallanganda — barcha xizmatlar ham tugatilgan deb belgilanadi
-        // (hodim tugatilgan ishlari/komissiya hisobiga tushishi uchun)
-        $project->services()->whereNull('completed_at')->update(['completed_at' => now()]);
-
-        // Egasiga "loyiha tayyor" SMS (saveQuietly bo'lgani uchun model hodisasi
-        // yonmaydi — shu sababli bu yerda aniq chaqiramiz). Natija dehydrate()da chiqadi.
-        $project->sendReadySms();
-
-        $this->dispatch('notify', type: 'success', message: 'Loyiha tugallandi!');
-    }
-
     // Zudlik olovini "Qabul qildim" — mas'ul hodim yoki admin/menejer o'chiradi
     public function acceptUrgent(int $projectId): void
     {
@@ -416,31 +386,6 @@ class KanbanBoard extends Page
         ]);
 
         $this->dispatch('notify', type: 'success', message: $on ? 'Zudlik yoqildi' : "Zudlik o'chirildi");
-    }
-
-    public function markUncomplete(int $projectId): void
-    {
-        if (!auth()->user()?->isAdmin() && !auth()->user()?->isMenejer()) return;
-
-        $project = Project::findOrFail($projectId);
-        $project->status = 'tolangan';
-        $project->saveQuietly();
-
-        ProjectStatusLog::where('project_id', $projectId)
-            ->whereNull('left_at')
-            ->update(['left_at' => now()]);
-
-        ProjectStatusLog::create([
-            'project_id' => $projectId,
-            'status'     => 'tolangan',
-            'entered_at' => now(),
-            'changed_by' => auth()->id(),
-        ]);
-
-        // Jarayonga qaytarilganda — xizmatlar "tugatilmagan" holatga qaytadi
-        $project->services()->update(['completed_at' => null]);
-
-        $this->dispatch('notify', type: 'info', message: 'Loyiha jarayonga qaytarildi!');
     }
 
 
@@ -717,68 +662,15 @@ class KanbanBoard extends Page
         return ['amount' => $amount, 'final' => $price - $amount];
     }
 
-    // ── Payment request (admin/menejer → kassir) ──────────────────────────
-    public function requestPayment(int $projectId): void
-    {
-        if (!auth()->user()?->canSeeAllProjects()) return;
-
-        $project = Project::find($projectId);
-        if (!$project) return;
-
-        $project->update([
-            'payment_requested_at' => now(),
-            'payment_requested_by' => auth()->id(),
-        ]);
-
-        $this->dispatch('notify', type: 'success', message: "Loyiha kassirga to'lovga yuborildi!");
-    }
-
-    public function cancelPaymentRequest(int $projectId): void
-    {
-        $project = Project::find($projectId);
-        if (!$project) return;
-
-        $project->update([
-            'payment_requested_at' => null,
-            'payment_requested_by' => null,
-        ]);
-
-        $this->dispatch('notify', type: 'info', message: "To'lov so'rovi bekor qilindi");
-    }
-
     // ── Edit modal (ProjectEditModal komponenti) eventlari ────────────────
     // Modaldagi amal tugmalari shu listenerlarni chaqiradi → tegishli modalni ochadi.
+    // Qolgan kb-* eventlari (to'lovga, tugallash, ko'chirish, refresh) —
+    // HandlesProjectEditModalActions traitida (Loyihalar ro'yxati bilan umumiy).
     #[\Livewire\Attributes\On('kb-open-route')]
     public function kbOpenRoute(int $id, string $status): void { $this->openRouteModal($id, $status); }
 
     #[\Livewire\Attributes\On('kb-open-assign')]
     public function kbOpenAssign(int $id): void { $this->openServiceAssignModal($id); }
-
-    #[\Livewire\Attributes\On('kb-request-payment')]
-    public function kbRequestPayment(int $id): void { $this->requestPayment($id); }
-
-    #[\Livewire\Attributes\On('kb-cancel-request')]
-    public function kbCancelRequest(int $id): void { $this->cancelPaymentRequest($id); }
-
-    // PaymentModal komponentida to'lov saqlangan/tahrirlangan/o'chirilgan yoki
-    // narx o'zgargandan keyin yuboriladi — kartalardagi summa/foizni
-    // yangilash uchun doskani qayta chizishga majburlaydi (bo'sh metod —
-    // chaqirilishning o'zi Livewire'ni re-render qilishga yetarli).
-    #[\Livewire\Attributes\On('kb-payment-saved')]
-    public function kbPaymentSaved(): void {}
-
-    #[\Livewire\Attributes\On('kb-mark-complete')]
-    public function kbMarkComplete(int $id): void { $this->markComplete($id); }
-
-    #[\Livewire\Attributes\On('kb-mark-uncomplete')]
-    public function kbMarkUncomplete(int $id): void { $this->markUncomplete($id); }
-
-    #[\Livewire\Attributes\On('kb-move')]
-    public function kbMove(int $id, string $status): void { $this->moveProject($id, $status); }
-
-    // Ma'lumot/xizmat o'zgardi — doska qaytadan render bo'lsin (getViewData)
-    #[\Livewire\Attributes\On('kb-refresh')]
-    public function kbRefresh(): void {}
 
     // ── Route to department modal ─────────────────────────────────────────
     public function openRouteModal(int $projectId, string $currentStatus): void
@@ -866,27 +758,6 @@ class KanbanBoard extends Page
     private function logStatusChange(Project $project, string $newStatus, int $allocDays = 0, ?int $assignedUserId = null): void
     {
         Project::logStatusChange($project, $newStatus, $allocDays, $assignedUserId);
-    }
-
-    // ── Move project between statuses ────────────────────────────────────
-    public function moveProject(int $projectId, string $newStatus): void
-    {
-        $valid = \App\Models\ProjectStatus::pluck('key')->toArray();
-        if (!in_array($newStatus, $valid)) return;
-
-        $project = Project::find($projectId);
-        if (!$project) return;
-
-        $this->logStatusChange($project, $newStatus);
-        $update = ['status' => $newStatus];
-        if ($newStatus === 'yangi_didox') {
-            $update['is_didox'] = true;
-            if (!$project->didox_added_at) {
-                $update['didox_added_at'] = now();
-                $update['didox_added_by'] = auth()->id();
-            }
-        }
-        $project->update($update);
     }
 
     // "Nomi" maydoni yonidagi tezkor teglar (Toposyomka / Eskiz loyiha) —

@@ -314,17 +314,6 @@ class ProjectResource extends Resource
 
     public static function table(Table $table): Table
     {
-        $statusColors = [
-            'yangi'            => 'info',
-            'tolov_jarayonida' => 'warning',
-            'yangi_loyihalar'  => 'primary',
-            'tekshirish'       => 'warning',
-            'tolangan'         => 'success',
-            'tugallangan'      => 'success',
-            'taqdim_etilgan'   => 'gray',
-            'bekor_qilingan'   => 'danger',
-        ];
-
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('number')
@@ -389,10 +378,17 @@ class ProjectResource extends Resource
                     ->formatStateUsing(fn($state) => Project::categoryOptions()[$state] ?? $state)
                     ->colors(['primary' => fn() => true]),
 
-                Tables\Columns\BadgeColumn::make('status')
+                // Kanban ustunlari (ProjectStatus) nomi va rangi bilan — xom kalit
+                // (yangi_toposyomka) emas, "Yangi Toposyomka" ko'rinadi.
+                Tables\Columns\TextColumn::make('status')
                     ->label('Holat')
-                    ->formatStateUsing(fn($state) => Project::statusOptions()[$state] ?? $state)
-                    ->colors($statusColors),
+                    ->html()
+                    ->formatStateUsing(function ($state) {
+                        $s     = \App\Models\ProjectStatus::allOrdered()->firstWhere('key', $state);
+                        $label = e($s?->label ?? (Project::statusOptions()[$state] ?? $state));
+                        $c     = preg_match('/^#[0-9a-fA-F]{6}$/', (string) $s?->color) ? $s->color : '#6b7280';
+                        return "<span style='display:inline-block;white-space:nowrap;font-size:12px;font-weight:600;padding:2px 10px;border-radius:20px;background:{$c}1f;color:{$c};border:1px solid {$c}55'>{$label}</span>";
+                    }),
 
                 Tables\Columns\TextColumn::make('total_price')
                     ->label('Umumiy')
@@ -444,7 +440,7 @@ class ProjectResource extends Resource
             ->filters([
                 SelectFilter::make('status')
                     ->label('Holat')
-                    ->options(Project::statusOptions()),
+                    ->options(fn () => \App\Models\ProjectStatus::asOptions() ?: Project::statusOptions()),
 
                 SelectFilter::make('category')
                     ->label('Kategoriya')
