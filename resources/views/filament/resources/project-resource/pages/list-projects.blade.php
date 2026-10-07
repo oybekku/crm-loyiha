@@ -14,8 +14,8 @@
     {{-- Jadval ko'rinishi: Kategoriya yorliqlari, ixcham qatorlar, FISH o'lchami, hover rangi --}}
     <style>
         @keyframes pg-spin { to { transform: rotate(360deg); } }
-        /* Kategoriya yorlig'i — "jonli" tugma: fon ikki tus orasida sekin oqadi,
-           har ~4 soniyada ustidan ingichka nur o'tadi */
+        /* Kategoriya yorlig'i — "jonli" tugma: fon ikki tus orasida sekin,
+           bilinar-bilinmas oqadi (ustidan o'tadigan oq nur olib tashlangan) */
         .pg-badge {
             position: relative; overflow: hidden;
             display: inline-flex; align-items: center; justify-content: center; gap: 6px;
@@ -28,16 +28,8 @@
             box-shadow: 0 1px 3px rgba(0,0,0,.15);
             animation: pg-flow 4s ease-in-out infinite;
         }
-        .pg-badge > * { position: relative; z-index: 1; }
-        .pg-badge::after {
-            content: ''; position: absolute; top: 0; left: -60%; width: 40%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
-            transform: skewX(-20deg);
-            animation: pg-shine 4s ease-in-out infinite;
-        }
         @keyframes pg-flow  { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
-        @keyframes pg-shine { 0%, 60% { left: -60%; } 100% { left: 130%; } }
-        @media (prefers-reduced-motion: reduce) { .pg-badge, .pg-badge::after { animation: none; } }
+        @media (prefers-reduced-motion: reduce) { .pg-badge { animation: none; } }
         /* Qatorlar ixchamroq — Filament standarti py-4 (16px) o'rniga 6px */
         .fi-ta-table .fi-ta-text,
         .fi-ta-table .fi-ta-selection-cell > div { padding-top: 6px !important; padding-bottom: 6px !important; }
