@@ -28,6 +28,8 @@
             box-shadow: 0 1px 3px rgba(0,0,0,.15);
             animation: pg-flow 4s ease-in-out infinite;
         }
+        /* Matn doim oq — panelning umumiy jadval matni rangi (qora) bosib ketmasin */
+        .fi-main .pg-badge, .fi-main .pg-badge * { color: #fff !important; }
         @keyframes pg-flow  { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
         @media (prefers-reduced-motion: reduce) { .pg-badge { animation: none; } }
         /* Qatorlar ixchamroq — Filament standarti py-4 (16px) o'rniga 6px */
