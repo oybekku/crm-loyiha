@@ -1,6 +1,7 @@
 {{--
     Mijozlar qarzlari jadvali — Yangi bux ("Mijozlar qarzlari" tabi) va alohida
     "Mijozlar qarzlari" sahifasi (MijozQarzlari) shu partialni ishlatadi.
+    Sahifada @livewire('project-edit-modal') bo'lishi kerak (qatorga bosish).
     Ma'lumot: HandlesClientDebts::clientDebtsViewData()
     ($debtRows, $debtMonths, $debtRowsSum, $debtAllSum, $debtAllCount)
 --}}
@@ -30,6 +31,7 @@
 .cd-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
 .cd-tbl th{font-size:11px;font-weight:600;color:var(--cd-mu);text-align:left;padding:9px 10px;background:var(--cd-soft);white-space:nowrap}
 .cd-tbl td{padding:8px 10px;border-top:1px solid var(--cd-bd);vertical-align:middle}
+.cd-row{cursor:pointer}
 .cd-tbl tr:hover td{background:#ecfdf5}
 .dark .cd-tbl tr:hover td{background:rgba(16,185,129,.08)}
 .cd-tbl .num{text-align:right;white-space:nowrap}
@@ -76,7 +78,9 @@
                     ? "Oxirgi qo'ng'iroq: " . $p->debt_called_at->format('d.m.Y H:i') . ($p->debtCalledBy ? ' · ' . $p->debtCalledBy->name : '')
                     : 'Hali telefon qilinmagan';
             @endphp
-            <tr wire:key="debt-{{ $p->id }}">
+            {{-- Qatorga bosilsa loyiha tahrirlash oynasi (izoh/tugma/telefon bosilganda emas) --}}
+            <tr wire:key="debt-{{ $p->id }}" class="cd-row"
+                @click="if (!$event.target.closest('button,a,input,select,textarea,label')) $wire.dispatch('open-edit-modal', { id: {{ $p->id }} })">
                 <td>{{ $i + 1 }}</td>
                 <td>{{ $p->seq_no }}</td>
                 <td>{{ $p->owner_name ?: '—' }}<span class="cd-sub">{{ \Illuminate\Support\Str::limit($p->address ?? $p->title, 45) }}</span></td>

@@ -28,7 +28,13 @@ use Livewire\WithFileUploads;
 //  - Chiqim = expenses (eski Buxgalteriyadagi "Xarajatlar" bilan bir jadval).
 class YangiBux extends Page
 {
-    use WithFileUploads, \App\Traits\HandlesClientDebts;
+    use WithFileUploads, \App\Traits\HandlesClientDebts, \App\Traits\HandlesProjectEditModalActions;
+
+    // Mijozlar qarzlari: qatorga bosilganda ochiladigan ProjectEditModal'dan "Tugallandi" SMS natijasi
+    public function dehydrate(): void
+    {
+        $this->flushReadySmsNotifications();
+    }
 
     protected static string  $view            = 'filament.pages.yangi-bux';
     protected static ?string $navigationIcon  = 'heroicon-o-chart-pie';

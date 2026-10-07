@@ -12,7 +12,13 @@ use Filament\Pages\Page;
  */
 class MijozQarzlari extends Page
 {
-    use HandlesClientDebts;
+    // Qatorga bosilganda ProjectEditModal ochiladi — uning amal tugmalari (kb-*) shu yerda
+    use HandlesClientDebts, \App\Traits\HandlesProjectEditModalActions;
+
+    public function dehydrate(): void
+    {
+        $this->flushReadySmsNotifications();
+    }
 
     protected static string  $view  = 'filament.pages.mijoz-qarzlari';
     protected static ?string $title = 'Mijozlar qarzlari';

@@ -42,6 +42,34 @@ trait HandlesProjectEditModalActions
     #[On('kb-refresh')]
     public function kbRefresh(): void {}
 
+    // "Yuborish" va "Hodim" oynalari faqat Kanban doskada bor — boshqa sahifalarda
+    // o'sha yerga loyiha oynasi ochiq holda o'tkazamiz. KanbanBoard bu ikkala
+    // metodni o'zining oynalarini ochadigan qilib qayta yozgan.
+    #[On('kb-open-route')]
+    public function kbOpenRoute(int $id, string $status): void
+    {
+        $this->redirect(\App\Filament\Pages\KanbanBoard::getUrl(['open' => $id]));
+    }
+
+    #[On('kb-open-assign')]
+    public function kbOpenAssign(int $id): void
+    {
+        $this->redirect(\App\Filament\Pages\KanbanBoard::getUrl(['open' => $id]));
+    }
+
+    // "Tugallandi" bosilganda yuborilgan SMS natijasi — toast qilib chiqarish
+    // (sahifaning dehydrate() metodidan chaqiriladi)
+    protected function flushReadySmsNotifications(): void
+    {
+        foreach (Project::$pendingSmsNotifications as $note) {
+            $this->dispatch('notify',
+                type: $note['ok'] ? 'success' : 'error',
+                message: $note['message']
+            );
+        }
+        Project::$pendingSmsNotifications = [];
+    }
+
     public function markComplete(int $projectId): void
     {
         if (!auth()->user()?->isAdmin() && !auth()->user()?->isMenejer()) return;

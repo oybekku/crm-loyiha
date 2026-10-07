@@ -2,16 +2,13 @@
 
 namespace App\Filament\Resources\ProjectResource\Pages;
 
-use App\Filament\Pages\KanbanBoard;
 use App\Filament\Resources\ProjectResource;
-use App\Models\Project;
 use App\Traits\HandlesProjectEditModalActions;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Livewire\Attributes\On;
 
 class ListProjects extends ListRecords
 {
@@ -70,30 +67,11 @@ class ListProjects extends ListRecords
         $this->dispatch('open-edit-modal', id: (int) $recordKey);
     }
 
-    // "Yuborish" va "Hodim" oynalari faqat Kanban doskada bor — o'sha yerga
-    // loyiha oynasi ochiq holda o'tkazamiz.
-    #[On('kb-open-route')]
-    public function kbOpenRoute(int $id, string $status): void
-    {
-        $this->redirect(KanbanBoard::getUrl(['open' => $id]));
-    }
-
-    #[On('kb-open-assign')]
-    public function kbOpenAssign(int $id): void
-    {
-        $this->redirect(KanbanBoard::getUrl(['open' => $id]));
-    }
-
     // "Tugallandi" bosilganda yuborilgan SMS natijasi — Kanbandagi kabi toast
+    // ("Yuborish"/"Hodim" esa traitda — Kanbanga yo'naltiradi)
     public function dehydrate(): void
     {
-        foreach (Project::$pendingSmsNotifications as $note) {
-            $this->dispatch('notify',
-                type: $note['ok'] ? 'success' : 'error',
-                message: $note['message']
-            );
-        }
-        Project::$pendingSmsNotifications = [];
+        $this->flushReadySmsNotifications();
     }
 
     protected function getTableQuery(): ?Builder

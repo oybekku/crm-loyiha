@@ -81,6 +81,13 @@ class YangiBuxDebtCallTest extends TestCase
         $c->set('debtMonth', '');
         $c->assertSee('TEST Yangi Oy');
 
+        // Qatorga bosish → tahrirlash oynasi; oynaning amallari (kb-*) shu sahifada ishlaydi
+        $p0 = Project::where('owner_name', 'TEST Eski Oy')->first();
+        $c->assertSeeHtml("dispatch('open-edit-modal', { id: {$p0->id} })");
+        $this->get('/admin/mijozlar-qarzlari')->assertSeeLivewire('project-edit-modal');
+        $c->dispatch('kb-move', id: $p0->id, status: 'eskiz_loyiha');
+        $this->assertSame('eskiz_loyiha', $p0->fresh()->status);
+        $c->dispatch('kb-open-route', id: $p0->id, status: 'x')->assertRedirect();
         // Menejer ham izoh/qo'ng'iroq belgilay oladi
         $p = Project::where('owner_name', 'TEST Eski Oy')->first();
         $c->call('toggleDebtCalled', $p->id);

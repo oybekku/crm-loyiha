@@ -1305,6 +1305,8 @@
 @endif
 
 @livewire('payment-modal')
+{{-- Mijozlar qarzlari: qatorga bosilganda ochiladigan loyiha tahrirlash oynasi --}}
+@livewire('project-edit-modal')
 <div id="kb-notify-box" style="display:none;position:fixed;top:20px;right:20px;z-index:100000;color:#fff;padding:12px 18px;border-radius:10px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.2)"></div>
 @script
 <script>
