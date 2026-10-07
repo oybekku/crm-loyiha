@@ -393,10 +393,10 @@ class Project extends Model
     public static function progressGroupOptions(): array
     {
         return [
-            // Yorliq fonlari (matn qora) — yorqin to'q ranglar
-            'tayyor'      => ['label' => 'Tayyor',        'color' => '#22c55e'], // yashil
-            'jarayonda'   => ['label' => 'Jarayonda',     'color' => '#facc15'], // sariq
-            'toxtatilgan' => ['label' => "To'xtatilgan",  'color' => '#ef4444'], // qizil
+            // Yorliq fonlari (matn oq) — color → color2 orasida sekin oqib turadi
+            'tayyor'      => ['label' => 'Tayyor',        'color' => '#16a34a', 'color2' => '#4ade80'], // yashil
+            'jarayonda'   => ['label' => 'Jarayonda',     'color' => '#d97706', 'color2' => '#fbbf24'], // sariq
+            'toxtatilgan' => ['label' => "To'xtatilgan",  'color' => '#dc2626', 'color2' => '#f87171'], // qizil
         ];
     }
 
