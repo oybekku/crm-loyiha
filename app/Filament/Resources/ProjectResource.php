@@ -363,10 +363,10 @@ class ProjectResource extends Resource
                         // "Jarayonda" — MyGOV'dagi "В обработке" kabi kichik aylanuvchi halqa
                         // (@keyframes pg-spin — list-projects.blade.php'da)
                         $spinner = $state === 'jarayonda'
-                            ? "<span style='display:inline-block;width:10px;height:10px;border:2px solid {$c}40;border-top-color:{$c};border-radius:50%;animation:pg-spin .8s linear infinite;flex-shrink:0'></span>"
+                            ? "<span style='display:inline-block;width:10px;height:10px;border:2px solid rgba(0,0,0,.25);border-top-color:#111827;border-radius:50%;animation:pg-spin .8s linear infinite;flex-shrink:0'></span>"
                             : '';
-                        // Uchala yorliq bir xil o'lchamda (kenglik qat'iy, matn o'rtada)
-                        return "<span style='display:inline-flex;align-items:center;justify-content:center;gap:6px;box-sizing:border-box;width:112px;height:24px;white-space:nowrap;font-size:12px;font-weight:600;padding:0 8px;border-radius:20px;background:{$c}1a;color:{$c};border:1px solid {$c}55'>{$spinner}" . e($g['label']) . "</span>";
+                        // Uchala yorliq bir xil o'lchamda; fon yorqin to'q rang, matn qora
+                        return "<span style='display:inline-flex;align-items:center;justify-content:center;gap:6px;box-sizing:border-box;width:112px;height:24px;white-space:nowrap;font-size:12px;font-weight:700;padding:0 8px;border-radius:20px;background:{$c};color:#111827'>{$spinner}" . e($g['label']) . "</span>";
                     }),
 
                 // Kanban ustuni nomi (xom kalit emas) — oddiy matn, rangsiz
@@ -386,6 +386,17 @@ class ProjectResource extends Resource
                     ->formatStateUsing(fn($state) => number_format($state, 0, '.', ' ') . " so'm")
                     ->color('success')
                     ->sortable()
+                    ->visible(fn () => !auth()->user()?->isBajaruvchi()),
+
+                // Qoldiq = Umumiy − To'langan (qarz bo'lsa qizil, to'liq to'langan bo'lsa kulrang 0)
+                Tables\Columns\TextColumn::make('qoldiq')
+                    ->label('Qoldiq')
+                    ->state(fn (Project $record): float => (float) $record->total_price - (float) $record->paid_amount)
+                    ->formatStateUsing(fn ($state) => number_format($state, 0, '.', ' ') . " so'm")
+                    ->color(fn ($state) => $state > 0 ? 'danger' : 'gray')
+                    ->weight(fn ($state) => $state > 0 ? 'bold' : null)
+                    ->sortable(query: fn (Builder $query, string $direction) => $query->orderByRaw(
+                        '(COALESCE(total_price,0) - COALESCE(paid_amount,0)) ' . ($direction === 'desc' ? 'desc' : 'asc')))
                     ->visible(fn () => !auth()->user()?->isBajaruvchi()),
 
                 // Hodim uchun umumiy/to'langan summa o'rniga — faqat O'ZINING

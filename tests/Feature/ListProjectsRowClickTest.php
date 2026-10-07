@@ -38,6 +38,8 @@ class ListProjectsRowClickTest extends TestCase
         // Filtrlar jadval ustida ochiq turadi (yashirin tugma ichida emas)
         $c->assertSeeHtml('fi-ta-filters-above-content-ctn');
         $c->assertSeeHtml('pl-owner-name'); // FISH kattaroq shrift klassi
+        $c->assertSee('Qoldiq');
+        $c->sortTable('qoldiq', 'desc')->assertOk(); // SQL'da saralash ishlaydi
 
         // Kategoriya: status → Tayyor / Jarayonda / To'xtatilgan
         $this->assertSame('jarayonda', Project::progressGroup('yangi'));
