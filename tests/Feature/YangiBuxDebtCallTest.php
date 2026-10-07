@@ -38,7 +38,7 @@ class YangiBuxDebtCallTest extends TestCase
         $p = $this->debtor('TEST Qarzdor', now()->toDateTimeString());
 
         $c = Livewire::test(YangiBux::class)->call('setTab', 'qarzlar');
-        $c->assertOk()->assertSee('TEST Qarzdor')->assertSee('+998 90 123 45 67')
+        $c->assertOk()->assertSee('TEST QARZDOR')->assertSee('+998 90 123 45 67')
           ->assertSee('Qilinmadi')->assertSee("Hali telefon qilinmagan");
 
         $c->call('saveDebtComment', $p->id, '  Ertaga to\'laydi  ');
@@ -73,13 +73,16 @@ class YangiBuxDebtCallTest extends TestCase
         $this->assertFalse(YangiBux::canAccess());
 
         $c = Livewire::test(MijozQarzlari::class);
-        $c->assertOk()->assertSee('TEST Eski Oy')->assertSee('TEST Yangi Oy')->assertSee('Mart 2001');
+        $c->assertOk()->assertSee('TEST ESKI OY')->assertSee('TEST YANGI OY')->assertSee('Mart 2001');
 
         $c->set('debtMonth', '2001-03');
-        $c->assertSee('TEST Eski Oy')->assertDontSee('TEST Yangi Oy');
+        $c->assertSee('TEST ESKI OY')->assertDontSee('TEST YANGI OY');
+        // 15 belgidan uzun FISH qisqartiriladi, to'liq ismi title'da
+        $this->debtor('Mamadaliyeva Gulbaxor Talibjanovna', '2001-03-20 10:00:00');
+        $c->call('$refresh')->assertSee('MAMADALIYEVA GU…')->assertSeeHtml('title="MAMADALIYEVA GULBAXOR TALIBJANOVNA"');
 
         $c->set('debtMonth', '');
-        $c->assertSee('TEST Yangi Oy');
+        $c->assertSee('TEST YANGI OY');
 
         // Qatorga bosish → tahrirlash oynasi; oynaning amallari (kb-*) shu sahifada ishlaydi
         $p0 = Project::where('owner_name', 'TEST Eski Oy')->first();
