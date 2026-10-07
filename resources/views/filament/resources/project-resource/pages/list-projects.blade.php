@@ -14,8 +14,8 @@
     {{-- Jadval ko'rinishi: Kategoriya yorliqlari, ixcham qatorlar, FISH o'lchami, hover rangi --}}
     <style>
         @keyframes pg-spin { to { transform: rotate(360deg); } }
-        /* Kategoriya yorlig'i — odatda harakatsiz; sichqoncha ustiga borganda fon
-           ikki tus orasida sekin oqadi, yengil yorug'lik beradi, halqa aylanadi */
+        /* Kategoriya yorlig'i — rang oqishi va yorug'lik faqat sichqoncha ustiga
+           borganda; "Jarayonda" halqasi doim aylanadi */
         .pg-badge {
             position: relative; overflow: hidden;
             display: inline-flex; align-items: center; justify-content: center; gap: 6px;
@@ -29,9 +29,8 @@
             animation: pg-flow 4s ease-in-out infinite;
             animation-play-state: paused; /* faqat sichqoncha ustiga borganda "jonlanadi" */
         }
-        .pg-badge > span:first-child { animation-play-state: paused !important; } /* Jarayonda halqasi ham */
+        /* "Jarayonda" halqasi esa doim aylanadi (o'z inline animatsiyasi) */
         .pg-badge:hover { animation-play-state: running; box-shadow: 0 0 10px var(--c2), 0 1px 3px rgba(0,0,0,.15); }
-        .pg-badge:hover > span:first-child { animation-play-state: running !important; }
         /* Matn doim oq — panelning umumiy jadval matni rangi (qora) bosib ketmasin */
         .fi-main .pg-badge, .fi-main .pg-badge * { color: #fff !important; }
         @keyframes pg-flow  { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
