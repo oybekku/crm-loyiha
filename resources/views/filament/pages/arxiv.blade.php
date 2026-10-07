@@ -346,7 +346,7 @@ $getBadgeStyle = function(string $status) use ($archiveBadgeColors): string {
                             <div class="arx-owner">
                                 <div class="arx-avatar">{{ mb_strtoupper(mb_substr($project->owner_name, 0, 1)) }}</div>
                                 <div>
-                                    <div class="arx-owner-name">{{ $project->owner_name }}</div>
+                                    <div class="arx-owner-name"><x-fish :name="$project->owner_name" /></div>
                                     @if($project->number)
                                     <div style="font-size:11px;color:#9ca3af;font-family:monospace">{{ $project->number }}</div>
                                     @endif

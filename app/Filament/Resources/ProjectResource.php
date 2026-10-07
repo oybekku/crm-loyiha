@@ -327,7 +327,10 @@ class ProjectResource extends Resource
                     ->label('Egasi')
                     ->searchable()
                     ->sortable()
-                    ->extraAttributes(['class' => 'pl-owner-name']), // 30% kattaroq (list-projects.blade.php)
+                    // Barcha ro'yxatlardagidek: KATTA HARF, 15 belgidan keyin "…", to'liq ismi tooltip'da
+                    ->formatStateUsing(fn ($state) => Project::fishShort($state))
+                    ->tooltip(fn (Project $record) => Project::fishFull($record->owner_name))
+                    ->extraAttributes(['class' => 'pl-owner-name']), // o'lcham — list-projects.blade.php
 
                 Tables\Columns\TextColumn::make('services_performance')
                     ->label('Ish ko\'rsatkichi')

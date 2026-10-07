@@ -16,7 +16,7 @@
             <td>{{ $i + 1 }}@if($isJust)<span class="yb-just-tag">yangi</span>@endif</td>
             <td style="white-space:nowrap">{{ $r['date']?->format('d.m.Y') }}</td>
             <td>@if($r['type'] === 'kirim')<span class="yb-pill k">Kirim</span>@elseif(($r['kind'] ?? '') === 'oylik')<span class="yb-pill o">Oylik</span>@else<span class="yb-pill c">Xarajat</span>@endif</td>
-            <td>{{ $r['who'] }}@if($r['who_sub'])<span class="yb-sub">{{ \Illuminate\Support\Str::limit($r['who_sub'], 30) }}</span>@endif</td>
+            <td>@if(!empty($r['who_client']))<x-fish :name="$r['who']" />@else{{ $r['who'] }}@endif @if($r['who_sub'])<span class="yb-sub">{{ \Illuminate\Support\Str::limit($r['who_sub'], 30) }}</span>@endif</td>
             <td>{{ \Illuminate\Support\Str::limit($r['desc'], 40) }}@if(!empty($r['note']))<span class="yb-sub">{{ \Illuminate\Support\Str::limit($r['note'], 50) }}</span>@endif</td>
             <td class="num yb-g">{{ $r['type'] === 'kirim' ? number_format($r['amount'], 0, '.', ' ') : '—' }}</td>
             <td class="num yb-r">{{ $r['type'] === 'chiqim' ? number_format($r['amount'], 0, '.', ' ') : '—' }}</td>

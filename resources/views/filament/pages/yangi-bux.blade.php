@@ -306,7 +306,7 @@
                 @forelse($debts->take(5) as $i => $d)
                     <div class="yb-li">
                         <span class="yb-av" style="background:{{ $avColors[$i % 7] }}">{{ $initials($d['project']->owner_name) }}</span>
-                        <div style="min-width:0">{{ $d['project']->owner_name ?: '—' }}<span class="yb-sub">№{{ $d['project']->seq_no }} · {{ \Illuminate\Support\Str::limit($d['project']->address ?? $d['project']->title, 28) }}</span></div>
+                        <div style="min-width:0"><x-fish :name="$d['project']->owner_name" /><span class="yb-sub">№{{ $d['project']->seq_no }} · {{ \Illuminate\Support\Str::limit($d['project']->address ?? $d['project']->title, 28) }}</span></div>
                         <b class="yb-r">{{ $fmt($d['debt']) }} so'm</b>
                     </div>
                 @empty

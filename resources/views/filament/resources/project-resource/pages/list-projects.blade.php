@@ -39,8 +39,8 @@
         /* Qatorlar ixchamroq — Filament standarti py-4 (16px) o'rniga 6px */
         .fi-ta-table .fi-ta-text,
         .fi-ta-table .fi-ta-selection-cell > div { padding-top: 6px !important; padding-bottom: 6px !important; }
-        /* Egasi (FISH) — 18px dan 20% kichikroq */
-        .pl-owner-name, .pl-owner-name .fi-ta-text-item-label { font-size: 14.5px !important; line-height: 1.3; }
+        /* Egasi (FISH) — barcha ro'yxatlardagi fish komponenti bilan bir xil o'lcham */
+        .pl-owner-name, .pl-owner-name .fi-ta-text-item-label { font-size: 14.85px !important; font-weight: 600; line-height: 1.3; white-space: nowrap; }
         /* Qator ustiga sichqoncha borganda — och yashil (Filament standarti och kulrang) */
         .fi-ta-table .fi-ta-row:hover { background-color: #ecfdf5 !important; }
         .dark .fi-ta-table .fi-ta-row:hover { background-color: rgba(16, 185, 129, .10) !important; }

@@ -346,7 +346,7 @@
             <div class="exp-row">
                 <span class="exp-date">{{ $pay->payment_date?->format('d.m.Y') }}</span>
                 <span class="exp-acc-badge">{{ \App\Models\Payment::methodOptions()[$pay->method] ?? $pay->method }}</span>
-                <span class="exp-comment">{{ $pay->project?->number }} — {{ $pay->project?->owner_name }}</span>
+                <span class="exp-comment">{{ $pay->project?->number }} — <x-fish :name="$pay->project?->owner_name" /></span>
                 <span class="exp-amount" style="color:#4ade80 !important">+ {{ number_format($pay->amount, 0, '.', ' ') }} so'm</span>
             </div>
             @empty

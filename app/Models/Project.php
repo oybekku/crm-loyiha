@@ -375,6 +375,21 @@ class Project extends Model
         return $query->whereNull('timer_paused_at');
     }
 
+    // Ro'yxatlarda mijoz FISH'i bir xil ko'rinishi uchun (<x-fish> komponenti):
+    // hammasi katta harfda, 15 belgidan keyin "…" bilan qisqartiriladi.
+    public const FISH_MAX = 15;
+
+    public static function fishFull(?string $name): string
+    {
+        return mb_strtoupper(trim(preg_replace('/\s+/u', ' ', (string) $name)));
+    }
+
+    public static function fishShort(?string $name): string
+    {
+        $full = self::fishFull($name);
+        return $full === '' ? '—' : \Illuminate\Support\Str::limit($full, self::FISH_MAX, '…');
+    }
+
     // Loyihalar ro'yxatidagi umumiy holat: tayyor / jarayonda / to'xtatilgan.
     // Ariza, Toposyomka, Eskiz loyiha va h.k. — hammasi "jarayonda".
     public const PROGRESS_TAYYOR_STATUSES      = ['tugallangan', 'didox', 'taqdim_etilgan'];

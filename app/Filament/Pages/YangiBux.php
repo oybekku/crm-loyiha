@@ -1047,6 +1047,7 @@ class YangiBux extends Page
                 'touched' => ($p->updated_at ?? $p->created_at)?->format('Y-m-d H:i:s') . sprintf('%010d', $p->id),
                 'type'    => 'kirim',
                 'who'     => $p->project?->owner_name ?: ('Loyiha #' . ($p->project?->seq_no ?? $p->project_id)),
+                'who_client' => (bool) $p->project?->owner_name, // mijoz FISH — <x-fish> bilan
                 'who_sub' => $p->project ? ('№' . $p->project->seq_no . ' · ' . ($p->project->address ?: $p->project->title)) : null,
                 'desc'    => $p->note ?: "Loyiha to'lovi",
                 'note'    => null,
@@ -1086,6 +1087,7 @@ class YangiBux extends Page
                 'touched' => ($e->updated_at ?? $e->created_at)?->format('Y-m-d H:i:s') . sprintf('%010d', $e->id),
                 'type'    => 'chiqim',
                 'who'     => $e->project?->owner_name ?: ($e->user?->name ?: 'Xarajat'),
+                'who_client' => (bool) $e->project?->owner_name,
                 'who_sub' => $e->project ? ('№' . $e->project->seq_no . ' · ' . ($e->project->address ?: $e->project->title)) : ($e->user ? 'Xodim oyligi' : null),
                 'desc'    => $e->comment ?: '—',
                 'note'    => $e->note,

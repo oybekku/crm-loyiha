@@ -84,9 +84,7 @@
                 @click="if (!$event.target.closest('button,a,input,select,textarea,label')) $wire.dispatch('open-edit-modal', { id: {{ $p->id }} })">
                 <td>{{ $i + 1 }}</td>
                 <td>{{ $p->seq_no }}</td>
-                {{-- FISH: hammasi katta harfda, 15 belgidan keyin qisqartiriladi (to'liq ismi — sichqoncha ustiga olib borganda) --}}
-                @php $fish = mb_strtoupper(trim((string) $p->owner_name)); @endphp
-                <td style="font-weight:600;white-space:nowrap" title="{{ $fish }}">{{ $fish !== '' ? \Illuminate\Support\Str::limit($fish, 15, '…') : '—' }}</td>
+                <td><x-fish :name="$p->owner_name" /></td>
                 <td style="white-space:nowrap">
                     @forelse($phones as $k => $ph)
                         <a href="tel:{{ preg_replace('/[^\d+]/', '', $ph) }}" style="display:block;color:inherit;text-decoration:none;{{ $k ? 'font-size:13px;opacity:.7' : 'font-weight:600' }}">{{ $cdPhone($ph) }}</a>

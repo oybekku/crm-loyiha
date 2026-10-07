@@ -529,7 +529,7 @@
                                     <td style="color:#9ca3af;font-size:11px">{{ $j + 1 }}</td>
                                     <td>
                                         <div style="font-weight:700;color:#111827;font-family:monospace;font-size:12px">{{ $it['project_number'] }}</div>
-                                        <div style="font-size:12px;color:#374151;margin-top:1px">{{ $it['owner_name'] }}</div>
+                                        <div style="color:#374151;margin-top:1px"><x-fish :name="$it['owner_name']" /></div>
                                     </td>
                                     <td>
                                         <span style="display:inline-block;background:#eff6ff;color:#2563eb;font-size:10px;font-weight:600;border-radius:4px;padding:2px 7px">
@@ -671,7 +671,7 @@
                             <td style="padding:6px 10px;color:#9ca3af;font-size:11px">{{ $j + 1 }}</td>
                             <td style="padding:6px 10px">
                                 <div style="font-weight:600;font-size:11px;font-family:monospace;color:#374151">{{ $aw['project_number'] }}</div>
-                                <div style="font-size:11px;color:#6b7280">{{ $aw['owner_name'] }}</div>
+                                <div style="color:#6b7280"><x-fish :name="$aw['owner_name']" /></div>
                             </td>
                             <td style="padding:6px 10px;color:#374151">{{ $aw['service_label'] ?? '—' }}</td>
                             <td style="padding:6px 10px;text-align:right;color:#111827">{{ number_format($aw['price'], 0, '.', ' ') }}</td>
@@ -953,7 +953,7 @@
             @foreach($warnings as $wp)
             <tr class="mr-warn-row">
                 <td>
-                    <div style="font-weight:600">{{ $wp->owner_name }}</div>
+                    <div><x-fish :name="$wp->owner_name" /></div>
                     <div style="font-size:11px;color:#9ca3af">{{ $wp->number }} · {{ $wp->address }}</div>
                 </td>
                 <td>{{ number_format($wp->total_price, 0, '.', ' ') }} so'm</td>
@@ -1060,7 +1060,7 @@
                 <tr style="border-bottom:1px solid #f1f5f9">
                     <td style="padding:8px 10px;text-align:center;color:#9ca3af;font-size:11px;font-weight:600">{{ $loop->iteration }}</td>
                     <td style="padding:8px 10px">
-                        <div style="font-weight:600;color:#111827;font-size:12px">{{ $it['owner_name'] }}</div>
+                        <div style="color:#111827"><x-fish :name="$it['owner_name']" /></div>
                         <div style="font-size:10px;color:#9ca3af">{{ $it['project_number'] }}</div>
                     </td>
                     <td style="padding:8px 10px;color:#374151">{{ $it['service_label'] ?? '—' }}</td>

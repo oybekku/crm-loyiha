@@ -34,7 +34,7 @@ class ListProjectsRowClickTest extends TestCase
 
         $c = Livewire::test(ListProjects::class);
         $c->call('loadTable');
-        $c->assertOk()->assertSee('TEST ListModal')->assertSee('Jarayonda');
+        $c->assertOk()->assertSee('TEST LISTMODAL')->assertSee('Jarayonda');
         // Filtrlar jadval ustida ochiq turadi (yashirin tugma ichida emas)
         $c->assertSeeHtml('fi-ta-filters-above-content-ctn');
         $c->assertSeeHtml('pl-owner-name'); // FISH kattaroq shrift klassi

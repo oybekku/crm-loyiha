@@ -68,7 +68,7 @@ $xqCanAct = auth()->user()?->isHisobchi() || auth()->user()?->isAdmin();
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
             <div>
                 <span class="xq-num">{{ $p->number }}</span>
-                <span class="xq-name">&nbsp;{{ $p->owner_name }}</span>
+                <span class="xq-name">&nbsp;<x-fish :name="$p->owner_name" /></span>
             </div>
             <div style="display:flex;flex-direction:column;gap:8px;align-items:stretch">
                 <a href="{{ route('print.project.didox', $p) }}" target="_blank" class="xq-btn" style="justify-content:center">
