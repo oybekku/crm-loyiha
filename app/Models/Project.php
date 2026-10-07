@@ -21,6 +21,7 @@ class Project extends Model
         'mygov_login', 'mygov_password', 'mygov_fish',
         'is_urgent', 'urgent_accepted_at', 'urgent_accepted_by',
         'ready_sms_status', 'ready_sms_sent_at', 'ready_sms_error',
+        'debt_comment', 'debt_called', 'debt_called_at', 'debt_called_by',
     ];
 
     /**
@@ -47,7 +48,15 @@ class Project extends Model
         'is_didox'              => 'boolean',
         'urgent_accepted_at'    => 'datetime',
         'ready_sms_sent_at'     => 'datetime',
+        'debt_called'           => 'boolean',
+        'debt_called_at'        => 'datetime',
     ];
+
+    // Mijozlar qarzlari — oxirgi marta kim telefon qilgani
+    public function debtCalledBy()
+    {
+        return $this->belongsTo(User::class, 'debt_called_by');
+    }
 
     protected static function booted(): void
     {
