@@ -430,64 +430,7 @@
     </div>
 
 @elseif($tab === 'qarzlar')
-    <div class="yb-card">
-        <div class="yb-h"><span>Mijozlar qarzlari <span class="yb-sub">{{ $debtClients }} ta loyiha · jami {{ $fmt($debtTotal) }} so'm (bekor qilingan va to'xtatilganlar kirmaydi)</span></span></div>
-        <div class="yb-tbl-wrap">
-        <table class="yb-tbl">
-            <thead><tr><th>#</th><th>№</th><th>Mijoz / Loyiha</th><th>Telefon</th><th>Izoh</th><th>Qo'ng'iroq</th><th>Ochilgan</th><th class="num">Shartnoma</th><th class="num">To'langan</th><th class="num">Qarz</th><th>To'lov %</th></tr></thead>
-            <tbody>
-            @forelse($debts as $i => $d)
-                @php
-                    $p = $d['project'];
-                    $pc = $p->total_price > 0 ? min(100, round($p->paid_amount / $p->total_price * 100)) : 0;
-                    // Telefonlar: ['phone' => '+998...'] ro'yxati — bo'sh/"+998" qoldiqlari tashlanadi
-                    $phones = collect($p->phones ?? [])->map(fn ($x) => is_array($x) ? ($x['phone'] ?? '') : (string) $x)
-                        ->map(fn ($x) => trim($x))->filter(fn ($x) => strlen(preg_replace('/\D/', '', $x)) > 4)->values();
-                    $fmtPhone = function ($ph) {
-                        $dg = preg_replace('/\D/', '', $ph);
-                        return strlen($dg) === 12 ? '+' . substr($dg,0,3) . ' ' . substr($dg,3,2) . ' ' . substr($dg,5,3) . ' ' . substr($dg,8,2) . ' ' . substr($dg,10,2) : $ph;
-                    };
-                    $callTip = $p->debt_called_at
-                        ? "Oxirgi qo'ng'iroq: " . $p->debt_called_at->format('d.m.Y H:i') . ($p->debtCalledBy ? ' · ' . $p->debtCalledBy->name : '')
-                        : "Hali telefon qilinmagan";
-                @endphp
-                <tr wire:key="debt-{{ $p->id }}">
-                    <td>{{ $i + 1 }}</td>
-                    <td>{{ $p->seq_no }}</td>
-                    <td>{{ $p->owner_name ?: '—' }}<span class="yb-sub">{{ \Illuminate\Support\Str::limit($p->address ?? $p->title, 45) }}</span></td>
-                    <td style="white-space:nowrap">
-                        @forelse($phones as $k => $ph)
-                            <a href="tel:{{ preg_replace('/[^\d+]/', '', $ph) }}" style="display:block;color:inherit;text-decoration:none;{{ $k ? 'font-size:11px;opacity:.7' : 'font-weight:600' }}">{{ $fmtPhone($ph) }}</a>
-                        @empty
-                            <span class="yb-sub">—</span>
-                        @endforelse
-                    </td>
-                    <td style="min-width:180px">
-                        <input type="text" value="{{ $p->debt_comment }}" placeholder="Izoh yozing…" maxlength="2000"
-                               wire:change="saveDebtComment({{ $p->id }}, $event.target.value)"
-                               @keydown.enter="$event.target.blur()"
-                               title="{{ $p->debt_comment }}"
-                               style="width:100%;font-size:12px;padding:5px 8px;border:1px solid var(--yb-bd);border-radius:6px;background:transparent;color:inherit">
-                    </td>
-                    <td style="white-space:nowrap">
-                        <button type="button" wire:click="toggleDebtCalled({{ $p->id }})" title="{{ $callTip }}"
-                                style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;cursor:pointer;border:1px solid {{ $p->debt_called ? '#16a34a' : '#d1d5db' }};background:{{ $p->debt_called ? '#16a34a' : 'transparent' }};color:{{ $p->debt_called ? '#fff' : '#6b7280' }}">
-                            {{ $p->debt_called ? '✓ Qilindi' : '☎ Qilinmadi' }}
-                        </button>
-                    </td>
-                    <td>{{ $p->created_at?->format('d.m.Y') }}</td>
-                    <td class="num">{{ $fmt($p->total_price) }}</td>
-                    <td class="num yb-g">{{ $fmt($p->paid_amount) }}</td>
-                    <td class="num yb-r">{{ $fmt($d['debt']) }}</td>
-                    <td style="min-width:90px"><div style="background:var(--yb-soft);border-radius:4px;height:6px"><div style="width:{{ $pc }}%;background:#22c55e;height:6px;border-radius:4px"></div></div><span class="yb-sub">{{ $pc }}%</span></td>
-                </tr>
-            @empty
-                <tr><td colspan="11" class="yb-empty">Qarzdor mijoz yo'q</td></tr>
-            @endforelse
-            </tbody>
-        </table>
-        </div>
-    </div>
+    @include('filament.pages.partials.client-debts')
 
 @elseif($tab === 'oylik')
     @php $S = $salary; @endphp

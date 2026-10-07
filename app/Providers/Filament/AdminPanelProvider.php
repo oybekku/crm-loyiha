@@ -846,6 +846,11 @@ HTML;
             $href = e(\App\Filament\Resources\ProjectResource::getUrl('index'));
             $projectLinks .= "<a href=\"{$href}\" wire:navigate class=\"bsr-item bsr-item-top\" data-exact-href=\"{$href}\">Loyihalar ro'yxati</a>";
         }
+        // "Mijozlar qarzlari" — admin va menejerlar
+        if (\App\Filament\Pages\MijozQarzlari::canAccess()) {
+            $href = e(\App\Filament\Pages\MijozQarzlari::getUrl());
+            $projectLinks .= "<a href=\"{$href}\" wire:navigate class=\"bsr-item bsr-item-top\" data-exact-href=\"{$href}\">Mijozlar qarzlari</a>";
+        }
 
         // Sonlar va linklar hozir ko'rinib turgan oyga mos bo'lishi uchun — agar
         // joriy sahifa ?year=&month= bilan ochilgan bo'lsa (masalan shu panelning

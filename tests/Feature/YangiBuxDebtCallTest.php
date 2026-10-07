@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Pages\MijozQarzlari;
 use App\Filament\Pages\YangiBux;
 use App\Models\Project;
 use App\Models\User;
@@ -13,14 +14,10 @@ class YangiBuxDebtCallTest extends TestCase
 {
     use DatabaseTransactions;
 
-    public function test_debt_tab_phone_comment_and_call_toggle(): void
+    private function debtor(string $name, string $createdAt): Project
     {
-        $admin = User::where('role', 'admin')->first();
-        $this->actingAs($admin);
-        \Filament\Facades\Filament::setCurrentPanel(\Filament\Facades\Filament::getPanel('admin'));
-
         $p = Project::create([
-            'owner_name'  => 'TEST Qarzdor',
+            'owner_name'  => $name,
             'number'      => '#TEST-' . uniqid(),
             'status'      => 'toposyomka',
             'address'     => 'Test',
@@ -28,6 +25,17 @@ class YangiBuxDebtCallTest extends TestCase
             'total_price' => 999999999,
             'paid_amount' => 0,
         ]);
+        Project::whereKey($p->id)->update(['created_at' => $createdAt]);
+        return $p->fresh();
+    }
+
+    public function test_debt_tab_phone_comment_and_call_toggle(): void
+    {
+        $admin = User::where('role', 'admin')->first();
+        $this->actingAs($admin);
+        \Filament\Facades\Filament::setCurrentPanel(\Filament\Facades\Filament::getPanel('admin'));
+
+        $p = $this->debtor('TEST Qarzdor', now()->toDateTimeString());
 
         $c = Livewire::test(YangiBux::class)->call('setTab', 'qarzlar');
         $c->assertOk()->assertSee('TEST Qarzdor')->assertSee('+998 90 123 45 67')
@@ -47,5 +55,43 @@ class YangiBuxDebtCallTest extends TestCase
         $c->call('toggleDebtCalled', $p->id);
         $this->assertFalse($p->fresh()->debt_called);
         $this->assertNotNull($p->fresh()->debt_called_at);
+    }
+
+    public function test_month_filter_and_manager_page(): void
+    {
+        $this->debtor('TEST Eski Oy', '2001-03-15 10:00:00');
+        $this->debtor('TEST Yangi Oy', '2001-04-15 10:00:00');
+
+        // Menejer: alohida sahifa ochiladi, chap panelda link bor, Yangi bux esa yopiq
+        $m = User::create([
+            'name' => 'TEST Menejer', 'email' => 'test-m-' . uniqid() . '@example.test',
+            'password' => bcrypt('x'), 'role' => 'menejer', 'is_active' => true, 'permissions' => [],
+        ]);
+        $this->actingAs($m);
+        \Filament\Facades\Filament::setCurrentPanel(\Filament\Facades\Filament::getPanel('admin'));
+        $this->get('/admin/mijozlar-qarzlari')->assertOk()->assertSee('Mijozlar qarzlari</a>', false);
+        $this->assertFalse(YangiBux::canAccess());
+
+        $c = Livewire::test(MijozQarzlari::class);
+        $c->assertOk()->assertSee('TEST Eski Oy')->assertSee('TEST Yangi Oy')->assertSee('Mart 2001');
+
+        $c->set('debtMonth', '2001-03');
+        $c->assertSee('TEST Eski Oy')->assertDontSee('TEST Yangi Oy');
+
+        $c->set('debtMonth', '');
+        $c->assertSee('TEST Yangi Oy');
+
+        // Menejer ham izoh/qo'ng'iroq belgilay oladi
+        $p = Project::where('owner_name', 'TEST Eski Oy')->first();
+        $c->call('toggleDebtCalled', $p->id);
+        $this->assertTrue($p->fresh()->debt_called);
+
+        // Bajaruvchiga yopiq
+        $b = User::create([
+            'name' => 'TEST Baj', 'email' => 'test-b-' . uniqid() . '@example.test',
+            'password' => bcrypt('x'), 'role' => 'bajaruvchi', 'is_active' => true, 'permissions' => [],
+        ]);
+        $this->actingAs($b);
+        $this->assertFalse(MijozQarzlari::canAccess());
     }
 }
