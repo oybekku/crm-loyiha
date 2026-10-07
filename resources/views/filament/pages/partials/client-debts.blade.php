@@ -20,17 +20,17 @@
 .cd{--cd-card:#fff;--cd-bd:#eceef2;--cd-tx:#111827;--cd-mu:#6b7280;--cd-soft:#f3f4f6;color:var(--cd-tx)}
 .dark .cd{--cd-card:#111827;--cd-bd:#1f2937;--cd-tx:#f3f4f6;--cd-mu:#9ca3af;--cd-soft:#1f2937}
 .cd *{box-sizing:border-box}
-/* Barcha yozuvlar avvalgidan 15% kattaroq */
+/* Barcha yozuvlar boshlang'ich o'lchamdan ~32% kattaroq (2 marta +15%) */
 .cd-card{background:var(--cd-card);border:1px solid var(--cd-bd);border-radius:14px;padding:18px;box-shadow:0 1px 6px rgba(0,0,0,.03)}
 .cd-h{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
-.cd-title{font-size:17.25px;font-weight:800}
-.cd-sub{display:block;font-size:12.65px;font-weight:400;color:var(--cd-mu);margin-top:2px}
-.cd-filter{display:flex;align-items:center;gap:8px;font-size:14.4px;color:var(--cd-mu)}
-.cd-filter select{font-size:15px;font-weight:600;padding:7px 32px 7px 10px;border:1px solid var(--cd-bd);border-radius:8px;background-color:var(--cd-card);color:var(--cd-tx);min-width:240px}
+.cd-title{font-size:19.8px;font-weight:800}
+.cd-sub{display:block;font-size:14.5px;font-weight:400;color:var(--cd-mu);margin-top:2px}
+.cd-filter{display:flex;align-items:center;gap:8px;font-size:16.5px;color:var(--cd-mu)}
+.cd-filter select{font-size:17.2px;font-weight:600;padding:7px 32px 7px 10px;border:1px solid var(--cd-bd);border-radius:8px;background-color:var(--cd-card);color:var(--cd-tx);min-width:240px}
 .cd-filter select option{background:var(--cd-card);color:var(--cd-tx)}
 .cd-wrap{overflow-x:auto}
-.cd-tbl{width:100%;border-collapse:collapse;font-size:14.4px}
-.cd-tbl th{font-size:12.65px;font-weight:600;color:var(--cd-mu);text-align:left;padding:9px 10px;background:var(--cd-soft);white-space:nowrap}
+.cd-tbl{width:100%;border-collapse:collapse;font-size:16.5px}
+.cd-tbl th{font-size:14.5px;font-weight:600;color:var(--cd-mu);text-align:left;padding:9px 10px;background:var(--cd-soft);white-space:nowrap}
 .cd-tbl td{padding:8px 10px;border-top:1px solid var(--cd-bd);vertical-align:middle}
 .cd-row{cursor:pointer}
 .cd-tbl tr:hover td{background:#ecfdf5}
@@ -38,8 +38,8 @@
 .cd-tbl .num{text-align:right;white-space:nowrap}
 .cd-g{color:#16a34a;font-weight:600}.cd-r{color:#dc2626;font-weight:700}
 .cd-empty{text-align:center;color:var(--cd-mu);padding:28px !important}
-.cd-in{width:100%;font-size:13.8px;padding:5px 8px;border:1px solid var(--cd-bd);border-radius:6px;background:transparent;color:inherit}
-.cd-call{font-size:12.65px;font-weight:700;padding:4px 10px;border-radius:999px;cursor:pointer;border:1px solid #d1d5db;background:transparent;color:#6b7280;white-space:nowrap}
+.cd-in{width:100%;font-size:15.9px;padding:5px 8px;border:1px solid var(--cd-bd);border-radius:6px;background:transparent;color:inherit}
+.cd-call{font-size:14.5px;font-weight:700;padding:4px 10px;border-radius:999px;cursor:pointer;border:1px solid #d1d5db;background:transparent;color:#6b7280;white-space:nowrap}
 .cd-call.on{border-color:#16a34a;background:#16a34a;color:#fff}
 </style>
 
@@ -87,7 +87,7 @@
                 <td style="font-weight:600">{{ $p->owner_name ?: '—' }}</td>
                 <td style="white-space:nowrap">
                     @forelse($phones as $k => $ph)
-                        <a href="tel:{{ preg_replace('/[^\d+]/', '', $ph) }}" style="display:block;color:inherit;text-decoration:none;{{ $k ? 'font-size:12.65px;opacity:.7' : 'font-weight:600' }}">{{ $cdPhone($ph) }}</a>
+                        <a href="tel:{{ preg_replace('/[^\d+]/', '', $ph) }}" style="display:block;color:inherit;text-decoration:none;{{ $k ? 'font-size:14.5px;opacity:.7' : 'font-weight:600' }}">{{ $cdPhone($ph) }}</a>
                     @empty
                         <span class="cd-sub">—</span>
                     @endforelse
