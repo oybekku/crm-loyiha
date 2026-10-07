@@ -39,7 +39,7 @@ class ListProjectsRowClickTest extends TestCase
         $c->assertSeeHtml('fi-ta-filters-above-content-ctn');
         $c->assertSeeHtml('pl-owner-name'); // FISH kattaroq shrift klassi
         $c->assertSee('Qoldiq');
-        $c->assertSeeHtml('class="pg-badge" style="--c1:#ffc400;--c2:#ffe600"'); // Jarayonda — jonli yorliq
+        $c->assertSeeHtml('class="pg-badge" style="--c1:#ffc400;--c2:#ffe600;--tx:#111827"'); // Jarayonda — jonli yorliq
         $c->sortTable('qoldiq', 'desc')->assertOk(); // SQL'da saralash ishlaydi
 
         // Kategoriya: status → Tayyor / Jarayonda / To'xtatilgan

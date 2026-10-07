@@ -31,8 +31,10 @@
         }
         /* "Jarayonda" halqasi esa doim aylanadi (o'z inline animatsiyasi) */
         .pg-badge:hover { animation-play-state: running; box-shadow: 0 0 10px var(--c2), 0 1px 3px rgba(0,0,0,.15); }
-        /* Matn doim oq — panelning umumiy jadval matni rangi (qora) bosib ketmasin */
-        .fi-main .pg-badge, .fi-main .pg-badge * { color: #fff !important; }
+        /* Matn rangi yorliqning o'zidan (--tx: oq, Jarayonda — qora); panelning umumiy
+           jadval matni rangi bosib ketmasin */
+        .fi-main .pg-badge, .fi-main .pg-badge * { color: var(--tx, #fff) !important; }
+        .pg-badge[style*="--tx:#111827"] { text-shadow: none; }
         @keyframes pg-flow  { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
         @media (prefers-reduced-motion: reduce) { .pg-badge { animation: none; } }
         /* Qatorlar ixchamroq — Filament standarti py-4 (16px) o'rniga 6px */

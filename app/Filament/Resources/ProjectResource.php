@@ -362,15 +362,17 @@ class ProjectResource extends Resource
                     ->state(fn (Project $record) => Project::progressGroup($record->status))
                     ->formatStateUsing(function ($state) {
                         $g = Project::progressGroupOptions()[$state];
-                        $c = $g['color'];
+                        $c  = $g['color'];
+                        $tx = $g['text'] ?? '#fff'; // matn rangi (Jarayonda — qora, qolganlari oq)
+                        $ring = $tx === '#fff' ? 'rgba(255,255,255,.35)' : 'rgba(0,0,0,.2)';
                         // "Jarayonda" — MyGOV'dagi "В обработке" kabi kichik aylanuvchi halqa
                         // (@keyframes pg-spin — list-projects.blade.php'da)
                         $spinner = $state === 'jarayonda'
-                            ? "<span style='display:inline-block;width:10px;height:10px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:pg-spin .8s linear infinite;flex-shrink:0'></span>"
+                            ? "<span style='display:inline-block;width:10px;height:10px;border:2px solid {$ring};border-top-color:{$tx};border-radius:50%;animation:pg-spin .8s linear infinite;flex-shrink:0'></span>"
                             : '';
-                        // Uchala yorliq bir xil o'lchamda; matn oq; fon ikki tus orasida
-                        // sekin "oqadi" + ustidan nur o'tadi (.pg-badge — list-projects.blade.php)
-                        return "<span class='pg-badge' style='--c1:{$c};--c2:{$g['color2']}'>{$spinner}<span>" . e($g['label']) . "</span></span>";
+                        // Uchala yorliq bir xil o'lchamda; fon ikki tus orasida sekin "oqadi"
+                        // (faqat sichqoncha ustiga borganda — .pg-badge, list-projects.blade.php)
+                        return "<span class='pg-badge' style='--c1:{$c};--c2:{$g['color2']};--tx:{$tx}'>{$spinner}<span>" . e($g['label']) . "</span></span>";
                     }),
 
                 // Kanban ustuni nomi (xom kalit emas) — oddiy matn, rangsiz

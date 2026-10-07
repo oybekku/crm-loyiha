@@ -419,7 +419,7 @@ class Project extends Model
         return [
             // Yorliq fonlari (matn oq) — color → color2 orasida sekin oqib turadi
             'tayyor'      => ['label' => 'Tayyor',        'color' => '#16a34a', 'color2' => '#4ade80'], // yashil
-            'jarayonda'   => ['label' => 'Jarayonda',     'color' => '#ffc400', 'color2' => '#ffe600'], // yorqin sariq ("Click me now" tugmasi kabi)
+            'jarayonda'   => ['label' => 'Jarayonda',     'color' => '#ffc400', 'color2' => '#ffe600', 'text' => '#111827'], // yorqin sariq, matn qora
             'toxtatilgan' => ['label' => "To'xtatilgan",  'color' => '#dc2626', 'color2' => '#f87171'], // qizil
         ];
     }
