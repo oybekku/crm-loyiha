@@ -36,7 +36,7 @@ class ProjectResource extends Resource
         $user = auth()->user();
         if (!$user) return false;
         if ($user->isBajaruvchi()) return true; // faqat ro'yxat, faqat o'z loyihalari
-        if ($user->isAdmin()) return true;
+        if ($user->isAdmin() || $user->isMenejer()) return true;
         // Loyiha tahrirlash yoki ro'yxat ruxsati bo'lsa — resource sahifalariga kirish mumkin
         return $user->hasPermission(static::menuPermissionKey())
             || $user->hasPermission('loyiha_tahrirlash');
@@ -48,7 +48,7 @@ class ProjectResource extends Resource
         $user = auth()->user();
         if (!$user) return false;
         if ($user->isBajaruvchi()) return true;
-        if ($user->isAdmin()) return true;
+        if ($user->isAdmin() || $user->isMenejer()) return true; // menejerlarga doim ochiq
         return $user->hasPermission(static::menuPermissionKey());
     }
 
@@ -351,7 +351,7 @@ class ProjectResource extends Resource
                     ->searchable()
                     ->limit(30),
 
-                // Umumiy holat: Tayyor (ko'k) / Jarayonda (sariq) / To'xtatilgan (qizil)
+                // Umumiy holat: Tayyor (yashil) / Jarayonda (sariq) / To'xtatilgan (qizil)
                 // — Project::progressGroup() statusdan hisoblaydi.
                 Tables\Columns\TextColumn::make('progress_group')
                     ->label('Kategoriya')

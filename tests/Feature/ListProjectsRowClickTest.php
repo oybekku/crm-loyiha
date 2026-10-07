@@ -57,6 +57,19 @@ class ListProjectsRowClickTest extends TestCase
         $this->assertNotNull($project->fresh()->payment_requested_at);
         $c->dispatch('kb-open-route', id: $project->id, status: 'x')->assertRedirect();
 
+        // Menejer (alohida ruxsatsiz ham) ro'yxatni ko'radi va chap panelda link bor
+        $menejer = User::create([
+            'name' => 'TEST Menejer', 'email' => 'test-menejer-' . uniqid() . '@example.test',
+            'password' => bcrypt('x'), 'role' => 'menejer', 'is_active' => true, 'permissions' => [],
+        ]);
+        // Oldingi admin sessiyasi (AuthenticateSession parol xeshi) foydalanuvchi almashganda chiqarib yuboradi
+        $this->flushSession();
+        $this->actingAs($menejer);
+        $this->assertTrue(\App\Filament\Resources\ProjectResource::canViewAny());
+        $this->get('/admin/projects')->assertOk()->assertSee("Loyihalar ro'yxati</a>", false);
+        $this->flushSession();
+        $this->actingAs($user);
+
         $k = Livewire::test(KanbanBoard::class);
         $k->assertOk();
         $k->dispatch('kb-cancel-request', id: $project->id);
