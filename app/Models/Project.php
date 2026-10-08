@@ -26,34 +26,48 @@ class Project extends Model
     ];
 
     /**
-     * "Qilinadigan ishlar ro'yxati" — har loyihada doim bor standart ishlar.
-     * Kalitni o'zgartirmang (bazada saqlangan galochkalar shu kalitlarga bog'langan).
+     * "Qilinadigan ishlar ro'yxati" — umumiy (hamma loyihalar uchun) ishlar.
+     * Admin sahifadan tahrirlaydi → app_settings['work_checklist_items']; bo'sh bo'lsa shu sukut.
+     * Kalit (key) o'zgarmaydi — loyihalardagi galochkalar shu kalitlarga bog'langan.
      */
-    public const WORK_CHECKLIST_ITEMS = [
-        'kadastr_yangilash' => 'Kadastr yangilash',
-        'topo_semka'        => 'Topo s\'emka',
-        'eskiz_loyiha'      => 'Eskiz loyiha',
-        'loyiha_smeta'      => 'Loyiha-smeta xujjatlari',
-        'texnik_pasport'    => 'Texnik pasport',
-        'foydalanishga_rk'  => 'Foydalanishga r.k.',
-        'akt_loyiha_tash'   => 'AKT loyiha tashkilot ma\'lumotnomasi',
-        'qurilish_tugallanmagan' => 'Qurilishi tugallanmagan ob\'ekt kad. pasporti',
-        'akt_63'            => '63% akt ma\'lumotnomasi',
-        'royxat_ariza'      => 'Ro\'yxatdan o\'tkazish uchun ariza',
+    public const DEFAULT_WORK_ITEMS = [
+        ['key' => 'kadastr',   'title' => 'Кадастр ҳужжатларини янгилаш', 'note' => "(УЗКАД тизимидан ўтган кадастр ҳужжатлари бундан мустасно)\nЯгона интерактив давлат хизматлари портали орқали", 'resp' => 'Фуқаро'],
+        ['key' => 'topo',      'title' => 'Ҳудудда Топосъёмка ишларини олиб бориш', 'note' => '', 'resp' => 'Лойиҳа ташкилоти'],
+        ['key' => 'loyiha',    'title' => 'Лойиҳа ҳужжатларини тайёрлаш', 'note' => '', 'resp' => 'Лойиҳа ташкилоти'],
+        ['key' => 'eskiz',     'title' => 'Лойиҳа ҳужжатларининг архитектуравий қисмини келишиш', 'note' => '(Ягона интерактив давлат хизматлари портали орқали Эскиз лойиҳа ҳужжатларини келишиш учун буюртма бериш)', 'resp' => 'Фуқаро'],
+        ['key' => 'qurilish',  'title' => 'Қурилиш монтаж ишларини олиб бориш ва якунлаш', 'note' => '', 'resp' => 'Фуқаро'],
+        ['key' => 'uzkad',     'title' => 'УЗКАД тизимидаги Кадастр ҳужжатларига буюртма бериш', 'note' => '(мавжудлари бундан мустасно)', 'resp' => 'Фуқаро'],
+        ['key' => 'nazorat53', 'title' => 'Қурилиш ишлари тугалланмаган иншоот учун (53%) муаллифлик назорати хулосаси', 'note' => '', 'resp' => 'Лойиҳа ташкилоти'],
+        ['key' => 'nazorat100','title' => 'Қурилиш ишлари тугалланган иншоот учун (100%) муаллифлик назорати хулосаси', 'note' => '', 'resp' => 'Лойиҳа ташкилоти'],
+        ['key' => 'foydalanish','title' => 'Фойдаланишга қабул қилиш ва давлат рўйхатидан ўтказишга буюртма бериш', 'note' => '(Ягона интерактив давлат хизматлари портали орқали)', 'resp' => 'Фуқаро'],
     ];
 
-    /** Ro'yxat (standart + qo'shimcha) — [['key','label','done','extra','hidden'], ...] */
+    /** Umumiy ishlar ro'yxati — [['key','title','note','resp'], ...] */
+    public static function workItems(): array
+    {
+        return AppSetting::get('work_checklist_items') ?: self::DEFAULT_WORK_ITEMS;
+    }
+
+    /** Shu loyiha ro'yxati (umumiy + qo'shimcha) — [['key','title','note','resp','done','extra','hidden'], ...] */
     public function workChecklist(): array
     {
         $data   = $this->work_checklist ?: [];
         $done   = $data['done'] ?? [];
         $hidden = $data['hidden'] ?? [];
         $items  = [];
-        foreach (self::WORK_CHECKLIST_ITEMS as $key => $label) {
-            $items[] = ['key' => $key, 'label' => $label, 'done' => in_array($key, $done, true), 'extra' => false, 'hidden' => in_array($key, $hidden, true)];
+        foreach (self::workItems() as $w) {
+            $items[] = $w + ['done' => in_array($w['key'], $done, true), 'extra' => false, 'hidden' => in_array($w['key'], $hidden, true)];
         }
         foreach ($data['extra'] ?? [] as $e) {
-            $items[] = ['key' => $e['id'], 'label' => $e['label'], 'done' => (bool) ($e['done'] ?? false), 'extra' => true, 'hidden' => in_array($e['id'], $hidden, true)];
+            $items[] = [
+                'key'    => $e['id'],
+                'title'  => $e['title'] ?? ($e['label'] ?? ''),
+                'note'   => $e['note'] ?? '',
+                'resp'   => $e['resp'] ?? '',
+                'done'   => (bool) ($e['done'] ?? false),
+                'extra'  => true,
+                'hidden' => in_array($e['id'], $hidden, true),
+            ];
         }
         return $items;
     }

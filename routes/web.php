@@ -218,29 +218,32 @@ Route::middleware(['auth'])->group(function () {
         $user = auth()->user();
         abort_unless($user?->isAdmin() || $user?->isMenejer(), 403);
 
-        $done = array_values(array_intersect(
-            (array) $request->input('done', []),
-            array_keys(\App\Models\Project::WORK_CHECKLIST_ITEMS)
-        ));
+        $globalKeys = array_column(\App\Models\Project::workItems(), 'key');
         $extra = [];
-        foreach ((array) $request->input('extra', []) as $e) {
-            $label = trim(strip_tags((string) ($e['label'] ?? '')));
-            if ($label === '') continue;
-            $extra[] = [
-                'id'    => preg_replace('/[^a-z0-9_]/i', '', (string) ($e['id'] ?? '')) ?: 'x' . uniqid(),
-                'label' => mb_substr($label, 0, 120),
-                'done'  => (bool) ($e['done'] ?? false),
-            ];
+        foreach (array_slice(\App\Support\WorkItemInput::clean((array) $request->input('extra', []), 'x'), 0, 30) as $e) {
+            $extra[] = ['id' => $e['key'], 'title' => $e['title'], 'note' => $e['note'], 'resp' => $e['resp'], 'done' => $e['done']];
         }
-        $extra = array_slice($extra, 0, 30);
+        // Umumiy ishlardan bajarilganlari + qo'shimchalar ichidagi "done"
+        $done = array_values(array_intersect((array) $request->input('done', []), $globalKeys));
         // Shu mijozga kerak bo'lmagan (vaqtincha yashirilgan) ishlar — chop etilmaydi
         $hidden = array_values(array_intersect(
             (array) $request->input('hidden', []),
-            array_merge(array_keys(\App\Models\Project::WORK_CHECKLIST_ITEMS), array_column($extra, 'id'))
+            array_merge($globalKeys, array_column($extra, 'id'))
         ));
         $project->update(['work_checklist' => ['done' => $done, 'extra' => $extra, 'hidden' => $hidden]]);
         return response()->json(['ok' => true]);
     })->name('print.project.ishlar.save');
+
+    // Umumiy ishlar ro'yxati (hamma loyihalar uchun) — faqat admin tahrirlaydi
+    Route::post('/print/ishlar-template', function (\Illuminate\Http\Request $request) {
+        abort_unless(auth()->user()?->isAdmin(), 403);
+        $items = array_map(
+            fn ($w) => ['key' => $w['key'], 'title' => $w['title'], 'note' => $w['note'], 'resp' => $w['resp']],
+            array_slice(\App\Support\WorkItemInput::clean((array) $request->input('items', []), 'g'), 0, 50)
+        );
+        \App\Models\AppSetting::put('work_checklist_items', $items);
+        return response()->json(['ok' => true]);
+    })->name('print.ishlar-template.save');
 
     // To'lov cheki (80mm) — "To'lash" bosilgach avtomatik ochilib, o'zi chop etiladi
     Route::get('/print/payment/{payment}/chek', function (\App\Models\Payment $payment) {
