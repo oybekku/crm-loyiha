@@ -79,7 +79,7 @@ class YangiBuxDebtCallTest extends TestCase
         $c->assertSee('TEST ESKI OY')->assertDontSee('TEST YANGI OY');
         // 15 belgidan uzun FISH qisqartiriladi, to'liq ismi title'da
         $this->debtor('Mamadaliyeva Gulbaxor Talibjanovna', '2001-03-20 10:00:00');
-        $c->call('$refresh')->assertSee('MAMADALIYEVA GU…')->assertSeeHtml('title="MAMADALIYEVA GULBAXOR TALIBJANOVNA"');
+        $c->call('$refresh')->assertSee('MAMADALIYEVA GULBAXOR')->assertSeeHtml('title="MAMADALIYEVA GULBAXOR TALIBJANOVNA"');
 
         $c->set('debtMonth', '');
         $c->assertSee('TEST YANGI OY');

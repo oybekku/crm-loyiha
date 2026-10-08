@@ -376,8 +376,9 @@ class Project extends Model
     }
 
     // Ro'yxatlarda mijoz FISH'i bir xil ko'rinishi uchun (<x-fish> komponenti):
-    // hammasi katta harfda, 15 belgidan keyin "…" bilan qisqartiriladi.
-    public const FISH_MAX = 15;
+    // hammasi katta harfda; familiya va ism TO'LIQ, otasining ismi ko'rsatilmaydi
+    // (to'liq FISH — tooltip'da).
+    public const FISH_WORDS = 2;
 
     public static function fishFull(?string $name): string
     {
@@ -387,7 +388,7 @@ class Project extends Model
     public static function fishShort(?string $name): string
     {
         $full = self::fishFull($name);
-        return $full === '' ? '—' : \Illuminate\Support\Str::limit($full, self::FISH_MAX, '…');
+        return $full === '' ? '—' : implode(' ', array_slice(explode(' ', $full), 0, self::FISH_WORDS));
     }
 
     // Loyihalar ro'yxatidagi umumiy holat: tayyor / jarayonda / to'xtatilgan.

@@ -14,12 +14,12 @@ class FishDisplayTest extends TestCase
 
     public function test_fish_component_uppercases_and_truncates(): void
     {
-        $this->assertSame('MAMADALIYEVA GU…', Project::fishShort('Mamadaliyeva  Gulbaxor Talibjanovna'));
+        $this->assertSame('MAMADALIYEVA GULBAXOR', Project::fishShort('Mamadaliyeva  Gulbaxor Talibjanovna'));
         $this->assertSame('ISOQOV', Project::fishShort(' isoqov '));
         $this->assertSame('—', Project::fishShort(null));
 
         $html = Blade::render('<x-fish :name="$n" />', ['n' => 'Matnazarova Anastasiya']);
-        $this->assertStringContainsString('MATNAZAROVA ANA…', $html);
+        $this->assertStringContainsString('>MATNAZAROVA ANASTASIYA</span>', $html);
         $this->assertStringContainsString('title="MATNAZAROVA ANASTASIYA"', $html);
         $this->assertStringContainsString('font-size:14.85px', $html);
     }
@@ -37,6 +37,6 @@ class FishDisplayTest extends TestCase
             $r = $this->get($url);
             $this->assertContains($r->status(), [200], "$url -> " . $r->status());
         }
-        $this->get('/admin/arxiv-page')->assertOk()->assertSee('TESTOV FISHJON…');
+        $this->get('/admin/arxiv-page')->assertOk()->assertSee('TESTOV FISHJON')->assertDontSee('TESTOV FISHJON UZUNISMOVICH</span>', false);
     }
 }
