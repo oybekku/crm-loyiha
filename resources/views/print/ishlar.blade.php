@@ -58,7 +58,8 @@
     .item.done .cb svg { display: block; }
     .item.done .txt { color: #111; }
     .item:not(.done) .txt { font-weight: 700; }
-    .item .del { display: none; }
+    .item .num { flex-shrink: 0; min-width: 22px; text-align: right; font-weight: 700; color: #1d4ed8; }
+    .item .acts { display: none; }
 
     .legend { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 14px; padding-top: 10px; border-top: 1px dashed #9ca3af; font-size: 11.5px; color: #4b5563; }
     .legend .mini { display: inline-flex; width: 13px; height: 13px; border: 1.4px solid #111; border-radius: 2px; vertical-align: -2px; align-items: center; justify-content: center; margin-right: 4px; }
@@ -82,12 +83,21 @@
     .editable .item { cursor: pointer; border-radius: 6px; padding: 4px 6px; margin: -4px -6px; transition: background .12s; }
     .editable .item:hover { background: #eff6ff; }
     .editable .item:hover .cb { border-color: #2563eb; }
-    .editable .item .del {
-        display: inline-flex; margin-left: auto; flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
-        border: none; background: #fee2e2; color: #b91c1c; font-size: 14px; cursor: pointer; align-items: center; justify-content: center;
-        opacity: 0; transition: opacity .12s;
+    .editable .item .acts { display: inline-flex; gap: 4px; margin-left: auto; flex-shrink: 0; }
+    .act {
+        width: 26px; height: 26px; border-radius: 6px; border: 1px solid #e5e7eb; background: #f9fafb;
+        font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0;
     }
-    .editable .item:hover .del { opacity: 1; }
+    .act:hover { background: #fff; border-color: #9ca3af; }
+    .act-del { background: #fef2f2; border-color: #fecaca; }
+    .act-del:hover { background: #fee2e2; border-color: #f87171; }
+
+    .hidden-box { margin-top: 12px; padding: 10px 12px; border: 1px dashed #d1d5db; border-radius: 8px; background: #f9fafb; font-size: 12.5px; color: #4b5563; }
+    .hidden-box b { color: #111; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px; background: #fff; border: 1px solid #d1d5db; color: #6b7280; text-decoration: line-through; font-size: 12.5px; }
+    .chip button { text-decoration: none; border: none; background: #dbeafe; color: #1d4ed8; border-radius: 999px; padding: 2px 8px; font-size: 11.5px; font-weight: 700; cursor: pointer; }
+    .chip .chip-del { background: #fee2e2; color: #b91c1c; }
 
     .panel { width: 210mm; margin: 0 auto; background: #fff; border-radius: 10px; padding: 14px 16px; box-shadow: 0 4px 18px rgba(0,0,0,.08); display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
     .panel .hint { font-size: 12.5px; color: #374151; flex: 1 1 260px; }
@@ -110,7 +120,7 @@
         .no-print { display: none !important; }
         .sheet { margin: 0; box-shadow: none; width: 210mm; height: 297mm; min-height: 0; }
         .editable .item:hover { background: none; }
-        .item .del { display: none !important; }
+        .item .acts { display: none !important; }
     }
     @page { size: A4; margin: 0; }
 </style>
@@ -126,7 +136,8 @@
 
 @if($canEdit)
 <div class="panel no-print" style="margin-top:16px;">
-    <div class="hint">☝️ Bajarilgan ishni <b>bosing</b> — galochka qo'yiladi (yana bossangiz olinadi). O'zgarish avtomatik saqlanadi.</div>
+    <div class="hint">☝️ Bajarilgan ishni <b>bosing</b> — galochka qo'yiladi (yana bossangiz olinadi).
+        <b>🙈</b> — shu mijozga kerak bo'lmagan ishni yashirish, <b>🗑</b> — qo'shilgan ishni o'chirish. Avtomatik saqlanadi.</div>
     <input id="newItem" type="text" maxlength="120" placeholder="Qo'shimcha ish nomi..." onkeydown="if(event.key==='Enter'){addItem()}">
     <button class="btn btn-add" onclick="addItem()">＋ Qo'shish</button>
     <button class="btn btn-soft" onclick="setAll(true)">Hammasi ✓</button>
@@ -172,6 +183,9 @@
             <span class="count" id="count"></span>
         </div>
     </div>
+    @if($canEdit)
+    <div class="hidden-box no-print" id="hiddenBox" style="display:none"></div>
+    @endif
 
     <div class="note">
         Hurmatli mijoz! Bo'sh katakchali (<b>belgilanmagan</b>) ishlar hali bajarilishi kerak bo'lgan ishlardir.
@@ -211,17 +225,36 @@
 
     function render() {
         const grid = document.getElementById('grid');
+        const visible = items.map(function (it, i) { return { it: it, i: i }; }).filter(function (v) { return !v.it.hidden; });
         // Ikki ustun: chapda birinchi yarmi, o'ngda qolgani (rasmdagidek)
-        grid.style.gridTemplateRows = 'repeat(' + Math.max(1, Math.ceil(items.length / 2)) + ', auto)';
-        grid.innerHTML = items.map(function (it, i) {
+        grid.style.gridTemplateRows = 'repeat(' + Math.max(1, Math.ceil(visible.length / 2)) + ', auto)';
+        grid.innerHTML = visible.map(function (v, n) {
+            const it = v.it, i = v.i;
             return '<div class="item' + (it.done ? ' done' : '') + '" data-i="' + i + '">'
+                + '<span class="num">' + (n + 1) + '.</span>'
                 + '<span class="cb">' + CHECK + '</span>'
                 + '<span class="txt">' + esc(it.label) + '</span>'
-                + (it.extra ? '<button type="button" class="del no-print" title="O\'chirish" data-del="' + i + '">×</button>' : '')
+                + '<span class="acts no-print">'
+                +   '<button type="button" class="act" title="Yashirish (shu mijozga kerak emas)" data-hide="' + i + '">🙈</button>'
+                +   (it.extra ? '<button type="button" class="act act-del" title="O\'chirish" data-del="' + i + '">🗑</button>' : '')
+                + '</span>'
                 + '</div>';
-        }).join('');
-        const done = items.filter(function (it) { return it.done; }).length;
-        document.getElementById('count').textContent = 'Bajarildi: ' + done + ' / ' + items.length;
+        }).join('') || '<div style="color:#6b7280;font-size:13px;">Ro\'yxat bo\'sh</div>';
+        const done = visible.filter(function (v) { return v.it.done; }).length;
+        document.getElementById('count').textContent = 'Bajarildi: ' + done + ' / ' + visible.length;
+
+        const box = document.getElementById('hiddenBox');
+        if (box) {
+            const hid = items.map(function (it, i) { return { it: it, i: i }; }).filter(function (v) { return v.it.hidden; });
+            box.style.display = hid.length ? '' : 'none';
+            box.innerHTML = '🙈 <b>Yashirilgan ishlar (' + hid.length + ')</b> — chop etilmaydi. Kerak bo\'lsa "Qaytarish"ni bosing:'
+                + '<div class="chips">' + hid.map(function (v) {
+                    return '<span class="chip">' + esc(v.it.label)
+                        + '<button type="button" data-show="' + v.i + '">↺ Qaytarish</button>'
+                        + (v.it.extra ? '<button type="button" class="chip-del" data-del="' + v.i + '">🗑</button>' : '')
+                        + '</span>';
+                }).join('') + '</div>';
+        }
     }
 
     let saveTimer = null;
@@ -238,6 +271,7 @@
                 body: JSON.stringify({
                     done:  items.filter(function (it) { return !it.extra && it.done; }).map(function (it) { return it.key; }),
                     extra: items.filter(function (it) { return it.extra; }).map(function (it) { return { id: it.key, label: it.label, done: it.done }; }),
+                    hidden: items.filter(function (it) { return it.hidden; }).map(function (it) { return it.key; }),
                 }),
             }).then(function (r) {
                 if (!r.ok) throw new Error(r.status);
@@ -261,26 +295,37 @@
         const inp = document.getElementById('newItem');
         const label = inp.value.trim();
         if (!label) { inp.focus(); return; }
-        items.push({ key: 'x' + Date.now().toString(36), label: label, done: false, extra: true });
+        items.push({ key: 'x' + Date.now().toString(36), label: label, done: false, extra: true, hidden: false });
         inp.value = '';
         render(); save();
     }
 
     function setAll(v) {
-        items.forEach(function (it) { it.done = v; });
+        items.forEach(function (it) { if (!it.hidden) it.done = v; });
         render(); save();
     }
 
+    // Yashirish / qaytarish / o'chirish tugmalari (ro'yxatda ham, yashirilganlar qutisida ham)
+    function handleAction(e) {
+        const del = e.target.closest('[data-del]');
+        if (del) {
+            const i = +del.dataset.del;
+            if (!confirm('"' + items[i].label + '" butunlay o\'chirilsinmi?')) return true;
+            items.splice(i, 1);
+            render(); save();
+            return true;
+        }
+        const hide = e.target.closest('[data-hide]');
+        if (hide) { items[+hide.dataset.hide].hidden = true; render(); save(); return true; }
+        const show = e.target.closest('[data-show]');
+        if (show) { items[+show.dataset.show].hidden = false; render(); save(); return true; }
+        return false;
+    }
+
     if (CAN_EDIT) {
+        document.getElementById('hiddenBox').addEventListener('click', handleAction);
         document.getElementById('grid').addEventListener('click', function (e) {
-            const del = e.target.closest('[data-del]');
-            if (del) {
-                const i = +del.dataset.del;
-                if (!confirm('"' + items[i].label + '" o\'chirilsinmi?')) return;
-                items.splice(i, 1);
-                render(); save();
-                return;
-            }
+            if (handleAction(e)) return;
             const row = e.target.closest('.item');
             if (!row) return;
             const it = items[+row.dataset.i];

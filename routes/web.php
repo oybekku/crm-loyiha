@@ -232,7 +232,13 @@ Route::middleware(['auth'])->group(function () {
                 'done'  => (bool) ($e['done'] ?? false),
             ];
         }
-        $project->update(['work_checklist' => ['done' => $done, 'extra' => array_slice($extra, 0, 30)]]);
+        $extra = array_slice($extra, 0, 30);
+        // Shu mijozga kerak bo'lmagan (vaqtincha yashirilgan) ishlar — chop etilmaydi
+        $hidden = array_values(array_intersect(
+            (array) $request->input('hidden', []),
+            array_merge(array_keys(\App\Models\Project::WORK_CHECKLIST_ITEMS), array_column($extra, 'id'))
+        ));
+        $project->update(['work_checklist' => ['done' => $done, 'extra' => $extra, 'hidden' => $hidden]]);
         return response()->json(['ok' => true]);
     })->name('print.project.ishlar.save');
 

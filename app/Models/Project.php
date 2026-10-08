@@ -42,17 +42,18 @@ class Project extends Model
         'royxat_ariza'      => 'Ro\'yxatdan o\'tkazish uchun ariza',
     ];
 
-    /** Ro'yxat (standart + qo'shimcha) — [['key','label','done','extra'], ...] */
+    /** Ro'yxat (standart + qo'shimcha) — [['key','label','done','extra','hidden'], ...] */
     public function workChecklist(): array
     {
-        $data  = $this->work_checklist ?: [];
-        $done  = $data['done'] ?? [];
-        $items = [];
+        $data   = $this->work_checklist ?: [];
+        $done   = $data['done'] ?? [];
+        $hidden = $data['hidden'] ?? [];
+        $items  = [];
         foreach (self::WORK_CHECKLIST_ITEMS as $key => $label) {
-            $items[] = ['key' => $key, 'label' => $label, 'done' => in_array($key, $done, true), 'extra' => false];
+            $items[] = ['key' => $key, 'label' => $label, 'done' => in_array($key, $done, true), 'extra' => false, 'hidden' => in_array($key, $hidden, true)];
         }
         foreach ($data['extra'] ?? [] as $e) {
-            $items[] = ['key' => $e['id'], 'label' => $e['label'], 'done' => (bool) ($e['done'] ?? false), 'extra' => true];
+            $items[] = ['key' => $e['id'], 'label' => $e['label'], 'done' => (bool) ($e['done'] ?? false), 'extra' => true, 'hidden' => in_array($e['id'], $hidden, true)];
         }
         return $items;
     }
