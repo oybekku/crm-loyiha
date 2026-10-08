@@ -783,15 +783,15 @@
                     @foreach($SY['months'] as $m)
                         @php $c = $r['cells'][$m]; @endphp
                         <td class="num yb-sy-cell">
-                            <span class="yb-g">{{ $c['paid'] ? $fmt($c['paid']) : '—' }}</span>
-                            @if($c['kerak'] > 0)<span class="yb-r">{{ $fmt($c['kerak']) }}</span>@endif
-                            @if($c['ortiq'] > 0)<span style="color:#ea580c">+{{ $fmt($c['ortiq']) }}</span>@endif
+                            <span class="yb-g"><i>to'landi</i>{{ $c['paid'] ? $fmt($c['paid']) : '—' }}</span>
+                            @if($c['kerak'] > 0)<span class="yb-r"><i>kerak</i>{{ $fmt($c['kerak']) }}</span>@endif
+                            @if($c['ortiq'] > 0)<span style="color:#ea580c"><i>ortiqcha</i>+{{ $fmt($c['ortiq']) }}</span>@endif
                         </td>
                     @endforeach
                     <td class="num yb-sy-cell" style="background:var(--yb-soft)">
-                        <span class="yb-g">{{ $fmt($r['sum']['paid']) }}</span>
-                        @if($r['sum']['kerak'] > 0)<span class="yb-r">{{ $fmt($r['sum']['kerak']) }}</span>@endif
-                        @if($r['sum']['ortiq'] > 0)<span style="color:#ea580c">+{{ $fmt($r['sum']['ortiq']) }}</span>@endif
+                        <span class="yb-g"><i>to'landi</i>{{ $fmt($r['sum']['paid']) }}</span>
+                        @if($r['sum']['kerak'] > 0)<span class="yb-r"><i>kerak</i>{{ $fmt($r['sum']['kerak']) }}</span>@endif
+                        @if($r['sum']['ortiq'] > 0)<span style="color:#ea580c"><i>ortiqcha</i>+{{ $fmt($r['sum']['ortiq']) }}</span>@endif
                     </td>
                 </tr>
             @empty
@@ -802,21 +802,21 @@
                     @foreach($SY['months'] as $m)
                         @php $t = $SY['tot'][$m] ?? ['paid' => 0, 'kerak' => 0, 'ortiq' => 0]; @endphp
                         <td class="num yb-sy-cell">
-                            <span class="yb-g">{{ $fmt($t['paid']) }}</span>
-                            @if($t['kerak'] > 0)<span class="yb-r">{{ $fmt($t['kerak']) }}</span>@endif
-                            @if($t['ortiq'] > 0)<span style="color:#ea580c">+{{ $fmt($t['ortiq']) }}</span>@endif
+                            <span class="yb-g"><i>to'landi</i>{{ $fmt($t['paid']) }}</span>
+                            @if($t['kerak'] > 0)<span class="yb-r"><i>kerak</i>{{ $fmt($t['kerak']) }}</span>@endif
+                            @if($t['ortiq'] > 0)<span style="color:#ea580c"><i>ortiqcha</i>+{{ $fmt($t['ortiq']) }}</span>@endif
                         </td>
                     @endforeach
                     <td class="num yb-sy-cell">
-                        <span class="yb-g">{{ $fmt($SY['grand']['paid']) }}</span>
-                        @if($SY['grand']['kerak'] > 0)<span class="yb-r">{{ $fmt($SY['grand']['kerak']) }}</span>@endif
-                        @if($SY['grand']['ortiq'] > 0)<span style="color:#ea580c">+{{ $fmt($SY['grand']['ortiq']) }}</span>@endif
+                        <span class="yb-g"><i>to'landi</i>{{ $fmt($SY['grand']['paid']) }}</span>
+                        @if($SY['grand']['kerak'] > 0)<span class="yb-r"><i>kerak</i>{{ $fmt($SY['grand']['kerak']) }}</span>@endif
+                        @if($SY['grand']['ortiq'] > 0)<span style="color:#ea580c"><i>ortiqcha</i>+{{ $fmt($SY['grand']['ortiq']) }}</span>@endif
                     </td>
                 </tr>
             </tbody>
         </table>
         </div>
-        <style>.yb-staffyear .yb-sy-cell span{display:block;line-height:1.35;white-space:nowrap}.yb-staffyear .yb-sy-cell .yb-r,.yb-staffyear .yb-sy-cell span[style]{font-size:11px;font-weight:700}</style>
+        <style>.yb-staffyear .yb-sy-cell span{display:block;line-height:1.35;white-space:nowrap}.yb-staffyear .yb-sy-cell i{font-style:normal;font-size:10px;font-weight:500;color:var(--yb-mu);margin-right:5px}.yb-staffyear .yb-sy-cell .yb-r,.yb-staffyear .yb-sy-cell span[style]{font-size:11px;font-weight:700}</style>
     </div>
     @endif
 
