@@ -42,7 +42,10 @@
         .fi-ta-table .fi-ta-selection-cell > div { padding-top: 6px !important; padding-bottom: 6px !important; }
         /* Egasi (FISH) — barcha ro'yxatlardagi fish komponenti bilan bir xil o'lcham */
         .pl-owner-name, .pl-owner-name .fi-ta-text-item-label { font-size: 14.85px !important; font-weight: 600; line-height: 1.3; white-space: nowrap; }
-        /* Qator ustiga sichqoncha borganda — och yashil (Filament standarti och kulrang) */
+        /* Qidiruv maydoni chap tomonda (Filament standarti — o'ngda); ustunlar
+           tugmasi esa o'ng chetda qoladi */
+        .fi-ta-header-toolbar > div.ms-auto { margin-inline-start: 0 !important; flex: 1 1 auto; }
+        .fi-ta-header-toolbar > div.ms-auto > :last-child:not(:first-child) { margin-inline-start: auto; }        /* Qator ustiga sichqoncha borganda — och yashil (Filament standarti och kulrang) */
         .fi-ta-table .fi-ta-row:hover { background-color: #ecfdf5 !important; }
         .dark .fi-ta-table .fi-ta-row:hover { background-color: rgba(16, 185, 129, .10) !important; }
     </style>
