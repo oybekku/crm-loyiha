@@ -70,7 +70,7 @@
     .works .c-num  { width: 54px; text-align: center !important; font-weight: 700; }
     .works .c-st   { width: 82px; text-align: center !important; }
     .works .c-resp { width: 170px; }
-    .works .w-title { font-weight: 700; line-height: 1.3; color: #0f172a; }
+    .works .w-title { font-weight: 700; font-size: 15.4px; line-height: 1.3; color: #0f172a; }
     .works .w-note  { font-style: italic; line-height: 1.35; white-space: pre-line; color: #64748b; font-size: 13px; margin-top: 3px; }
     .cb {
         width: 22px; height: 22px; border: 1.6px solid #64748b; border-radius: 5px; background: #fff;
