@@ -283,6 +283,7 @@
     <a href="{{ route('print.project.rozilik', $project) }}" style="background:#fff;color:#7c3aed;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">📝 Rozilik xati</a>
     <a href="{{ route('print.project.didox', $project) }}" target="_blank" style="background:#fff;color:#0891b2;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;">🔷 DIDOX</a>
     <button onclick="window.open('{{ route('print.project.chegirma', $project) }}','_blank')" style="background:#fff;color:#b45309;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;">🎟 Chegirma</button>
+    <button onclick="window.open('{{ route('print.project.ishlar', $project) }}','_blank')" style="background:#fff;color:#047857;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;">✅ Ishlar</button>
     <div style="width:1px;height:28px;background:rgba(255,255,255,0.3);"></div>
     <button onclick="window.close()" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.4);padding:8px 18px;border-radius:6px;font-size:14px;cursor:pointer;">
         ✕ Yopish

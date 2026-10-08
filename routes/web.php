@@ -208,6 +208,34 @@ Route::middleware(['auth'])->group(function () {
         return view('print.ariza', compact('project'));
     })->name('print.project.ariza');
 
+    // "Qilinadigan ishlar ro'yxati" — mijozga A4 ma'lumotnoma (Ariza → ✅ Ishlar)
+    Route::get('/print/project/{project}/ishlar', function (\App\Models\Project $project) {
+        return view('print.ishlar', compact('project'));
+    })->name('print.project.ishlar');
+
+    // Galochkalar va qo'shimcha ishlarni saqlash (faqat admin/menejer)
+    Route::post('/print/project/{project}/ishlar', function (\Illuminate\Http\Request $request, \App\Models\Project $project) {
+        $user = auth()->user();
+        abort_unless($user?->isAdmin() || $user?->isMenejer(), 403);
+
+        $done = array_values(array_intersect(
+            (array) $request->input('done', []),
+            array_keys(\App\Models\Project::WORK_CHECKLIST_ITEMS)
+        ));
+        $extra = [];
+        foreach ((array) $request->input('extra', []) as $e) {
+            $label = trim(strip_tags((string) ($e['label'] ?? '')));
+            if ($label === '') continue;
+            $extra[] = [
+                'id'    => preg_replace('/[^a-z0-9_]/i', '', (string) ($e['id'] ?? '')) ?: 'x' . uniqid(),
+                'label' => mb_substr($label, 0, 120),
+                'done'  => (bool) ($e['done'] ?? false),
+            ];
+        }
+        $project->update(['work_checklist' => ['done' => $done, 'extra' => array_slice($extra, 0, 30)]]);
+        return response()->json(['ok' => true]);
+    })->name('print.project.ishlar.save');
+
     // To'lov cheki (80mm) — "To'lash" bosilgach avtomatik ochilib, o'zi chop etiladi
     Route::get('/print/payment/{payment}/chek', function (\App\Models\Payment $payment) {
         $project = $payment->project;

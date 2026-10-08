@@ -55,6 +55,7 @@
 
             {{-- Shartnoma RU/UZ, Chegirma, Rozilik xati — endi "Ariza" sahifasi ichida --}}
             <a href="{{ route('print.project.ariza', $editInfoId) }}" target="_blank" style="padding:6px 11px;border-radius:7px;border:1px solid #d1d5db;background:#fff;color:#374151;font-size:12px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:4px">🖨 Ariza</a>
+            <a href="{{ route('print.project.ishlar', $editInfoId) }}" target="_blank" style="padding:6px 11px;border-radius:7px;border:1px solid #a7f3d0;background:#ecfdf5;color:#047857;font-size:12px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:4px">✅ Ishlar</a>
 
             {{-- Imzo chekish — PDF fayl yuklanmagan bo'lsa ham har doim ochiq --}}
             @if(auth()->user()?->isAdmin() || auth()->user()?->isMenejer())

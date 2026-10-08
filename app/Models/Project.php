@@ -22,7 +22,40 @@ class Project extends Model
         'is_urgent', 'urgent_accepted_at', 'urgent_accepted_by',
         'ready_sms_status', 'ready_sms_sent_at', 'ready_sms_error',
         'debt_comment', 'debt_called', 'debt_called_at', 'debt_called_by',
+        'work_checklist',
     ];
+
+    /**
+     * "Qilinadigan ishlar ro'yxati" — har loyihada doim bor standart ishlar.
+     * Kalitni o'zgartirmang (bazada saqlangan galochkalar shu kalitlarga bog'langan).
+     */
+    public const WORK_CHECKLIST_ITEMS = [
+        'kadastr_yangilash' => 'Kadastr yangilash',
+        'topo_semka'        => 'Topo s\'emka',
+        'eskiz_loyiha'      => 'Eskiz loyiha',
+        'loyiha_smeta'      => 'Loyiha-smeta xujjatlari',
+        'texnik_pasport'    => 'Texnik pasport',
+        'foydalanishga_rk'  => 'Foydalanishga r.k.',
+        'akt_loyiha_tash'   => 'AKT loyiha tashkilot ma\'lumotnomasi',
+        'qurilish_tugallanmagan' => 'Qurilishi tugallanmagan ob\'ekt kad. pasporti',
+        'akt_63'            => '63% akt ma\'lumotnomasi',
+        'royxat_ariza'      => 'Ro\'yxatdan o\'tkazish uchun ariza',
+    ];
+
+    /** Ro'yxat (standart + qo'shimcha) — [['key','label','done','extra'], ...] */
+    public function workChecklist(): array
+    {
+        $data  = $this->work_checklist ?: [];
+        $done  = $data['done'] ?? [];
+        $items = [];
+        foreach (self::WORK_CHECKLIST_ITEMS as $key => $label) {
+            $items[] = ['key' => $key, 'label' => $label, 'done' => in_array($key, $done, true), 'extra' => false];
+        }
+        foreach ($data['extra'] ?? [] as $e) {
+            $items[] = ['key' => $e['id'], 'label' => $e['label'], 'done' => (bool) ($e['done'] ?? false), 'extra' => true];
+        }
+        return $items;
+    }
 
     /**
      * Shu so'rov davomida yuborilgan "tayyor" SMS natijalari.
@@ -50,6 +83,7 @@ class Project extends Model
         'ready_sms_sent_at'     => 'datetime',
         'debt_called'           => 'boolean',
         'debt_called_at'        => 'datetime',
+        'work_checklist'        => 'array',
     ];
 
     // Mijozlar qarzlari — oxirgi marta kim telefon qilgani
