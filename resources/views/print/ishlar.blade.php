@@ -68,16 +68,7 @@
 
     .note { margin-top: 16px; font-size: 12.5px; line-height: 1.6; color: #333; }
 
-    /* Imzolar */
-    .signatures { display: flex; justify-content: space-between; gap: 30px; margin-top: auto; padding-top: 40px; }
-    .sig-block { flex: 1; position: relative; min-height: 110px; }
-    .stamp-img { position: absolute; top: {{ (int) $stamp['stamp_top'] }}px; left: 19px; width: {{ (int) $stamp['stamp_width'] }}px; opacity: .92; pointer-events: none; z-index: 1; }
-    .sig-title { font-size: 13px; font-weight: 700; margin-bottom: 35px; }
-    .sig-line  { border-bottom: 1.5px solid #000; margin-bottom: 6px; position: relative; z-index: 2; }
-    .sig-label { font-size: 11px; color: #666; position: relative; z-index: 2; }
-    .sig-name  { font-size: 14px; font-weight: 700; margin-top: 4px; position: relative; z-index: 2; }
-    .sig-right { text-align: right; }
-    .footer-date { font-size: 11px; color: #666; margin-top: 14px; text-align: center; border-top: 1px solid #e5e7eb; padding-top: 6px; }
+    .footer-date { font-size: 11px; color: #666; margin-top: auto; text-align: center; border-top: 1px solid #e5e7eb; padding-top: 6px; }
 
     /* ── Tahrirlash (faqat ekranda) ── */
     .editable .item { cursor: pointer; border-radius: 6px; padding: 4px 6px; margin: -4px -6px; transition: background .12s; }
@@ -190,23 +181,6 @@
     <div class="note">
         Hurmatli mijoz! Bo'sh katakchali (<b>belgilanmagan</b>) ishlar hali bajarilishi kerak bo'lgan ishlardir.
         Savollar bo'yicha yuqoridagi telefon raqamlariga murojaat qiling.
-    </div>
-
-    <div class="signatures">
-        <div class="sig-block">
-            <div class="sig-title">Direktor:</div>
-            <div class="sig-line"></div>
-            <div class="sig-label">Imzo / muhr</div>
-            <div class="sig-name">Sarimsakov J.</div>
-            <img src="/images/imzo.png?v=2" class="stamp-img" alt="">
-        </div>
-        <div class="sig-block sig-right">
-            <div class="sig-title">Mijoz:</div>
-            <div class="sig-line"></div>
-            <div class="sig-label">Imzo</div>
-            <div class="sig-name">{{ $project->owner_name }}</div>
-            <div style="font-size:11px;color:#888;margin-top:3px;">ro'yxat bilan tanishdim</div>
-        </div>
     </div>
 
     <div class="footer-date">Chop etilgan: {{ now()->format('d.m.Y H:i') }}</div>
