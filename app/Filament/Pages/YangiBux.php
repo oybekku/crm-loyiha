@@ -1361,6 +1361,7 @@ class YangiBux extends Page
         };
         $salaryDue = array_fill(1, 12, null);
         $mamuriyDue = array_fill(1, 12, null);
+        $staffYear = null;
         if ($this->tab === 'hisobotlar') {
             $firstYm = Project::min('created_at');
             $firstYm = $firstYm ? Carbon::parse($firstYm)->format('Y-m') : null;
@@ -1371,6 +1372,41 @@ class YangiBux extends Page
                 $salaryDue[$m]  = (float) collect($grid)->sum(fn ($r) => $dueParts($r, $m)['ishbay']);
                 $mamuriyDue[$m] = (float) collect($grid)->sum(fn ($r) => $dueParts($r, $m)['mamuriy']);
             }
+
+            // "Yil hisoboti / Hodimlar" — har hodim × har oy: to'langan / to'lash kerak /
+            // ortiqcha. Oylik maosh tabidagi bilan AYNAN bir xil qoida (payableSplit,
+            // yearGrid 'calc'). Ishdan bo'shaganlar ham — summasi bo'lsa.
+            $yearPays = EmployeeSalaryPayment::where('month', 'like', $year . '-%')->get()
+                ->groupBy(fn ($p) => $p->user_id . '|' . (int) substr($p->month, 5, 2));
+            $staffMonths = [];
+            for ($m = 1; $m <= 12; $m++) {
+                $ymM = sprintf('%04d-%02d', $year, $m);
+                if ($firstYm && $ymM >= $firstYm && $ymM <= $nowYm) $staffMonths[] = $m;
+            }
+            $staffYear = ['months' => $staffMonths, 'rows' => [], 'tot' => []];
+            $allRows = array_merge($grid, EmployeePayableService::yearGrid($year, activeOnly: false));
+            foreach ($allRows as $r) {
+                $u = $r['user'];
+                $cells = []; $sum = ['paid' => 0.0, 'kerak' => 0.0, 'ortiq' => 0.0];
+                foreach ($staffMonths as $m) {
+                    $pays = $yearPays->get($u->id . '|' . $m, collect());
+                    [$kerak, $ortiq] = self::payableSplit($u, (float) ($r['months'][$m]['calc'] ?? 0), $pays);
+                    $c = ['paid' => (float) $pays->sum('amount'), 'kerak' => $kerak, 'ortiq' => $ortiq];
+                    $cells[$m] = $c;
+                    foreach ($c as $k => $v) {
+                        $sum[$k] += $v;
+                        $staffYear['tot'][$m][$k] = ($staffYear['tot'][$m][$k] ?? 0) + $v;
+                    }
+                }
+                if ($sum['paid'] <= 0 && $sum['kerak'] <= 0 && $sum['ortiq'] <= 0) continue; // umuman summasi yo'q
+                $staffYear['rows'][] = ['user' => $u, 'active' => (bool) $u->is_active, 'cells' => $cells, 'sum' => $sum];
+            }
+            $sums = array_column($staffYear['rows'], 'sum');
+            $staffYear['grand'] = [
+                'paid'  => array_sum(array_column($sums, 'paid')),
+                'kerak' => array_sum(array_column($sums, 'kerak')),
+                'ortiq' => array_sum(array_column($sums, 'ortiq')),
+            ];
 
             // Sof foyda — shu oyda ochilgan loyihalar bo'yicha (Dashboard'dagi kabi,
             // to'xtatilgan va bekor qilinganlarsiz). Faqat ISHBAY oylik ayriladi,
@@ -1501,6 +1537,7 @@ class YangiBux extends Page
             'mamuriySpent' => $mamuriyByMonth[$month] ?? 0.0,
             'yearMamuriy'  => array_sum($mamuriyByMonth),
             'repDetail'    => $repDetail,
+            'staffYear'    => $staffYear,
             'repColsHidden'=> $this->tab === 'hisobotlar' ? $this->repColsHidden() : [],
             'repHidden'    => $this->tab === 'hisobotlar' ? $this->repHiddenMonths() : [],
             'profitInfo'   => $this->tab === 'hisobotlar' && $this->profitMonth ? ($chart[$this->profitMonth - 1] + ['title' => $fullMonths[$this->profitMonth - 1] . ' ' . $year]) : null,

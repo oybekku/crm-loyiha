@@ -763,6 +763,63 @@
         </div>
     </div>
 
+    {{-- Yil hisoboti / Hodimlar — har hodim × oy: to'langan / to'lash kerak / ortiqcha (YangiBux $staffYear) --}}
+    @if($staffYear)
+    @php $SY = $staffYear; @endphp
+    <div class="yb-card" style="margin-top:16px">
+        <div class="yb-h"><span>{{ $this->ybYear }}-yil hisoboti / Hodimlar
+            <span class="yb-sub">Har oy: <b class="yb-g">to'langan</b> · <b class="yb-r">to'lash kerak</b> · <b style="color:#ea580c">ortiqcha to'langan</b> — Oylik maosh tabidagi qoida bo'yicha</span></span></div>
+        <div class="yb-tbl-wrap">
+        <table class="yb-tbl yb-staffyear">
+            <thead><tr>
+                <th>Hodim</th>
+                @foreach($SY['months'] as $m)<th class="num">{{ ['Yan','Fev','Mar','Apr','May','Iyun','Iyul','Avg','Sen','Okt','Noy','Dek'][$m - 1] }}</th>@endforeach
+                <th class="num">Jami</th>
+            </tr></thead>
+            <tbody>
+            @forelse($SY['rows'] as $r)
+                <tr>
+                    <td style="white-space:nowrap"><b>{{ $r['user']->name }}</b>@if(!$r['active'])<span class="yb-sub">ishdan bo'shagan</span>@endif</td>
+                    @foreach($SY['months'] as $m)
+                        @php $c = $r['cells'][$m]; @endphp
+                        <td class="num yb-sy-cell">
+                            <span class="yb-g">{{ $c['paid'] ? $fmt($c['paid']) : '—' }}</span>
+                            @if($c['kerak'] > 0)<span class="yb-r">{{ $fmt($c['kerak']) }}</span>@endif
+                            @if($c['ortiq'] > 0)<span style="color:#ea580c">+{{ $fmt($c['ortiq']) }}</span>@endif
+                        </td>
+                    @endforeach
+                    <td class="num yb-sy-cell" style="background:var(--yb-soft)">
+                        <span class="yb-g">{{ $fmt($r['sum']['paid']) }}</span>
+                        @if($r['sum']['kerak'] > 0)<span class="yb-r">{{ $fmt($r['sum']['kerak']) }}</span>@endif
+                        @if($r['sum']['ortiq'] > 0)<span style="color:#ea580c">+{{ $fmt($r['sum']['ortiq']) }}</span>@endif
+                    </td>
+                </tr>
+            @empty
+                <tr><td colspan="{{ count($SY['months']) + 2 }}" class="yb-empty">Bu yil hodimlarga to'lov yoki hisoblangan summa yo'q</td></tr>
+            @endforelse
+                <tr style="font-weight:800;background:var(--yb-soft)">
+                    <td>Jami</td>
+                    @foreach($SY['months'] as $m)
+                        @php $t = $SY['tot'][$m] ?? ['paid' => 0, 'kerak' => 0, 'ortiq' => 0]; @endphp
+                        <td class="num yb-sy-cell">
+                            <span class="yb-g">{{ $fmt($t['paid']) }}</span>
+                            @if($t['kerak'] > 0)<span class="yb-r">{{ $fmt($t['kerak']) }}</span>@endif
+                            @if($t['ortiq'] > 0)<span style="color:#ea580c">+{{ $fmt($t['ortiq']) }}</span>@endif
+                        </td>
+                    @endforeach
+                    <td class="num yb-sy-cell">
+                        <span class="yb-g">{{ $fmt($SY['grand']['paid']) }}</span>
+                        @if($SY['grand']['kerak'] > 0)<span class="yb-r">{{ $fmt($SY['grand']['kerak']) }}</span>@endif
+                        @if($SY['grand']['ortiq'] > 0)<span style="color:#ea580c">+{{ $fmt($SY['grand']['ortiq']) }}</span>@endif
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        </div>
+        <style>.yb-staffyear .yb-sy-cell span{display:block;line-height:1.35;white-space:nowrap}.yb-staffyear .yb-sy-cell .yb-r,.yb-staffyear .yb-sy-cell span[style]{font-size:11px;font-weight:700}</style>
+    </div>
+    @endif
+
     @if($profitInfo)
         @php $P = $profitInfo; @endphp
         @teleport('body')
