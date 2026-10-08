@@ -123,7 +123,9 @@ class ServicesRelationManager extends RelationManager
                     ->color('info'),
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make()->label('Xizmat qo\'shish'),
+                Tables\Actions\CreateAction::make()->label('Xizmat qo\'shish')
+                    // Keyinroq qo'shilgan xizmat — qo'shilgan oyiga (ProjectService::work_month)
+                    ->mutateFormDataUsing(fn (array $data) => $data + ['work_month' => now()->format('Y-m')]),
             ])
             ->actions([
                 Tables\Actions\EditAction::make()->label(''),

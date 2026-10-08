@@ -425,6 +425,17 @@ class Project extends Model
         ];
     }
 
+    // Kanban / Loyihalar ro'yxati / chap panel oy filtri: shu oyda OCHILGAN loyiha
+    // yoki shu oyga tegishli xizmati bor loyiha (masalan iyundagi loyihaga oktabrda
+    // Ariza qo'shilsa — ham iyunda, ham oktabrda ko'rinadi). Index'dan foydalanadi.
+    public function scopeVisibleInMonth($query, int $year, int $month)
+    {
+        $start = \Carbon\Carbon::create($year, $month, 1)->startOfMonth();
+        return $query->where(fn ($q) => $q
+            ->whereBetween('projects.created_at', [$start, $start->copy()->endOfMonth()])
+            ->orWhereHas('services', fn ($s) => $s->inWorkMonth($year, $month)));
+    }
+
     public static function categoryOptions(): array
     {
         return [

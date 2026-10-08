@@ -77,8 +77,7 @@ class ListProjects extends ListRecords
     protected function getTableQuery(): ?Builder
     {
         return parent::getTableQuery()
-            ?->whereYear('created_at', $this->selYear)
-            ->whereMonth('created_at', $this->selMonth);
+            ?->visibleInMonth($this->selYear, $this->selMonth); // + shu oyda xizmat qo'shilgan eski loyihalar
     }
 
     protected function getHeaderActions(): array

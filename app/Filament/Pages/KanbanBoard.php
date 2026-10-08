@@ -1084,8 +1084,8 @@ class KanbanBoard extends Page
         // TEZLIK: whereYear/whereMonth o'rniga whereBetween — created_at indeksidan
         // foydalanadi (whereYear/whereMonth ustunni funksiyaga o'raydi, indeks ishlamay qoladi).
         if (empty($this->search)) {
-            $periodStart = \Carbon\Carbon::create($this->kbYear, $this->kbMonth, 1)->startOfMonth();
-            $projectQuery->whereBetween('created_at', [$periodStart, $periodStart->copy()->endOfMonth()]);
+            // + shu oyda yangi xizmat (masalan Ariza) qo'shilgan eski loyihalar — Project::visibleInMonth
+            $projectQuery->visibleInMonth($this->kbYear, $this->kbMonth);
         }
 
         // Qidiruv filtri
@@ -1143,8 +1143,7 @@ class KanbanBoard extends Page
             }
             if ($this->filterEmployee) {
                 // Hodim saralashida sonlar bilan mos bo'lishi uchun MyGOV ham tanlangan oy bilan cheklanadi
-                $mStart = \Carbon\Carbon::create($this->kbYear, $this->kbMonth, 1)->startOfMonth();
-                $mygovQuery->whereBetween('created_at', [$mStart, $mStart->copy()->endOfMonth()])
+                $mygovQuery->visibleInMonth($this->kbYear, $this->kbMonth)
                     ->whereHas('services', fn ($q) => $q->where('assigned_user_id', $this->filterEmployee));
             }
             $projects['mygov'] = $mygovQuery->get();
@@ -1165,10 +1164,9 @@ class KanbanBoard extends Page
         if ($authUser?->isHisobchi() || $authUser?->canSeeAllProjects()) {
             // To'lov navbati ham tanlangan oyga bog'lanadi (ustunlar bilan bir xil —
             // loyiha OCHILGAN oyiga qarab), shunda eski oy so'rovlari yangi oyga o'tmaydi.
-            $periodStart  = \Carbon\Carbon::create($this->kbYear, $this->kbMonth, 1)->startOfMonth();
             $paymentQueue = Project::with(['assignedUsers', 'paymentRequester'])
                 ->whereNotNull('payment_requested_at')
-                ->whereBetween('created_at', [$periodStart, $periodStart->copy()->endOfMonth()])
+                ->visibleInMonth($this->kbYear, $this->kbMonth)
                 ->orderBy('payment_requested_at', 'asc')
                 ->get();
         }

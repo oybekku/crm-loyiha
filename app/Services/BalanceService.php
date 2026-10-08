@@ -59,12 +59,9 @@ class BalanceService
 
         $services = ProjectService::with('project')
             ->where('assigned_user_id', $userId)
-            ->whereHas('project', function ($q) use ($year, $month) {
-                $q->where('status', '!=', 'bekor_qilingan');
-                if ($year && $month) {
-                    $q->whereYear('created_at', $year)->whereMonth('created_at', $month);
-                }
-            })
+            ->whereHas('project', fn ($q) => $q->where('status', '!=', 'bekor_qilingan'))
+            // Oy — xizmatning ish oyi (keyin qo'shilgan Ariza — qo'shilgan oyida)
+            ->when($year && $month, fn ($q) => $q->inWorkMonth((int) $year, (int) $month))
             ->get();
 
         foreach ($services as $s) {

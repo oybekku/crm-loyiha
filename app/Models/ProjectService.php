@@ -9,7 +9,7 @@ class ProjectService extends Model
     protected $fillable = [
         'project_id', 'assigned_user_id', 'service_name', 'price',
         'discount_type', 'discount_value', 'final_price', 'note',
-        'deadline_days', 'work_started_at', 'submitted_at', 'completed_at',
+        'deadline_days', 'work_started_at', 'submitted_at', 'completed_at', 'work_month',
     ];
 
     protected $casts = [
@@ -59,8 +59,37 @@ class ProjectService extends Model
     }
 
 
+    // ── Ish oyi ('Y-m') ──────────────────────────────────────────────────
+    // Oyliklar, Oylik hisobot, Dashboard va boshqa oylik hisob-kitoblar xizmatni
+    // shu oy bo'yicha oladi (loyiha ochilgan oy emas). Odatda loyiha ochilgan oy;
+    // tahrirlash oynasidan keyinroq qo'shilgan xizmat — qo'shilgan oy
+    // (ProjectEditModal::eiAddService work_month'ni aniq beradi).
+    public function scopeInWorkMonth($query, int $year, int $month)
+    {
+        return $query->where('project_services.work_month', sprintf('%04d-%02d', $year, $month));
+    }
+
+    public function scopeInWorkYear($query, int $year)
+    {
+        return $query->where('project_services.work_month', 'like', sprintf('%04d-%%', $year));
+    }
+
+    /** Komissiya foizi va hisobot uchun oy — work_month, bo'lmasa loyiha ochilgan oy */
+    public function workMonthKey(): string
+    {
+        return $this->work_month ?: ($this->project?->created_at?->format('Y-m') ?? now()->format('Y-m'));
+    }
+
     protected static function booted(): void
     {
+        static::creating(function ($service) {
+            // Aniq berilmagan bo'lsa — loyiha ochilgan oy (yangi loyiha, arxivdan tiklash)
+            if (empty($service->work_month)) {
+                $created = $service->project_id ? Project::whereKey($service->project_id)->value('created_at') : null;
+                $service->work_month = $created ? \Carbon\Carbon::parse($created)->format('Y-m') : now()->format('Y-m');
+            }
+        });
+
         static::saving(function ($service) {
             $price = (float) $service->price;
             if ($service->discount_type === 'percent') {

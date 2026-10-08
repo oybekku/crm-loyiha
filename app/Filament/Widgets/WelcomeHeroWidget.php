@@ -98,24 +98,21 @@ class WelcomeHeroWidget extends Widget
                 break;
             case 'month_done':
                 $q->whereNotNull('completed_at')
-                    ->whereHas('project', fn ($p) => $p->whereYear('created_at', $this->selYear)
-                        ->whereMonth('created_at', $month)
-                        ->where('status', '!=', 'bekor_qilingan'));
+                    ->inWorkMonth($this->selYear, $month)
+                    ->whereHas('project', fn ($p) => $p->where('status', '!=', 'bekor_qilingan'));
                 $titleSuffix = 'Tugallangan — ' . \Carbon\Carbon::create($this->selYear, $month, 1)->translatedFormat('F');
                 break;
             case 'month_prog':
                 $q->whereNull('completed_at')
-                    ->whereHas('project', fn ($p) => $p->whereYear('created_at', $this->selYear)
-                        ->whereMonth('created_at', $month)
-                        ->whereNotIn('status', \App\Services\EmployeePayableService::ARCHIVE_STATUSES)
+                    ->inWorkMonth($this->selYear, $month)
+                    ->whereHas('project', fn ($p) => $p->whereNotIn('status', \App\Services\EmployeePayableService::ARCHIVE_STATUSES)
                         ->whereNull('timer_paused_at'));
                 $titleSuffix = 'Jarayonda — ' . \Carbon\Carbon::create($this->selYear, $month, 1)->translatedFormat('F');
                 break;
             case 'month_paused':
                 $q->whereNull('completed_at')
-                    ->whereHas('project', fn ($p) => $p->whereYear('created_at', $this->selYear)
-                        ->whereMonth('created_at', $month)
-                        ->whereNotIn('status', \App\Services\EmployeePayableService::ARCHIVE_STATUSES)
+                    ->inWorkMonth($this->selYear, $month)
+                    ->whereHas('project', fn ($p) => $p->whereNotIn('status', \App\Services\EmployeePayableService::ARCHIVE_STATUSES)
                         ->whereNotNull('timer_paused_at'));
                 $titleSuffix = 'Muzlatilgan — ' . \Carbon\Carbon::create($this->selYear, $month, 1)->translatedFormat('F');
                 break;
@@ -128,9 +125,8 @@ class WelcomeHeroWidget extends Widget
             case 'month_overdue':
                 $q->whereNull('completed_at')
                     ->where('deadline_days', '>', 0)
-                    ->whereHas('project', fn ($p) => $p->whereYear('created_at', $this->selYear)
-                        ->whereMonth('created_at', $month)
-                        ->whereNotIn('status', \App\Services\EmployeePayableService::ARCHIVE_STATUSES)
+                    ->inWorkMonth($this->selYear, $month)
+                    ->whereHas('project', fn ($p) => $p->whereNotIn('status', \App\Services\EmployeePayableService::ARCHIVE_STATUSES)
                         ->whereNull('timer_paused_at'));
                 $titleSuffix = 'Kechikayotgan — ' . \Carbon\Carbon::create($this->selYear, $month, 1)->translatedFormat('F');
                 break;
@@ -262,9 +258,8 @@ class WelcomeHeroWidget extends Widget
             // loyihalar diqqat talab ishlarда ko'rinmaydi
             ->whereHas('project', fn ($q) => $q
                 ->whereNotIn('status', array_merge($archiveStatuses, ['tolov_jarayonida', 'tolangan']))
-                ->excludePaused()
-                ->whereYear('created_at', $this->selYear)
-                ->whereMonth('created_at', $this->selMonth))
+                ->excludePaused())
+            ->inWorkMonth($this->selYear, $this->selMonth)
             ->with(['project:id,number,owner_name,status', 'assignedUser:id,name']);
         if ($isEmployee) {
             $attnQ->where('assigned_user_id', $user->id);
@@ -340,9 +335,7 @@ class WelcomeHeroWidget extends Widget
 
         // Xizmat turlari bo'yicha statistika (tanlangan oy) — masalan:
         // Toposyomka 100 ta 10 000 000, Eskiz loyiha 50 ta 50 000 000...
-        $svcTypeQuery = \App\Models\ProjectService::whereHas('project', fn ($q) => $q
-            ->whereYear('created_at', $this->selYear)
-            ->whereMonth('created_at', $this->selMonth));
+        $svcTypeQuery = \App\Models\ProjectService::inWorkMonth($this->selYear, $this->selMonth);
         if ($isEmployee) {
             $svcTypeQuery->where('assigned_user_id', $user->id);
         }
@@ -454,12 +447,12 @@ class WelcomeHeroWidget extends Widget
                 $monthlyOverdue = array_fill(1, 12, 0);
                 $monthlyPaused  = array_fill(1, 12, 0);
                 (clone $svcQ)
-                    ->whereHas('project', fn ($p) => $p->whereYear('created_at', $this->selYear))
+                    ->inWorkYear($this->selYear)
                     ->with('project:id,created_at,status,timer_paused_at')
-                    ->get(['id', 'project_id', 'work_started_at', 'completed_at', 'submitted_at', 'deadline_days'])
+                    ->get(['id', 'project_id', 'work_month', 'work_started_at', 'completed_at', 'submitted_at', 'deadline_days'])
                     ->each(function ($s) use (&$monthlyDoneProjects, &$monthlyProg, &$monthlyOverdue, &$monthlyPaused, $archiveStatuses) {
                         if (!$s->project) return;
-                        $m = (int) $s->project->created_at->format('n');
+                        $m = (int) substr($s->work_month, 5, 2); // xizmatning ish oyi
                         if ($s->completed_at) {
                             if ($s->project->status !== 'bekor_qilingan') {
                                 $monthlyDoneProjects[$m][$s->project_id] = true;

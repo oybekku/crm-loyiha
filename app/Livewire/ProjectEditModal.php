@@ -520,6 +520,9 @@ class ProjectEditModal extends Component
             'discount_type'    => 'none',
             'discount_value'   => 0,
             'final_price'      => $price,
+            // Keyinroq qo'shilgan xizmat (masalan iyundagi loyihaga oktabrda Ariza) —
+            // oyliklar/hisobotlarda qo'shilgan oyiga tushadi
+            'work_month'       => now()->format('Y-m'),
         ]);
 
         $this->ei_newSvcType  = '';

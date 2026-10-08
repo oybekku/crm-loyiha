@@ -70,7 +70,8 @@ class EmployeePayableService
     public static function commissionForService(ProjectService $service, ?Project $project): array
     {
         $user  = $service->assignedUser;
-        $month = $project?->created_at?->format('Y-m') ?? now()->format('Y-m');
+        // Foiz — xizmatning ish oyi bo'yicha (keyin qo'shilgan Ariza — o'sha oy foizi)
+        $month = $service->work_month ?: ($project?->created_at?->format('Y-m') ?? now()->format('Y-m'));
         $rate  = self::rateFor($user, $month);
 
         $price      = (float) $service->final_price;
@@ -165,9 +166,8 @@ class EmployeePayableService
         $completedServices = ProjectService::with('project')
             ->where('assigned_user_id', $user->id)
             ->whereNotNull('completed_at')
-            ->whereHas('project', fn ($q) => $q->whereYear('created_at', $year)
-                ->whereMonth('created_at', $mon)
-                ->where('status', '!=', 'bekor_qilingan'))
+            ->inWorkMonth((int) $year, (int) $mon)
+            ->whereHas('project', fn ($q) => $q->where('status', '!=', 'bekor_qilingan'))
             ->get();
 
         $commission = 0.0;
@@ -184,9 +184,8 @@ class EmployeePayableService
         $pendingServices = ProjectService::with('project')
             ->where('assigned_user_id', $user->id)
             ->whereNull('completed_at')
-            ->whereHas('project', fn ($q) => $q->whereNotIn('status', $archiveStatuses)
-                ->whereYear('created_at', $year)
-                ->whereMonth('created_at', $mon))
+            ->inWorkMonth((int) $year, (int) $mon)
+            ->whereHas('project', fn ($q) => $q->whereNotIn('status', $archiveStatuses))
             ->get();
 
         $pendingCommission = 0.0;
@@ -224,9 +223,8 @@ class EmployeePayableService
         $completedServices = ProjectService::with(['assignedUser', 'project'])
             ->whereNotNull('completed_at')
             ->whereNotNull('assigned_user_id')
-            ->whereHas('project', fn ($q) => $q->whereYear('created_at', $year)
-                ->whereMonth('created_at', $mon)
-                ->where('status', '!=', 'bekor_qilingan'))
+            ->inWorkMonth((int) $year, (int) $mon)
+            ->whereHas('project', fn ($q) => $q->where('status', '!=', 'bekor_qilingan'))
             ->get();
 
         $payable = [];
@@ -295,8 +293,8 @@ class EmployeePayableService
 
         ProjectService::with(['assignedUser', 'project.services', 'project.payments'])
             ->whereNotNull('completed_at')->whereNotNull('assigned_user_id')
-            ->whereHas('project', fn ($q) => $q->whereYear('created_at', $year)->whereMonth('created_at', $month)
-                ->where('status', '!=', 'bekor_qilingan'))
+            ->inWorkMonth($year, $month)
+            ->whereHas('project', fn ($q) => $q->where('status', '!=', 'bekor_qilingan'))
             ->get()
             ->each(function ($s) use (&$res, $row) {
                 if (!$s->assignedUser || !$s->project) return;
@@ -307,12 +305,12 @@ class EmployeePayableService
 
         ProjectService::with(['assignedUser', 'project:id,created_at,status'])
             ->whereNull('completed_at')->whereNotNull('assigned_user_id')
-            ->whereHas('project', fn ($q) => $q->whereNotIn('status', ['tugallangan', 'taqdim_etilgan', 'bekor_qilingan'])
-                ->whereYear('created_at', $year)->whereMonth('created_at', $month))
+            ->inWorkMonth($year, $month)
+            ->whereHas('project', fn ($q) => $q->whereNotIn('status', ['tugallangan', 'taqdim_etilgan', 'bekor_qilingan']))
             ->get()
             ->each(function ($s) use (&$res, $row) {
                 $row($s->assigned_user_id);
-                $rate = self::rateFor($s->assignedUser, $s->project?->created_at?->format('Y-m') ?? now()->format('Y-m'));
+                $rate = self::rateFor($s->assignedUser, $s->workMonthKey());
                 $res[$s->assigned_user_id]['pending_count']++;
                 $res[$s->assigned_user_id]['pending_comm'] += round((float) $s->final_price * $rate / 100, 0);
             });
@@ -337,9 +335,8 @@ class EmployeePayableService
             $completedServices = ProjectService::with(['assignedUser', 'project'])
                 ->whereNotNull('completed_at')
                 ->whereNotNull('assigned_user_id')
-                ->whereHas('project', fn ($q) => $q->whereYear('created_at', $year)
-                    ->whereMonth('created_at', $m)
-                    ->where('status', '!=', 'bekor_qilingan'))
+                ->inWorkMonth($year, $m)
+                ->whereHas('project', fn ($q) => $q->where('status', '!=', 'bekor_qilingan'))
                 ->get();
 
             foreach ($completedServices as $service) {

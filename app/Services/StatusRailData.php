@@ -77,7 +77,7 @@ class StatusRailData
 
             $start = Carbon::create($year, $month, 1)->startOfMonth();
             $counts = $visible(Project::query(), false)
-                ->whereBetween('created_at', [$start, $start->copy()->endOfMonth()])
+                ->visibleInMonth($year, $month) // Kanban ustunlari bilan bir xil
                 ->selectRaw('status, count(*) as c')->groupBy('status')
                 ->pluck('c', 'status')->map(fn ($c) => (int) $c)->toArray();
             $counts['mygov'] = $visible(Project::query(), true)->where('status', 'mygov')->count();
@@ -104,7 +104,7 @@ class StatusRailData
             $start = Carbon::create($year, $month, 1)->startOfMonth();
             $perUser = ProjectService::query()
                 ->whereNotNull('assigned_user_id')
-                ->whereHas('project', fn ($q) => $q->whereBetween('created_at', [$start, $start->copy()->endOfMonth()]))
+                ->whereHas('project', fn ($q) => $q->visibleInMonth($year, $month))
                 ->selectRaw('assigned_user_id, count(distinct project_id) as c')
                 ->groupBy('assigned_user_id')
                 ->pluck('c', 'assigned_user_id');

@@ -17,16 +17,14 @@ class FirmReportService
         [$year, $mon] = array_pad(explode('-', $month), 2, null);
         $archiveStatuses = ['tugallangan', 'taqdim_etilgan', 'bekor_qilingan'];
 
-        // Komissiya HAR BAJARILGAN (tugatilgan) ish bo'yicha — LOYIHA qaysi oyda ochilgan
-        // bo'lsa, o'sha oy hisobotiga tushadi (xizmat qachon biriktirilgan/tugatilganidan
-        // qat'i nazar). Shu bilan har oyning loyihalar soni/summasi va hodimlar hisoboti
-        // doim mos keladi — chalkashlik bo'lmaydi. Bekor qilingan loyiha hisobga olinmaydi.
+        // Komissiya HAR BAJARILGAN (tugatilgan) ish bo'yicha — xizmatning ISH OYI
+        // (work_month: odatda loyiha ochilgan oy, keyin qo'shilgan xizmat — qo'shilgan
+        // oy) hisobotiga tushadi. Bekor qilingan loyiha hisobga olinmaydi.
         $completed = ProjectService::with(['assignedUser', 'project'])
             ->whereNotNull('completed_at')
             ->whereNotNull('assigned_user_id')
-            ->whereHas('project', fn ($q) =>
-                $q->whereYear('created_at', $year)->whereMonth('created_at', $mon)
-                  ->where('status', '!=', 'bekor_qilingan'))
+            ->inWorkMonth((int) $year, (int) $mon)
+            ->whereHas('project', fn ($q) => $q->where('status', '!=', 'bekor_qilingan'))
             ->get();
 
         $jamiTushum     = 0.0;
@@ -77,8 +75,7 @@ class FirmReportService
         // ishi tugamaganlar 0 bilan ko'rinadi (masalan Qodirxoja: 0)
         $activeAssignees = ProjectService::with('assignedUser')
             ->whereNotNull('assigned_user_id')
-            ->whereHas('project', fn ($q) =>
-                $q->whereYear('created_at', $year)->whereMonth('created_at', $mon))
+            ->inWorkMonth((int) $year, (int) $mon)
             ->get()
             ->pluck('assignedUser')
             ->filter()

@@ -463,16 +463,15 @@ class MonthlyReport extends Page
     {
         [$year, $month] = explode('-', $this->selectedMonth);
 
-        // Komissiya HAR BAJARILGAN (tugatilgan) ish bo'yicha — LOYIHA qaysi oyda ochilgan
-        // bo'lsa, o'sha oy hisobotiga tushadi (xizmat qachon biriktirilgan/tugatilganidan
-        // qat'i nazar). Shu bilan har oyning loyihalar soni/summasi va hodimlar hisoboti
-        // doim mos keladi — chalkashlik bo'lmaydi. Bekor qilingan loyiha hisobga olinmaydi.
+        // Komissiya HAR BAJARILGAN (tugatilgan) ish bo'yicha — xizmatning ISH OYI
+        // (project_services.work_month) hisobotiga tushadi: odatda loyiha ochilgan oy,
+        // loyihaga keyinroq qo'shilgan xizmat (masalan oktabrda Ariza) — qo'shilgan oy.
+        // Bekor qilingan loyiha hisobga olinmaydi.
         $completedServices = \App\Models\ProjectService::with(['assignedUser', 'project.payments'])
             ->whereNotNull('completed_at')
             ->whereNotNull('assigned_user_id')
-            ->whereHas('project', fn($q) =>
-                $q->whereYear('created_at', $year)->whereMonth('created_at', $month)
-                  ->where('status', '!=', 'bekor_qilingan'))
+            ->inWorkMonth((int) $year, (int) $month)
+            ->whereHas('project', fn($q) => $q->where('status', '!=', 'bekor_qilingan'))
             ->get();
 
         $projectIds = $completedServices->pluck('project_id')->unique();
@@ -574,8 +573,8 @@ class MonthlyReport extends Page
 
         // Shu oyda ochilgan loyihalarда ishi bor hodimlarni ham qo'shamiz
         $allAssignedUsers = \App\Models\ProjectService::whereNotNull('assigned_user_id')
-            ->whereHas('project', fn($q) => $q->whereNotIn('status', $archiveStatuses)
-                ->whereYear('created_at', $year)->whereMonth('created_at', $month))
+            ->inWorkMonth((int) $year, (int) $month)
+            ->whereHas('project', fn($q) => $q->whereNotIn('status', $archiveStatuses))
             ->with('assignedUser')
             ->get()
             ->pluck('assignedUser')
@@ -647,8 +646,8 @@ class MonthlyReport extends Page
             // allaqachon yopilgan hisoblanadi).
             $pendingServices = \App\Models\ProjectService::where('assigned_user_id', $uid)
                 ->whereNull('completed_at')
-                ->whereHas('project', fn($q) => $q->whereNotIn('status', $archiveStatuses)
-                    ->whereYear('created_at', $year)->whereMonth('created_at', $month))
+                ->inWorkMonth((int) $year, (int) $month)
+                ->whereHas('project', fn($q) => $q->whereNotIn('status', $archiveStatuses))
                 ->with('project:id,number,owner_name,status,created_at')
                 ->get();
 
@@ -665,8 +664,7 @@ class MonthlyReport extends Page
                     $daysLeft = $diff;
                     $lateDays = $isLate ? abs($diff) : 0;
                 }
-                $svcMonth = $s->project?->created_at?->format('Y-m') ?? now()->format('Y-m');
-                $rate = EmployeePayableService::rateFor($s->assignedUser, $svcMonth);
+                $rate = EmployeePayableService::rateFor($s->assignedUser, $s->workMonthKey());
                 $myShare = round((float)$s->final_price * $rate / 100, 0);
                 $isPaid = collect($paidServiceNotes)->contains(fn($n) => str_starts_with($n, 'svc:' . $s->id . '|'));
                 return [
@@ -819,14 +817,12 @@ class MonthlyReport extends Page
         $tugatilganIshlar = \App\Models\ProjectService::with(['assignedUser', 'project:id,number,owner_name,status,created_at'])
             ->whereNotNull('completed_at')
             ->whereNotNull('assigned_user_id')
-            ->whereHas('project', fn($q) =>
-                $q->whereYear('created_at', $year)->whereMonth('created_at', $month)
-                  ->where('status', '!=', 'bekor_qilingan'))
+            ->inWorkMonth((int) $year, (int) $month)
+            ->whereHas('project', fn($q) => $q->where('status', '!=', 'bekor_qilingan'))
             ->orderByDesc('completed_at')
             ->get()
             ->map(function ($s) use ($statusLabels) {
-                $svcMonth = $s->project?->created_at?->format('Y-m') ?? now()->format('Y-m');
-                $rate = EmployeePayableService::rateFor($s->assignedUser, $svcMonth);
+                $rate = EmployeePayableService::rateFor($s->assignedUser, $s->workMonthKey());
                 $st = $s->project?->status;
                 return [
                     'project_id'   => $s->project_id,
@@ -856,8 +852,8 @@ class MonthlyReport extends Page
         // xizmatlar
         $pendingServices = \App\Models\ProjectService::with('assignedUser')
             ->whereNull('completed_at')
-            ->whereHas('project', fn($q) => $q->whereNotIn('status', $archiveStatuses)
-                ->whereYear('created_at', $year)->whereMonth('created_at', $month))
+            ->inWorkMonth((int) $year, (int) $month)
+            ->whereHas('project', fn($q) => $q->whereNotIn('status', $archiveStatuses))
             ->whereNotNull('assigned_user_id')
             ->get();
 
@@ -872,7 +868,7 @@ class MonthlyReport extends Page
         $pendingMonth = sprintf('%04d-%02d', $year, $month);
         foreach ($pendingServices as $ps) {
             if (!$ps->assignedUser) continue;
-            $r = EmployeePayableService::rateFor($ps->assignedUser, $pendingMonth);
+            $r = EmployeePayableService::rateFor($ps->assignedUser, $ps->work_month ?: $pendingMonth);
             $share = round((float)$ps->final_price * $r / 100);
             $pendingWorkersShare += $share;
             $uid = $ps->assigned_user_id;
@@ -985,9 +981,17 @@ class MonthlyReport extends Page
             }
         }
 
-        // Umumiy loyihalar — shu oyda ochilgan barcha loyihalar
-        $allProjectsCount = (int)   Project::excludePaused()->whereYear('created_at', $year)->whereMonth('created_at', $month)->count();
-        $allProjectsSum   = (float) Project::excludePaused()->whereYear('created_at', $year)->whereMonth('created_at', $month)->sum('total_price');
+        // Umumiy loyihalar — shu oyda ochilgan loyihalar + shu oyda yangi xizmat
+        // qo'shilgan eski loyihalar; summa — shu oyga tegishli xizmatlar narxi
+        // (loyiha summasi = xizmatlari yig'indisi, shu sabab ochilgan oy uchun
+        // natija avvalgidek; keyin qo'shilgan Ariza o'z oyiga qo'shiladi).
+        $allProjectsCount = (int) Project::excludePaused()
+            ->where(fn ($q) => $q->where(fn ($c) => $c->whereYear('created_at', $year)->whereMonth('created_at', $month))
+                ->orWhereHas('services', fn ($s) => $s->inWorkMonth((int) $year, (int) $month)))
+            ->count();
+        $allProjectsSum   = (float) \App\Models\ProjectService::inWorkMonth((int) $year, (int) $month)
+            ->whereHas('project', fn ($q) => $q->excludePaused())
+            ->sum('final_price');
 
         return compact(
             'userStats', 'warnings', 'projects',
