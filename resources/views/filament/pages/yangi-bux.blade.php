@@ -367,7 +367,7 @@
 
     @include('filament.pages.partials.yangi-bux-recurring')
 
-    <div style="margin-bottom:16px">@include('filament.pages.partials.yangi-bux-staff-cards')</div>
+    {{-- "Xodimlar bo'yicha xarajatlar" Kirim-chiqim tabida yashirilgan (admin so'rovi) — Asosiy ko'rinishda qoldi --}}
 
     <div class="yb-card">
         {{-- Filtrlar --}}
