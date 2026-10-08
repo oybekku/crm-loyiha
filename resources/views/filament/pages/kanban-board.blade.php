@@ -565,9 +565,10 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
     {{-- Oy/yil tanlash (loyiha ochilgan oyiga qarab) --}}
     @if(!$search)
     <div style="display:flex;align-items:center;gap:4px;margin-left:auto;background:#fff;border:1.5px solid #e5e7eb;border-radius:8px;padding:3px 5px">
-        <button wire:click="kbChangeMonth(-1)" title="Oldingi oy" style="background:#f3f4f6;border:none;border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:15px;color:#374151;line-height:1">‹</button>
+        {{-- Oddiy havola (Livewire so'rovi emas) — katta doskani morph qilish 10-20 s qotirardi; KanbanBoard::kbMonthUrl() --}}
+        <a href="{{ $this->kbMonthUrl(-1) }}" title="Oldingi oy" style="background:#f3f4f6;border:none;border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:15px;color:#374151;line-height:26px;text-align:center;text-decoration:none">‹</a>
         <span style="font-size:13px;font-weight:700;color:#2563eb;min-width:110px;text-align:center;white-space:nowrap">📅 {{ $kbMonthLabel }}</span>
-        <button wire:click="kbChangeMonth(1)" title="Keyingi oy" style="background:#f3f4f6;border:none;border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:15px;color:#374151;line-height:1">›</button>
+        <a href="{{ $this->kbMonthUrl(1) }}" title="Keyingi oy" style="background:#f3f4f6;border:none;border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:15px;color:#374151;line-height:26px;text-align:center;text-decoration:none">›</a>
     </div>
     @endif
 

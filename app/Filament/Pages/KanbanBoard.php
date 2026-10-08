@@ -206,6 +206,24 @@ class KanbanBoard extends Page
         $this->dispatch('kb-month-changed', year: $this->kbYear, month: $this->kbMonth);
     }
 
+    /**
+     * Oldingi/keyingi oy havolasi. Oy almashtirish Livewire so'rovi (kbChangeMonth)
+     * emas, oddiy sahifa o'tishi orqali: doska HTML'i katta (oyiga ~3 MB), Livewire
+     * esa eski DOM'ni yangisi bilan element-ma-element solishtirib (morph) 10-20
+     * soniya qotib qolardi. Yangi sahifani to'g'ridan-to'g'ri yuklash ancha tez.
+     * Tanlangan bo'lim (status) va hodim filtri saqlanadi.
+     */
+    public function kbMonthUrl(int $delta): string
+    {
+        $date = \Carbon\Carbon::create($this->kbYear, $this->kbMonth, 1)->addMonths($delta);
+        return static::getUrl(array_filter([
+            'status'   => $this->filterStatus ?: null,
+            'employee' => $this->filterEmployee ?: null,
+            'year'     => $date->year,
+            'month'    => $date->month,
+        ]));
+    }
+
     public function kbSetMonth(int $year, int $month): void
     {
         $this->kbYear  = $year;

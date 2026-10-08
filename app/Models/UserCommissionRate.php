@@ -14,6 +14,14 @@ class UserCommissionRate extends Model
         'rate' => 'decimal:2',
     ];
 
+    protected static function booted(): void
+    {
+        // EmployeePayableService::rateFor() xotirasi eskirmasin
+        $flush = fn () => \App\Services\EmployeePayableService::flushRateCache();
+        static::saved($flush);
+        static::deleted($flush);
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);

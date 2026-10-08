@@ -44,12 +44,27 @@ class EmployeePayableService
     {
         if (!$user) return 0.0;
 
+        // Bitta so'rov davomida eslab qolinadi — Oylik hisobot/Yangi bux har bir
+        // xizmat uchun shu funksiyani chaqiradi (avval 2000+ bir xil SQL so'rov
+        // ketardi). Natija o'zgarmaydi: kalitga users.commission_rate ham kiradi,
+        // oylik foiz (UserCommissionRate) saqlansa/o'chirilsa xotira tozalanadi.
+        $key = $user->id . '|' . $month . '|' . $user->commission_rate;
+        if (array_key_exists($key, self::$rateCache)) return self::$rateCache[$key];
+
         $override = UserCommissionRate::where('user_id', $user->id)
             ->where('effective_month', '<=', $month)
             ->orderByDesc('effective_month')
             ->value('rate');
 
-        return (float) ($override ?? $user->commission_rate ?? 20);
+        return self::$rateCache[$key] = (float) ($override ?? $user->commission_rate ?? 20);
+    }
+
+    /** @var array<string, float> rateFor() natijalari (faqat joriy so'rov ichida) */
+    private static array $rateCache = [];
+
+    public static function flushRateCache(): void
+    {
+        self::$rateCache = [];
     }
 
     public static function commissionForService(ProjectService $service, ?Project $project): array
