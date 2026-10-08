@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="csrf-token" content="{{ csrf_token() }}">
 @php
-    $stamp    = \App\Services\DesignSettingsService::get();
     $isAdmin  = (bool) auth()->user()?->isAdmin();
     $canEdit  = $isAdmin || auth()->user()?->isMenejer();
     $items    = $project->workChecklist();
@@ -31,10 +30,7 @@
     }
 
     /* Sarlavha (Ariza bilan bir xil) */
-    .header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 8px; border-bottom: 3px solid #1d4ed8; }
-    .qr-wrap { text-align: center; }
-    .qr-wrap img { display: block; margin: 0 auto 4px; }
-    .qr-wrap p { font-size: 10px; color: #666; line-height: 1.4; }
+    .header { display: flex; align-items: center; justify-content: center; padding-bottom: 8px; border-bottom: 3px solid #1d4ed8; }
 
     .doc-title { text-align: center; margin: 20px 0 4px; font-family: 'Times New Roman', Times, serif; font-size: 22px; font-weight: 700; }
     .doc-sub   { text-align: center; font-size: 12px; color: #555; margin-bottom: 14px; }
@@ -176,17 +172,7 @@
 
 <div class="sheet">
     <div class="header">
-        <img src="/images/logo-mph.png" alt="MY PERFECT HOME" style="width:{{ (int) $stamp['ariza_logo_width'] }}px;height:{{ (int) $stamp['ariza_logo_width'] }}px;object-fit:contain;flex-shrink:0;display:block;">
-        <div style="text-align:center;font-size:{{ (int) $stamp['ariza_header_font'] }}px;line-height:1.6;">{!! $stamp['ariza_header_html'] ?: '<strong style="font-size:1.15em;display:block;margin-bottom:2px;">&quot;MY PERFECT HOME&quot; MCHJ</strong>
-            Toshkent shahri, Yangihayot tumani<br>
-            Uzar ko\'chasi, 60-uy, 46-xona<br>
-            MFO 01125&nbsp;&nbsp;INN 308515451<br>
-            OKED 41100<br>
-            Tel: +998 77 091 91 01, +998 99 468 19 91' !!}</div>
-        <div class="qr-wrap" style="flex-shrink:0;">
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=96x96&data={{ urlencode(route('track.project', ltrim($project->number, '#'))) }}" alt="QR" style="width:{{ (int) $stamp['ariza_qr_width'] }}px;height:{{ (int) $stamp['ariza_qr_width'] }}px;">
-            <p>Buyurtma holatini<br>skanerlang</p>
-        </div>
+        <img src="/images/logo-mph.png" alt="MY PERFECT HOME" style="width:130px;height:130px;object-fit:contain;display:block;">
     </div>
 
     <div class="doc-title">Қилинадиган ишлар рўйхати</div>
@@ -228,7 +214,6 @@
 
     <div class="note">
         Ҳурматли мижоз! Бўш катакчали (<b>белгиланмаган</b>) ишлар ҳали бажарилиши керак бўлган ишлардир.
-        Саволлар бўйича юқоридаги телефон рақамларига мурожаат қилинг.
     </div>
 
     <div class="footer-date">Чоп этилган: {{ now()->format('d.m.Y H:i') }}</div>
