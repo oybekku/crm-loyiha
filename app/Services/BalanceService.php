@@ -84,9 +84,11 @@ class BalanceService
             $earned  += $commPaid;
             $pending += $commLeft;
 
+            // comm_paid butun so'mga yaxlitlanadi, commission esa tiyingacha —
+            // solishtirish butun so'mda (aks holda 406 067 < 406 067.2 → "qisman" bo'lib qolardi)
             $status = !$isCompleted
                 ? 'jarayonda'
-                : ($commPaid >= $commission - 0.01 ? 'tasdiqlangan' : "qisman to'langan");
+                : (round($commPaid) >= round($commission) ? 'tasdiqlangan' : "qisman to'langan");
 
             $txns[] = [
                 'type'    => 'ish',
