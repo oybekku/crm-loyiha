@@ -43,6 +43,7 @@ class KanbanIcons
         'toposyomka'   => 'pin',
         'eskiz_loyiha' => 'clip',
         'ariza'        => 'file',
+        'malumotnoma'  => 'file',
     ];
 
     public static function svg(string $name, string $class = ''): string

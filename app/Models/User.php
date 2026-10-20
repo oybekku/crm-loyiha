@@ -163,6 +163,7 @@ class User extends Authenticatable implements FilamentUser
         if (in_array('toposyomka', $types))   $cols = array_merge($cols, ['yangi_toposyomka', 'toposyomka']);
         if (in_array('eskiz_loyiha', $types)) $cols = array_merge($cols, ['yangi_eskiz_loyiha', 'eskiz_loyiha']);
         if (!empty($cols)) $cols[] = 'kechikayotgan';
+        if (in_array('malumotnoma', $types)) $cols[] = 'malumotnoma';
 
         return $cache[$this->id] = $cols;
     }

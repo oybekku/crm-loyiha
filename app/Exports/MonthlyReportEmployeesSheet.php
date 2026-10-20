@@ -72,7 +72,9 @@ class MonthlyReportEmployeesSheet implements FromArray, WithTitle, WithStyles, W
             // Har bir xizmat o'ziga tegishli oy uchun to'g'ri foizni allaqachon
             // saqlagan (EmployeePayableService::commissionForService orqali) —
             // shu bilan Excel ham sahifadagi bilan bir xil raqamni chiqaradi.
-            $rate = $stat['services'][0]['rate'] ?? (float)($user->commission_rate ?? 20);
+            // Qat'iy foizli xizmat (Ma'lumotnoma 18%) hodimning shaxsiy foizi sifatida ko'rinmasin
+            $ownSvc = collect($stat['services'] ?? [])->first(fn ($s) => !isset(\App\Services\EmployeePayableService::FIXED_SERVICE_RATES[$s['service_name'] ?? '']));
+            $rate = $ownSvc['rate'] ?? (float)($user->commission_rate ?? 20);
             $role = $user->role_name ?? ucfirst($user->role ?? '');
 
             $advTotal          = (float)($stat['advance_total'] ?? 0);

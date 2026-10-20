@@ -51,6 +51,7 @@ class ArxivPage extends Page
         'eskiz_loyiha'        => 'Eskiz loyiha',
         'texnik_korik'        => "Texnik ko'rik",
         'ariza'               => 'Ariza',
+        'malumotnoma'         => "Ma'lumotnoma",
         'konstruksiya'        => 'Konstruksiya (K/R)',
         'arxitektura'         => 'Arxitektura',
         'smeta'               => 'Smeta',

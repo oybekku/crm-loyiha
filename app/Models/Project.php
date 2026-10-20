@@ -499,6 +499,9 @@ class Project extends Model
             'toposyomka'  => 'Toposyomka',
             'eskiz_loyiha'=> 'Eskiz loyiha',
             'ariza'       => 'Ariza',
+            // Narx qo'lda kiritiladi; komissiya doim 18% (EmployeePayableService::FIXED_SERVICE_RATES).
+            // Tartib muhim — to'lov taqsimoti (PaymentModal) shu tartibda; yangi tur doim OXIRIGA.
+            'malumotnoma' => "Ma'lumotnoma",
         ];
     }
 

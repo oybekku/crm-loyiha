@@ -664,7 +664,7 @@ class MonthlyReport extends Page
                     $daysLeft = $diff;
                     $lateDays = $isLate ? abs($diff) : 0;
                 }
-                $rate = EmployeePayableService::rateFor($s->assignedUser, $s->workMonthKey());
+                $rate = EmployeePayableService::rateForService($s);
                 $myShare = round((float)$s->final_price * $rate / 100, 0);
                 $isPaid = collect($paidServiceNotes)->contains(fn($n) => str_starts_with($n, 'svc:' . $s->id . '|'));
                 return [
@@ -822,7 +822,7 @@ class MonthlyReport extends Page
             ->orderByDesc('completed_at')
             ->get()
             ->map(function ($s) use ($statusLabels) {
-                $rate = EmployeePayableService::rateFor($s->assignedUser, $s->workMonthKey());
+                $rate = EmployeePayableService::rateForService($s);
                 $st = $s->project?->status;
                 return [
                     'project_id'   => $s->project_id,
@@ -868,7 +868,7 @@ class MonthlyReport extends Page
         $pendingMonth = sprintf('%04d-%02d', $year, $month);
         foreach ($pendingServices as $ps) {
             if (!$ps->assignedUser) continue;
-            $r = EmployeePayableService::rateFor($ps->assignedUser, $ps->work_month ?: $pendingMonth);
+            $r = EmployeePayableService::rateForService($ps, $ps->work_month ?: $pendingMonth);
             $share = round((float)$ps->final_price * $r / 100);
             $pendingWorkersShare += $share;
             $uid = $ps->assigned_user_id;

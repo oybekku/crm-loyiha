@@ -59,6 +59,27 @@ class EmployeePayableService
         return self::$rateCache[$key] = (float) ($override ?? $user->commission_rate ?? 20);
     }
 
+    /**
+     * Hodimdan qat'i nazar QAT'IY foizli xizmatlar — kim biriktirilgan bo'lsa
+     * (hodim, admin yoki direktor), shu foizni oladi.
+     */
+    public const FIXED_SERVICE_RATES = [
+        'malumotnoma' => 18.0,
+    ];
+
+    /**
+     * Bitta xizmat uchun foiz — xizmatning qat'iy foizi bo'lsa o'sha, aks holda
+     * hodimning shu oydagi foizi (rateFor). Xizmat komissiyasi hisoblanadigan
+     * HAMMA joy shuni ishlatadi — sahifalar orasida raqamlar farq qilmasligi uchun.
+     */
+    public static function rateForService(ProjectService $service, ?string $month = null): float
+    {
+        if (isset(self::FIXED_SERVICE_RATES[$service->service_name])) {
+            return $service->assigned_user_id ? self::FIXED_SERVICE_RATES[$service->service_name] : 0.0;
+        }
+        return self::rateFor($service->assignedUser, $month ?: $service->workMonthKey());
+    }
+
     /** @var array<string, float> rateFor() natijalari (faqat joriy so'rov ichida) */
     private static array $rateCache = [];
 
@@ -69,10 +90,10 @@ class EmployeePayableService
 
     public static function commissionForService(ProjectService $service, ?Project $project): array
     {
-        $user  = $service->assignedUser;
-        // Foiz — xizmatning ish oyi bo'yicha (keyin qo'shilgan Ariza — o'sha oy foizi)
+        // Foiz — xizmatning ish oyi bo'yicha (keyin qo'shilgan Ariza — o'sha oy foizi);
+        // qat'iy foizli xizmat (Ma'lumotnoma) — doim o'z foizi
         $month = $service->work_month ?: ($project?->created_at?->format('Y-m') ?? now()->format('Y-m'));
-        $rate  = self::rateFor($user, $month);
+        $rate  = self::rateForService($service, $month);
 
         $price      = (float) $service->final_price;
         $commission = round($price * $rate / 100, 2);
@@ -310,7 +331,7 @@ class EmployeePayableService
             ->get()
             ->each(function ($s) use (&$res, $row) {
                 $row($s->assigned_user_id);
-                $rate = self::rateFor($s->assignedUser, $s->workMonthKey());
+                $rate = self::rateForService($s);
                 $res[$s->assigned_user_id]['pending_count']++;
                 $res[$s->assigned_user_id]['pending_comm'] += round((float) $s->final_price * $rate / 100, 0);
             });
