@@ -1,5 +1,5 @@
 @php
-    $actions ??= false; $justSaved ??= null;
+    $actions ??= false; $justSaved ??= null; $canDelete ??= true;
     // $collapse berilsa — dastlab shuncha qator ko'rinadi, qolgani tugma bilan ochiladi
     $collapse ??= null;
     $opsMore = $collapse ? max(0, count($rows) - $collapse) : 0;
@@ -39,7 +39,7 @@
                         <span class="yb-act" title="Oylikdan avtomatik yozilgan — Oylik hisobot orqali o'zgartiriladi" style="cursor:help">🔒</span>
                     @else
                         <button type="button" class="yb-act" title="Tahrirlash" wire:click="openChiqim({{ $r['id'] }})">✏️</button>
-                        <button type="button" class="yb-act del" title="O'chirish" wire:click="deleteChiqim({{ $r['id'] }})" wire:confirm="Bu chiqimni o'chirasizmi? Eski Buxgalteriyadan ham o'chadi.">🗑</button>
+                        @if($canDelete)<button type="button" class="yb-act del" title="O'chirish" wire:click="deleteChiqim({{ $r['id'] }})" wire:confirm="Bu chiqimni o'chirasizmi? Eski Buxgalteriyadan ham o'chadi.">🗑</button>@endif
                     @endif
                 </td>
             @endif

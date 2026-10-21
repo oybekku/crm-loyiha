@@ -207,12 +207,14 @@
 .dark .yb-pill.o{background:#78350f;color:#fde68a}
 </style>
 
+@unless($onlyOps)
 @include('filament.partials.report-tabs')
+@endunless
 
 <div class="yb-top">
     <div>
-        <span class="yb-title">Buxgalteriya</span>
-        <span class="yb-crumb">Bosh sahifa › Yangi bux</span>
+        <span class="yb-title">{{ $onlyOps ? 'Kirim-chiqim' : 'Buxgalteriya' }}</span>
+        @unless($onlyOps)<span class="yb-crumb">Bosh sahifa › Yangi bux</span>@endunless
     </div>
     <div class="yb-month">
         <button type="button" wire:click="ybChangeMonth(-1)">‹</button>
@@ -221,6 +223,7 @@
     </div>
 </div>
 
+@unless($onlyOps)
 <div class="yb-tabs">
     @foreach($tabs as $key => $label)
         <button type="button" wire:click="setTab('{{ $key }}')" class="yb-tab {{ $tab === $key ? 'on' : '' }}">
@@ -228,6 +231,7 @@
         </button>
     @endforeach
 </div>
+@endunless
 
 <div wire:loading.delay.class="opacity-60">
 @if($tab === 'asosiy')
@@ -329,6 +333,8 @@
     </div>
 
 @elseif($tab === 'kirim')
+    {{-- Menejer (faqat kirim-chiqim ruxsati) — statistika, grafik, doimiy to'lovlar ko'rinmaydi --}}
+    @unless($onlyOps)
     <div class="yb-kpis" style="grid-template-columns:repeat(4,minmax(0,1fr))">
         @php
             $kpis3 = [
@@ -366,6 +372,7 @@
     </div>
 
     @include('filament.pages.partials.yangi-bux-recurring')
+    @endunless
 
     {{-- "Xodimlar bo'yicha xarajatlar" Kirim-chiqim tabida yashirilgan (admin so'rovi) — Asosiy ko'rinishda qoldi --}}
 
@@ -426,7 +433,7 @@
                 <button type="button" class="yb-btn" style="background:#dc2626" wire:click="openChiqim">＋ Chiqim qo'shish</button>
             </div>
         </div>
-        @include('filament.pages.partials.yangi-bux-ops', ['rows' => $opsFiltered, 'actions' => true, 'justSaved' => $opJustSaved, 'collapse' => 4])
+        @include('filament.pages.partials.yangi-bux-ops', ['rows' => $opsFiltered, 'actions' => true, 'justSaved' => $opJustSaved, 'collapse' => $onlyOps ? null : 4, 'canDelete' => !$onlyOps])
     </div>
 
 @elseif($tab === 'qarzlar')
@@ -1185,7 +1192,7 @@
                 <div class="yb-grid2">
                     <div class="yb-fld">
                         <label>Qaysi hisobdan (pul qayerdan chiqdi) <i>*</i></label>
-                        @include('filament.pages.partials.yangi-bux-account-select', ['model' => 'chAccountId', 'accountsList' => $allAccounts, 'selectedId' => $chAccountId, 'monthMode' => true])
+                        @include('filament.pages.partials.yangi-bux-account-select', ['model' => 'chAccountId', 'accountsList' => $allAccounts, 'selectedId' => $chAccountId, 'monthMode' => !$onlyOps])
                         @error('chAccountId')<div class="yb-err">{{ $message }}</div>@enderror
                     </div>
                     <div class="yb-fld">

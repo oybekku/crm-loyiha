@@ -297,19 +297,46 @@ class YangiBux extends Page
         // 'hujjatlar' => 'Hujjatlar',  // keyingi bosqichda
     ];
 
+    // Admin bo'lmagan xodimga (masalan Andijon menejeri) faqat Kirim-chiqim tabi:
+    // statistika yo'q, chiqim qo'shish/tahrirlash bor, o'chirish yo'q.
+    public const OPS_PERMISSION = 'yangi_bux_kirim_chiqim';
+
+    public static function onlyOps(): bool
+    {
+        $u = auth()->user();
+        return $u && !$u->isAdmin() && $u->hasPermission(self::OPS_PERMISSION);
+    }
+
+    private static function canEditOps(): bool
+    {
+        return (bool) auth()->user()?->isAdmin() || self::onlyOps();
+    }
+
     public static function canAccess(): bool
     {
-        return (bool) auth()->user()?->isAdmin();
+        return (bool) auth()->user()?->isAdmin() || self::onlyOps();
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return self::onlyOps() ? 'Kirim-chiqim' : static::$navigationLabel;
+    }
+
+    public function getTitle(): string
+    {
+        return self::onlyOps() ? 'Kirim-chiqim' : static::$title;
     }
 
     public function mount(): void
     {
         $this->ybYear  ??= (int) now()->year;
         $this->ybMonth ??= (int) now()->month;
+        if (self::onlyOps()) $this->tab = 'kirim';
     }
 
     public function setTab(string $tab): void
     {
+        if (self::onlyOps()) return;
         if (array_key_exists($tab, self::TABS)) $this->tab = $tab;
     }
 
@@ -369,7 +396,7 @@ class YangiBux extends Page
     // ── Chiqim qo'shish / tahrirlash ────────────────────────────────────────
     public function openChiqim(?int $id = null): void
     {
-        if (!auth()->user()?->isAdmin()) return;
+        if (!self::canEditOps()) return;
         $this->resetValidation();
         $this->chiqimId = null;
         $this->chFile = null;
@@ -602,7 +629,7 @@ class YangiBux extends Page
 
     public function saveChiqim(): void
     {
-        if (!auth()->user()?->isAdmin()) return;
+        if (!self::canEditOps()) return;
 
         $this->chAmount = str_replace([' ', ','], ['', '.'], $this->chAmount);
         // Yangi "Oylik / avans" — oylik tizimiga (xodim to'lovlari) ham yoziladi
@@ -640,6 +667,17 @@ class YangiBux extends Page
 
         $old = $this->chiqimId ? Expense::find($this->chiqimId) : null;
         if ($old?->is_auto) return;
+
+        // Menejer — faqat hisobda puli bo'lsa (hisobning umumiy qoldig'i; tahrirda
+        // o'sha hisobdan yozilgan eski summa qaytarib qo'shiladi)
+        if (self::onlyOps()) {
+            $acc   = FinancialAccount::find($this->chAccountId);
+            $avail = (float) $acc?->balance + ($old && (int) $old->account_id === (int) $this->chAccountId ? (float) $old->amount : 0);
+            if ((float) $this->chAmount > $avail + 0.01) {
+                $this->addError('chAmount', 'Bu hisobda faqat ' . number_format(max(0, $avail), 0, '.', ' ') . " so'm bor");
+                return;
+            }
+        }
 
         $attachment = $this->chExistingFile;
         if ($this->chFile) {
@@ -1120,6 +1158,8 @@ class YangiBux extends Page
     public function getViewData(): array
     {
         if (!array_key_exists($this->tab, self::TABS)) $this->tab = 'asosiy';
+        $onlyOps = self::onlyOps();
+        if ($onlyOps) $this->tab = 'kirim';
 
         $year  = $this->ybYear;
         $month = $this->ybMonth;
@@ -1490,7 +1530,8 @@ class YangiBux extends Page
         }
 
         return [
-            'tabs'         => self::TABS,
+            'tabs'         => $onlyOps ? ['kirim' => self::TABS['kirim']] : self::TABS,
+            'onlyOps'      => $onlyOps,
             'monthLabel'   => ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentabr', 'Oktabr', 'Noyabr', 'Dekabr'][$month - 1] . ' ' . $year,
             'income'       => $income,
             'expense'      => $expense,

@@ -78,6 +78,7 @@ class User extends Authenticatable implements FilamentUser
             'loyiha_otkazish'   => "Amal: Loyihani bosqichga o'tkazish",
             'loyiha_yuborish'   => "Amal: Loyihani yuborish",
             'barcha_loyihalar'  => "Amal: Barcha loyihalarni ko'rish",
+            \App\Filament\Pages\YangiBux::OPS_PERMISSION => "Menyu: Kirim-chiqim (Yangi bux — faqat kirim-chiqim, o'chirishsiz)",
         ];
 
         // Kanban ustunlari — bazadan dinamik o'qiladi
