@@ -4,6 +4,7 @@ namespace App\Filament\Pages\Auth;
 
 use App\Models\User;
 use App\Services\TelegramOtpService;
+use App\Services\TotpService;
 use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\TextInput;
@@ -38,6 +39,9 @@ class Login extends BaseLogin
     public ?int $pendingUserId = null;
 
     public bool $pendingRemember = false;
+
+    // 'telegram' — kod Telegramga yuboriladi; 'totp' — Google Authenticator ilovasidagi kod
+    public string $otpMode = 'telegram';
 
     public function authenticate(): ?LoginResponse
     {
@@ -80,6 +84,19 @@ class Login extends BaseLogin
             $this->throwFailureValidationException();
         }
 
+        // Google Authenticator yoqilgan bo'lsa — hech narsa yuborilmaydi, ilovadagi
+        // kod so'raladi (Telegram uzilishiga bog'liq emas). Telegramdan ustun turadi.
+        if (TotpService::requiredFor($user)) {
+            $this->pendingUserId = $user->id;
+            $this->pendingRemember = (bool) ($data['remember'] ?? false);
+            $this->otpMode = 'totp';
+            $this->otpStep = true;
+            $this->cacheForms();
+            $this->form->fill();
+
+            return null;
+        }
+
         if (
             TelegramOtpService::isConfigured() &&
             TelegramOtpService::otpRequired() &&
@@ -99,6 +116,7 @@ class Login extends BaseLogin
 
             $this->pendingUserId = $user->id;
             $this->pendingRemember = (bool) ($data['remember'] ?? false);
+            $this->otpMode = 'telegram';
             $this->otpStep = true;
 
             // Filament forma keshi shu so'rov ichida bir marta ($this->form->getState()
@@ -138,7 +156,12 @@ class Login extends BaseLogin
         $data = $this->form->getState();
         $user = $this->pendingUserId ? User::find($this->pendingUserId) : null;
 
-        if (! $user || ! TelegramOtpService::verifyOtp($user, (string) ($data['code'] ?? ''), 'login')) {
+        $code = (string) ($data['code'] ?? '');
+        $ok = $user && ($this->otpMode === 'totp'
+            ? TotpService::verifyUser($user, $code)
+            : TelegramOtpService::verifyOtp($user, $code, 'login'));
+
+        if (! $ok) {
             throw ValidationException::withMessages([
                 'data.code' => 'Kod noto\'g\'ri yoki muddati tugagan.',
             ]);
@@ -180,6 +203,10 @@ class Login extends BaseLogin
             return parent::getFormActions();
         }
 
+        if ($this->otpMode === 'totp') {
+            return [$this->getAuthenticateFormAction()];
+        }
+
         return [
             $this->getAuthenticateFormAction(),
             \Filament\Actions\Action::make('resendLoginOtp')
@@ -193,7 +220,7 @@ class Login extends BaseLogin
     {
         $user = $this->pendingUserId ? User::find($this->pendingUserId) : null;
 
-        if (! $user) {
+        if (! $user || $this->otpMode !== 'telegram') {
             return;
         }
 
@@ -211,7 +238,7 @@ class Login extends BaseLogin
     protected function getOtpCodeFormComponent(): TextInput
     {
         return TextInput::make('code')
-            ->label('Telegramdan kelgan tasdiqlash kodi')
+            ->label($this->otpMode === 'totp' ? 'Google Authenticator ilovasidagi 6 xonali kod' : 'Telegramdan kelgan tasdiqlash kodi')
             ->required()
             ->numeric()
             ->autofocus()

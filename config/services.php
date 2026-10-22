@@ -56,6 +56,11 @@ return [
         'otp_required' => env('TELEGRAM_OTP_REQUIRED', true),
     ],
 
+    // Google Authenticator (ilovadagi kod). Favqulodda o'chirish: TOTP_ENABLED=false
+    'totp' => [
+        'enabled' => env('TOTP_ENABLED', true),
+    ],
+
     // Wacom Signature SDK (STU-300 imzo planshetidan mijoz imzosini olish)
     'wacom' => [
         'sig_key'    => env('WACOM_SIG_KEY'),

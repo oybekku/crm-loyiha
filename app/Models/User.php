@@ -177,6 +177,7 @@ class User extends Authenticatable implements FilamentUser
     protected $hidden = [
         'password',
         'remember_token',
+        'totp_secret',
     ];
 
     /**
@@ -191,6 +192,8 @@ class User extends Authenticatable implements FilamentUser
             'password'          => 'hashed',
             'permissions'       => 'array',
             'is_active'         => 'boolean',
+            'totp_secret'       => 'encrypted',
+            'totp_enabled_at'   => 'datetime',
         ];
     }
 }
