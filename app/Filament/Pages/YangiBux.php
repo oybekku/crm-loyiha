@@ -1414,6 +1414,7 @@ class YangiBux extends Page
         $salaryDue = array_fill(1, 12, null);
         $mamuriyDue = array_fill(1, 12, null);
         $staffYear = null;
+        $walletYear = null;
         if ($this->tab === 'hisobotlar') {
             $firstYm = Project::min('created_at');
             $firstYm = $firstYm ? Carbon::parse($firstYm)->format('Y-m') : null;
@@ -1424,6 +1425,24 @@ class YangiBux extends Page
                 $salaryDue[$m]  = (float) collect($grid)->sum(fn ($r) => $dueParts($r, $m)['ishbay']);
                 $mamuriyDue[$m] = (float) collect($grid)->sum(fn ($r) => $dueParts($r, $m)['mamuriy']);
             }
+
+            // "Yil hisoboti" — Naqd / Plastik / Bank: har oy qoldig'i (monthAccountBalances
+            // qoidasi, ya'ni "Qoldiq" ustunidagi bilan bir xil). Faqat firma hisoblari —
+            // shaxsiy (xarajat) kartalar va hodim hisoblari kirmaydi. Sayt ochilgan oydan boshlab.
+            $typeOf = FinancialAccount::whereNull('user_id')->where('is_personal', false)->pluck('type', 'id');
+            $walletYear = ['naqd' => [], 'karta' => [], 'bank' => []];
+            $walletNone = [];  // hisobi ko'rsatilmagan eski yozuvlar — hech qaysi jadvalga kirmaydi
+            for ($m = 1; $m <= 12; $m++) {
+                if ($firstYm && sprintf('%04d-%02d', $year, $m) < $firstYm) continue;
+                foreach ($walletYear as $t => $_) $walletYear[$t][$m] = 0.0;
+                foreach ($this->monthAccountBalances($year, $m) as $id => $v) {
+                    $t = $typeOf[$id] ?? null;
+                    if (isset($walletYear[$t])) $walletYear[$t][$m] += $v;
+                }
+                $none = collect($this->monthWalletBreakdown($year, $m))->where('group', 'none')->sum('net');
+                if (abs($none) >= 1) $walletNone[$m] = $none;
+            }
+            $walletYear['none'] = $walletNone;
 
             // "Yil hisoboti / Hodimlar" — har hodim × har oy: to'langan / to'lash kerak /
             // ortiqcha. Oylik maosh tabidagi bilan AYNAN bir xil qoida (payableSplit,
@@ -1591,6 +1610,7 @@ class YangiBux extends Page
             'yearMamuriy'  => array_sum($mamuriyByMonth),
             'repDetail'    => $repDetail,
             'staffYear'    => $staffYear,
+            'walletYear'   => $walletYear,
             'repColsHidden'=> $this->tab === 'hisobotlar' ? $this->repColsHidden() : [],
             'repHidden'    => $this->tab === 'hisobotlar' ? $this->repHiddenMonths() : [],
             'staffYearCollapsed' => $this->tab === 'hisobotlar' && $this->staffYearCollapsed(),

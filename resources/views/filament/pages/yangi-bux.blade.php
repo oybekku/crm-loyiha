@@ -645,129 +645,43 @@
     @endif
 
 @elseif($tab === 'hisobotlar')
+    {{-- Yil hisoboti — Naqd / Plastik / Bank: har oy qoldig'i (YangiBux $walletYear) --}}
     <div class="yb-card">
-        <div class="yb-h"><span>{{ $this->ybYear }}-yil hisoboti <span class="yb-sub">Tushum — to'lov sanasi bo'yicha; xarajat — Buxgalteriyadagi qoida bo'yicha. Xarajat yoki oylik summasini bosing — ro'yxati ochiladi.</span></span></div>
-        <div class="yb-tbl-wrap">
-                    @php
-                // Yig'iladigan ustunlar (tartib jadvaldagi bilan bir xil). Yig'ilgani hamma adminlarda bir xil.
-                $repCols = [
-                    'loyiha'  => ["Loyihalar summasi", "Shu oyda ochilgan loyihalarning shartnoma summasi (Dashboard'dagi kabi). Ostida: bekor qilingan va mijozlar qarzi", '#0f766e'],
-                    'tushum'  => ["Tushum (kelgan pul)", "Shu oy loyihalari uchun mijozlardan haqiqatda kelgan pul", '#15803d'],
-                    'xarajat' => ["Xarajat", "Oylik va avanslarsiz chiqimlar — bosing: ro'yxat", '#dc2626'],
-                    'ishbay'  => ["Ishbay oylik: kerak / to'langan", "Toposyomka, ariza, eskiz ishlaridan. Kerak — shu oy loyihalaridagi barcha ishlar ulushi (Oylik hisobotdagi 'Hisoblangan'). To'langan — haqiqatda berilgan.", '#b45309'],
-                    'mamuriy' => ["Ma'muriy oylik", "Direktor, admin, buxgalter va h.k. — ishga bog'liq emas, firma daromadidan", '#7c3aed'],
-                    'chiqim'  => ["Jami chiqim", "Xarajat + barcha oyliklar", '#dc2626'],
-                    'foyda'   => ["Sof foyda: to'liq / hozirgi", "To'liq — loyihalar summasi − xarajat − ishbay oylik (hisoblangan); Hozirgi — tushgan pul − xarajat − ishbay oylik (mijoz to'lagani bo'yicha). Ma'muriy oylik kirmaydi.", '#15803d'],
-                    'qoldiq'  => ["Qoldiq", "Tushum − jami chiqim: shu oy puli hamyonlarda qancha qoldi (bosing — Naqd, Karta, Bank)", '#2563eb'],
-                ];
-                $colX = array_values(array_intersect(array_keys($repCols), $repColsHidden));
-                // Yashirilgan ustun / oy — qatori va ustuni joyida qoladi, faqat qiymatlar 0
-                // ko'rsatiladi va "Jami"ga ham 0 bo'lib kiradi (bazadagi ma'lumot o'zgarmaydi).
-                $colFields = [
-                    'loyiha'  => ['allSum', 'allCount', 'cancelSum', 'debtSum'],
-                    'tushum'  => ['income'],
-                    'xarajat' => ['other'],
-                    'ishbay'  => ['ishbay', 'ishbayDue', 'ishbayEarned'],
-                    'mamuriy' => ['mamuriy'],
-                    'chiqim'  => ['expense'],
-                    'foyda'   => ['fullProfit', 'curProfit', 'projCount', 'projSum'],
-                    'qoldiq'  => ['qoldiq', 'cross'],
-                ];
-                $hid = array_map('intval', $repHidden);
-                $chartV = array_map(function ($c) use ($hid, $colX, $colFields) {
-                    $c['hidden'] = in_array($c['m'], $hid, true);
-                    foreach ($colFields as $ck => $fields) {
-                        if ($c['hidden'] || in_array($ck, $colX, true)) foreach ($fields as $fk) $c[$fk] = 0;
-                    }
-                    return $c;
-                }, $chart);
-                $colIdx = array_flip(array_keys($repCols));
-            @endphp
-            @if($colX)
-                <style>
-                    @foreach($colX as $ck)
-                        .yb-rep td:nth-child({{ $colIdx[$ck] + 2 }}) .yb-cell-link{pointer-events:none;border-bottom-color:transparent}
-                    @endforeach
-                </style>
-            @endif
-        <table class="yb-tbl yb-rep">
-            <thead><tr><th>Oy</th>
-                @foreach($repCols as $ck => [$cl, $ct, $cc])
-                    @php $isX = in_array($ck, $colX, true); @endphp
-                    <th class="num yb-colh {{ $isX ? 'cx' : '' }}" title="{{ $isX ? $cl . ' — yashirilgan, ko\'rsatish uchun bosing' : $ct }}">
-                        <button type="button" wire:click="toggleRepCol('{{ $ck }}')" style="--cc:{{ $cc }}">
-                            <span class="yb-colh-l">{{ $cl }}</span><span class="yb-colh-c" title="{{ $isX ? 'Ko\'rsatish' : 'Yashirish (qiymatlar 0 bo\'ladi)' }}">{{ $isX ? '🙈' : '👁' }}</span>
-                        </button>
-                    </th>
-                @endforeach
-            </tr></thead>
-            <tbody>
-            @foreach($chartV as $c)
-                @php
-                    $isHid = $c['hidden'];
-                    $due  = $isHid || in_array('ishbay', $colX, true) ? null : ($salaryDue[$c['m']] ?? null);
-                    $mDue = $isHid || in_array('mamuriy', $colX, true) ? null : ($mamuriyDue[$c['m']] ?? null);
-                @endphp
-                <tr wire:click="ybSetMonth({{ $c['m'] }})" @class(['yb-zero-row' => $isHid]) style="cursor:pointer;{{ $c['m'] === $this->ybMonth ? 'font-weight:700' : '' }}">
-                    <td style="white-space:nowrap"><button type="button" @class(['yb-eye', 'off' => $isHid]) wire:click.stop="toggleRepMonth({{ $c['m'] }})" title="{{ $isHid ? 'Ko\'rsatish' : 'Bu oyni yashirish (qiymatlar 0 bo\'ladi)' }}">{{ $isHid ? '🙈' : '👁' }}</button> {{ $c['label'] }}</td>
-                    <td class="num" style="color:#0f766e">
-                        {{ $fmt($c['allSum']) }}
-                        @if($c['allCount'])<span class="yb-sub">{{ $c['allCount'] }} ta @if($c['cancelSum'] > 0) · bekor {{ $fmt($c['cancelSum']) }} @endif @if($c['debtSum'] > 0) · qarz {{ $fmt($c['debtSum']) }} @endif</span>@endif
-                    </td>
-                    <td class="num yb-g">{{ $fmt($c['income']) }}</td>
-                    <td class="num yb-r"><span class="yb-cell-link" wire:click.stop="openRepDetail({{ $c['m'] }}, 'xarajat')" title="Xarajatlar ro'yxati">{{ $fmt($c['other']) }}</span></td>
-                    <td class="num" style="color:#b45309">
-                        <span class="yb-cell-link" wire:click.stop="openRepDetail({{ $c['m'] }}, 'ishbay')" title="Ishbay oylik ro'yxati">
-                            @if($due !== null && $due > 0)<span style="color:var(--yb-mu);font-weight:600">{{ $fmt($due) }}</span> / @endif{{ $fmt($c['ishbay']) }}
-                        </span>
-                        @if($due !== null && $due > $c['ishbay'])
-                            <span class="yb-sub">qoldiq {{ $fmt($due - $c['ishbay']) }}</span>
-                        @endif
-                    </td>
-                    <td class="num" style="color:#7c3aed">
-                        <span class="yb-cell-link" wire:click.stop="openRepDetail({{ $c['m'] }}, 'mamuriy')" title="Ma'muriy oylik ro'yxati">
-                            @if($mDue !== null && $mDue > 0)<span style="color:var(--yb-mu);font-weight:600">{{ $fmt($mDue) }}</span> / @endif{{ $fmt($c['mamuriy']) }}
-                        </span>
-                    </td>
-                    <td class="num yb-r">{{ $fmt($c['expense']) }}</td>
-                    <td class="num">
-                        @if($c['projSum'] != 0 || $c['income'] != 0 || $c['expense'] != 0)
-                            <span class="yb-cell-link" wire:click.stop="openProfit({{ $c['m'] }})" title="Hisob-kitobni ko'rish">
-                                <span style="color:{{ $c['fullProfit'] < 0 ? '#dc2626' : '#15803d' }}">{{ $c['fullProfit'] < 0 ? '−' : '' }}{{ $fmt(abs($c['fullProfit'])) }}</span>
-                                / <span style="color:{{ $c['curProfit'] < 0 ? '#dc2626' : 'inherit' }}">{{ $c['curProfit'] < 0 ? '−' : '' }}{{ $fmt(abs($c['curProfit'])) }}</span>
-                            </span>
-                            <span class="yb-sub">{{ $c['projCount'] }} ta loyiha</span>
-                        @else 0 @endif
-                    </td>
-                    <td class="num {{ $c['qoldiq'] < 0 ? 'yb-r' : '' }}">
-                        @if($c['income'] != 0 || $c['expense'] != 0 || $c['cross'] != 0)<span class="yb-cell-link" wire:click.stop="openWallet({{ $c['m'] }})" title="Qaysi hamyonda qancha — Naqd, Karta, Bank">{{ $c['qoldiq'] < 0 ? '−' : '' }}{{ $fmt(abs($c['qoldiq'])) }}</span>@else{{ $fmt($c['qoldiq']) }}@endif
-                        @if($c['cross'] != 0)<span class="yb-sub" title="Boshqa oylarga / oylardan o'tkazilgan pul">{{ $c['cross'] > 0 ? '⇠ +' : '⇢ −' }}{{ $fmt(abs($c['cross'])) }} o'tkazma</span>@endif
-                    </td>
-                </tr>
+        <div class="yb-h"><span>{{ $this->ybYear }}-yil hisoboti <span class="yb-sub">Har oy qoldig'i hamyonlar bo'yicha: shu oy loyihalaridan tushgan pul − shu oy chiqimlari ± o'tkazmalar. Summani bosing — oy tafsiloti ochiladi.</span></span></div>
+        <div class="yb-wy">
+            @foreach(['naqd' => ['Naqd', '#15803d'], 'karta' => ['Plastik', '#2563eb'], 'bank' => ['Bank hisob', '#7c3aed']] as $wt => [$wl, $wc])
+                @php $wm = $walletYear[$wt] ?? []; $wSum = array_sum($wm); @endphp
+                <div class="yb-tbl-wrap">
+                <table class="yb-tbl">
+                    <thead><tr><th style="color:{{ $wc }}">{{ $wl }}</th><th class="num">Qoldiq</th></tr></thead>
+                    <tbody>
+                    @forelse($wm as $m => $v)
+                        <tr @if($m === $this->ybMonth) style="font-weight:700" @endif>
+                            <td>{{ ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'][$m - 1] }}</td>
+                            <td class="num {{ $v < 0 ? 'yb-r' : '' }}">
+                                @if($v != 0)<span class="yb-cell-link" wire:click="openWallet({{ $m }})" title="Oy tafsiloti — hamyonlar bo'yicha">{{ $v < 0 ? '−' : '' }}{{ $fmt(abs($v)) }}</span>@else 0 @endif
+                            </td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="2" class="yb-empty">Ma'lumot yo'q</td></tr>
+                    @endforelse
+                        <tr style="font-weight:800;background:var(--yb-soft)">
+                            <td>Jami</td>
+                            <td class="num {{ $wSum < 0 ? 'yb-r' : '' }}" style="color:{{ $wSum < 0 ? '' : $wc }}">{{ $wSum < 0 ? '−' : '' }}{{ $fmt(abs($wSum)) }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                </div>
             @endforeach
-                @php
-                    $sum = fn ($k) => array_sum(array_column($chartV, $k));
-                    $yearDue = in_array('ishbay', $colX, true) ? 0 : array_sum(array_map(fn ($c) => $c['hidden'] ? 0 : (float) ($salaryDue[$c['m']] ?? 0), $chartV));
-                    $yIncome = $sum('income'); $yExpense = $sum('expense'); $yIsh = $sum('ishbay');
-                    $yFull = $sum('fullProfit'); $yCur = $sum('curProfit');
-                @endphp
-                <tr style="font-weight:800">
-                    <td>Jami @if($hid)<span class="yb-sub">{{ count($hid) }} oy yashirilgan</span>@endif</td>
-                    <td class="num" style="color:#0f766e">{{ $fmt($sum('allSum')) }}<span class="yb-sub">{{ $sum('allCount') }} ta · qarz {{ $fmt($sum('debtSum')) }}</span></td>
-                    <td class="num yb-g">{{ $fmt($yIncome) }}</td>
-                    <td class="num yb-r">{{ $fmt($sum('other')) }}</td>
-                    <td class="num" style="color:#b45309">
-                        @if($yearDue > 0)<span style="color:var(--yb-mu);font-weight:600">{{ $fmt($yearDue) }}</span> / @endif{{ $fmt($yIsh) }}
-                        @if($yearDue > $yIsh)<span class="yb-sub">qoldiq {{ $fmt($yearDue - $yIsh) }}</span>@endif
-                    </td>
-                    <td class="num" style="color:#7c3aed">{{ $fmt($sum('mamuriy')) }}</td>
-                    <td class="num yb-r">{{ $fmt($yExpense) }}</td>
-                    <td class="num"><span style="color:{{ $yFull < 0 ? '#dc2626' : '#15803d' }}">{{ $yFull < 0 ? '−' : '' }}{{ $fmt(abs($yFull)) }}</span> / {{ $yCur < 0 ? '−' : '' }}{{ $fmt(abs($yCur)) }}<span class="yb-sub">{{ $sum('projCount') }} ta loyiha</span></td>
-                    <td class="num">{{ $fmt($sum('qoldiq')) }}</td>
-                </tr>
-            </tbody>
-        </table>
         </div>
+        @if(!empty($walletYear['none']))
+            <div class="yb-sub" style="font-size:12px;margin-top:10px">⚠ Hisobi (Naqd / Plastik / Bank) ko'rsatilmagan eski yozuvlar jadvallarga kirmagan:
+                @foreach($walletYear['none'] as $m => $v)
+                    <b>{{ ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'][$m - 1] }}</b> <span class="yb-cell-link {{ $v < 0 ? 'yb-r' : '' }}" wire:click="openWallet({{ $m }})">{{ $v < 0 ? '−' : '' }}{{ $fmt(abs($v)) }}</span>@if(!$loop->last) · @endif
+                @endforeach
+            </div>
+        @endif
+        <style>.yb-wy{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}@media (max-width:900px){.yb-wy{grid-template-columns:1fr}}</style>
     </div>
 
     {{-- Yil hisoboti / Hodimlar — har hodim × oy: to'langan / to'lash kerak / ortiqcha (YangiBux $staffYear) --}}
