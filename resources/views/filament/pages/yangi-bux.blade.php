@@ -773,10 +773,13 @@
     {{-- Yil hisoboti / Hodimlar — har hodim × oy: to'langan / to'lash kerak / ortiqcha (YangiBux $staffYear) --}}
     @if($staffYear)
     @php $SY = $staffYear; @endphp
-    <div class="yb-card" style="margin-top:16px">
-        <div class="yb-h"><span>{{ $this->ybYear }}-yil hisoboti / Hodimlar
-            <span class="yb-sub">Har oy: <b class="yb-g">to'langan</b> · <b class="yb-r">to'lash kerak</b> · <b style="color:#ea580c">ortiqcha to'langan</b> — Oylik maosh tabidagi qoida bo'yicha</span></span></div>
-        <div class="yb-tbl-wrap">
+    {{-- Yig'iladigan: holat bazada — bir admin yig'sa, boshqa adminlarda ham yig'ilgan turadi --}}
+    @php $canToggleSY = auth()->user()?->isAdmin(); @endphp
+    <div class="yb-card" style="margin-top:16px" x-data="{ open: @js(!$staffYearCollapsed) }">
+        <div class="yb-h" @if($canToggleSY) @click="open = !open; $wire.toggleStaffYear()" style="cursor:pointer;user-select:none" @endif :style="open ? '' : 'margin-bottom:0'"><span>{{ $this->ybYear }}-yil hisoboti / Hodimlar
+            <span class="yb-sub">Har oy: <b class="yb-g">to'langan</b> · <b class="yb-r">to'lash kerak</b> · <b style="color:#ea580c">ortiqcha to'langan</b> — Oylik maosh tabidagi qoida bo'yicha</span></span>
+            @if($canToggleSY)<button type="button" class="yb-btn" style="font-size:12px;padding:4px 12px;white-space:nowrap" x-text="open ? '▲ Yig\'ish' : '▼ Ochish'"></button>@endif</div>
+        <div class="yb-tbl-wrap" x-show="open" x-collapse>
         <table class="yb-tbl yb-staffyear">
             <thead><tr>
                 <th>Hodim</th>

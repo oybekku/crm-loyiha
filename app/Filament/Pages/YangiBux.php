@@ -158,6 +158,18 @@ class YangiBux extends Page
         \App\Models\AppSetting::put('yangi_bux.hidden_cols', array_values($h));
     }
 
+    // Hisobotlar: "Yil hisoboti / Hodimlar" yig'ilganmi — hamma adminlarda bir xil (bazada umumiy)
+    private function staffYearCollapsed(): bool
+    {
+        return (bool) \App\Models\AppSetting::get('yangi_bux.staffyear_collapsed', false);
+    }
+
+    public function toggleStaffYear(): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+        \App\Models\AppSetting::put('yangi_bux.staffyear_collapsed', !$this->staffYearCollapsed());
+    }
+
     public function toggleRepMonth(int $month): void
     {
         if (!auth()->user()?->isAdmin() || $month < 1 || $month > 12) return;
@@ -1581,6 +1593,7 @@ class YangiBux extends Page
             'staffYear'    => $staffYear,
             'repColsHidden'=> $this->tab === 'hisobotlar' ? $this->repColsHidden() : [],
             'repHidden'    => $this->tab === 'hisobotlar' ? $this->repHiddenMonths() : [],
+            'staffYearCollapsed' => $this->tab === 'hisobotlar' && $this->staffYearCollapsed(),
             'profitInfo'   => $this->tab === 'hisobotlar' && $this->profitMonth ? ($chart[$this->profitMonth - 1] + ['title' => $fullMonths[$this->profitMonth - 1] . ' ' . $year]) : null,
             'mtFromBal'    => $this->showMt && $this->mtFromYm ? $this->monthAccountBalances(...array_map('intval', explode('-', $this->mtFromYm))) : [],
             'mtToBal'      => $this->showMt && $this->mtToYm ? $this->monthAccountBalances(...array_map('intval', explode('-', $this->mtToYm))) : [],
