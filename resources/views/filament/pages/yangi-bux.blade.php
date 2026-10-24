@@ -645,44 +645,50 @@
     @endif
 
 @elseif($tab === 'hisobotlar')
-    {{-- Yil hisoboti — Naqd / Plastik / Bank: har oy qoldig'i (YangiBux $walletYear) --}}
-    <div class="yb-card">
-        <div class="yb-h"><span>{{ $this->ybYear }}-yil hisoboti <span class="yb-sub">Har oy qoldig'i hamyonlar bo'yicha: shu oy loyihalaridan tushgan pul − shu oy chiqimlari ± o'tkazmalar. Summani bosing — oy tafsiloti ochiladi.</span></span></div>
-        <div class="yb-wy">
-            @foreach(['naqd' => ['Naqd', '#15803d'], 'karta' => ['Plastik', '#2563eb'], 'bank' => ['Bank hisob', '#7c3aed']] as $wt => [$wl, $wc])
-                @php $wm = $walletYear[$wt] ?? []; $wSum = array_sum($wm); @endphp
-                <div class="yb-tbl-wrap">
+    {{-- Yil hisoboti — Naqd / Plastik / Bank: 3 ta alohida oyna, har oy qoldig'i (YangiBux $walletYear) --}}
+    @php $wMonths = ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr']; @endphp
+    <div class="yb-wy">
+        @foreach(['naqd' => ['💵', 'Naqd', '#15803d'], 'karta' => ['💳', 'Plastik', '#2563eb'], 'bank' => ['🏦', 'Bank hisob', '#7c3aed']] as $wt => [$wi, $wl, $wc])
+            @php $wm = $walletYear[$wt] ?? []; $wSum = array_sum($wm); @endphp
+            <div class="yb-card yb-wy-card" style="--wc:{{ $wc }}">
+                <div class="yb-wy-h">
+                    <div><span class="yb-wy-t">{{ $wi }} {{ $wl }}</span><span class="yb-sub">{{ $this->ybYear }}-yil · har oy qoldig'i</span></div>
+                    <div class="yb-wy-sum {{ $wSum < 0 ? 'yb-r' : '' }}"><span class="yb-sub">Jami</span>{{ $wSum < 0 ? '−' : '' }}{{ $fmt(abs($wSum)) }}</div>
+                </div>
                 <table class="yb-tbl">
-                    <thead><tr><th style="color:{{ $wc }}">{{ $wl }}</th><th class="num">Qoldiq</th></tr></thead>
                     <tbody>
                     @forelse($wm as $m => $v)
                         <tr @if($m === $this->ybMonth) style="font-weight:700" @endif>
-                            <td>{{ ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'][$m - 1] }}</td>
+                            <td>{{ $wMonths[$m - 1] }}</td>
                             <td class="num {{ $v < 0 ? 'yb-r' : '' }}">
-                                @if($v != 0)<span class="yb-cell-link" wire:click="openWallet({{ $m }})" title="Oy tafsiloti — hamyonlar bo'yicha">{{ $v < 0 ? '−' : '' }}{{ $fmt(abs($v)) }}</span>@else 0 @endif
+                                @if($v != 0)<span class="yb-cell-link" wire:click="openWallet({{ $m }})" title="Oy tafsiloti — hamyonlar bo'yicha">{{ $v < 0 ? '−' : '' }}{{ $fmt(abs($v)) }}</span>@else <span style="color:var(--yb-mu)">0</span> @endif
                             </td>
                         </tr>
                     @empty
                         <tr><td colspan="2" class="yb-empty">Ma'lumot yo'q</td></tr>
                     @endforelse
-                        <tr style="font-weight:800;background:var(--yb-soft)">
-                            <td>Jami</td>
-                            <td class="num {{ $wSum < 0 ? 'yb-r' : '' }}" style="color:{{ $wSum < 0 ? '' : $wc }}">{{ $wSum < 0 ? '−' : '' }}{{ $fmt(abs($wSum)) }}</td>
-                        </tr>
                     </tbody>
                 </table>
-                </div>
+            </div>
+        @endforeach
+    </div>
+    <div class="yb-sub" style="font-size:12px;margin-top:8px">Har oy qoldig'i: shu oy loyihalaridan tushgan pul − shu oy chiqimlari ± o'tkazmalar. Summani bosing — oy tafsiloti ochiladi.</div>
+    @if(!empty($walletYear['none']))
+        <div class="yb-sub" style="font-size:12px;margin-top:4px">⚠ Hisobi (Naqd / Plastik / Bank) ko'rsatilmagan eski yozuvlar jadvallarga kirmagan:
+            @foreach($walletYear['none'] as $m => $v)
+                <b>{{ $wMonths[$m - 1] }}</b> <span class="yb-cell-link {{ $v < 0 ? 'yb-r' : '' }}" wire:click="openWallet({{ $m }})">{{ $v < 0 ? '−' : '' }}{{ $fmt(abs($v)) }}</span>@if(!$loop->last) · @endif
             @endforeach
         </div>
-        @if(!empty($walletYear['none']))
-            <div class="yb-sub" style="font-size:12px;margin-top:10px">⚠ Hisobi (Naqd / Plastik / Bank) ko'rsatilmagan eski yozuvlar jadvallarga kirmagan:
-                @foreach($walletYear['none'] as $m => $v)
-                    <b>{{ ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'][$m - 1] }}</b> <span class="yb-cell-link {{ $v < 0 ? 'yb-r' : '' }}" wire:click="openWallet({{ $m }})">{{ $v < 0 ? '−' : '' }}{{ $fmt(abs($v)) }}</span>@if(!$loop->last) · @endif
-                @endforeach
-            </div>
-        @endif
-        <style>.yb-wy{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}@media (max-width:900px){.yb-wy{grid-template-columns:1fr}}</style>
-    </div>
+    @endif
+    <style>
+        .yb-wy{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+        @media (max-width:900px){.yb-wy{grid-template-columns:1fr}}
+        .yb-wy-card{border-top:4px solid var(--wc)}
+        .yb-wy-h{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--yb-bd)}
+        .yb-wy-t{display:block;font-size:16px;font-weight:800;color:var(--wc)}
+        .yb-wy-sum{text-align:right;font-size:20px;font-weight:800;color:var(--wc);white-space:nowrap}
+        .yb-wy-sum.yb-r{color:#dc2626}
+    </style>
 
     {{-- Yil hisoboti / Hodimlar — har hodim × oy: to'langan / to'lash kerak / ortiqcha (YangiBux $staffYear) --}}
     @if($staffYear)
