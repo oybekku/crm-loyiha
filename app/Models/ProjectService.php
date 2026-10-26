@@ -119,6 +119,12 @@ class ProjectService extends Model
             $service->project?->updateTotals();
         });
 
+        // Narxga ta'sir qiluvchi o'zgarish — Google Authenticator kodisiz o'tmaydi
+        // (saving'dan keyin ishlaydi, final_price allaqachon hisoblangan)
+        static::creating(fn ($service) => \App\Services\PriceChangeRecorder::guard($service, 'creating'));
+        static::updating(fn ($service) => \App\Services\PriceChangeRecorder::guard($service, 'updating'));
+        static::deleting(fn ($service) => \App\Services\PriceChangeRecorder::guard($service, 'deleting'));
+
         // Narx o'zgarishlari jurnali + adminlarga 🔔 xabar (PriceChangeRecorder qoidalari)
         static::created(fn ($service) => \App\Services\PriceChangeRecorder::serviceCreated($service));
         static::updated(fn ($service) => \App\Services\PriceChangeRecorder::serviceUpdated($service));

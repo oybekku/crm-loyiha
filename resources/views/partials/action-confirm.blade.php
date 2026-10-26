@@ -1,7 +1,7 @@
 {{--
     Muhim amalni Google Authenticator kodi bilan tasdiqlash (ActionConfirmService).
     Parametrlar: $model (wire:model), $submit (Enter bosilganda chaqiriladigan metod),
-                 $error (bool — noto'g'ri kod), $hint (ixtiyoriy izoh).
+                 $error (bool — noto'g'ri kod), $hint (ixtiyoriy izoh), $autofocus (ixtiyoriy).
 --}}
 @if(\App\Services\ActionConfirmService::required())
     <label style="font-size:12px;font-weight:500;color:#374151;display:block;margin-bottom:6px">🔐 Google Authenticator kodi</label>
@@ -14,7 +14,7 @@
         <input type="text" inputmode="numeric" autocomplete="one-time-code" wire:model="{{ $model }}"
                wire:keydown.enter="{{ $submit }}"
                style="width:100%;border:1.5px solid {{ $error ? '#ef4444' : '#e2e8f0' }};border-radius:8px;padding:10px 14px;font-size:18px;letter-spacing:6px;text-align:center;outline:none;margin-bottom:8px;box-sizing:border-box"
-               placeholder="······" maxlength="6" autofocus>
+               placeholder="······" maxlength="6" @if(!empty($autofocus)) autofocus @endif>
         @if($error)
             <div style="font-size:12px;color:#ef4444;margin-bottom:10px">❌ Noto'g'ri yoki eskirgan kod — ilovadagi yangi kodni kiriting</div>
         @endif

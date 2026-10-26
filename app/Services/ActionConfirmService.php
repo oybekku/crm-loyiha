@@ -5,9 +5,10 @@ namespace App\Services;
 use App\Models\User;
 
 /**
- * Muhim amallarni (to'lovni tahrirlash/o'chirish, xizmat narxini o'zgartirish,
- * loyihani butunlay o'chirish, admin akkaunti va bosqichlarni tahrirlash)
- * Google Authenticator kodi bilan tasdiqlash.
+ * Muhim amallarni (to'lovni tahrirlash/o'chirish, loyiha narxiga ta'sir
+ * qiluvchi har qanday o'zgarish — PriceChangeRecorder::guard(), loyihani
+ * butunlay o'chirish, admin akkaunti va bosqichlarni tahrirlash)
+ * Google Authenticator kodi bilan tasdiqlash. To'lov kiritish — kodsiz.
  *
  * Ilk bor Telegram kodi bilan edi — Beget'dan Telegramga ulanish beqaror
  * bo'lgani uchun ilovadagi kodga o'tildi: server hech qayerga so'rov
@@ -20,6 +21,14 @@ use App\Models\User;
  */
 class ActionConfirmService
 {
+    /** Shu so'rovda kod to'g'ri kiritildimi — PriceChangeRecorder::guard() shunga qaraydi */
+    private static bool $confirmed = false;
+
+    public static function confirmed(): bool
+    {
+        return !self::required() || self::$confirmed;
+    }
+
     public static function required(): bool
     {
         return (bool) config('services.totp.action_confirm', true) && TotpService::globallyEnabled();
@@ -34,7 +43,9 @@ class ActionConfirmService
     public static function verify(?User $user, ?string $code): bool
     {
         if (!self::required()) return true;
-        return self::canConfirm($user) && TotpService::verifyUser($user, (string) $code);
+        $ok = self::canConfirm($user) && TotpService::verifyUser($user, (string) $code);
+        if ($ok) self::$confirmed = true;
+        return $ok;
     }
 
     public static function setupUrl(): string

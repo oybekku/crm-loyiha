@@ -445,7 +445,7 @@
 <div style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1500;display:flex;align-items:center;justify-content:center;padding:16px">
     <div style="background:#fff;border-radius:16px;padding:28px 32px;width:320px;box-shadow:0 25px 60px rgba(0,0,0,.2)" wire:click.stop>
         <div style="font-size:16px;font-weight:700;color:#111827;margin-bottom:10px">🗑 To'lovni o'chirish</div>
-        @include('partials.action-confirm', ['model' => 'deletePaymentPin', 'submit' => 'confirmDeletePayment', 'error' => $deletePaymentPinError, 'hint' => "To'lovni butunlay o'chirish uchun Google Authenticator ilovasidagi kodni kiriting"])
+        @include('partials.action-confirm', ['model' => 'deletePaymentPin', 'submit' => 'confirmDeletePayment', 'error' => $deletePaymentPinError, 'autofocus' => true, 'hint' => "To'lovni butunlay o'chirish uchun Google Authenticator ilovasidagi kodni kiriting"])
         <div style="display:flex;gap:8px;margin-top:12px">
             <button wire:click="closeDeletePayment"
                     style="flex:1;padding:10px;border-radius:8px;border:1px solid #e5e7eb;background:#f9fafb;color:#374151;font-size:13px;cursor:pointer">
@@ -476,7 +476,10 @@
         <input wire:model="servicePriceValue" type="number" min="0"
                style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px 14px;font-size:15px;outline:none;margin-bottom:12px;box-sizing:border-box"
                placeholder="Masalan: 4078800">
-        @include('partials.action-confirm', ['model' => 'servicePricePin', 'submit' => 'saveServicePrice', 'error' => $servicePricePinError])
+        @if(($spSvc?->final_price ?? 0) > 0)
+            {{-- Narxi bor xizmat — o'zgartirish kod bilan; 0 narxga birinchi narx yozish kodsiz --}}
+            @include('partials.action-confirm', ['model' => 'servicePricePin', 'submit' => 'saveServicePrice', 'error' => $servicePricePinError])
+        @endif
         <div style="display:flex;gap:8px;margin-top:12px">
             <button wire:click="closeServicePrice"
                     style="flex:1;padding:10px;border-radius:8px;border:1px solid #e5e7eb;background:#f9fafb;color:#374151;font-size:13px;cursor:pointer">

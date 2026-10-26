@@ -176,7 +176,7 @@ $getBadgeStyle = function(string $status) use ($archiveBadgeColors): string {
 <div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:flex;align-items:center;justify-content:center">
     <div style="background:#fff;border-radius:16px;padding:28px 32px;width:320px;box-shadow:0 25px 60px rgba(0,0,0,.2)">
         <div style="font-size:16px;font-weight:700;color:#111827;margin-bottom:10px">🗑 Loyihani butunlay o'chirish</div>
-        @include('partials.action-confirm', ['model' => 'pinInput', 'submit' => 'confirmDelete', 'error' => $pinError, 'hint' => "Loyihani butunlay o'chirish uchun Google Authenticator ilovasidagi kodni kiriting"])
+        @include('partials.action-confirm', ['model' => 'pinInput', 'submit' => 'confirmDelete', 'error' => $pinError, 'autofocus' => true, 'hint' => "Loyihani butunlay o'chirish uchun Google Authenticator ilovasidagi kodni kiriting"])
         <div style="display:flex;gap:8px;margin-top:12px">
             <button wire:click="$set('showPinModal',false)"
                     style="flex:1;padding:10px;border-radius:8px;border:1px solid #e5e7eb;background:#f9fafb;color:#374151;font-size:13px;cursor:pointer">

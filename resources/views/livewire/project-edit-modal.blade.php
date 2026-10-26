@@ -521,6 +521,12 @@
                 <button type="button" wire:click="eiAddService" style="padding:9px 18px;border-radius:8px;border:none;background:#4338ca;color:#fff;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap">➕ Qo'shish</button>
             </div>
             <div style="font-size:10px;color:#6366f1;margin-top:7px">⚠️ Yangi ish qo'shilsa loyiha umumiy summasi oshadi.</div>
+            @if(\App\Models\ProjectService::where('project_id', $editInfoId)->sum('final_price') > 0)
+                {{-- Narxi bor loyiha — qo'shish loyiha narxini o'zgartiradi, kod bilan --}}
+                <div style="margin-top:10px">
+                    @include('partials.action-confirm', ['model' => 'ei_newSvcPin', 'submit' => 'eiAddService', 'error' => $ei_newSvcPinError])
+                </div>
+            @endif
             @endif
         </div>
         @endif

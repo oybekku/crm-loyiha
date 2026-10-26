@@ -182,6 +182,8 @@ class ArxivBackupService
             if ($existing && $conflict === 'overwrite') {
                 $existing->update($projectData);
                 $project = $existing;
+                // Arxivdan tiklash — narx o'zgarishi emas (kod so'ralmaydi, jurnalga yozilmaydi)
+                \App\Services\PriceChangeRecorder::markFresh($project->id);
                 // Eski bog'liq ma'lumotlarni tozalash
                 $project->services()->delete();
                 $project->payments()->delete();

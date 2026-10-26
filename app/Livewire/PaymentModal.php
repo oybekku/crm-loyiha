@@ -622,11 +622,6 @@ class PaymentModal extends Component
     {
         if (!auth()->user()?->isAdmin() && !auth()->user()?->isMenejer()) return;
 
-        if (!ActionConfirmService::verify(auth()->user(), $this->servicePricePin)) {
-            $this->servicePricePinError = true;
-            return;
-        }
-
         $svc = ProjectService::find($this->servicePriceId);
         if (!$svc) {
             $this->closeServicePrice();
@@ -634,6 +629,13 @@ class PaymentModal extends Component
         }
 
         $newFinal = max(0, (float) str_replace([' ', ','], '', $this->servicePriceValue));
+
+        // Kod faqat narxi bor xizmat narxi o'zgarganda (0 → X — birinchi narx kiritish, kodsiz)
+        if (\App\Services\PriceChangeRecorder::updateAffectsPrice((float) $svc->final_price, $newFinal)
+            && !ActionConfirmService::verify(auth()->user(), $this->servicePricePin)) {
+            $this->servicePricePinError = true;
+            return;
+        }
 
         // ProjectService'ning "saving" hook'i final_price'ni doim price va
         // discount_type/value asosida qayta hisoblaydi. Chegirma o'z holida

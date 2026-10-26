@@ -33,30 +33,77 @@ class PriceChangeRecorder
         self::$freshProjects[$projectId] = true;
     }
 
+    // ── Qoidalar (yozish ham, kod so'rash ham shularga qaraydi) ──────────────
+
+    /** Narxi bor xizmat narxi/chegirmasi o'zgaradimi (0 → X — birinchi narx, o'zgarish emas) */
+    public static function updateAffectsPrice(float $oldFinal, float $newFinal): bool
+    {
+        return $oldFinal > 0 && abs($newFinal - $oldFinal) >= 0.01;
+    }
+
+    /** Narxi bor loyihaga narxli xizmat qo'shiladimi */
+    public static function createAffectsPrice(?int $projectId, float $newFinal, ?int $exceptServiceId = null): bool
+    {
+        if ($newFinal <= 0 || !$projectId || isset(self::$freshProjects[$projectId])) return false;
+        $others = (float) ProjectService::where('project_id', $projectId)
+            ->when($exceptServiceId, fn ($q) => $q->whereKeyNot($exceptServiceId))->sum('final_price');
+        return $others > 0;
+    }
+
+    /** Narxi bor xizmat olib tashlanadimi */
+    public static function deleteAffectsPrice(ProjectService $svc): bool
+    {
+        return (float) $svc->final_price > 0 && $svc->project_id && !isset(self::$freshProjects[$svc->project_id]);
+    }
+
+    /**
+     * Saqlashdan OLDIN (ProjectService creating/updating/deleting): loyiha narxiga
+     * ta'sir qiladigan o'zgarish shu so'rovda Google Authenticator kodi bilan
+     * tasdiqlanmagan bo'lsa — to'xtatadi. Har bir oyna kodni o'zi so'raydi; bu
+     * qo'riqchi esa biror yo'l esdan chiqib qolsa ham kodsiz narx o'zgarmasligi uchun.
+     */
+    public static function guard(ProjectService $svc, string $event): void
+    {
+        if (!auth()->check() || ActionConfirmService::confirmed()) return;
+        if ($svc->project_id && isset(self::$freshProjects[$svc->project_id])) return;
+
+        $affects = match ($event) {
+            'updating' => $svc->isDirty('final_price') && self::updateAffectsPrice((float) $svc->getOriginal('final_price'), (float) $svc->final_price),
+            'creating' => self::createAffectsPrice($svc->project_id, (float) $svc->final_price),
+            'deleting' => self::deleteAffectsPrice($svc),
+            default    => false,
+        };
+        if (!$affects) return;
+
+        $msg = ActionConfirmService::canConfirm(auth()->user())
+            ? "Loyiha narxini o'zgartirish uchun Google Authenticator kodi kerak"
+            : "Loyiha narxini o'zgartirish uchun avval Google Authenticator'ni ulang";
+        Notification::make()->title($msg)->danger()->send();
+        throw \Illuminate\Validation\ValidationException::withMessages(['confirm_code' => $msg]);
+    }
+
+    // ── Yozish (saqlangandan KEYIN) ───────────────────────────────────────────
+
     public static function serviceUpdated(ProjectService $svc): void
     {
         if (!$svc->wasChanged('final_price')) return;
         $old = (float) $svc->getOriginal('final_price');
         $new = (float) $svc->final_price;
-        if ($old <= 0 || abs($new - $old) < 0.01) return;
+        if (!self::updateAffectsPrice($old, $new)) return;
         self::record($svc, 'changed', $old, $new);
     }
 
     public static function serviceCreated(ProjectService $svc): void
     {
         $new = (float) $svc->final_price;
-        if ($new <= 0) return;
-        // Faqat narxi bor loyihaga qo'shilganda (boshqa xizmatlar jami > 0)
-        $others = (float) ProjectService::where('project_id', $svc->project_id)->whereKeyNot($svc->id)->sum('final_price');
-        if ($others <= 0) return;
+        if (!self::createAffectsPrice($svc->project_id, $new, $svc->id)) return;
         self::record($svc, 'added', 0, $new);
     }
 
     public static function serviceDeleted(ProjectService $svc): void
     {
-        $old = (float) $svc->final_price;
-        if ($old <= 0) return;
-        self::record($svc, 'removed', $old, 0);
+        if (!self::deleteAffectsPrice($svc)) return;
+        self::record($svc, 'removed', (float) $svc->final_price, 0);
     }
 
     private static function record(ProjectService $svc, string $kind, float $old, float $new): void

@@ -73,7 +73,46 @@ class ServicesRelationManager extends RelationManager
                 ->label('Izoh')
                 ->rows(2)
                 ->columnSpanFull(),
+
+            self::confirmField("Narx yoki chegirma o'zgarsa (narxi bor loyihada) — kerak. Faqat mas'ul/izoh o'zgarsa — shart emas."),
         ]);
+    }
+
+    /** Google Authenticator kodi maydoni (ActionConfirmService) — saqlanmaydi, before()da tekshiriladi */
+    protected static function confirmField(string $hint): Forms\Components\TextInput
+    {
+        return Forms\Components\TextInput::make('confirm_code')
+            ->label('🔐 Google Authenticator kodi')
+            ->helperText(fn () => \App\Services\ActionConfirmService::canConfirm(auth()->user()) ? $hint
+                : new \Illuminate\Support\HtmlString("Avval <a href=\"" . e(\App\Services\ActionConfirmService::setupUrl()) . "\" style=\"color:#4338ca;font-weight:600\">Google Authenticator'ni ulang</a>."))
+            ->placeholder('······')
+            ->maxLength(6)
+            ->visible(fn () => \App\Services\ActionConfirmService::required())
+            ->columnSpanFull();
+    }
+
+    /** Loyiha narxiga ta'sir qilsa — kodni tekshiradi; noto'g'ri bo'lsa amalni to'xtatadi */
+    protected static function checkCode(bool $affectsPrice, array $data, Tables\Actions\Action|Tables\Actions\BulkAction $action): void
+    {
+        if (!$affectsPrice || \App\Services\ActionConfirmService::verify(auth()->user(), $data['confirm_code'] ?? '')) return;
+
+        \Filament\Notifications\Notification::make()
+            ->title(\App\Services\ActionConfirmService::canConfirm(auth()->user())
+                ? (filled($data['confirm_code'] ?? null) ? "Noto'g'ri yoki eskirgan kod" : "Loyiha narxi o'zgaradi — Google Authenticator kodini kiriting")
+                : "Avval Google Authenticator'ni ulang")
+            ->danger()->send();
+        $action->halt();
+    }
+
+    protected static function finalOf(array $data): float
+    {
+        $price = (float) ($data['price'] ?? 0);
+        $val   = (float) ($data['discount_value'] ?? 0);
+        return max(0, match ($data['discount_type'] ?? 'none') {
+            'percent' => $price - ($price * $val / 100),
+            'fixed'   => $price - $val,
+            default   => $price,
+        });
     }
 
     protected static function recalculate(Get $get, Set $set): void
@@ -125,15 +164,27 @@ class ServicesRelationManager extends RelationManager
             ->headerActions([
                 Tables\Actions\CreateAction::make()->label('Xizmat qo\'shish')
                     // Keyinroq qo'shilgan xizmat — qo'shilgan oyiga (ProjectService::work_month)
-                    ->mutateFormDataUsing(fn (array $data) => $data + ['work_month' => now()->format('Y-m')]),
+                    // confirm_code $fillable'da yo'q — saqlashda o'zi tushib qoladi (before() uni ko'rishi kerak)
+                    ->mutateFormDataUsing(fn (array $data) => $data + ['work_month' => now()->format('Y-m')])
+                    ->before(fn (array $data, Tables\Actions\CreateAction $action) => self::checkCode(
+                        \App\Services\PriceChangeRecorder::createAffectsPrice($this->getOwnerRecord()->id, self::finalOf($data)), $data, $action)),
             ])
             ->actions([
-                Tables\Actions\EditAction::make()->label(''),
-                Tables\Actions\DeleteAction::make()->label(''),
+                Tables\Actions\EditAction::make()->label('')
+                    ->before(fn (array $data, $record, Tables\Actions\EditAction $action) => self::checkCode(
+                        \App\Services\PriceChangeRecorder::updateAffectsPrice((float) $record->final_price, self::finalOf($data)), $data, $action)),
+                Tables\Actions\DeleteAction::make()->label('')
+                    ->form(fn ($record) => \App\Services\PriceChangeRecorder::deleteAffectsPrice($record)
+                        ? [self::confirmField("Narxi bor xizmat olib tashlanadi — loyiha narxi kamayadi.")] : [])
+                    ->before(fn (array $data, $record, Tables\Actions\DeleteAction $action) => self::checkCode(
+                        \App\Services\PriceChangeRecorder::deleteAffectsPrice($record), $data, $action)),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->form([self::confirmField("Narxi bor xizmatlar olib tashlansa — loyiha narxi kamayadi.")])
+                        ->before(fn (array $data, $records, Tables\Actions\DeleteBulkAction $action) => self::checkCode(
+                            $records->contains(fn ($r) => \App\Services\PriceChangeRecorder::deleteAffectsPrice($r)), $data, $action)),
                 ]),
             ]);
     }

@@ -63,6 +63,8 @@ class ProjectEditModal extends Component
     public string $ei_newSvcType     = '';
     public string $ei_newSvcPrice    = '';
     public $ei_newSvcUser            = null;
+    public string $ei_newSvcPin      = '';   // narxi bor loyihaga qo'shishda — Google Authenticator kodi
+    public bool $ei_newSvcPinError   = false;
 
     // ── "kv narx" (tarif bo'yicha hisoblash) oynasi ──
     private const SUB_SERVICE_ORDER = [
@@ -512,6 +514,15 @@ class ProjectEditModal extends Component
         }
 
         $price = (float) $this->ei_newSvcPrice;
+
+        // Narxi bor loyihaga qo'shish — loyiha narxi o'zgaradi, kod kerak
+        $this->ei_newSvcPinError = false;
+        if (\App\Services\PriceChangeRecorder::createAffectsPrice($p->id, $price)
+            && !\App\Services\ActionConfirmService::verify(auth()->user(), $this->ei_newSvcPin)) {
+            $this->ei_newSvcPinError = true;
+            return;
+        }
+
         ProjectService::create([
             'project_id'       => $p->id,
             'assigned_user_id' => $this->ei_newSvcUser ?: null,
@@ -528,6 +539,7 @@ class ProjectEditModal extends Component
         $this->ei_newSvcType  = '';
         $this->ei_newSvcPrice = '';
         $this->ei_newSvcUser  = null;
+        $this->ei_newSvcPin   = '';
         $this->ei_services    = $this->buildEiServices($p->fresh());
         $this->dispatch('kb-refresh');
         $this->dispatch('notify', type: 'success', message: 'Xizmat qo\'shildi!');
