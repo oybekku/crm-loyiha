@@ -109,6 +109,9 @@ class Project extends Model
 
     protected static function booted(): void
     {
+        // Yangi loyiha xizmatlari "narx o'zgarishi" hisoblanmaydi (PriceChangeRecorder)
+        static::created(fn ($project) => \App\Services\PriceChangeRecorder::markFresh($project->id));
+
         static::creating(function ($project) {
             if (empty($project->number)) {
                 $project->number = '#' . str_pad(random_int(1, 999999999), 9, '0', STR_PAD_LEFT);

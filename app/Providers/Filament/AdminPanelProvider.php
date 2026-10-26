@@ -32,6 +32,10 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogo(asset('images/makonn-mark.png'))
             ->brandLogoHeight('2rem')
             ->topNavigation()
+            // 🔔 Panel xabarlari (masalan narx o'zgarishi — PriceChangeRecorder)
+            // Faqat adminlarda — boshqalarda har 30 soniyalik so'rov bo'lmasin
+            ->databaseNotifications(fn () => (bool) auth()->user()?->isAdmin())
+            ->databaseNotificationsPolling('30s')
             ->colors([
                 'primary' => Color::Green,
             ])

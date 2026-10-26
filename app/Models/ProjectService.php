@@ -118,6 +118,11 @@ class ProjectService extends Model
         static::deleted(function ($service) {
             $service->project?->updateTotals();
         });
+
+        // Narx o'zgarishlari jurnali + adminlarga 🔔 xabar (PriceChangeRecorder qoidalari)
+        static::created(fn ($service) => \App\Services\PriceChangeRecorder::serviceCreated($service));
+        static::updated(fn ($service) => \App\Services\PriceChangeRecorder::serviceUpdated($service));
+        static::deleted(fn ($service) => \App\Services\PriceChangeRecorder::serviceDeleted($service));
     }
 
     public function project()
