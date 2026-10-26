@@ -37,6 +37,8 @@ class ActivityLog extends Model
         return match ($this->action) {
             'project_deleted' => "Loyiha o'chirildi",
             'project_edited'  => 'Loyiha tahrirlandi',
+            'project_force_deleted' => "Loyiha butunlay o'chirildi (arxivdan)",
+            'service_price_changed' => "Xizmat narxi o'zgartirildi",
             default           => $this->action,
         };
     }

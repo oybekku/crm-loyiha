@@ -128,27 +128,24 @@ class ProjectStatusResource extends Resource
                 Tables\Actions\EditAction::make()
                     ->label('')
                     ->requiresConfirmation()
-                    ->modalHeading('Telegram tasdiqlash kodi')
-                    ->modalDescription('Tahrirlash uchun Telegramingizga yuborilgan kodni kiriting')
-                    ->mountUsing(function ($record) {
-                        \App\Services\TelegramOtpService::sendOtp(
-                            auth()->user(), 'status_edit',
-                            "Bosqichni tahrirlash: " . ($record->label ?? $record->key)
-                        );
-                    })
+                    ->modalHeading('Google Authenticator kodi')
+                    ->modalDescription(fn () => \App\Services\ActionConfirmService::canConfirm(auth()->user())
+                        ? 'Tahrirlash uchun Google Authenticator ilovasidagi kodni kiriting'
+                        : new \Illuminate\Support\HtmlString("Bu amal uchun Google Authenticator kodi kerak. Avval <a href=\"" . e(\App\Services\ActionConfirmService::setupUrl()) . "\" style=\"color:#4338ca;font-weight:600\">ilovani ulang</a>."))
                     ->form(fn (Forms\Form $form) => $form->schema([
                         Forms\Components\TextInput::make('_pin')
-                            ->label('Telegram kodi')
-                            ->password()
-                            ->visible(fn () => \App\Services\TelegramOtpService::otpRequired())
-                            ->required(fn () => \App\Services\TelegramOtpService::otpRequired())
+                            ->label('Google Authenticator kodi')
+                            ->visible(fn () => \App\Services\ActionConfirmService::required())
+                            ->required(fn () => \App\Services\ActionConfirmService::required())
                             ->placeholder('······'),
                     ]))
                     ->before(function (array $data, $record, Tables\Actions\EditAction $action) {
-                        if (!\App\Services\TelegramOtpService::verifyOtp(auth()->user(), $data['_pin'] ?? '', 'status_edit')) {
+                        if (!\App\Services\ActionConfirmService::verify(auth()->user(), $data['_pin'] ?? '')) {
                             $action->halt();
                             \Filament\Notifications\Notification::make()
-                                ->title("Noto'g'ri yoki eskirgan kod")
+                                ->title(\App\Services\ActionConfirmService::canConfirm(auth()->user())
+                                    ? "Noto'g'ri yoki eskirgan kod"
+                                    : "Avval Google Authenticator'ni ulang")
                                 ->danger()->send();
                         }
                     }),

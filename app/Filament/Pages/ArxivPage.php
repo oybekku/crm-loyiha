@@ -211,21 +211,24 @@ class ArxivPage extends Page
         $this->pinInput        = '';
         $this->pinError        = false;
         $this->showPinModal    = true;
-        $proj = Project::withTrashed()->find($id);
-        \App\Services\TelegramOtpService::sendOtp(
-            auth()->user(), 'arxiv_delete',
-            "Loyihani BUTUNLAY o'chirish: " . ($proj?->owner_name ?? '#' . $id)
-        );
     }
 
     public function confirmDelete(): void
     {
-        if (!\App\Services\TelegramOtpService::verifyOtp(auth()->user(), $this->pinInput, 'arxiv_delete')) {
+        if (!\App\Services\ActionConfirmService::verify(auth()->user(), $this->pinInput)) {
             $this->pinError = true;
             return;
         }
         if ($this->pendingDeleteId) {
-            Project::withTrashed()->findOrFail($this->pendingDeleteId)->forceDelete();
+            $proj = Project::withTrashed()->findOrFail($this->pendingDeleteId);
+            // Faoliyat jurnaliga (project_id yo'q — loyiha bazadan butunlay o'chadi)
+            \App\Models\ActivityLog::create([
+                'user_id'        => auth()->id(),
+                'project_number' => $proj->number,
+                'action'         => 'project_force_deleted',
+                'description'    => $proj->owner_name . " — " . number_format((float) $proj->total_price, 0, '.', ' ') . " so'm, to'langan " . number_format((float) $proj->paid_amount, 0, '.', ' ') . " so'm",
+            ]);
+            $proj->forceDelete();
             Notification::make()->title("Loyiha butunlay o'chirildi")->danger()->send();
         }
         $this->showPinModal    = false;

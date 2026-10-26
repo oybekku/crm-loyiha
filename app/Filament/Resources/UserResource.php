@@ -86,23 +86,18 @@ class UserResource extends Resource
                     ->dehydrateStateUsing(fn($state) => bcrypt($state))
                     ->placeholder('Yangi parol kiriting'),
 
-                // Admin akkauntini tahrirlash uchun Telegram kodi — kimdir kirib o'zgartirib qo'ymasin
+                // Admin akkauntini tahrirlash uchun Google Authenticator kodi — kimdir kirib o'zgartirib qo'ymasin
                 Forms\Components\TextInput::make('pin_confirm')
-                    ->label('🔐 Telegram tasdiqlash kodi (admin login/parolini o\'zgartirish uchun)')
-                    ->password()
+                    ->label('🔐 Google Authenticator kodi (admin login/parolini o\'zgartirish uchun)')
+                    ->helperText(fn () => \App\Services\ActionConfirmService::canConfirm(auth()->user()) ? null
+                        : new \Illuminate\Support\HtmlString("Avval <a href=\"" . e(\App\Services\ActionConfirmService::setupUrl()) . "\" style=\"color:#4338ca;font-weight:600\">Google Authenticator'ni ulang</a>."))
                     ->dehydrated(false)
-                    ->visible(fn($operation, $record) => $operation === 'edit' && $record?->isAdmin() && \App\Services\TelegramOtpService::otpRequired())
-                    ->required(fn($operation, $record) => $operation === 'edit' && $record?->isAdmin() && \App\Services\TelegramOtpService::otpRequired())
-                    ->afterStateHydrated(function ($operation, $record) {
-                        if ($operation === 'edit' && $record?->isAdmin()) {
-                            \App\Services\TelegramOtpService::sendOtp(
-                                auth()->user(), 'user_edit',
-                                "Admin ma'lumotini tahrirlash: {$record->name}"
-                            );
-                        }
-                    })
+                    ->visible(fn($operation, $record) => $operation === 'edit' && $record?->isAdmin() && \App\Services\ActionConfirmService::required())
+                    ->required(fn($operation, $record) => $operation === 'edit' && $record?->isAdmin() && \App\Services\ActionConfirmService::required())
                     ->rule(fn () => function (string $attribute, $value, \Closure $fail) {
-                        if (!\App\Services\TelegramOtpService::verifyOtp(auth()->user(), (string) $value, 'user_edit')) {
+                        if (!\App\Services\ActionConfirmService::canConfirm(auth()->user())) {
+                            $fail("Avval Google Authenticator'ni ulang");
+                        } elseif (!\App\Services\ActionConfirmService::verify(auth()->user(), (string) $value)) {
                             $fail("Noto'g'ri yoki eskirgan kod");
                         }
                     })

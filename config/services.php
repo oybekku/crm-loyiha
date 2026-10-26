@@ -59,6 +59,9 @@ return [
     // Google Authenticator (ilovadagi kod). Favqulodda o'chirish: TOTP_ENABLED=false
     'totp' => [
         'enabled' => env('TOTP_ENABLED', true),
+        // Muhim amallarni (to'lov tahrirlash/o'chirish va h.k.) ilova kodi bilan tasdiqlash.
+        // Favqulodda o'chirish: ACTION_CONFIRM_REQUIRED=false (ActionConfirmService)
+        'action_confirm' => env('ACTION_CONFIRM_REQUIRED', true),
     ],
 
     // Wacom Signature SDK (STU-300 imzo planshetidan mijoz imzosini olish)

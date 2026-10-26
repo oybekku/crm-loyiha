@@ -9,7 +9,7 @@ use App\Models\Project;
 use App\Models\ProjectService;
 use App\Models\ProjectStatus;
 use App\Models\User;
-use App\Services\TelegramOtpService;
+use App\Services\ActionConfirmService;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -429,11 +429,6 @@ class PaymentModal extends Component
         $this->editPaymentPin       = '';
         $this->editPaymentPinError  = false;
         $this->showEditPaymentModal = true;
-
-        TelegramOtpService::sendOtp(
-            auth()->user(), 'edit_payment',
-            "Summani tahrirlash: " . number_format((float) $payment->amount, 0, '.', ' ') . " so'm (" . ($payment->project?->owner_name ?? '—') . ")"
-        );
     }
 
     public function closeEditPayment(): void
@@ -458,7 +453,7 @@ class PaymentModal extends Component
 
     public function saveEditPayment(): void
     {
-        if (!TelegramOtpService::verifyOtp(auth()->user(), $this->editPaymentPin, 'edit_payment')) {
+        if (!ActionConfirmService::verify(auth()->user(), $this->editPaymentPin)) {
             $this->editPaymentPinError = true;
             return;
         }
@@ -534,18 +529,13 @@ class PaymentModal extends Component
         $this->dispatch('kb-payment-saved');
     }
 
-    // ── Delete payment (Telegram tasdiqlash kodi bilan) ─────────────────────
+    // ── Delete payment (Google Authenticator kodi bilan) ────────────────────
     public function openDeletePayment(int $paymentId): void
     {
         $this->deletePaymentId       = $paymentId;
         $this->deletePaymentPin      = '';
         $this->deletePaymentPinError = false;
         $this->showDeletePaymentModal = true;
-        $pmt = Payment::find($paymentId);
-        TelegramOtpService::sendOtp(
-            auth()->user(), 'delete_payment',
-            "To'lovni o'chirish: " . ($pmt ? number_format((float)$pmt->amount, 0, '.', ' ') . " so'm (" . ($pmt->project?->owner_name ?? '—') . ")" : "#{$paymentId}")
-        );
     }
 
     public function closeDeletePayment(): void
@@ -558,7 +548,7 @@ class PaymentModal extends Component
 
     public function confirmDeletePayment(): void
     {
-        if (!TelegramOtpService::verifyOtp(auth()->user(), $this->deletePaymentPin, 'delete_payment')) {
+        if (!ActionConfirmService::verify(auth()->user(), $this->deletePaymentPin)) {
             $this->deletePaymentPinError = true;
             return;
         }
@@ -605,7 +595,7 @@ class PaymentModal extends Component
         $this->paymentLogsProjectId = 0;
     }
 
-    // ── Xizmat narxini tahrirlash (Joriy narx — Telegram tasdiqlash kodi bilan) ──
+    // ── Xizmat narxini tahrirlash (Joriy narx — Google Authenticator kodi bilan) ──
     public function openServicePrice(int $serviceId): void
     {
         if (!auth()->user()?->isAdmin() && !auth()->user()?->isMenejer()) return;
@@ -617,11 +607,6 @@ class PaymentModal extends Component
         $this->servicePricePin      = '';
         $this->servicePricePinError = false;
         $this->showServicePriceModal = true;
-        $svcLabel = Project::serviceOptions()[$svc->service_name] ?? $svc->service_name;
-        TelegramOtpService::sendOtp(
-            auth()->user(), 'service_price',
-            "Narx o'zgartirish: {$svcLabel} ({$svc->project?->owner_name})"
-        );
     }
 
     public function closeServicePrice(): void
@@ -637,7 +622,7 @@ class PaymentModal extends Component
     {
         if (!auth()->user()?->isAdmin() && !auth()->user()?->isMenejer()) return;
 
-        if (!TelegramOtpService::verifyOtp(auth()->user(), $this->servicePricePin, 'service_price')) {
+        if (!ActionConfirmService::verify(auth()->user(), $this->servicePricePin)) {
             $this->servicePricePinError = true;
             return;
         }
@@ -662,9 +647,23 @@ class PaymentModal extends Component
             default   => $newFinal,
         };
 
+        $oldFinal = (float) $svc->final_price;
         $svc->update(['price' => $basePrice]);
 
-        Project::find($svc->project_id)?->updateTotals();
+        $project = Project::find($svc->project_id);
+        $project?->updateTotals();
+
+        // Faoliyat jurnaliga: kim, qaysi xizmat narxini qanchadan qanchaga o'zgartirdi
+        if (abs($oldFinal - $newFinal) >= 0.01) {
+            \App\Models\ActivityLog::create([
+                'user_id'        => auth()->id(),
+                'project_id'     => $svc->project_id,
+                'project_number' => $project?->number,
+                'action'         => 'service_price_changed',
+                'description'    => (Project::serviceOptions()[$svc->service_name] ?? $svc->service_name) . ': '
+                    . number_format($oldFinal, 0, '.', ' ') . ' → ' . number_format($newFinal, 0, '.', ' ') . " so'm",
+            ]);
+        }
 
         $this->closeServicePrice();
         $this->dispatch('notify', type: 'success', message: 'Narx yangilandi!');

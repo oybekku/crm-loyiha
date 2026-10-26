@@ -77,8 +77,8 @@ class FaoliyatJurnali extends Page
                 'project_id'     => $log->project_id,
                 'description'    => $log->description,
                 'type'           => 'project',
-                'danger'         => $log->action === 'project_deleted',
-                'linkable'       => $log->action !== 'project_deleted',
+                'danger'         => in_array($log->action, ['project_deleted', 'project_force_deleted'], true),
+                'linkable'       => !in_array($log->action, ['project_deleted', 'project_force_deleted'], true),
             ]);
 
         $payments = PaymentLog::query()
