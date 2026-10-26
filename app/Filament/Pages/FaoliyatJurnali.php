@@ -7,7 +7,9 @@ use App\Models\PaymentLog;
 use App\Models\User;
 use Carbon\Carbon;
 use Filament\Pages\Page;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Livewire\WithPagination;
 
 /**
  * "Kim, qachon, nima qildi" — ActivityLog (loyiha o'chirilishi/tahrirlanishi)
@@ -17,6 +19,10 @@ use Illuminate\Support\Collection;
  */
 class FaoliyatJurnali extends Page
 {
+    use WithPagination;
+
+    public const PER_PAGE = 50;
+
     protected static string  $view            = 'filament.pages.faoliyat-jurnali';
     protected static ?string $navigationIcon  = 'heroicon-o-clipboard-document-list';
     protected static ?string $navigationLabel = 'Faoliyat jurnali';
@@ -34,6 +40,9 @@ class FaoliyatJurnali extends Page
 
     public string $dateTo = '';
 
+    /** Qidiruv: xodim, amal, loyiha raqami, mijoz, tavsif bo'yicha */
+    public string $search = '';
+
     public static function canAccess(): bool
     {
         return (bool) auth()->user()?->isAdmin();
@@ -49,8 +58,26 @@ class FaoliyatJurnali extends Page
     {
         $this->filterUserId = null;
         $this->filterType   = '';
+        $this->search       = '';
         $this->dateFrom     = now()->startOfMonth()->format('Y-m-d');
         $this->dateTo       = now()->format('Y-m-d');
+        $this->resetPage();
+    }
+
+    // Filtr yoki qidiruv o'zgarsa — 1-sahifaga qaytamiz
+    public function updated(string $property): void
+    {
+        if (in_array($property, ['filterUserId', 'filterType', 'dateFrom', 'dateTo', 'search'], true)) {
+            $this->resetPage();
+        }
+    }
+
+    public function getPageEntriesProperty(): LengthAwarePaginator
+    {
+        $all  = $this->entries;
+        $page = max(1, (int) $this->getPage());
+
+        return new LengthAwarePaginator($all->forPage($page, self::PER_PAGE)->values(), $all->count(), self::PER_PAGE, $page);
     }
 
     public function getUsersProperty(): Collection
@@ -75,6 +102,7 @@ class FaoliyatJurnali extends Page
                 'action'         => $log->actionLabel(),
                 'project_number' => $log->project_number,
                 'project_id'     => $log->project_id,
+                'owner_name'     => $log->project?->owner_name,
                 'description'    => $log->description,
                 'type'           => 'project',
                 'danger'         => in_array($log->action, ['project_deleted', 'project_force_deleted'], true),
@@ -93,6 +121,7 @@ class FaoliyatJurnali extends Page
                 'action'         => $log->actionLabel(),
                 'project_number' => $log->project?->number,
                 'project_id'     => $log->project_id,
+                'owner_name'     => $log->project?->owner_name,
                 'description'    => $log->description,
                 'type'           => 'payment',
                 'danger'         => $log->action === 'deleted',
@@ -103,6 +132,19 @@ class FaoliyatJurnali extends Page
 
         if ($this->filterType) {
             $all = $all->where('type', $this->filterType)->values();
+        }
+
+        // Qidiruv — har bir so'z alohida (masalan "Jamshid narx" — ikkalasi ham bo'lishi kerak)
+        $words = preg_split('/\s+/u', mb_strtolower(trim($this->search)), -1, PREG_SPLIT_NO_EMPTY);
+        if ($words) {
+            $all = $all->filter(function ($e) use ($words) {
+                $hay = mb_strtolower(implode(' ', [$e['user'], $e['action'], $e['project_number'], $e['owner_name'], $e['description']]));
+                $hayNoSpace = str_replace(' ', '', $hay); // "1000000" ham "1 000 000"ni topsin
+                foreach ($words as $w) {
+                    if (!str_contains($hay, $w) && !str_contains($hayNoSpace, $w)) return false;
+                }
+                return true;
+            })->values();
         }
 
         return $all;

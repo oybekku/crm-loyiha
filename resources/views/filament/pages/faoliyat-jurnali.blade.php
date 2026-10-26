@@ -34,12 +34,28 @@
 .dark .fj-proj{color:#9ca3af !important}
 
 .fj-empty{text-align:center;color:#9ca3af !important;padding:40px;font-size:13px}
+
+.fj-search{flex:1 1 260px}
+.fj-search input{width:100%;min-width:0}
+.fj-pager{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:14px}
+.fj-count{font-size:12px;color:#6b7280 !important}
+.dark .fj-count{color:#9ca3af !important}
+.fj-pages{display:flex;gap:4px;flex-wrap:wrap}
+.fj-pg{min-width:34px;height:34px;padding:0 10px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;color:#374151 !important;font-size:12.5px;font-weight:700;cursor:pointer}
+.dark .fj-pg{background:#1f2937;border-color:rgba(255,255,255,.1);color:#d1d5db !important}
+.fj-pg.on{background:#2563eb;border-color:#2563eb;color:#fff !important}
+.fj-pg:disabled{opacity:.4;cursor:default}
+.fj-dots{padding:0 4px;color:#9ca3af !important;align-self:center}
 </style>
 
 <div style="max-width:1100px;margin:0 auto">
     <div class="fj-title" style="margin-bottom:16px">Faoliyat jurnali</div>
 
     <div class="fj-filters">
+        <div class="fj-field fj-search">
+            <label>Qidiruv</label>
+            <input type="search" wire:model.live.debounce.400ms="search" placeholder="Xodim, loyiha raqami, mijoz, summa, status...">
+        </div>
         <div class="fj-field">
             <label>Xodim</label>
             <select wire:model.live="filterUserId">
@@ -68,8 +84,9 @@
         <button type="button" class="fj-reset" wire:click="resetFilters">Tozalash</button>
     </div>
 
+    @php $pg = $this->pageEntries; @endphp
     <div class="fj-panel">
-        @forelse($this->entries as $entry)
+        @forelse($pg->items() as $entry)
             <div class="fj-row">
                 <div class="fj-date">{{ $entry['created_at']?->format('d.m.Y H:i') }}</div>
                 <div class="fj-user">{{ $entry['user'] }}</div>
@@ -78,7 +95,7 @@
                     {{ $entry['description'] }}
                     @if($entry['project_number'])
                         <div class="fj-proj">
-                            Loyiha: {{ $entry['project_number'] }}
+                            Loyiha: {{ $entry['project_number'] }}@if($entry['owner_name']) · {{ $entry['owner_name'] }}@endif
                             @if($entry['project_id'] && $entry['linkable'])
                                 — <a href="{{ route('filament.admin.resources.projects.edit', $entry['project_id']) }}" wire:navigate style="color:#2563eb">ochish</a>
                             @endif
@@ -90,5 +107,26 @@
             <div class="fj-empty">Bu filtr bo'yicha yozuv topilmadi</div>
         @endforelse
     </div>
+
+    @if($pg->total() > 0)
+    <div class="fj-pager">
+        <div class="fj-count">Jami <b>{{ $pg->total() }}</b> ta yozuv · {{ $pg->firstItem() }}–{{ $pg->lastItem() }} ko'rsatilmoqda</div>
+        @if($pg->lastPage() > 1)
+        @php
+            $cur = $pg->currentPage(); $last = $pg->lastPage();
+            // 1 … (joriy ±2) … oxirgi
+            $nums = collect([1, $last])->merge(range(max(1, $cur - 2), min($last, $cur + 2)))->unique()->sort()->values();
+        @endphp
+        <div class="fj-pages">
+            <button type="button" class="fj-pg" wire:click="previousPage" @disabled($cur <= 1)>‹</button>
+            @foreach($nums as $i => $n)
+                @if($i > 0 && $n - $nums[$i - 1] > 1)<span class="fj-dots">…</span>@endif
+                <button type="button" @class(['fj-pg', 'on' => $n === $cur]) wire:click="gotoPage({{ $n }})">{{ $n }}</button>
+            @endforeach
+            <button type="button" class="fj-pg" wire:click="nextPage" @disabled($cur >= $last)>›</button>
+        </div>
+        @endif
+    </div>
+    @endif
 </div>
 </x-filament-panels::page>
