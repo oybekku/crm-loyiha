@@ -646,14 +646,18 @@
 
 @elseif($tab === 'hisobotlar')
     {{-- Yil hisoboti — Naqd / Plastik / Bank: 3 ta alohida oyna, har oy qoldig'i (YangiBux $walletYear) --}}
-    @php $wMonths = ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr']; @endphp
+    @php
+        $wMonths  = ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'];
+        $wTypes   = ['naqd' => ['💵', 'Naqd', '#15803d'], 'karta' => ['💳', 'Plastik', '#2563eb'], 'bank' => ['🏦', 'Bank hisob', '#7c3aed']];
+        $wSums    = array_map(fn ($t) => array_sum($walletYear[$t] ?? []), array_combine(array_keys($wTypes), array_keys($wTypes)));
+        $wGrand   = array_sum($wSums);
+    @endphp
     <div class="yb-wy">
-        @foreach(['naqd' => ['💵', 'Naqd', '#15803d'], 'karta' => ['💳', 'Plastik', '#2563eb'], 'bank' => ['🏦', 'Bank hisob', '#7c3aed']] as $wt => [$wi, $wl, $wc])
-            @php $wm = $walletYear[$wt] ?? []; $wSum = array_sum($wm); @endphp
+        @foreach($wTypes as $wt => [$wi, $wl, $wc])
+            @php $wm = $walletYear[$wt] ?? []; $wSum = $wSums[$wt]; @endphp
             <div class="yb-card yb-wy-card" style="--wc:{{ $wc }}">
                 <div class="yb-wy-h">
-                    <div><span class="yb-wy-t">{{ $wi }} {{ $wl }}</span><span class="yb-sub">{{ $this->ybYear }}-yil · har oy qoldig'i</span></div>
-                    <div class="yb-wy-sum {{ $wSum < 0 ? 'yb-r' : '' }}"><span class="yb-sub">Jami</span>{{ $wSum < 0 ? '−' : '' }}{{ $fmt(abs($wSum)) }}</div>
+                    <span class="yb-wy-t">{{ $wi }} {{ $wl }}</span><span class="yb-sub">{{ $this->ybYear }}-yil · har oy qoldig'i</span>
                 </div>
                 <table class="yb-tbl">
                     <tbody>
@@ -669,8 +673,20 @@
                     @endforelse
                     </tbody>
                 </table>
+                <div class="yb-wy-foot"><span>Jami</span><b class="{{ $wSum < 0 ? 'yb-r' : '' }}">{{ $wSum < 0 ? '−' : '' }}{{ $fmt(abs($wSum)) }}</b></div>
             </div>
         @endforeach
+    </div>
+    {{-- Umumiy jami: Naqd + Plastik + Bank --}}
+    <div class="yb-card yb-wy-grand">
+        <div class="yb-wy-parts">
+            @foreach($wTypes as $wt => [$wi, $wl, $wc])
+                @if(!$loop->first)<span class="yb-wy-op">+</span>@endif
+                <span class="yb-wy-part" style="--wc:{{ $wc }}"><span class="yb-sub">{{ $wi }} {{ $wl }}</span><b>{{ $wSums[$wt] < 0 ? '−' : '' }}{{ $fmt(abs($wSums[$wt])) }}</b></span>
+            @endforeach
+            <span class="yb-wy-op">=</span>
+        </div>
+        <div class="yb-wy-total {{ $wGrand < 0 ? 'yb-r' : '' }}"><span class="yb-sub">Umumiy jami · {{ $this->ybYear }}-yil</span>{{ $wGrand < 0 ? '−' : '' }}{{ $fmt(abs($wGrand)) }} <small>so'm</small></div>
     </div>
     <div class="yb-sub" style="font-size:12px;margin-top:8px">Har oy qoldig'i: shu oy loyihalaridan tushgan pul − shu oy chiqimlari ± o'tkazmalar. Summani bosing — oy tafsiloti ochiladi.</div>
     @if(!empty($walletYear['none']))
@@ -683,11 +699,19 @@
     <style>
         .yb-wy{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
         @media (max-width:900px){.yb-wy{grid-template-columns:1fr}}
-        .yb-wy-card{border-top:4px solid var(--wc)}
-        .yb-wy-h{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--yb-bd)}
+        .yb-wy-card{border-top:4px solid var(--wc);display:flex;flex-direction:column}
+        .yb-wy-h{margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--yb-bd)}
         .yb-wy-t{display:block;font-size:16px;font-weight:800;color:var(--wc)}
-        .yb-wy-sum{text-align:right;font-size:20px;font-weight:800;color:var(--wc);white-space:nowrap}
-        .yb-wy-sum.yb-r{color:#dc2626}
+        .yb-wy-foot{margin-top:auto;display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:12px 10px 2px;border-top:2px solid var(--wc);font-weight:800;font-size:13px}
+        .yb-wy-foot b{font-size:20px;color:var(--wc);white-space:nowrap}
+        .yb-wy-foot b.yb-r{color:#dc2626}
+        .yb-wy-grand{margin-top:16px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;border-top:4px solid #b7892f}
+        .yb-wy-parts{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+        .yb-wy-part b{display:block;font-size:16px;color:var(--wc);white-space:nowrap}
+        .yb-wy-op{font-size:18px;font-weight:800;color:var(--yb-mu)}
+        .yb-wy-total{text-align:right;font-size:26px;font-weight:800;color:var(--yb-tx);white-space:nowrap}
+        .yb-wy-total small{font-size:13px;color:var(--yb-mu)}
+        .yb-wy-total.yb-r{color:#dc2626}
     </style>
 
     {{-- Yil hisoboti / Hodimlar — har hodim × oy: to'langan / to'lash kerak / ortiqcha (YangiBux $staffYear) --}}
