@@ -11,7 +11,15 @@ class EmployeeSalaryPayment extends Model
     public const TYPE_ISHBAY  = 'ishbay';
     public const TYPE_MAMURIY = 'mamuriy';
 
-    protected $fillable = ['user_id', 'month', 'amount', 'salary_type', 'paid_at', 'note', 'given_by'];
+    // month — maosh qaysi oy uchun (qarz shu oyda yopiladi); wallet_month — pul qaysi oy
+    // hamyonidan (Buxgalteriya xarajati shu oyga yoziladi; NULL — month bilan bir xil)
+    protected $fillable = ['user_id', 'month', 'wallet_month', 'amount', 'salary_type', 'paid_at', 'note', 'given_by'];
+
+    /** Pul qaysi oy hamyonidan berilgan */
+    public function walletMonth(): string
+    {
+        return $this->wallet_month ?: $this->month;
+    }
 
     protected $casts = [
         'amount'  => 'decimal:2',

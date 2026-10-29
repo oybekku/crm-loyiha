@@ -108,6 +108,7 @@ class YangiBux extends Page
     public float  $payRemaining = 0;      // mijoz to'lagani bo'yicha hozir to'lash mumkin
     public float  $payFullRemaining = 0;  // hisoblangan (barcha ishlar) bo'yicha qoldiq
     public array  $payDue = [];           // to'lov turlari bo'yicha "To'lanishi kerak" (dueByType)
+    public string $payWalletMonth = '';   // pul qaysi oy hamyonidan (Y-m); maosh oyi bilan bir xil — avvalgidek
     public ?int   $payAccountId = null;   // oylik qaysi hisobdan berildi
     public string $paySalaryType = EmployeeSalaryPayment::TYPE_ISHBAY;
 
@@ -857,6 +858,23 @@ class YangiBux extends Page
         return [EmployeeSalaryPayment::TYPE_ISHBAY => max(0, $calc - $base - $paidIsh), EmployeeSalaryPayment::TYPE_MAMURIY => max(0, $base - $paidMam)];
     }
 
+    /** "Pul qaysi oy hamyonidan" tanlovi: ['Y-m' => 'Oktabr 2026'], sayt ochilgan oydan joriy oygacha (yangisi tepada) */
+    private function walletMonthOptions(): array
+    {
+        $first = Project::min('created_at');
+        $from  = $first ? Carbon::parse($first)->startOfMonth() : now()->startOfMonth();
+        $opts  = [];
+        for ($d = now()->startOfMonth(); $d->gte($from); $d->subMonth()) {
+            $opts[$d->format('Y-m')] = $this->monthName($d->year, $d->month);
+        }
+        // Tahrirlanayotgan to'lovning oyi ro'yxatda bo'lmasa ham ko'rinsin
+        if ($this->payWalletMonth && !isset($opts[$this->payWalletMonth])) {
+            [$y, $m] = array_map('intval', explode('-', $this->payWalletMonth));
+            $opts[$this->payWalletMonth] = $this->monthName($y, $m);
+        }
+        return $opts;
+    }
+
     /** Qarz qaysi turda bo'lsa — o'sha (ikkalasida bo'lsa ishlar uchun), bo'lmasa xodimning standart turi */
     private static function suggestedType(array $due, ?User $u): string
     {
@@ -884,6 +902,7 @@ class YangiBux extends Page
         $this->payDate      = now()->format('Y-m-d');
         $this->payNote      = '';
         $this->payAccountId = null;   // har safar admin o'zi tanlaydi (naqd yoki karta)
+        $this->payWalletMonth = $this->ym();
         $this->fillPayDue($userId);
         $this->showPayModal = true;
     }
@@ -940,6 +959,7 @@ class YangiBux extends Page
         $this->payRemaining = 0;
         $this->payDue       = $this->dueByType($p->user_id, $p->id); // shu to'lovsiz — turini almashtirsa nimani yopishi ko'rinsin
         $this->payAccountId = Expense::where('salary_payment_id', $p->id)->value('account_id');
+        $this->payWalletMonth = $p->walletMonth();
         $this->paySalaryType = $p->type;
         $this->historyUserId = null;
         $this->showPayModal = true;
@@ -955,6 +975,7 @@ class YangiBux extends Page
             'payDate'   => 'required|date',
             'payAccountId' => 'required|exists:financial_accounts,id,user_id,NULL',
             'paySalaryType' => 'required|in:' . implode(',', array_keys(EmployeeSalaryPayment::typeOptions())),
+            'payWalletMonth' => ['required', 'regex:/^\d{4}-\d{2}$/'],
         ], [
             'payUserId.required'    => 'Xodimni tanlang',
             'payAmount.required'    => 'Summani kiriting',
@@ -966,6 +987,7 @@ class YangiBux extends Page
         $savedPay = \App\Services\SalaryPaymentService::save([
             'user_id'  => $this->payUserId,
             'month'    => $month,
+            'wallet_month' => $this->payWalletMonth !== $month ? $this->payWalletMonth : null,
             'amount'   => $amount,
             'salary_type' => $this->paySalaryType,
             'paid_at'  => $this->payDate,
@@ -1664,6 +1686,11 @@ class YangiBux extends Page
             'repHidden'    => $this->tab === 'hisobotlar' ? $this->repHiddenMonths() : [],
             'staffYearCollapsed' => $this->tab === 'hisobotlar' && $this->staffYearCollapsed(),
             'profitInfo'   => $this->tab === 'hisobotlar' && $this->profitMonth ? ($chart[$this->profitMonth - 1] + ['title' => $fullMonths[$this->profitMonth - 1] . ' ' . $year]) : null,
+            // Maosh to'lash: pul qaysi oy hamyonidan — tanlov ro'yxati (sayt ochilgan oydan joriy oygacha) va qoldiq
+            'payWalletMonths' => $this->showPayModal ? $this->walletMonthOptions() : [],
+            'paySalaryMonth'  => $this->showPayModal ? ($this->payEditId ? (EmployeeSalaryPayment::find($this->payEditId)?->month ?? $this->ym()) : $this->ym()) : '',
+            'payWalletBal'    => $this->showPayModal && preg_match('/^\d{4}-\d{2}$/', $this->payWalletMonth)
+                ? $this->monthAccountBalances(...array_map('intval', explode('-', $this->payWalletMonth))) : [],
             'mtFromBal'    => $this->showMt && $this->mtFromYm ? $this->monthAccountBalances(...array_map('intval', explode('-', $this->mtFromYm))) : [],
             'mtToBal'      => $this->showMt && $this->mtToYm ? $this->monthAccountBalances(...array_map('intval', explode('-', $this->mtToYm))) : [],
             'wallet'       => $this->tab === 'hisobotlar' && $this->walletMonth ? [
@@ -1674,6 +1701,11 @@ class YangiBux extends Page
                 'title' => $fullMonths[$this->walletMonth - 1] . ' ' . $year,
                 'rows'  => $this->monthWalletBreakdown($year, $this->walletMonth),
                 'profit'=> $incomeByMonth[$this->walletMonth] - $expenseByMonth[$this->walletMonth],
+                // Boshqa oy maoshi shu oy pulidan (wallet_month = shu oy) va aksincha
+                'salCross' => EmployeeSalaryPayment::with(['user:id,name', 'giver:id,name'])
+                    ->whereNotNull('wallet_month')->whereColumn('wallet_month', '!=', 'month')
+                    ->where(fn ($q) => $q->where('wallet_month', sprintf('%04d-%02d', $year, $this->walletMonth))->orWhere('month', sprintf('%04d-%02d', $year, $this->walletMonth)))
+                    ->orderByDesc('paid_at')->get(),
             ] : null,
             'salaryPayments' => EmployeeSalaryPayment::with(['user', 'giver'])
                 ->where('month', sprintf('%04d-%02d', $year, $month))

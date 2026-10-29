@@ -638,7 +638,9 @@
                 <div class="yb-modal-b">
                     @forelse($S['history'] as $h)
                         <div class="yb-li" style="border-bottom:1px solid var(--yb-bd)">
-                            <div style="min-width:0">{{ $h->paid_at->format('d.m.Y') }} · <b class="yb-g">{{ $fmt($h->amount) }} so'm</b><span class="yb-sub">{{ $h->giver?->name }}@if($h->note) · {{ \Illuminate\Support\Str::limit(preg_replace('/^svc:\d+\|/', '', $h->note), 60) }}@endif</span></div>
+                            <div style="min-width:0">{{ $h->paid_at->format('d.m.Y') }} · <b class="yb-g">{{ $fmt($h->amount) }} so'm</b>
+                                @if($h->wallet_month && $h->wallet_month !== $h->month)<span style="margin-left:4px;background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe;border-radius:999px;padding:0 7px;font-size:10px;font-weight:700" title="Pul shu oy hamyonidan berilgan">⇄ {{ ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'][(int) substr($h->wallet_month, 5, 2) - 1] }} hamyonidan</span>@endif
+                                <span class="yb-sub">{{ $h->giver?->name }}@if($h->note) · {{ \Illuminate\Support\Str::limit(preg_replace('/^svc:\d+\|/', '', $h->note), 60) }}@endif</span></div>
                             <span style="margin-left:auto;white-space:nowrap">
                                 <button type="button" class="yb-act" title="Tahrirlash" wire:click="editPay({{ $h->id }})">✏️</button>
                                 <button type="button" class="yb-act del" title="O'chirish" wire:click="deletePay({{ $h->id }})" wire:confirm="Bu to'lovni o'chirasizmi? Oylik hisobot va Buxgalteriyadan ham o'chadi.">🗑</button>
@@ -892,6 +894,29 @@
                     @empty
                         <div class="yb-sub" style="font-size:12px">Bu oyda oydan oyga o'tkazma yo'q. Ortiqcha pulni keyingi oyning Naqd yoki Kartasiga o'tkazish uchun yuqoridagi tugmani bosing.</div>
                     @endforelse
+
+                    @if($wallet['salCross']->isNotEmpty())
+                        @php
+                            $wYm   = sprintf('%04d-%02d', $this->ybYear, $wallet['m']);
+                            $scOut = $wallet['salCross']->where('wallet_month', $wYm);   // shu oy pulidan boshqa oy maoshi
+                            $scIn  = $wallet['salCross']->where('month', $wYm);          // shu oy maoshi boshqa oy pulidan
+                            $mN    = fn ($ym) => ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'][(int) substr($ym, 5, 2) - 1];
+                        @endphp
+                        <div style="margin:16px 0 8px"><b>💵 Boshqa oy maoshlari</b>
+                            <span class="yb-sub">Xodim qarzi maosh oyida yopiladi, pul esa tanlangan oy hamyonidan kamayadi.</span></div>
+                        @foreach([[$scOut, "Shu oy pulidan berilgan boshqa oylar maoshi", 'yb-r', '−'], [$scIn, "Shu oy maoshi boshqa oy pulidan berilgan (bu oy hamyoniga ta'sir qilmagan)", '', '']] as [$list, $ttl, $cls, $sign])
+                            @if($list->isNotEmpty())
+                                <div class="yb-sub" style="font-weight:700;margin:8px 0 4px">{{ $ttl }} — {{ $list->count() }} ta, {{ $fmt($list->sum('amount')) }} so'm</div>
+                                @foreach($list as $sp)
+                                    <div class="yb-li" style="border-bottom:1px solid var(--yb-bd);gap:10px">
+                                        <div style="min-width:0;flex:1"><b>{{ $sp->user?->name }}</b> — {{ $mN($sp->month) }} maoshi
+                                            <span class="yb-sub">{{ $sp->paid_at?->format('d.m.Y') }} · {{ $mN($sp->wallet_month) }} hamyonidan · {{ $sp->giver?->name }}</span></div>
+                                        <b class="{{ $cls }}" style="white-space:nowrap">{{ $sign }}{{ $fmt($sp->amount) }}</b>
+                                    </div>
+                                @endforeach
+                            @endif
+                        @endforeach
+                    @endif
                 </div>
             </div>
         </div>
@@ -1281,9 +1306,29 @@
                         <input type="date" class="yb-in" wire:model="payDate">
                     </div>
                 </div>
+                @php
+                    $pwLabel   = $payWalletMonths[$payWalletMonth] ?? $payWalletMonth;
+                    $pwSalaryM = $paySalaryMonth;
+                    $pwSalaryL = $payWalletMonths[$pwSalaryM] ?? $pwSalaryM;
+                    $pwOther   = $payWalletMonth && $payWalletMonth !== $pwSalaryM;
+                @endphp
+                <div class="yb-fld">
+                    <label>Pul qaysi oy hamyonidan? <i>*</i></label>
+                    <select class="yb-in" wire:model.live="payWalletMonth">
+                        @foreach($payWalletMonths as $ym => $lbl)
+                            <option value="{{ $ym }}">{{ $lbl }}{{ $ym === $pwSalaryM ? ' — maosh oyining o\'zi' : '' }}</option>
+                        @endforeach
+                    </select>
+                    @if($pwOther)
+                        <div class="yb-sub" style="margin-top:4px;color:#7c3aed">
+                            ⇄ {{ $pwSalaryL }} maoshi <b>{{ $pwLabel }}</b> pulidan beriladi:
+                            xodim qarzi {{ \Illuminate\Support\Str::before($pwSalaryL, ' ') }} oyida yopiladi, pul {{ \Illuminate\Support\Str::before($pwLabel, ' ') }} hamyonidan kamayadi.
+                        </div>
+                    @endif
+                </div>
                 <div class="yb-fld">
                     <label>Qaysi hisobdan berildi <i>*</i></label>
-                    @include('filament.pages.partials.yangi-bux-account-select', ['model' => 'payAccountId', 'accountsList' => $allAccounts, 'selectedId' => $payAccountId, 'monthMode' => true])
+                    @include('filament.pages.partials.yangi-bux-account-select', ['model' => 'payAccountId', 'accountsList' => $allAccounts, 'selectedId' => $payAccountId, 'monthMode' => true, 'monthBalances' => $payWalletBal, 'monthLabel' => $pwLabel])
                     @error('payAccountId')<div class="yb-err">{{ $message }}</div>@enderror
                 </div>
                 <div class="yb-fld">

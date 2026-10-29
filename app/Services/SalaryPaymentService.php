@@ -86,6 +86,9 @@ class SalaryPaymentService
         $kind       = $isPartial ? "qisman avans" : 'oylik';
         $userName   = $payment->user?->name ?? $payment->user_id;
         $comment    = "{$userName} — {$monthLabel} oyi uchun {$kind} berildi";
+        if ($payment->walletMonth() !== $payment->month) {
+            $comment .= ' (' . Carbon::createFromFormat('Y-m', $payment->walletMonth())->translatedFormat('F Y') . ' hamyonidan)';
+        }
 
         Expense::updateOrCreate(
             ['salary_payment_id' => $payment->id],
@@ -93,7 +96,8 @@ class SalaryPaymentService
                 'account_id'   => $expenseAccountId,
                 'user_id'      => $payment->user_id,
                 'category'     => Expense::KIND_OYLIK,
-                'month'        => $payment->month,
+                // Xarajat (hamyon qoldig'i) — pul olingan oyga; xodim qarzi baribir $payment->month bo'yicha
+                'month'        => $payment->walletMonth(),
                 'amount'       => $payment->amount,
                 'comment'      => $comment,
                 'expense_date' => $payment->paid_at,

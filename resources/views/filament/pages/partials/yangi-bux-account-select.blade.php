@@ -2,12 +2,13 @@
      Xodim kartalari pul hisobi emas — bu ro'yxatda yo'q.
      $model — wire:model nomi, $accountsList — FinancialAccount'lar, $selectedId — joriy qiymat.
      $monthMode — true: umumiy qoldiq o'rniga ochiq oyning puli ko'rsatiladi;
-     $noBalance — true: summa ko'rsatilmaydi (masalan, doimiy to'lov shablonida). --}}
+     $noBalance — true: summa ko'rsatilmaydi (masalan, doimiy to'lov shablonida).
+     $monthBalances / $monthLabel (ixtiyoriy) — boshqa oy puli (masalan maosh "qaysi oy hamyonidan"). --}}
 @php
     $fmtA = fn ($v) => number_format((float) $v, 0, '.', ' ');
     $noBalance = $noBalance ?? false;
     $monthMode = $monthMode ?? false;
-    $balMap    = $monthMode ? $monthAccountBalances : $accountBalances;
+    $balMap    = $monthMode ? ($monthBalances ?? $monthAccountBalances) : $accountBalances;
     $balPrefix = $monthMode ? \Illuminate\Support\Str::before($monthLabel, ' ') . ': ' : '';
     $types = \App\Models\FinancialAccount::typeOptions();
     $company  = $accountsList->filter(fn ($a) => !$a->is_personal && !$a->user_id);
