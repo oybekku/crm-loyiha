@@ -660,7 +660,14 @@
         $wTypes   = ['naqd' => ['💵', 'Naqd', '#15803d'], 'karta' => ['💳', 'Plastik', '#2563eb'], 'bank' => ['🏦', 'Bank hisob', '#7c3aed']];
         $wSums    = array_map(fn ($t) => array_sum($walletYear[$t] ?? []), array_combine(array_keys($wTypes), array_keys($wTypes)));
         $wGrand   = array_sum($wSums);
+        $wCanMt   = auth()->user()?->isAdmin();
     @endphp
+    @if($wCanMt)
+        <div style="display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-bottom:10px">
+            <span class="yb-sub">Bir oyning pulini boshqa oyga (masalan oktabr Naqd → noyabr Naqd) — qator yonidagi ⇄ tugmasi yoki:</span>
+            <button type="button" class="yb-btn" wire:click="openMonthTransfer">⇄ Oydan oyga o'tkazish</button>
+        </div>
+    @endif
     <div class="yb-wy">
         @foreach($wTypes as $wt => [$wi, $wl, $wc])
             @php $wm = $walletYear[$wt] ?? []; $wSum = $wSums[$wt]; @endphp
@@ -675,6 +682,9 @@
                             <td>{{ $wMonths[$m - 1] }}</td>
                             <td class="num {{ $v < 0 ? 'yb-r' : '' }}">
                                 @if($v != 0)<span class="yb-cell-link" wire:click="openWallet({{ $m }})" title="Oy tafsiloti — hamyonlar bo'yicha">{{ $v < 0 ? '−' : '' }}{{ $fmt(abs($v)) }}</span>@else <span style="color:var(--yb-mu)">0</span> @endif
+                                @if($wCanMt && $v > 0 && !empty($walletYear['acc'][$wt]))
+                                    <button type="button" class="yb-wy-mt" wire:click="openMonthTransfer({{ $m }}, {{ $walletYear['acc'][$wt] }})" title="{{ $wMonths[$m - 1] }} {{ $wl }} pulini boshqa oyga o'tkazish">⇄</button>
+                                @endif
                             </td>
                         </tr>
                     @empty
@@ -709,6 +719,8 @@
         .yb-wy{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
         @media (max-width:900px){.yb-wy{grid-template-columns:1fr}}
         .yb-wy-card{border-top:4px solid var(--wc);display:flex;flex-direction:column}
+        .yb-wy-mt{margin-left:8px;width:24px;height:24px;border-radius:6px;border:1px solid var(--yb-bd);background:transparent;color:var(--wc);font-weight:800;cursor:pointer;line-height:1}
+        .yb-wy-mt:hover{background:var(--wc);color:#fff}
         .yb-wy-h{margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--yb-bd)}
         .yb-wy-t{display:block;font-size:16px;font-weight:800;color:var(--wc)}
         .yb-wy-foot{margin-top:auto;display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:12px 10px 2px;border-top:2px solid var(--wc);font-weight:800;font-size:13px}

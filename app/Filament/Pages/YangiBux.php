@@ -189,15 +189,23 @@ class YangiBux extends Page
     public string  $mtAmount   = '';
     public string  $mtComment  = '';
 
-    public function openMonthTransfer(?int $fromMonth = null): void
+    /**
+     * $fromAcc berilsa (Hisobotlardagi hamyon jadvali ⇄ tugmasi) — shu hamyondan shu
+     * hamyonga, summa = o'sha oydagi qoldig'i (o'zgartirish mumkin).
+     */
+    public function openMonthTransfer(?int $fromMonth = null, ?int $fromAcc = null): void
     {
         if (!auth()->user()?->isAdmin()) return;
         $this->resetValidation();
         $from = Carbon::create($this->ybYear, $fromMonth ?: $this->ybMonth, 1);
         $this->mtFromYm  = $from->format('Y-m');
         $this->mtToYm    = now()->format('Y-m') > $this->mtFromYm ? now()->format('Y-m') : $from->copy()->addMonth()->format('Y-m');
-        $this->mtFromAcc = $this->mtToAcc = null;
+        $this->mtFromAcc = $this->mtToAcc = $fromAcc;
         $this->mtAmount  = $this->mtComment = '';
+        if ($fromAcc) {
+            $bal = (float) ($this->monthAccountBalances($from->year, $from->month)[$fromAcc] ?? 0);
+            if ($bal > 0) $this->mtAmount = number_format($bal, 0, '.', ' ');
+        }
         $this->showMt    = true;
     }
 
@@ -1481,6 +1489,9 @@ class YangiBux extends Page
                 if (abs($none) >= 1) $walletNone[$m] = $none;
             }
             $walletYear['none'] = $walletNone;
+            // Har tur uchun firma hamyoni (⇄ oydan oyga o'tkazish tugmasi uchun; bir nechta bo'lsa — birinchisi)
+            $walletYear['acc'] = FinancialAccount::whereNull('user_id')->where('is_personal', false)
+                ->orderBy('sort_order')->orderBy('id')->get(['id', 'type'])->unique('type')->pluck('id', 'type')->all();
 
             // "Yil hisoboti / Hodimlar" — har hodim × har oy: to'langan / to'lash kerak /
             // ortiqcha. Oylik maosh tabidagi bilan AYNAN bir xil qoida (payableSplit,
