@@ -661,25 +661,12 @@ class ProjectEditModal extends Component
     private function buildEiServices(Project $p): array
     {
         $p->loadMissing(['services.assignedUser', 'payments']);
-        $priceMap = [];
-        foreach ($p->services as $s) $priceMap[$s->service_name] = (float) $s->final_price;
 
-        $paid = [];
-        foreach ($p->payments as $pay) {
-            $svcs = $pay->services ?? [];
-            if (empty($svcs)) continue;
-            $sumSel = 0;
-            foreach ($svcs as $sn) $sumSel += ($priceMap[$sn] ?? 0);
-            foreach ($svcs as $sn) {
-                $sp    = $priceMap[$sn] ?? 0;
-                $share = $sumSel > 0 ? (float) $pay->amount * ($sp / $sumSel) : (float) $pay->amount / count($svcs);
-                $paid[$sn] = ($paid[$sn] ?? 0) + $share;
-            }
-        }
-
-        return $p->services->map(function ($s) use ($paid) {
+        // Xizmatga tushgan pul — To'lov oynasi va oyliklar bilan AYNAN bir xil qoida
+        // (saqlangan service_split bo'lsa — o'sha, bo'lmasa narx nisbati bo'yicha)
+        return $p->services->map(function ($s) use ($p) {
             $price = (float) $s->final_price;
-            $pd    = $paid[$s->service_name] ?? 0;
+            $pd    = \App\Services\EmployeePayableService::paidAmountForService($s, $p);
             return [
                 'id'        => $s->id,
                 'key'       => $s->service_name,
