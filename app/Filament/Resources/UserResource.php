@@ -116,6 +116,35 @@ class UserResource extends Resource
         ]);
     }
 
+    /** Oklad oynasi maydonlari: summa + "qaysi oydan boshlab" (oldingi oylar o'zgarmaydi) */
+    protected static function okladFields(bool $withAmount = true): array
+    {
+        $fields = [];
+        if ($withAmount) {
+            $fields[] = Forms\Components\TextInput::make('amount')
+                ->label("Oklad — oylik maosh (so'm)")
+                ->numeric()->minValue(0)->required()->autofocus()
+                ->placeholder('Masalan: 5000000')
+                ->helperText("Har oy \"To'lanishi kerak\"ga qo'shiladi (ish bo'lmasa ham). \"📅 Oylik maosh (oklad)\" turidagi to'lov bilan yopiladi.");
+        }
+        $fields[] = Forms\Components\TextInput::make('from_month')
+            ->label('Qaysi oydan boshlab')
+            ->type('month')->required()
+            ->default(now()->format('Y-m'))
+            ->helperText("Shu oy va keyingi oylarga ta'sir qiladi. Oldingi oylar o'zgarmaydi.");
+        return $fields;
+    }
+
+    /** Oklad tarixi — oyna tavsifi uchun */
+    protected static function okladHistory(User $u): \Illuminate\Support\HtmlString|string
+    {
+        $rows = \App\Models\UserBaseSalary::where('user_id', $u->id)->orderByDesc('effective_month')->limit(6)->get();
+        if ($rows->isEmpty()) return 'Hozircha oklad belgilanmagan.';
+        $li = $rows->map(fn ($r) => '<li>' . e($r->effective_month === '2000-01' ? 'boshidan' : $r->effective_month . ' dan') . ': <b>'
+            . ($r->amount > 0 ? number_format($r->amount, 0, '.', ' ') . " so'm" : "oklad yo'q") . '</b></li>')->implode('');
+        return new \Illuminate\Support\HtmlString("<div style=\"font-size:12px\">Tarix:<ul style=\"margin:4px 0 0 16px;list-style:disc\">{$li}</ul></div>");
+    }
+
     public static function table(Table $table): Table
     {
         return $table
@@ -158,11 +187,47 @@ class UserResource extends Resource
                     ->label('Loyihalar')
                     ->counts('projects')
                     ->sortable(),
+
+                Tables\Columns\TextColumn::make('base_salary')
+                    ->label('Oklad')
+                    ->formatStateUsing(fn ($state) => (float) $state > 0 ? number_format((float) $state, 0, '.', ' ') . " so'm" : '—')
+                    ->color(fn ($state) => (float) $state > 0 ? 'success' : 'gray')
+                    ->weight(fn ($state) => (float) $state > 0 ? 'bold' : null)
+                    ->sortable(),
             ])
             ->filters([
                 //
             ])
             ->actions([
+                // Oklad — qo'shish/tahrirlash "shu oydan boshlab" (admin akkauntida ham kodsiz: login/parolga tegmaydi)
+                Tables\Actions\Action::make('oklad')
+                    ->label(fn ($record) => (float) $record->base_salary > 0 ? 'Oklad' : "Oklad qo'shish")
+                    ->icon('heroicon-o-banknotes')
+                    ->color('success')
+                    ->visible(fn () => auth()->user()?->isAdmin())
+                    ->modalHeading(fn ($record) => "{$record->name} — oklad")
+                    ->modalDescription(fn ($record) => self::okladHistory($record))
+                    ->modalWidth('md')
+                    ->fillForm(fn ($record) => ['amount' => (float) $record->base_salary > 0 ? (float) $record->base_salary : null, 'from_month' => now()->format('Y-m')])
+                    ->form(self::okladFields())
+                    ->action(function (array $data, $record) {
+                        \App\Services\EmployeePayableService::setOklad($record, (float) $data['amount'], $data['from_month']);
+                        \Filament\Notifications\Notification::make()->title('Oklad saqlandi')->body("{$data['from_month']} oydan boshlab")->success()->send();
+                    }),
+                Tables\Actions\Action::make('okladDelete')
+                    ->label('')
+                    ->tooltip("Okladni o'chirish")
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->visible(fn ($record) => auth()->user()?->isAdmin() && (float) $record->base_salary > 0)
+                    ->modalHeading(fn ($record) => "{$record->name} — okladni o'chirish")
+                    ->modalDescription(fn ($record) => number_format((float) $record->base_salary, 0, '.', ' ') . " so'm oklad tanlangan oydan boshlab olib tashlanadi. Oldingi oylar va berilgan to'lovlar o'zgarmaydi.")
+                    ->modalSubmitActionLabel("O'chirish")
+                    ->form(self::okladFields(false))
+                    ->action(function (array $data, $record) {
+                        \App\Services\EmployeePayableService::setOklad($record, 0, $data['from_month']);
+                        \Filament\Notifications\Notification::make()->title("Oklad o'chirildi")->body("{$data['from_month']} oydan boshlab")->success()->send();
+                    }),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make()
                     ->visible(fn($record) => $record->id !== auth()->id()),

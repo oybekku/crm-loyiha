@@ -96,7 +96,7 @@ class YangiBux extends Page
     // ── Oylik maosh tabi ──
     public string $omRole     = '';   // bo'lim = maosh turi: ishbay | mamuriy
     public string $omPosition = '';   // lavozim
-    public string $omStatus   = '';   // tolangan | qisman | tolanmagan
+    public string $omStatus   = '';   // tolangan | qisman | tolanmagan | oklad_qarz
     public string $omSearch   = '';
 
     public bool   $showPayModal = false;
@@ -817,16 +817,15 @@ class YangiBux extends Page
      * ma'muriy to'lovlardan yopiladi). $calc = yearGrid 'calc' (ochilgan komissiya + oklad).
      * @return array{0: float, 1: float} [to'lanishi kerak, ortiqcha to'langan]
      */
-    private static function payableSplit(User $u, float $calc, Collection $pays): array
+    private static function payableSplit(User $u, float $calc, Collection $pays, float $base): array
     {
+        // Hamma xodimda bir xil: oklad — "Oylik maosh (oklad)" to'lovlari bilan,
+        // ishlar komissiyasi — "Bajarilgan ishlar uchun" to'lovlari bilan yopiladi.
+        // $base — shu oydagi oklad (EmployeePayableService::okladFor), $calc ichida.
         $paidMam = (float) $pays->filter(fn ($p) => $p->type === EmployeeSalaryPayment::TYPE_MAMURIY)->sum('amount');
         $paidIsh = (float) $pays->sum('amount') - $paidMam;
-        $base    = (float) ($u->base_salary ?? 0);
-        if (EmployeeSalaryPayment::typeForUser($u) === EmployeeSalaryPayment::TYPE_MAMURIY) {
-            $comm = $calc - $base;
-            return [max(0, $comm - $paidIsh) + max(0, $base - $paidMam), max(0, $paidIsh - $comm)];
-        }
-        return [max(0, $calc - $paidIsh), max(0, $paidIsh - $calc)];
+        $comm    = $calc - $base;
+        return [max(0, $comm - $paidIsh) + max(0, $base - $paidMam), max(0, $paidIsh - $comm)];
     }
 
     /**
@@ -844,13 +843,10 @@ class YangiBux extends Page
             ->when($exceptPaymentId, fn ($q) => $q->whereKeyNot($exceptPaymentId))->get();
         $paidMam = (float) $pays->filter(fn ($p) => $p->type === EmployeeSalaryPayment::TYPE_MAMURIY)->sum('amount');
         $paidIsh = (float) $pays->sum('amount') - $paidMam;
-        $base    = (float) ($u->base_salary ?? 0);
+        $base    = EmployeePayableService::okladFor($u, $this->ym());
 
-        if (EmployeeSalaryPayment::typeForUser($u) === EmployeeSalaryPayment::TYPE_MAMURIY) {
-            return [EmployeeSalaryPayment::TYPE_ISHBAY => max(0, $calc - $base - $paidIsh), EmployeeSalaryPayment::TYPE_MAMURIY => max(0, $base - $paidMam)];
-        }
-        // Ishbay xodimda oklad ham ishlar bilan birga hisoblanadi
-        return [EmployeeSalaryPayment::TYPE_ISHBAY => max(0, $calc - $paidIsh), EmployeeSalaryPayment::TYPE_MAMURIY => 0.0];
+        // payableSplit bilan bir xil qoida (hamma xodimda)
+        return [EmployeeSalaryPayment::TYPE_ISHBAY => max(0, $calc - $base - $paidIsh), EmployeeSalaryPayment::TYPE_MAMURIY => max(0, $base - $paidMam)];
     }
 
     /** Qarz qaysi turda bo'lsa — o'sha (ikkalasida bo'lsa ishlar uchun), bo'lmasa xodimning standart turi */
@@ -868,7 +864,7 @@ class YangiBux extends Page
         if (!$u) return 0;
         $work = EmployeePayableService::workSummaryForMonth($this->ybYear, $this->ybMonth);
         $paid = (float) EmployeeSalaryPayment::where('user_id', $userId)->where('month', $this->ym())->sum('amount');
-        return max(0, (float) ($u->base_salary ?? 0) + (float) ($work[$userId]['total'] ?? 0) - $paid);
+        return max(0, EmployeePayableService::okladFor($u, $this->ym()) + (float) ($work[$userId]['total'] ?? 0) - $paid);
     }
 
     public function openPay(?int $userId = null): void
@@ -996,7 +992,7 @@ class YangiBux extends Page
             public function array(): array { return $this->rows; }
             public function headings(): array
             {
-                return ['#', 'Xodim', 'Lavozim', "Bo'lim", 'Asosiy maosh', 'Hisoblangan', "Ortiqcha to'langan", "To'lanishi kerak", "To'landi", 'Kutayotgan', "To'lov holati", "To'lov sanasi"];
+                return ['#', 'Xodim', 'Lavozim', "Bo'lim", 'Oklad', 'Hisoblangan', "Ortiqcha to'langan", "To'lanishi kerak", "To'landi", 'Kutayotgan', "To'lov holati", "To'lov sanasi"];
             }
         };
 
@@ -1016,7 +1012,7 @@ class YangiBux extends Page
         return collect($grid)->map(function ($row) use ($pays, $work) {
             $u    = $row['user'];
             $cell = $row['months'][$this->ybMonth] ?? ['calc' => 0, 'paid' => 0, 'remaining' => 0];
-            $base = (float) ($u->base_salary ?? 0);
+            $base = (float) ($cell['base'] ?? 0);
             // Jami summa = oklad + HISOBLANGAN (shu oy loyihalaridagi barcha ishlar
             // ulushi — Oylik hisobotdagi kabi). Mijoz to'lagan qismga to'g'ri keladigani
             // ($earned) alohida — "hozir to'lash mumkin" ma'lumoti sifatida.
@@ -1024,9 +1020,13 @@ class YangiBux extends Page
             $earned    = max(0, (float) $cell['calc'] - $base);
             $total = $base + $workTotal;
             $paid  = (float) $cell['paid'];
-            [$kerak, $ortiqcha] = self::payableSplit($u, (float) $cell['calc'], $pays->get($u->id, collect()));
+            [$kerak, $ortiqcha] = self::payableSplit($u, (float) $cell['calc'], $pays->get($u->id, collect()), $base);
             $status = $total <= 0 && $paid <= 0 ? 'yoq' : ($kerak > 0 ? ($paid > 0 ? 'qisman' : 'tolanmagan') : 'tolangan');
+            // Oklad holati: shu oy "Oylik maosh (oklad)" turida qancha berilgan, qancha qolgan
+            $okladPaid = (float) $pays->get($u->id, collect())->filter(fn ($p) => $p->type === EmployeeSalaryPayment::TYPE_MAMURIY)->sum('amount');
             return [
+                'okladPaid'   => $okladPaid,
+                'okladLeft'   => max(0, $base - $okladPaid),
                 'user'        => $u,
                 'position'    => $u->position ?: '—',
                 // Bo'lim = maosh turi (ishbay — toposyomka/ariza/eskiz; ma'muriy — firma foydasidan)
@@ -1248,7 +1248,8 @@ class YangiBux extends Page
             $rows = $all;
             if ($this->omRole !== '')     $rows = $rows->where('roleKey', $this->omRole);
             if ($this->omPosition !== '') $rows = $rows->where('position', $this->omPosition);
-            if ($this->omStatus !== '')   $rows = $rows->where('status', $this->omStatus);
+            if ($this->omStatus === 'oklad_qarz') $rows = $rows->filter(fn ($r) => $r['okladLeft'] > 0)->values();
+            elseif ($this->omStatus !== '')   $rows = $rows->where('status', $this->omStatus);
             if (trim($this->omSearch) !== '') {
                 $n = mb_strtolower(trim($this->omSearch));
                 $rows = $rows->filter(fn ($r) => str_contains(mb_strtolower($r['user']->name . ' ' . $r['position']), $n));
@@ -1265,7 +1266,7 @@ class YangiBux extends Page
                 $calc = $pd = 0.0;
                 foreach ($grids[$d->year] as $r) {
                     $c   = $r['months'][$d->month];
-                    $due = (float) ($r['user']->base_salary ?? 0) + (float) ($wk[$r['user']->id]['total'] ?? 0);
+                    $due = (float) ($c['base'] ?? 0) + (float) ($wk[$r['user']->id]['total'] ?? 0);
                     $calc += $due;
                     $pd   += min($c['paid'], $due);
                 }
@@ -1433,20 +1434,19 @@ class YangiBux extends Page
         // Oylik "to'lanishi kerak" — shu oy loyihalaridagi bajarilgan ishlar
         // uchun mijoz TO'LIQ to'lasa beriladigan komissiya + oklad. Tizim
         // ishlamagan (birinchi loyihadan oldingi) va hali kelmagan oylar — yo'q.
-        // Ishbay "kerak" = hisoblangan (har kimning ishlari) + ishbay xodimlar okladi;
-        // Ma'muriy "kerak" = ma'muriy xodimlar okladi (belgilangan bo'lsa).
-        $isMam = fn ($u) => EmployeeSalaryPayment::typeForUser($u) === EmployeeSalaryPayment::TYPE_MAMURIY;
+        // Ishlar uchun "kerak" = hisoblangan (har kimning ishlari);
+        // Oklad "kerak" = shu oydagi okladlar (belgilangan bo'lsa, hamma xodimda).
         // Ishbay "kerak" = Oylik hisobotdagi "Hisoblangan" (tugallangan + kutayotgan ishlar)
         $workCache = [];
-        $dueParts = function (array $r, int $m) use ($isMam, $year, &$workCache): array {
+        $dueParts = function (array $r, int $m) use ($year, &$workCache): array {
             $workCache[$m] ??= EmployeePayableService::workSummaryForMonth($year, $m);
-            $base = (float) ($r['user']->base_salary ?? 0);
+            $base = (float) ($r['months'][$m]['base'] ?? 0);
             $cell = $r['months'][$m] ?? ['full' => 0, 'calc' => 0];
-            $mam  = $isMam($r['user']);
             return [
-                'ishbay'        => (float) ($workCache[$m][$r['user']->id]['total'] ?? 0) + ($mam ? 0 : $base),
-                'ishbay_earned' => (float) $cell['calc'] - $base + ($mam ? 0 : $base),
-                'mamuriy'       => $mam ? $base : 0.0,
+                // Oklad hamma xodimda "Oylik maosh (oklad)" qismida (payableSplit bilan bir xil)
+                'ishbay'        => (float) ($workCache[$m][$r['user']->id]['total'] ?? 0),
+                'ishbay_earned' => (float) $cell['calc'] - $base,
+                'mamuriy'       => $base,
             ];
         };
         $salaryDue = array_fill(1, 12, null);
@@ -1499,7 +1499,7 @@ class YangiBux extends Page
                 $cells = []; $sum = ['paid' => 0.0, 'kerak' => 0.0, 'ortiq' => 0.0];
                 foreach ($staffMonths as $m) {
                     $pays = $yearPays->get($u->id . '|' . $m, collect());
-                    [$kerak, $ortiq] = self::payableSplit($u, (float) ($r['months'][$m]['calc'] ?? 0), $pays);
+                    [$kerak, $ortiq] = self::payableSplit($u, (float) ($r['months'][$m]['calc'] ?? 0), $pays, (float) ($r['months'][$m]['base'] ?? 0));
                     $c = ['paid' => (float) $pays->sum('amount'), 'kerak' => $kerak, 'ortiq' => $ortiq];
                     $cells[$m] = $c;
                     foreach ($c as $k => $v) {

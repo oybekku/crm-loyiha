@@ -88,6 +88,58 @@ class EmployeePayableService
         self::$rateCache = [];
     }
 
+    /** @var array<int, array<string, float>> foydalanuvchi => [effective_month => amount] (joriy so'rov ichida) */
+    private static array $okladCache = [];
+
+    public static function flushOkladCache(): void
+    {
+        self::$okladCache = [];
+    }
+
+    /**
+     * Hodimning shu oydagi okladi — "shu oydan boshlab" tarixi (UserBaseSalary):
+     * effective_month <= $month bo'lgan eng oxirgi yozuv. Yozuv yo'q — 0.
+     * Oklad belgilangan oydan oldingi oylarga qo'shilmaydi.
+     */
+    public static function okladFor(?User $user, string $month): float
+    {
+        if (!$user) return 0.0;
+        self::$okladCache[$user->id] ??= \App\Models\UserBaseSalary::where('user_id', $user->id)
+            ->orderBy('effective_month')->pluck('amount', 'effective_month')->map(fn ($v) => (float) $v)->all();
+
+        $amount = 0.0;
+        foreach (self::$okladCache[$user->id] as $from => $v) {
+            if ($from > $month) break;
+            $amount = $v;
+        }
+        return $amount;
+    }
+
+    /**
+     * Okladni "$fromMonth oydan boshlab" belgilaydi (0 — o'chirish). O'tgan oylar
+     * o'zgarmaydi. users.base_salary — joriy oydagi oklad (ro'yxatda ko'rsatish uchun).
+     * Faoliyat jurnaliga yoziladi.
+     */
+    public static function setOklad(User $user, float $amount, string $fromMonth): void
+    {
+        $amount = max(0, $amount);
+        $old    = self::okladFor($user, $fromMonth);
+        \App\Models\UserBaseSalary::updateOrCreate(
+            ['user_id' => $user->id, 'effective_month' => $fromMonth],
+            ['amount' => $amount, 'created_by' => auth()->id()]
+        );
+        $user->forceFill(['base_salary' => self::okladFor($user, now()->format('Y-m'))])->saveQuietly();
+
+        if (abs($old - $amount) >= 0.01) {
+            \App\Models\ActivityLog::create([
+                'user_id'     => auth()->id(),
+                'action'      => 'oklad_changed',
+                'description' => "{$user->name}: " . number_format($old, 0, '.', ' ') . ' → ' . number_format($amount, 0, '.', ' ')
+                    . " so'm ({$fromMonth} oydan boshlab)",
+            ]);
+        }
+    }
+
     public static function commissionForService(ProjectService $service, ?Project $project): array
     {
         // Foiz — xizmatning ish oyi bo'yicha (keyin qo'shilgan Ariza — o'sha oy foizi);
@@ -389,23 +441,22 @@ class EmployeePayableService
 
         $rows = [];
         foreach ($users as $uid => $user) {
-            // Belgilangan oylik (oklad) — loyiha komissiyasidan mustaqil, har
-            // oyga (o'tganlariga ham) avtomatik qo'shiladi. "Ish qilinmasa
-            // ham oylik beriladigan" hodimlar uchun (masalan Eskiz loyihadan
-            // tashqari ishlaydiganlar).
-            $baseSalary = (float) ($user->base_salary ?? 0);
-
+            // Belgilangan oylik (oklad) — loyiha komissiyasidan mustaqil, oklad
+            // belgilangan oydan boshlab har oyga qo'shiladi (okladFor — tarix).
+            // "Ish qilinmasa ham oylik beriladigan" hodimlar uchun.
             $months        = [];
             $yearCalc      = 0.0;
             $yearPaid      = 0.0;
             $yearRemaining = 0.0;
             for ($m = 1; $m <= 12; $m++) {
+                $baseSalary = self::okladFor($user, $monthStrings[$m]);
                 $calc      = ($calcByUserMonth[$uid][$m] ?? 0.0) + $baseSalary;
                 $paid      = $paidByUserMonth[$uid][$m] ?? 0.0;
                 $remaining = max(0, $calc - $paid);
                 $months[$m] = [
                     'calc'      => $calc,
                     'full'      => ($fullByUserMonth[$uid][$m] ?? 0.0) + $baseSalary,
+                    'base'      => $baseSalary,   // shu oydagi oklad (calc ichida)
                     'paid'      => $paid,
                     'remaining' => $remaining,
                     'month_str' => $monthStrings[$m],

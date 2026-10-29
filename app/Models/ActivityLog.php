@@ -39,6 +39,7 @@ class ActivityLog extends Model
             'project_edited'  => 'Loyiha tahrirlandi',
             'project_force_deleted' => "Loyiha butunlay o'chirildi (arxivdan)",
             'service_price_changed' => "Xizmat narxi o'zgartirildi",
+            'oklad_changed'         => "Oklad o'zgartirildi",
             default           => $this->action,
         };
     }

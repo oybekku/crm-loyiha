@@ -527,7 +527,7 @@
             </div>
             <div class="yb-f">
                 <label>Holat</label>
-                <select wire:model.live="omStatus"><option value="">Barchasi</option><option value="tolangan">To'langan</option><option value="qisman">Qisman</option><option value="tolanmagan">To'lanmagan</option></select>
+                <select wire:model.live="omStatus"><option value="">Barchasi</option><option value="tolangan">To'langan</option><option value="qisman">Qisman</option><option value="tolanmagan">To'lanmagan</option><option value="oklad_qarz">📅 Oklad to'lanmaganlar</option></select>
             </div>
             <div class="yb-f" style="flex:1;min-width:160px"><label>&nbsp;</label><input type="search" wire:model.live.debounce.400ms="omSearch" placeholder="🔍 Xodimni qidirish..."></div>
             <button type="button" class="yb-btn" style="background:#16a34a;padding:10px 16px" wire:click="openPay">＋ Maosh to'lash</button>
@@ -536,7 +536,7 @@
 
         <div class="yb-tbl-wrap" style="margin-top:14px">
         <table class="yb-tbl">
-            <thead><tr><th>#</th><th>Xodim</th><th>Lavozim</th><th>Bo'lim</th><th class="num">Asosiy maosh</th><th class="num" style="color:#d97706" title="Shu oy loyihalaridagi barcha ishlar ulushi — tugallangan va kutayotgan birga">Hisoblangan</th><th class="num" style="color:#dc2626" title="Xodimga mijoz to'lagan ulushidan ko'proq berilgan "ishlar uchun" pul (oklad kirmaydi)">Ortiqcha to'langan</th><th class="num" style="color:#16a34a" title="Mijoz to'lagan ulushga mutanosib ochilgan summa (+ oklad) − berilgani. Mijoz hali to'lamagan qismi kirmaydi.">To'lanishi kerak</th><th class="num" style="color:#2563eb">To'landi</th><th class="num" style="color:#f97316">Kutayotgan</th><th>To'lov holati</th><th>To'lov sanasi</th><th style="text-align:right">Amallar</th></tr></thead>
+            <thead><tr><th>#</th><th>Xodim</th><th>Lavozim</th><th>Bo'lim</th><th class="num" title="Shu oydagi oklad (Xodimlar sahifasida belgilanadi) — «Oylik maosh (oklad)» turidagi to'lov bilan yopiladi">Oklad</th><th class="num" style="color:#d97706" title="Shu oy loyihalaridagi barcha ishlar ulushi — tugallangan va kutayotgan birga">Hisoblangan</th><th class="num" style="color:#dc2626" title="Xodimga mijoz to'lagan ulushidan ko'proq berilgan «ishlar uchun» pul (oklad kirmaydi)">Ortiqcha to'langan</th><th class="num" style="color:#16a34a" title="Mijoz to'lagan ulushga mutanosib ochilgan summa (+ oklad) − berilgani. Mijoz hali to'lamagan qismi kirmaydi.">To'lanishi kerak</th><th class="num" style="color:#2563eb">To'landi</th><th class="num" style="color:#f97316">Kutayotgan</th><th>To'lov holati</th><th>To'lov sanasi</th><th style="text-align:right">Amallar</th></tr></thead>
             <tbody>
             @php $grpPrev = null; $grpNo = 0; @endphp
             @forelse($S['rows'] as $r)
@@ -572,7 +572,16 @@
                     <td><span class="yb-stype {{ $isMam ? 'mam' : '' }}" style="margin-left:0" wire:click="toggleUserSalaryType({{ $r['user']->id }})"
                               wire:confirm="{{ $r['user']->name }} — {{ $isMam ? "'BAJARILGAN ISHLAR UCHUN'" : "'OYLIK MAOSH (OKLAD)'" }} guruhiga o'tkazilsinmi? Turi tanlanmagan eski to'lovlari ham shu turga o'tadi."
                               title="Bosib boshqa guruhga o'tkazing">{{ $isMam ? '📅 Oklad' : '🛠 Ishlar uchun' }}</span></td>
-                    <td class="num" style="font-weight:500">{{ $r['base'] > 0 ? $fmt($r['base']) : '—' }}</td>
+                    <td class="num" style="font-weight:500">
+                        @if($r['base'] > 0)
+                            {{ $fmt($r['base']) }}
+                            @if($r['okladLeft'] > 0)
+                                <span class="yb-sub" style="color:#dc2626;font-weight:700" title="Shu oy okladidan to'lanmagan qismi">{{ $r['okladPaid'] > 0 ? 'qoldi ' . $fmt($r['okladLeft']) : "⏰ to'lanmagan" }}</span>
+                            @else
+                                <span class="yb-sub" style="color:#16a34a;font-weight:700">✔ to'langan</span>
+                            @endif
+                        @else — @endif
+                    </td>
                     <td class="num" style="color:#d97706">
                         {{ $r['workTotal'] > 0 ? $fmt($r['workTotal']) : '—' }}
                         @if($r['work'] && $r['work']['pending_count'] > 0)<span class="yb-sub">tugallangan: {{ $fmt($r['work']['done_comm']) }}</span>@endif

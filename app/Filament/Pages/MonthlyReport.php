@@ -131,9 +131,14 @@ class MonthlyReport extends Page
         $user->update([
             'role'        => $this->roleEditValue,
             'position'    => trim($this->positionEditValue) ?: null,
-            'base_salary' => max(0, (float) str_replace([' ', ','], '', $this->salaryBaseEditValue ?: '0')),
             'salary_type' => $this->salaryTypeEditValue === 'mamuriy' ? 'mamuriy' : null,
         ]);
+
+        // Oklad — tarix bilan, joriy oydan boshlab (oldingi oylar o'zgarmaydi)
+        $newBase = max(0, (float) str_replace([' ', ','], '', $this->salaryBaseEditValue ?: '0'));
+        if (abs($newBase - (float) $user->base_salary) >= 0.01) {
+            \App\Services\EmployeePayableService::setOklad($user, $newBase, now()->format('Y-m'));
+        }
 
         $this->closeRoleEditor();
         Notification::make()->title("{$user->name} — sozlamalari yangilandi")->success()->send();

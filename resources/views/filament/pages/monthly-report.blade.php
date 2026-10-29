@@ -1438,7 +1438,7 @@
                    style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;font-size:14px;font-weight:600;outline:none;box-sizing:border-box"
                    onfocus="this.style.borderColor='#a21caf'" onblur="this.style.borderColor='#e2e8f0'">
             @error('salaryBaseEditValue')<span style="font-size:11px;color:#dc2626">{{ $message }}</span>@enderror
-            <div style="font-size:11px;color:#94a3b8;margin-top:4px">Ishlamagan oyda ham "To'lanishi kerak"ga har oy avtomatik qo'shiladi (o'tgan oylarga ham).</div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:4px">Joriy oydan boshlab har oy "To'lanishi kerak"ga qo'shiladi (ish bo'lmasa ham). Oldingi oylar o'zgarmaydi. Boshqa oydan boshlash — Xodimlar sahifasidagi "Oklad" tugmasi.</div>
         </div>
         <div>
             @include('filament.pages.partials.salary-type-pick', ['model' => 'salaryTypeEditValue', 'value' => $salaryTypeEditValue, 'title' => "Odatda nima uchun to'lanadi?"])
