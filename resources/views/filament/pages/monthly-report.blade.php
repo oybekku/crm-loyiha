@@ -383,7 +383,7 @@
                     <div style="display:flex;align-items:center;gap:8px">
                         <div>
                             <div style="font-weight:600;color:#111827">{{ $stat['user']->name }}
-                                @if($stat['user']->salary_type === 'mamuriy')<span title="Ma'muriy oylik — ishga bog'liq emas, firma daromadidan" style="margin-left:4px;background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe;border-radius:999px;padding:0 7px;font-size:10px;font-weight:700">Ma'muriy</span>@endif
+                                @if($stat['user']->salary_type === 'mamuriy')<span title="Oylik maosh (oklad) — ishga bog'liq emas, firma daromadidan" style="margin-left:4px;background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe;border-radius:999px;padding:0 7px;font-size:10px;font-weight:700">Oklad</span>@endif
                             </div>
                             <div style="font-size:11px;color:#9ca3af">
                                 {{ $stat['user']->role_name ?? ucfirst($stat['user']->role) }}
@@ -455,7 +455,7 @@
                     @if($paidTotalRow > 0)
                     <span style="font-weight:700;color:#2563eb">{{ number_format($paidTotalRow, 0, '.', ' ') }} so'm</span>
                     @if(($stat['paid_mamuriy'] ?? 0) > 0)
-                    <div style="font-size:10px;color:#7c3aed;margin-top:1px" title="Ma'muriy oylik — ortiqcha to'lov hisoblanmaydi">shundan ma'muriy: {{ number_format($stat['paid_mamuriy'], 0, '.', ' ') }}</div>
+                    <div style="font-size:10px;color:#7c3aed;margin-top:1px" title="Oylik maosh (oklad) — ortiqcha to'lov hisoblanmaydi">shundan oklad: {{ number_format($stat['paid_mamuriy'], 0, '.', ' ') }}</div>
                     @endif
                     @else
                     <span style="color:#d1d5db;font-size:12px">—</span>
@@ -1183,9 +1183,9 @@
                 <div style="font-size:14px;font-weight:700;color:#111827">{{ number_format($sp->amount,0,'.',' ') }} so'm</div>
                 <div style="font-size:12px;color:#6b7280">{{ $sp->paid_at->format('d.m.Y') }}</div>
                 @if($sp->type === 'mamuriy')
-                <span style="background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe;border-radius:999px;padding:0 7px;font-size:10px;font-weight:700">Ma'muriy</span>
+                <span style="background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe;border-radius:999px;padding:0 7px;font-size:10px;font-weight:700">📅 Oklad</span>
                 @else
-                <span style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:999px;padding:0 7px;font-size:10px;font-weight:700">Ishbay</span>
+                <span style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:999px;padding:0 7px;font-size:10px;font-weight:700">🛠 Ishlar uchun</span>
                 @endif
                 @if($sp->note)
                 <div style="font-size:11px;color:#9ca3af;flex:1">{{ $sp->note }}</div>
@@ -1441,7 +1441,7 @@
             <div style="font-size:11px;color:#94a3b8;margin-top:4px">Ishlamagan oyda ham "To'lanishi kerak"ga har oy avtomatik qo'shiladi (o'tgan oylarga ham).</div>
         </div>
         <div>
-            @include('filament.pages.partials.salary-type-pick', ['model' => 'salaryTypeEditValue', 'value' => $salaryTypeEditValue])
+            @include('filament.pages.partials.salary-type-pick', ['model' => 'salaryTypeEditValue', 'value' => $salaryTypeEditValue, 'title' => "Odatda nima uchun to'lanadi?"])
             <div style="font-size:11px;color:#94a3b8;margin-top:-6px">Yangi oylik to'lovida shu tur avtomatik tanlanadi. Turi belgilanmagan eski to'lovlar ham shu turdan olinadi.</div>
         </div>
     </div>

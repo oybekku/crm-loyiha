@@ -340,7 +340,7 @@
             $kpis3 = [
                 ['l' => 'Kirimlar',       'v' => $income,      'ic' => '↓', 'bg' => '#dcfce7', 'c' => '#16a34a', 'pct' => $incomePct,  'good' => 1],
                 ['l' => 'Xarajatlar',     'v' => $otherSpent,  'ic' => '↗', 'bg' => '#fee2e2', 'c' => '#dc2626', 'sub' => 'oylik va avanslarsiz'],
-                ['l' => 'Oylik / avans',  'v' => $salarySpent, 'ic' => '💵', 'bg' => '#fef3c7', 'c' => '#b45309', 'sub' => 'ishbay ' . $fmt($salarySpent - $mamuriySpent) . " · ma'muriy " . $fmt($mamuriySpent)],
+                ['l' => 'Oylik / avans',  'v' => $salarySpent, 'ic' => '💵', 'bg' => '#fef3c7', 'c' => '#b45309', 'sub' => 'ishlar uchun ' . $fmt($salarySpent - $mamuriySpent) . " · oklad " . $fmt($mamuriySpent)],
                 ['l' => 'Sof foyda',      'v' => $profit,      'ic' => '◔', 'bg' => '#dbeafe', 'c' => '#2563eb', 'pct' => $profitPct,  'good' => 1],
             ];
         @endphp
@@ -536,7 +536,7 @@
 
         <div class="yb-tbl-wrap" style="margin-top:14px">
         <table class="yb-tbl">
-            <thead><tr><th>#</th><th>Xodim</th><th>Lavozim</th><th>Bo'lim</th><th class="num">Asosiy maosh</th><th class="num" style="color:#d97706" title="Shu oy loyihalaridagi barcha ishlar ulushi — tugallangan va kutayotgan birga">Hisoblangan</th><th class="num" style="color:#dc2626" title="Xodimga mijoz to'lagan ulushidan ko'proq berilgan ishbay pul (ma'muriy oylik kirmaydi)">Ortiqcha to'langan</th><th class="num" style="color:#16a34a" title="Mijoz to'lagan ulushga mutanosib ochilgan summa (+ oklad) − berilgani. Mijoz hali to'lamagan qismi kirmaydi.">To'lanishi kerak</th><th class="num" style="color:#2563eb">To'landi</th><th class="num" style="color:#f97316">Kutayotgan</th><th>To'lov holati</th><th>To'lov sanasi</th><th style="text-align:right">Amallar</th></tr></thead>
+            <thead><tr><th>#</th><th>Xodim</th><th>Lavozim</th><th>Bo'lim</th><th class="num">Asosiy maosh</th><th class="num" style="color:#d97706" title="Shu oy loyihalaridagi barcha ishlar ulushi — tugallangan va kutayotgan birga">Hisoblangan</th><th class="num" style="color:#dc2626" title="Xodimga mijoz to'lagan ulushidan ko'proq berilgan "ishlar uchun" pul (oklad kirmaydi)">Ortiqcha to'langan</th><th class="num" style="color:#16a34a" title="Mijoz to'lagan ulushga mutanosib ochilgan summa (+ oklad) − berilgani. Mijoz hali to'lamagan qismi kirmaydi.">To'lanishi kerak</th><th class="num" style="color:#2563eb">To'landi</th><th class="num" style="color:#f97316">Kutayotgan</th><th>To'lov holati</th><th>To'lov sanasi</th><th style="text-align:right">Amallar</th></tr></thead>
             <tbody>
             @php $grpPrev = null; $grpNo = 0; @endphp
             @forelse($S['rows'] as $r)
@@ -548,8 +548,8 @@
                     @endphp
                     <tr class="yb-grp {{ $gMam ? 'mam' : '' }}">
                         <td colspan="5">
-                            {{ $gMam ? "🏢 Ma'muriy oylik" : '🛠 Ishbay oylik' }}
-                            <span>{{ $gMam ? "direktor, admin, menejer, buxgalter — firma foydasidan" : "toposyomka, ariza, eskiz loyiha — ishdan (komissiya)" }} · {{ $gRows->count() }} nafar
+                            {{ $gMam ? '📅 Oylik maosh (oklad) oluvchilar' : '🛠 Bajarilgan ishlar uchun oluvchilar' }}
+                            <span>{{ $gMam ? "har oy doimiy maosh — ishlari bo'lsa, ular uchun komissiya ALOHIDA \"Bajarilgan ishlar uchun\" to'lanadi" : "toposyomka, eskiz, ariza ulushi (komissiya)" }} · {{ $gRows->count() }} nafar
                                 </span>
                         </td>
                         <td class="num" style="color:#d97706">{{ $fmt($gRows->sum('workTotal')) }}</td>
@@ -570,8 +570,8 @@
                     </td>
                     <td>{{ $r['position'] }}</td>
                     <td><span class="yb-stype {{ $isMam ? 'mam' : '' }}" style="margin-left:0" wire:click="toggleUserSalaryType({{ $r['user']->id }})"
-                              wire:confirm="{{ $r['user']->name }} — {{ $isMam ? 'ISHBAY' : "MA'MURIY" }} guruhiga o'tkazilsinmi? Turi tanlanmagan eski to'lovlari ham shu turga o'tadi."
-                              title="Bosib boshqa guruhga o'tkazing">{{ $isMam ? "🏢 Ma'muriy" : '🛠 Ishbay' }}</span></td>
+                              wire:confirm="{{ $r['user']->name }} — {{ $isMam ? "'BAJARILGAN ISHLAR UCHUN'" : "'OYLIK MAOSH (OKLAD)'" }} guruhiga o'tkazilsinmi? Turi tanlanmagan eski to'lovlari ham shu turga o'tadi."
+                              title="Bosib boshqa guruhga o'tkazing">{{ $isMam ? '📅 Oklad' : '🛠 Ishlar uchun' }}</span></td>
                     <td class="num" style="font-weight:500">{{ $r['base'] > 0 ? $fmt($r['base']) : '—' }}</td>
                     <td class="num" style="color:#d97706">
                         {{ $r['workTotal'] > 0 ? $fmt($r['workTotal']) : '—' }}
@@ -617,7 +617,7 @@
             @endif
         </table>
         </div>
-        <div class="yb-sub" style="margin-top:8px">Ustunlar Oylik hisobot bilan bir xil: Hisoblangan — shu oy loyihalaridagi barcha ishlar ulushi; To'lanishi kerak — mijoz to'lagan ulushga mutanosib ochilgan summa (+ oklad) − berilgani; Ortiqcha to'langan — ochilgan ulushdan ko'p berilgan ishbay pul (ma'muriy oylik kirmaydi); Kutayotgan — hali tugallanmagan ishlar. Berilgan maosh Buxgalteriya xarajatlariga avtomatik yoziladi.</div>
+        <div class="yb-sub" style="margin-top:8px">Ustunlar Oylik hisobot bilan bir xil: Hisoblangan — shu oy loyihalaridagi barcha ishlar ulushi; To'lanishi kerak — mijoz to'lagan ulushga mutanosib ochilgan summa (+ oklad) − berilgani; Ortiqcha to'langan — ochilgan ulushdan ko'p berilgan "ishlar uchun" pul (oklad kirmaydi); Kutayotgan — hali tugallanmagan ishlar. Berilgan maosh Buxgalteriya xarajatlariga avtomatik yoziladi.</div>
     </div>
 
     {{-- Shu oydagi to'lovlar tarixi --}}
@@ -789,7 +789,7 @@
                                 <td class="num yb-g">{{ $fmt($P['projSum']) }}<span class="yb-sub">loyihalar summasi</span></td>
                                 <td class="num yb-g">{{ $fmt($P['income']) }}<span class="yb-sub">tushgan pul</span></td></tr>
                             <tr><td>− Xarajat</td><td class="num yb-r">{{ $fmt($P['other']) }}</td><td class="num yb-r">{{ $fmt($P['other']) }}</td></tr>
-                            <tr><td>− Ishbay oylik <span class="yb-sub">toposyomka, ariza, eskiz</span></td>
+                            <tr><td>− Bajarilgan ishlar uchun <span class="yb-sub">toposyomka, ariza, eskiz</span></td>
                                 <td class="num yb-r">{{ $fmt($P['ishbayDue']) }}<span class="yb-sub">hisoblangan</span></td>
                                 <td class="num yb-r">{{ $fmt($P['ishbayEarned']) }}<span class="yb-sub">mijoz to'lagani bo'yicha · berilgan {{ $fmt($P['ishbay']) }}</span></td></tr>
                         </tbody>
@@ -803,7 +803,7 @@
                     @if($P['projSum'] > $P['income'])
                         <div class="yb-sub" style="font-size:12px;margin-top:10px">Farq <b>{{ $fmt($P['fullProfit'] - $P['curProfit']) }}</b> — mijozlar hali to'lamagan <b>{{ $fmt($P['projSum'] - $P['income']) }}</b> so'm (qarz) hisobidan; ular to'lagach, hozirgi foyda to'liq foydaga yetadi.</div>
                     @endif
-                    <div class="yb-sub" style="font-size:12px;margin-top:6px">Ma'muriy oylik ({{ $fmt($P['mamuriy']) }}) bu hisobga kirmaydi — u "Qoldiq" ustunida (hamyonlardagi pul) hisobga olingan.</div>
+                    <div class="yb-sub" style="font-size:12px;margin-top:6px">Oylik maosh — oklad ({{ $fmt($P['mamuriy']) }}) bu hisobga kirmaydi — u "Qoldiq" ustunida (hamyonlardagi pul) hisobga olingan.</div>
                 </div>
             </div>
         </div>
@@ -1247,7 +1247,7 @@
                         <div class="yb-sub">shundan mijoz to'lagani bo'yicha hozir to'lash mumkin: <b class="{{ $payRemaining > 0 ? 'yb-r' : 'yb-g' }}">{{ $fmt($payRemaining) }} so'm</b></div>
                     @endif
                 </div>
-                @include('filament.pages.partials.salary-type-pick', ['model' => 'paySalaryType', 'value' => $paySalaryType])
+                @include('filament.pages.partials.salary-type-pick', ['model' => 'paySalaryType', 'value' => $paySalaryType, 'due' => $payUserId ? $payDue : []])
                 <div class="yb-grid2">
                     <div class="yb-fld">
                         <label>Summa (so'm) <i>*</i></label>

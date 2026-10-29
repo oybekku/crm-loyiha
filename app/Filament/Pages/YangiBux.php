@@ -107,6 +107,7 @@ class YangiBux extends Page
     public ?int   $payEditId    = null;
     public float  $payRemaining = 0;      // mijoz to'lagani bo'yicha hozir to'lash mumkin
     public float  $payFullRemaining = 0;  // hisoblangan (barcha ishlar) bo'yicha qoldiq
+    public array  $payDue = [];           // to'lov turlari bo'yicha "To'lanishi kerak" (dueByType)
     public ?int   $payAccountId = null;   // oylik qaysi hisobdan berildi
     public string $paySalaryType = EmployeeSalaryPayment::TYPE_ISHBAY;
 
@@ -828,13 +829,36 @@ class YangiBux extends Page
         return [max(0, $calc - $paidIsh), max(0, $paidIsh - $calc)];
     }
 
-    /** Tanlangan oy uchun "To'lanishi kerak" (Oylik maosh jadvalidagi bilan bir xil). */
-    private function remainingFor(int $userId): float
+    /**
+     * "To'lanishi kerak" — to'lov turlari bo'yicha alohida (payableSplit bilan bir xil qoida):
+     * ['ishbay' => bajarilgan ishlar uchun, 'mamuriy' => oylik maosh (oklad)].
+     * $exceptPaymentId — tahrirlanayotgan to'lov hisobga olinmaydi (turini almashtirsa nima bo'lishini ko'rsatish uchun).
+     */
+    private function dueByType(int $userId, ?int $exceptPaymentId = null): array
     {
         $row = collect(EmployeePayableService::yearGrid($this->ybYear))->firstWhere('user.id', $userId);
-        if (!$row) return 0;
-        $pays = EmployeeSalaryPayment::with('user')->where('user_id', $userId)->where('month', $this->ym())->get();
-        return self::payableSplit($row['user'], (float) ($row['months'][$this->ybMonth]['calc'] ?? 0), $pays)[0];
+        if (!$row) return [EmployeeSalaryPayment::TYPE_ISHBAY => 0.0, EmployeeSalaryPayment::TYPE_MAMURIY => 0.0];
+        $u    = $row['user'];
+        $calc = (float) ($row['months'][$this->ybMonth]['calc'] ?? 0);
+        $pays = EmployeeSalaryPayment::with('user')->where('user_id', $userId)->where('month', $this->ym())
+            ->when($exceptPaymentId, fn ($q) => $q->whereKeyNot($exceptPaymentId))->get();
+        $paidMam = (float) $pays->filter(fn ($p) => $p->type === EmployeeSalaryPayment::TYPE_MAMURIY)->sum('amount');
+        $paidIsh = (float) $pays->sum('amount') - $paidMam;
+        $base    = (float) ($u->base_salary ?? 0);
+
+        if (EmployeeSalaryPayment::typeForUser($u) === EmployeeSalaryPayment::TYPE_MAMURIY) {
+            return [EmployeeSalaryPayment::TYPE_ISHBAY => max(0, $calc - $base - $paidIsh), EmployeeSalaryPayment::TYPE_MAMURIY => max(0, $base - $paidMam)];
+        }
+        // Ishbay xodimda oklad ham ishlar bilan birga hisoblanadi
+        return [EmployeeSalaryPayment::TYPE_ISHBAY => max(0, $calc - $paidIsh), EmployeeSalaryPayment::TYPE_MAMURIY => 0.0];
+    }
+
+    /** Qarz qaysi turda bo'lsa — o'sha (ikkalasida bo'lsa ishlar uchun), bo'lmasa xodimning standart turi */
+    private static function suggestedType(array $due, ?User $u): string
+    {
+        if ($due[EmployeeSalaryPayment::TYPE_ISHBAY] > 0) return EmployeeSalaryPayment::TYPE_ISHBAY;
+        if ($due[EmployeeSalaryPayment::TYPE_MAMURIY] > 0) return EmployeeSalaryPayment::TYPE_MAMURIY;
+        return EmployeeSalaryPayment::typeForUser($u);
     }
 
     /** Hisoblangan (oklad + shu oy barcha ishlari ulushi) bo'yicha qoldiq */
@@ -853,13 +877,10 @@ class YangiBux extends Page
         $this->resetValidation();
         $this->payEditId    = null;
         $this->payUserId    = $userId;
-        $this->payRemaining = $userId ? $this->remainingFor($userId) : 0;
-        $this->payFullRemaining = $userId ? $this->fullRemainingFor($userId) : 0;
-        $this->payAmount    = $this->payRemaining > 0 ? number_format($this->payRemaining, 0, '.', ' ') : '';
         $this->payDate      = now()->format('Y-m-d');
         $this->payNote      = '';
         $this->payAccountId = null;   // har safar admin o'zi tanlaydi (naqd yoki karta)
-        $this->paySalaryType = EmployeeSalaryPayment::typeForUser($userId ? User::find($userId) : null);
+        $this->fillPayDue($userId);
         $this->showPayModal = true;
     }
 
@@ -867,10 +888,26 @@ class YangiBux extends Page
     public function updatedPayUserId($value): void
     {
         if ($this->payEditId) return;
-        $this->paySalaryType = EmployeeSalaryPayment::typeForUser($value ? User::find($value) : null);
-        $this->payRemaining = $value ? $this->remainingFor((int) $value) : 0;
-        $this->payFullRemaining = $value ? $this->fullRemainingFor((int) $value) : 0;
+        $this->fillPayDue($value ? (int) $value : null);
+    }
+
+    // Tur almashtirilsa — summa shu turdagi qarzga (yangi to'lovda)
+    public function updatedPaySalaryType(): void
+    {
+        if ($this->payEditId) return;
+        $this->payRemaining = (float) ($this->payDue[$this->paySalaryType] ?? 0);
         $this->payAmount    = $this->payRemaining > 0 ? number_format($this->payRemaining, 0, '.', ' ') : '';
+    }
+
+    /** Turlar bo'yicha qarz, tavsiya etilgan tur va summa (yangi to'lov oynasi) */
+    private function fillPayDue(?int $userId): void
+    {
+        $u = $userId ? User::find($userId) : null;
+        $this->payDue           = $userId ? $this->dueByType($userId) : [];
+        $this->paySalaryType    = $userId ? self::suggestedType($this->payDue, $u) : EmployeeSalaryPayment::typeForUser(null);
+        $this->payRemaining     = (float) ($this->payDue[$this->paySalaryType] ?? 0);
+        $this->payFullRemaining = $userId ? $this->fullRemainingFor($userId) : 0;
+        $this->payAmount        = $this->payRemaining > 0 ? number_format($this->payRemaining, 0, '.', ' ') : '';
     }
 
     // Xodimning standart maosh turi (Ishbay ↔ Ma'muriy). Turi yozilmagan eski
@@ -882,7 +919,7 @@ class YangiBux extends Page
         if (!$u) return;
         $new = $u->salary_type === EmployeeSalaryPayment::TYPE_MAMURIY ? null : EmployeeSalaryPayment::TYPE_MAMURIY;
         $u->update(['salary_type' => $new]);
-        Notification::make()->title("{$u->name} — " . ($new ? "Ma'muriy oylik" : 'Ishbay oylik'))->success()->send();
+        Notification::make()->title("{$u->name} — " . EmployeeSalaryPayment::typeOptions()[$new ?: EmployeeSalaryPayment::TYPE_ISHBAY])->success()->send();
     }
 
     public function editPay(int $paymentId): void
@@ -897,6 +934,7 @@ class YangiBux extends Page
         $this->payDate      = $p->paid_at->format('Y-m-d');
         $this->payNote      = (string) $p->note;
         $this->payRemaining = 0;
+        $this->payDue       = $this->dueByType($p->user_id, $p->id); // shu to'lovsiz — turini almashtirsa nimani yopishi ko'rinsin
         $this->payAccountId = Expense::where('salary_payment_id', $p->id)->value('account_id');
         $this->paySalaryType = $p->type;
         $this->historyUserId = null;

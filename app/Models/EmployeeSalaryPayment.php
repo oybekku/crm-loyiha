@@ -23,7 +23,8 @@ class EmployeeSalaryPayment extends Model
 
     public static function typeOptions(): array
     {
-        return [self::TYPE_ISHBAY => 'Ishbay oylik', self::TYPE_MAMURIY => "Ma'muriy oylik"];
+        // Nom — pul NIMA UCHUN berilayotgani (kimga emas): direktor ham ishi uchun komissiya oladi
+        return [self::TYPE_ISHBAY => 'Bajarilgan ishlar uchun', self::TYPE_MAMURIY => 'Oylik maosh (oklad)'];
     }
 
     /** Xodimning standart maosh turi (bo'sh = ishbay) */
