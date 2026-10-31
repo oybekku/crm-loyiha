@@ -313,7 +313,7 @@ Route::middleware(['auth'])->group(function () {
     })->name('print.project.rozilik');
 
     // DIDOX shartnoma (Word .docx — PhpWord orqali, avtomat to'ldiriladi,
-    // shartnoma narxi loyiha summasidan mustaqil, doim qat'iy 400 000 so'm)
+    // shartnoma narxi = loyiha summasi (total_price))
     Route::get('/print/project/{project}/didox', function (\App\Models\Project $project) {
         $data  = \App\Services\DidoxShartnomaGenerator::generate($project);
         $fname = 'shartnoma-didox-' . ($project->seq_no ?: $project->id) . '.docx';

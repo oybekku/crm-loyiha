@@ -6,8 +6,9 @@
     $oyNomi    = $oylar[(int) $sana->format('n')];
     $yil       = $sana->format('Y');
     $raqam     = $project->seq_no ?: $project->id;
-    $narx      = '400 000,00';
-    $narxSozda = "To'rt yuz ming so'm";
+    $total     = (float) $project->total_price;
+    $narx      = number_format($total, 2, ',', ' ');
+    $narxSozda = \App\Services\ShartnomaGenerator::sumWords($total, 'uz') . " so'm";
     $ism       = $project->owner_name ?? '';
     $manzil    = $project->address ?? '';
 ?>

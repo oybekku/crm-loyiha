@@ -13,9 +13,6 @@ use PhpOffice\PhpWord\SimpleType\Jc;
  */
 class DidoxShartnomaGenerator
 {
-    private const NARX       = '400 000,00';
-    private const NARX_SOZDA = "To'rt yuz ming so'm";
-
     public static function generate(Project $p): string
     {
         $oylar = [1 => 'yanvar', 2 => 'fevral', 3 => 'mart', 4 => 'aprel', 5 => 'may', 6 => 'iyun',
@@ -29,8 +26,9 @@ class DidoxShartnomaGenerator
         $raqam    = $p->seq_no ?: $p->id;
         $ism      = $p->owner_name ?? '';
         $manzil   = $p->address ?? '';
-        $narx     = self::NARX;
-        $narxSozda = self::NARX_SOZDA;
+        $total     = (float) $p->total_price;
+        $narx      = number_format($total, 2, ',', ' ');
+        $narxSozda = ShartnomaGenerator::sumWords($total, 'uz') . " so'm";
 
         $phpWord = new PhpWord();
         $phpWord->setDefaultFontName('Times New Roman');
