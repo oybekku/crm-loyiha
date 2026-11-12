@@ -95,6 +95,16 @@
                 @endif
             @endif
 
+            {{-- Bazaga ko'chirish — faqat admin (izoh: sichqoncha olib borilganda) --}}
+            @if(auth()->user()?->isAdmin())
+            <x-baza-tip>
+                <button type="button" wire:click="eiOpenBaza"
+                        style="padding:6px 11px;border-radius:7px;border:1px solid #475569;background:linear-gradient(135deg,#475569,#1e293b);color:#fff;font-size:12px;font-weight:700;cursor:pointer">
+                    📦 Tugallash va Bazaga
+                </button>
+            </x-baza-tip>
+            @endif
+
             {{-- "👤 Hodim" tugmasi YASHIRILGAN — endi mas'ul hodim va muddat
                  har bir xizmatga "Xizmatlar va to'lovlar" bo'limidan biriktiriladi. --}}
             @if(false && !auth()->user()?->isHisobchi())

@@ -142,6 +142,22 @@ class ProjectEditModal extends Component
     public function eiMarkUncomplete(): void { $id = $this->editInfoId; $this->closeEditInfoModal(); $this->dispatch('kb-mark-uncomplete', id: $id); }
     public function eiMove(string $status): void { $id = $this->editInfoId; $this->closeEditInfoModal(); $this->dispatch('kb-move', id: $id, status: $status); }
 
+    // "Tugallash va Bazaga ko'chirish" (faqat admin) — BazaMoveModal oynasi ochiladi;
+    // ko'chirilgach shu oyna yopiladi (baza-moved).
+    public function eiOpenBaza(): void
+    {
+        if (!auth()->user()?->isAdmin() || !$this->editInfoId) return;
+        $this->dispatch('baza-open-move', ids: [$this->editInfoId]);
+    }
+
+    #[On('baza-moved')]
+    public function onBazaMoved(): void
+    {
+        if ($this->editInfoId && !Project::whereKey($this->editInfoId)->exists()) {
+            $this->closeEditInfoModal();
+        }
+    }
+
     // Per-xizmat "Tugallandi/Tugalmagan" toggle — modal ochiq qoladi, ro'yxat va karta yangilanadi
     public function eiToggleService(int $serviceId): void
     {

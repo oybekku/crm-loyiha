@@ -154,6 +154,14 @@ class EmployeePayableService
         $paidRatio      = $price > 0 ? min(1, $paidForService / $price) : 0;
 
         $commPaid      = round($commission * $paidRatio, 0);
+
+        // Bazaga ko'chirilgan loyiha yopilgan: mijoz qolgan pulni endi to'lamaydi —
+        // xodim ulushi mijoz TO'LAGAN qismiga teng bo'lib "muzlaydi" (masalan 60%
+        // to'langan bo'lsa — ulushning 60%), qolgani "jarayonda" osilib qolmaydi.
+        if ($project && $project->isInBaza()) {
+            $commission = (float) $commPaid;
+        }
+
         $commRemaining = max(0, $commission - $commPaid);
 
         return [

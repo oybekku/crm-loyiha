@@ -99,7 +99,80 @@ class Project extends Model
         'debt_called'           => 'boolean',
         'debt_called_at'        => 'datetime',
         'work_checklist'        => 'array',
+        'baza_at'               => 'datetime',
+        'baza_snapshot'         => 'array',
     ];
+
+    // ── BAZA (eskirgan loyihalar) ────────────────────────────────────────
+    // Bazadagi loyiha asosiy saytda ko'rinmaydi (HideBazaScope). Kassa/maosh
+    // hisoblarida pul izi qoladi, lekin ism-manzil o'rniga shu yozuv chiqadi.
+    public const BAZA_MASK_NAME    = '📦 BAZA LOYIHASI';
+    public const BAZA_MASK_ADDRESS = 'Bazadagi loyiha';
+
+    /** true — haqiqiy ism/manzil ko'rsatiladi (faqat Baza sahifasi, eksport, ko'chirish jarayoni) */
+    public static bool $revealBaza = false;
+
+    /** Bazadagi loyihalar id'lari — so'rov davomida bir marta o'qiladi */
+    protected static ?array $bazaIdCache = null;
+
+    public static function bazaIds(): array
+    {
+        return self::$bazaIdCache ??= array_flip(
+            \Illuminate\Support\Facades\DB::table('projects')->whereNotNull('baza_at')->pluck('id')->all()
+        );
+    }
+
+    public static function flushBazaCache(): void
+    {
+        self::$bazaIdCache = null;
+    }
+
+    public function isInBaza(): bool
+    {
+        if (array_key_exists('baza_at', $this->attributes)) {
+            return $this->attributes['baza_at'] !== null;
+        }
+        return $this->getKey() !== null && isset(self::bazaIds()[$this->getKey()]);
+    }
+
+    protected function maskedForBaza(): bool
+    {
+        return !self::$revealBaza && $this->isInBaza();
+    }
+
+    public function getOwnerNameAttribute($value)
+    {
+        return $this->maskedForBaza() ? self::BAZA_MASK_NAME : $value;
+    }
+
+    public function getAddressAttribute($value)
+    {
+        return $this->maskedForBaza() ? self::BAZA_MASK_ADDRESS : $value;
+    }
+
+    public function getTitleAttribute($value)
+    {
+        return $this->maskedForBaza() ? null : $value;
+    }
+
+    public function getPhonesAttribute($value)
+    {
+        if ($this->maskedForBaza()) return [];
+        return $value === null ? null : $this->fromJson($value);
+    }
+
+    /** Bazadagilar bilan birga (hammasi) */
+    public function scopeWithBaza($query)
+    {
+        return $query->withoutGlobalScope(\App\Models\Scopes\HideBazaScope::class);
+    }
+
+    /** Faqat Bazadagilar */
+    public function scopeOnlyBaza($query)
+    {
+        return $query->withoutGlobalScope(\App\Models\Scopes\HideBazaScope::class)
+            ->whereNotNull($this->qualifyColumn('baza_at'));
+    }
 
     // Mijozlar qarzlari — oxirgi marta kim telefon qilgani
     public function debtCalledBy()
@@ -109,6 +182,21 @@ class Project extends Model
 
     protected static function booted(): void
     {
+        static::addGlobalScope(new \App\Models\Scopes\HideBazaScope());
+
+        // Bazadagi loyiha faqat o'qish uchun — BazaService (ko'chirish/qaytarish)dan
+        // boshqa hech qayerdan o'zgartirib/o'chirib bo'lmaydi.
+        static::updating(function ($project) {
+            if ($project->getOriginal('baza_at') && !\App\Services\BazaService::$bypass) {
+                throw new \RuntimeException("Bu loyiha Bazada — o'zgartirib bo'lmaydi. Avval Bazadan qaytaring.");
+            }
+        });
+        static::deleting(function ($project) {
+            if ($project->getOriginal('baza_at') && !\App\Services\BazaService::$bypass) {
+                throw new \RuntimeException("Bu loyiha Bazada — o'chirib bo'lmaydi. Avval Bazadan qaytaring.");
+            }
+        });
+
         // Yangi loyiha xizmatlari "narx o'zgarishi" hisoblanmaydi (PriceChangeRecorder)
         static::created(fn ($project) => \App\Services\PriceChangeRecorder::markFresh($project->id));
 

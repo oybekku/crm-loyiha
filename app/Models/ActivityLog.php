@@ -29,7 +29,7 @@ class ActivityLog extends Model
 
     public function project()
     {
-        return $this->belongsTo(Project::class);
+        return $this->belongsTo(Project::class)->withoutGlobalScope(\App\Models\Scopes\HideBazaScope::class); // Baza: pul/ish izi saqlanadi
     }
 
     public function actionLabel(): string
@@ -40,6 +40,8 @@ class ActivityLog extends Model
             'project_force_deleted' => "Loyiha butunlay o'chirildi (arxivdan)",
             'service_price_changed' => "Xizmat narxi o'zgartirildi",
             'oklad_changed'         => "Oklad o'zgartirildi",
+            'project_baza_moved'    => "Loyiha Bazaga ko'chirildi",
+            'project_baza_restored' => 'Loyiha Bazadan qaytarildi',
             default           => $this->action,
         };
     }

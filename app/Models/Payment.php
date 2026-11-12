@@ -19,6 +19,18 @@ class Payment extends Model
 
     protected static function booted(): void
     {
+        // Bazadagi loyiha to'lovlari faqat o'qish uchun (kassa qoldig'i o'zgarmasin)
+        $guard = function ($payment) {
+            if (\App\Services\BazaService::$bypass) return;
+            $pid = $payment->project_id ?? $payment->getOriginal('project_id');
+            if ($pid && \App\Services\BazaService::isBazaProjectId((int) $pid)) {
+                throw new \RuntimeException("Bu to'lov Bazadagi loyihaga tegishli — o'zgartirib bo'lmaydi.");
+            }
+        };
+        static::creating($guard);
+        static::updating($guard);
+        static::deleting($guard);
+
         static::saved(function ($payment) {
             $payment->project?->updateTotals();
         });
@@ -30,7 +42,7 @@ class Payment extends Model
 
     public function project()
     {
-        return $this->belongsTo(Project::class);
+        return $this->belongsTo(Project::class)->withoutGlobalScope(\App\Models\Scopes\HideBazaScope::class); // Baza: pul/ish izi saqlanadi
     }
 
     public function createdBy()

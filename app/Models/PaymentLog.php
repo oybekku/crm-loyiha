@@ -26,7 +26,7 @@ class PaymentLog extends Model
 
     public function project()
     {
-        return $this->belongsTo(Project::class);
+        return $this->belongsTo(Project::class)->withoutGlobalScope(\App\Models\Scopes\HideBazaScope::class); // Baza: pul/ish izi saqlanadi
     }
 
     public function payment()

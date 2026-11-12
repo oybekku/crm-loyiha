@@ -60,7 +60,7 @@ class Expense extends Model
 
     public function project()
     {
-        return $this->belongsTo(Project::class, 'project_id');
+        return $this->belongsTo(Project::class, 'project_id')->withoutGlobalScope(\App\Models\Scopes\HideBazaScope::class); // Baza: pul/ish izi saqlanadi
     }
 
     public function responsible()

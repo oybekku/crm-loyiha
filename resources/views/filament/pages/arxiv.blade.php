@@ -267,6 +267,19 @@ $getBadgeStyle = function(string $status) use ($archiveBadgeColors): string {
                 Tiklash (import)
             </button>
             <span wire:loading style="font-size:12px;color:#6b7280">Tayyorlanmoqda...</span>
+
+            {{-- Baza — tanlangan eski loyihalarni ko'chirish (izoh: sichqoncha olib borilganda) --}}
+            <div style="margin-left:auto">
+                <x-baza-tip align="right">
+                    <button wire:click="openBazaSelected"
+                            style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#475569,#1e293b);color:#fff;border:none;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer">
+                        📦 Tanlanganlarni Bazaga
+                        @if(!empty($checkedIds))
+                        <span style="background:rgba(255,255,255,.2);border-radius:10px;padding:0 7px">{{ count($checkedIds) }}</span>
+                        @endif
+                    </button>
+                </x-baza-tip>
+            </div>
         </div>
         @endif
 
@@ -579,6 +592,17 @@ $getBadgeStyle = function(string $status) use ($archiveBadgeColors): string {
                     Loyihani tahrirlash →
                 </a>
             </div>
+
+            @if(auth()->user()?->isAdmin())
+            <div style="padding-bottom:4px">
+                <x-baza-tip align="right" style="display:flex">
+                    <button wire:click="openBazaOne({{ $sp->id }})"
+                            style="display:block;width:100%;text-align:center;padding:9px;background:linear-gradient(135deg,#475569,#1e293b);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:700;cursor:pointer">
+                        📦 Tugallash va Bazaga ko'chirish
+                    </button>
+                </x-baza-tip>
+            </div>
+            @endif
 
         </div>
     </div>

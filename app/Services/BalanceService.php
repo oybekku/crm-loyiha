@@ -68,6 +68,10 @@ class BalanceService
             $price = (float) $s->final_price;
             if ($price <= 0) continue;
 
+            // Bazadagi (yopilgan) loyihaning tugatilmagan, ulush berilmagan ishi —
+            // endi hech qachon to'lanmaydi, "jarayonda" bo'lib osilib turmasin
+            if (!$s->completed_at && $s->project?->isInBaza()) continue;
+
             $calc = EmployeePayableService::commissionForService($s, $s->project);
             $rate = $calc['rate']; // ko'rsatish uchun — oxirgi ko'rilgan xizmat foizi
 

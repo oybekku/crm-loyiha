@@ -745,6 +745,14 @@ HTML;
                     return $brand . $logo . $citiesDropdown;
                 }
             )
+            // "Tugallash va Bazaga ko'chirish" oynasi — faqat admin, har sahifada bitta nusxa
+            // (loyiha oynasidan va Arxivdan `baza-open-move` hodisasi bilan ochiladi)
+            ->renderHook(
+                'panels::body.end',
+                fn () => auth()->user()?->isAdmin()
+                    ? \Illuminate\Support\Facades\Blade::render("@livewire('baza-move-modal')")
+                    : ''
+            )
             ->renderHook(
                 'panels::body.end',
                 function () {

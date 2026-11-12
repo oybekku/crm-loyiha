@@ -420,6 +420,7 @@ class PaymentModal extends Component
     {
         $payment = Payment::find($paymentId);
         if (!$payment) return;
+        if ($this->bazaLocked($payment)) return;
         $this->editPaymentId        = $paymentId;
         $this->editPaymentAmount    = (string)(float)$payment->amount;
         $this->editPaymentDate      = $payment->payment_date?->format('Y-m-d') ?? now()->format('Y-m-d');
@@ -530,8 +531,19 @@ class PaymentModal extends Component
     }
 
     // ── Delete payment (Google Authenticator kodi bilan) ────────────────────
+    // Bazadagi loyiha to'lovi — faqat o'qish uchun (kassa qoldig'i o'zgarmasin)
+    private function bazaLocked(?Payment $payment): bool
+    {
+        if ($payment && \App\Services\BazaService::isBazaProjectId((int) $payment->project_id)) {
+            $this->dispatch('notify', type: 'error', message: "📦 Bu to'lov Bazadagi loyihaga tegishli — o'zgartirib bo'lmaydi. Avval Bazadan qaytaring.");
+            return true;
+        }
+        return false;
+    }
+
     public function openDeletePayment(int $paymentId): void
     {
+        if ($this->bazaLocked(Payment::find($paymentId))) return;
         $this->deletePaymentId       = $paymentId;
         $this->deletePaymentPin      = '';
         $this->deletePaymentPinError = false;

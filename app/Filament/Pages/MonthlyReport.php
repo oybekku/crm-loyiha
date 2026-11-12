@@ -481,7 +481,8 @@ class MonthlyReport extends Page
 
         $projectIds = $completedServices->pluck('project_id')->unique();
 
-        $projects = Project::with(['services.assignedUser', 'payments'])
+        // withBaza — Bazadagi loyiha ishlari ham xodim maoshida qoladi (ism yashirin)
+        $projects = Project::withBaza()->with(['services.assignedUser', 'payments'])
             ->whereIn('id', $projectIds)
             ->get();
 
@@ -776,7 +777,7 @@ class MonthlyReport extends Page
             ->toArray();
 
         $warnings = $projects->filter(
-            fn($p) => $p->paid_amount < $p->total_price && $p->total_price > 0
+            fn($p) => !$p->isInBaza() && $p->paid_amount < $p->total_price && $p->total_price > 0
         );
 
         $totalServicesSum  = array_sum(array_column($userStats, 'services_total'));

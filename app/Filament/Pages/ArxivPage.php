@@ -117,6 +117,36 @@ class ArxivPage extends Page
         $this->checkedIds = [];
     }
 
+    // ── Baza (faqat admin): tanlanganlarni / bitta loyihani ko'chirish oynasi ──
+    public function openBazaSelected(): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+        if (empty($this->checkedIds)) {
+            Notification::make()->title("Avval loyihalarni belgilang (chap tomondagi katakcha)")->warning()->send();
+            return;
+        }
+        $this->dispatch('baza-open-move', ids: array_values($this->checkedIds));
+    }
+
+    public function openBazaOne(int $id): void
+    {
+        if (!auth()->user()?->isAdmin()) return;
+        $this->dispatch('baza-open-move', ids: [$id]);
+    }
+
+    #[\Livewire\Attributes\On('baza-moved')]
+    public function onBazaMoved(): void
+    {
+        // Ko'chirilganlar endi Arxivda yo'q — belgilar va ochiq panel tozalanadi
+        $this->checkedIds = array_values(array_intersect(
+            $this->checkedIds,
+            Project::whereIn('id', $this->checkedIds)->pluck('id')->all()
+        ));
+        if ($this->selectedId && !Project::whereKey($this->selectedId)->exists()) {
+            $this->selectedId = null;
+        }
+    }
+
     public function exportSelected(): mixed
     {
         if (!auth()->user()?->isAdmin()) return null;

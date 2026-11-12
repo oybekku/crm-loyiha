@@ -82,6 +82,17 @@ class ProjectService extends Model
 
     protected static function booted(): void
     {
+        // Bazadagi loyiha xizmatlari faqat o'qish uchun
+        $guard = function ($service) {
+            if (\App\Services\BazaService::$bypass) return;
+            if ($service->project_id && \App\Services\BazaService::isBazaProjectId((int) $service->project_id)) {
+                throw new \RuntimeException("Bu xizmat Bazadagi loyihaga tegishli — o'zgartirib bo'lmaydi.");
+            }
+        };
+        static::creating($guard);
+        static::updating($guard);
+        static::deleting($guard);
+
         static::creating(function ($service) {
             // Aniq berilmagan bo'lsa — loyiha ochilgan oy (yangi loyiha, arxivdan tiklash)
             if (empty($service->work_month)) {
@@ -133,7 +144,7 @@ class ProjectService extends Model
 
     public function project()
     {
-        return $this->belongsTo(Project::class);
+        return $this->belongsTo(Project::class)->withoutGlobalScope(\App\Models\Scopes\HideBazaScope::class); // Baza: pul/ish izi saqlanadi
     }
 
     public function assignedUser()

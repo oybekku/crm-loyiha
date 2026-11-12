@@ -129,7 +129,7 @@ class ArxivBackupService
 
         $preview = [];
         foreach ($projects as $p) {
-            $existing = Project::where('number', $p['number'])->first();
+            $existing = Project::withBaza()->where('number', $p['number'])->first();
             $preview[] = [
                 'number'    => $p['number'],
                 'owner_name'=> $p['owner_name'],
@@ -156,9 +156,11 @@ class ArxivBackupService
         $imported = 0; $skipped = 0; $updated = 0;
 
         foreach ($projects as $pData) {
-            $existing = Project::where('number', $pData['number'])->first();
+            // Bazadagi loyiha ham "mavjud" hisoblanadi (aks holda nusxasi paydo bo'lardi);
+            // u faqat o'qish uchun — ustidan yozilmaydi, doim o'tkazib yuboriladi.
+            $existing = Project::withBaza()->where('number', $pData['number'])->first();
 
-            if ($existing && $conflict === 'skip') {
+            if ($existing && ($conflict === 'skip' || $existing->isInBaza())) {
                 $skipped++;
                 continue;
             }
