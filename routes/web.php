@@ -312,6 +312,16 @@ Route::middleware(['auth'])->group(function () {
         ]);
     })->name('print.project.rozilik');
 
+    // my.gov.uz ariza natijasi — saqlangan manzilga yo'naltirish (manzilda parol bor, sahifada ko'rsatilmaydi)
+    Route::get('/admin/mygov-ariza/{project}', function (\App\Models\Project $project) {
+        $u = auth()->user();
+        $ok = $u && ($u->canSeeAllProjects() || $project->services()->where('assigned_user_id', $u->id)->exists());
+        abort_unless($ok, 403);
+        $url = (string) $project->mygov_ariza_url;
+        abort_unless($url !== '' && app(\App\Services\MygovTaskChecker::class)->isSafeUrl($url), 404);
+        return redirect()->away($url);
+    })->name('mygov.ariza.open');
+
     // DIDOX shartnoma (Word .docx — PhpWord orqali, avtomat to'ldiriladi,
     // shartnoma narxi = loyiha summasi (total_price))
     Route::get('/print/project/{project}/didox', function (\App\Models\Project $project) {

@@ -19,6 +19,7 @@ class Project extends Model
         'didox_added_at', 'didox_added_by', 'didox_contract_done_at', 'didox_contract_done_by',
         'payment_requested_at', 'payment_requested_by',
         'mygov_login', 'mygov_password', 'mygov_fish', 'mygov_ariza_no', 'mygov_ariza_parol',
+        'mygov_ariza_url', 'mygov_ariza_holat', 'mygov_ariza_info', 'mygov_ariza_checked_at',
         'is_urgent', 'urgent_accepted_at', 'urgent_accepted_by',
         'ready_sms_status', 'ready_sms_sent_at', 'ready_sms_error',
         'debt_comment', 'debt_called', 'debt_called_at', 'debt_called_by',
@@ -93,6 +94,9 @@ class Project extends Model
         'payment_requested_at'  => 'datetime',
         'mygov_password'        => 'encrypted',
         'mygov_ariza_parol'     => 'encrypted',
+        'mygov_ariza_url'       => 'encrypted',   // ichida parol bor
+        'mygov_ariza_info'      => 'array',
+        'mygov_ariza_checked_at'=> 'datetime',
         'is_urgent'             => 'boolean',
         'is_didox'              => 'boolean',
         'urgent_accepted_at'    => 'datetime',

@@ -62,6 +62,11 @@ class ProjectEditModal extends Component
     public string $ei_mygovArizaNo   = '';
     public string $ei_mygovArizaParol = '';
     public bool   $ei_showMygov      = false;
+    // my.gov.uz ariza holatini tekshirish (MygovTaskChecker)
+    public string $ei_mygovCaptcha       = '';   // himoya kodi rasmi (data: URI)
+    public string $ei_mygovCaptchaToken  = '';
+    public string $ei_mygovCaptchaAnswer = '';
+    public array  $ei_mygovStatus        = [];   // holat, holat_rang, info…, checked_at, has_url
     public string $ei_newSvcType     = '';
     public string $ei_newSvcPrice    = '';
     public $ei_newSvcUser            = null;
@@ -126,6 +131,8 @@ class ProjectEditModal extends Component
         $this->ei_mygovArizaNo    = $this->canMygov($p) ? ($p->mygov_ariza_no ?? '') : '';
         $this->ei_mygovArizaParol = $this->canMygov($p) ? ($p->mygov_ariza_parol ?? '') : '';
         $this->ei_showMygov     = false;
+        $this->ei_mygovCaptcha = $this->ei_mygovCaptchaToken = $this->ei_mygovCaptchaAnswer = '';
+        $this->ei_mygovStatus  = $this->canMygov($p) ? $this->mygovStatusFor($p) : [];
         $this->showEditInfoModal = true;
     }
 
@@ -344,10 +351,108 @@ class ProjectEditModal extends Component
             'mygov_login'    => trim($this->ei_mygovLogin) ?: null,
             'mygov_password' => $this->ei_mygovPassword !== '' ? $this->ei_mygovPassword : null,
             'mygov_fish'     => trim($this->ei_mygovFish) ?: null,
-            'mygov_ariza_no'    => preg_replace('/\s+/', '', $this->ei_mygovArizaNo) ?: null,
-            'mygov_ariza_parol' => trim($this->ei_mygovArizaParol) ?: null,
         ]);
+        $this->mygovSaveAriza($p);
         $this->dispatch('notify', type: 'success', message: "MyGOV login/parol saqlandi");
+    }
+
+    // ── my.gov.uz ariza holati (qo'lda tekshirish) ──
+
+    private function mygovStatusFor(Project $p): array
+    {
+        if (!$p->mygov_ariza_holat) return [];
+        return array_merge($p->mygov_ariza_info ?? [], [
+            'holat'      => $p->mygov_ariza_holat,
+            'checked_at' => $p->mygov_ariza_checked_at?->format('d.m.Y H:i') ?? '',
+            'has_url'    => (bool) $p->mygov_ariza_url,
+        ]);
+    }
+
+    /** Ariza raqami/parolni saqlaydi; o'zgargan bo'lsa eski natijani tozalaydi. */
+    private function mygovSaveAriza(Project $p): void
+    {
+        $no  = preg_replace('/\s+/', '', $this->ei_mygovArizaNo) ?: null;
+        $pin = trim($this->ei_mygovArizaParol) ?: null;
+        if ($no === $p->mygov_ariza_no && $pin === $p->mygov_ariza_parol) return;
+        $p->mygov_ariza_no    = $no;
+        $p->mygov_ariza_parol = $pin;
+        $p->mygov_ariza_url   = null;
+        $p->mygov_ariza_holat = null;
+        $p->mygov_ariza_info  = null;
+        $p->mygov_ariza_checked_at = null;
+        $p->save();
+        $this->ei_mygovStatus = [];
+    }
+
+    private function mygovStore(Project $p, array $info, ?string $url = null): void
+    {
+        $p->timestamps = false;   // tekshirish loyiha "oxirgi o'zgarish"ini surmasin
+        if ($url) $p->mygov_ariza_url = $url;
+        $p->mygov_ariza_holat = mb_substr($info['holat'], 0, 100);
+        $p->mygov_ariza_info  = $info;
+        $p->mygov_ariza_checked_at = now();
+        $p->save();
+        $p->timestamps = true;
+        $this->ei_mygovStatus = $this->mygovStatusFor($p);
+    }
+
+    /** 1-qadam: himoya kodi rasmini olish (yoki natija manzili bor bo'lsa — darhol yangilash). */
+    public function eiMygovCheck(): void
+    {
+        $p = Project::find($this->editInfoId);
+        if (!$p || !$this->canMygov($p)) {
+            $this->dispatch('notify', type: 'error', message: "Ruxsat yo'q");
+            return;
+        }
+        if (!preg_match('/^\d{5,15}$/', preg_replace('/\s+/', '', $this->ei_mygovArizaNo)) || trim($this->ei_mygovArizaParol) === '') {
+            $this->dispatch('notify', type: 'error', message: "Ariza raqami (faqat raqam) va tekshirish parolini yozing");
+            return;
+        }
+        $this->mygovSaveAriza($p);
+
+        $checker = app(\App\Services\MygovTaskChecker::class);
+        try {
+            if ($p->mygov_ariza_url) {
+                $this->mygovStore($p, $checker->refresh($p->mygov_ariza_url));
+                $this->dispatch('notify', type: 'success', message: "Ariza holati yangilandi: {$p->mygov_ariza_holat}");
+                return;
+            }
+            $c = $checker->start();
+            $this->ei_mygovCaptcha       = $c['image'];
+            $this->ei_mygovCaptchaToken  = $c['token'];
+            $this->ei_mygovCaptchaAnswer = '';
+        } catch (\Throwable $e) {
+            report($e);
+            $this->dispatch('notify', type: 'error', message: $e instanceof \RuntimeException ? $e->getMessage() : "my.gov.uz bilan bog'lanib bo'lmadi");
+        }
+    }
+
+    /** 2-qadam: himoya kodi javobini yuborish. */
+    public function eiMygovSubmit(): void
+    {
+        $p = Project::find($this->editInfoId);
+        if (!$p || !$this->canMygov($p) || $this->ei_mygovCaptchaToken === '') return;
+        $answer = trim($this->ei_mygovCaptchaAnswer);
+        if (!preg_match('/^-?\d{1,4}$/', $answer)) {
+            $this->dispatch('notify', type: 'error', message: "Himoya kodi javobini raqam bilan yozing");
+            return;
+        }
+        $token = $this->ei_mygovCaptchaToken;
+        $this->ei_mygovCaptcha = $this->ei_mygovCaptchaToken = $this->ei_mygovCaptchaAnswer = '';
+        try {
+            $r = app(\App\Services\MygovTaskChecker::class)
+                ->submit($token, (string) $p->mygov_ariza_no, (string) $p->mygov_ariza_parol, $answer);
+            $this->mygovStore($p, $r['info'], $r['url']);
+            $this->dispatch('notify', type: 'success', message: "Ariza holati: {$p->mygov_ariza_holat}");
+        } catch (\Throwable $e) {
+            report($e);
+            $this->dispatch('notify', type: 'error', message: $e instanceof \RuntimeException ? $e->getMessage() : "my.gov.uz bilan bog'lanib bo'lmadi");
+        }
+    }
+
+    public function eiMygovCancel(): void
+    {
+        $this->ei_mygovCaptcha = $this->ei_mygovCaptchaToken = $this->ei_mygovCaptchaAnswer = '';
     }
 
     // ── "Loyiha tayyor" SMS — egasining 1-telefoniga Eskiz orqali yuboradi ──

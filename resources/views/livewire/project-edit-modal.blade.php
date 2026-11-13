@@ -162,10 +162,60 @@
                         </div>
                     </div>
                 </div>
-                <a href="https://my.gov.uz/uz/task-view#site/task-view" target="_blank" rel="noopener"
-                   onclick="(function(){var n=document.getElementById('mygov-ano-{{ $editInfoId }}');if(n&&n.value&&navigator.clipboard){navigator.clipboard.writeText(n.value.replace(/\s+/g,''))}})()"
-                   style="display:inline-block;margin-top:9px;padding:7px 14px;border-radius:8px;background:#16a34a;color:#fff;font-size:12px;font-weight:700;text-decoration:none">🔍 MyGOV'da tekshirish ↗</a>
-                <div style="font-size:10px;color:#6366f1;margin-top:6px">Tugma my.gov.uz'ni ochadi va ariza raqamini nusxalaydi (Ctrl+V). Parolni ⧉ bilan nusxalang, himoya kodini o'zingiz yozing.</div>
+                @php $ms = $ei_mygovStatus; @endphp
+                <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:9px">
+                    <button type="button" wire:click="eiMygovCheck" wire:loading.attr="disabled" wire:target="eiMygovCheck,eiMygovSubmit"
+                            style="padding:7px 14px;border-radius:8px;border:none;background:#16a34a;color:#fff;font-size:12px;font-weight:700;cursor:pointer">
+                        <span wire:loading.remove wire:target="eiMygovCheck">{{ !empty($ms['has_url']) ? '🔄 Holatni yangilash' : '🔍 Holatni tekshirish' }}</span>
+                        <span wire:loading wire:target="eiMygovCheck">⏳ my.gov.uz…</span>
+                    </button>
+                    @if(!empty($ms['has_url']))
+                        <a href="{{ route('mygov.ariza.open', $editInfoId) }}" target="_blank" rel="noopener noreferrer"
+                           style="padding:7px 12px;border-radius:8px;border:1px solid #16a34a;color:#15803d;background:#fff;font-size:12px;font-weight:700;text-decoration:none">📄 To'liq natija ↗</a>
+                    @endif
+                </div>
+
+                @if($ei_mygovCaptcha)
+                <div style="margin-top:9px;padding:9px;border:1.5px solid #fbbf24;border-radius:8px;background:#fffbeb">
+                    <div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:6px">Himoya kodi — misol javobini yozing:</div>
+                    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+                        <img src="{{ $ei_mygovCaptcha }}" alt="himoya kodi" style="height:38px;background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:2px 6px">
+                        <input wire:model="ei_mygovCaptchaAnswer" wire:keydown.enter="eiMygovSubmit" type="number" autocomplete="off" placeholder="Javob" x-init="$nextTick(() => $el.focus())"
+                               style="width:90px;padding:8px 10px;border:1.5px solid #fbbf24;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box">
+                        <button type="button" wire:click="eiMygovSubmit" wire:loading.attr="disabled" wire:target="eiMygovSubmit"
+                                style="padding:8px 14px;border-radius:8px;border:none;background:#d97706;color:#fff;font-size:12px;font-weight:700;cursor:pointer">
+                            <span wire:loading.remove wire:target="eiMygovSubmit">Yuborish</span><span wire:loading wire:target="eiMygovSubmit">⏳</span>
+                        </button>
+                        <button type="button" wire:click="eiMygovCancel" style="padding:8px 10px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;font-size:12px;cursor:pointer">Bekor</button>
+                    </div>
+                    <div style="font-size:10px;color:#92400e;margin-top:5px">Himoya kodi faqat birinchi marta so'raladi — keyin "Yangilash" kodsiz ishlaydi.</div>
+                </div>
+                @endif
+
+                @if(!empty($ms['holat']))
+                    @php
+                        $clr = ['green' => ['#dcfce7','#15803d'], 'red' => ['#fee2e2','#b91c1c'], 'yellow' => ['#fef9c3','#a16207'], 'blue' => ['#dbeafe','#1d4ed8']][$ms['holat_rang'] ?? ''] ?? ['#f3f4f6','#4b5563'];
+                        $steps = $ms['bosqichlar'] ?? [];
+                    @endphp
+                    <div style="margin-top:10px;padding:10px;border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb;font-size:12px;color:#374151">
+                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+                            <span style="padding:3px 12px;border-radius:999px;background:{{ $clr[0] }};color:{{ $clr[1] }};font-weight:800;font-size:13px">{{ $ms['holat'] }}</span>
+                            @if(!empty($ms['hozirgi_amal']))<span>Hozirgi amal: <b>{{ $ms['hozirgi_amal'] }}</b></span>@endif
+                        </div>
+                        @if(!empty($ms['kim']))<div>Hozir kimda: <b>{{ $ms['kim'] }}</b></div>@endif
+                        @if(!empty($ms['oxirgi']))<div>Oxirgi o'zgarish: <b>{{ $ms['oxirgi'] }}</b>@if(!empty($ms['berilgan'])) <span style="color:#6b7280">· berilgan {{ $ms['berilgan'] }}</span>@endif</div>@endif
+                        @if(!empty($ms['xizmat']))<div style="color:#6b7280;margin-top:2px">{{ $ms['xizmat'] }}@if(!empty($ms['tashkilot'])) — {{ $ms['tashkilot'] }}@endif</div>@endif
+                        @if($steps)
+                            <div style="margin-top:8px;font-weight:700;color:#4338ca">Bosqichlar</div>
+                            <ol style="margin:4px 0 0;padding-left:18px">
+                                @foreach($steps as $st)
+                                    <li style="margin-bottom:2px{{ $loop->last ? ';font-weight:700;color:#111827' : '' }}">{{ $st['nomi'] }} <span style="color:#6b7280;font-weight:400">— {{ $st['vaqt'] }}{{ !empty($st['kim']) ? ', ' . $st['kim'] : '' }}</span></li>
+                                @endforeach
+                            </ol>
+                        @endif
+                        <div style="font-size:10px;color:#9ca3af;margin-top:6px">Tekshirildi: {{ $ms['checked_at'] ?? '' }}</div>
+                    </div>
+                @endif
             </div>
             <button type="button" wire:click="eiSaveMygov" style="padding:8px 16px;border-radius:8px;border:none;background:#4338ca;color:#fff;font-size:13px;font-weight:700;cursor:pointer">💾 MyGOV saqlash</button>
             <div style="font-size:10px;color:#b45309;margin-top:6px">Ariza raqami/parolni yozgach "MyGOV saqlash"ni bosing.</div>
