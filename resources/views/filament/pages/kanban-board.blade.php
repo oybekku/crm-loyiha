@@ -775,6 +775,14 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                     </button>
                     <div style="flex:1;min-width:0">
                         <div class="kbn-name" style="font-size:12.5px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $project->owner_name }}</div>
+                        @php
+                            // Vaqtinchalik ogohlantirish: izohda "⚠️ TEKSHIRING" qatori bo'lsa, kartada qizil yozuv
+                            $tekshirLine = collect(preg_split('/\R/', (string) $project->description))
+                                ->first(fn ($l) => str_contains($l, '⚠️ TEKSHIRING'));
+                        @endphp
+                        @if($tekshirLine)
+                        <div style="font-size:10.5px;font-weight:700;margin-top:2px;padding:2px 6px;border-radius:5px;background:#fee2e2;color:#b91c1c;white-space:normal;line-height:1.3" title="{{ $tekshirLine }}">{{ $tekshirLine }}</div>
+                        @endif
                         @if($empsC->isNotEmpty())
                         <div class="kbn-emp" style="font-size:10.5px;font-weight:500;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Hodim: {{ $empsC->join(', ') }}</div>
                         @endif
@@ -838,6 +846,24 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                             @endif
                         </div>
                         @endforeach
+                        @if($project->mygov_ariza_holat)
+                            @php
+                                $mgInfo  = $project->mygov_ariza_info ?? [];
+                                $mgSteps = $mgInfo['bosqichlar'] ?? [];
+                                $mgLast  = $mgSteps ? end($mgSteps)['nomi'] : ($mgInfo['hozirgi_amal'] ?? '');
+                                $mgClr   = ['green' => ['#dcfce7','#15803d','#86efac'], 'red' => ['#fee2e2','#b91c1c','#fca5a5'], 'yellow' => ['#fef9c3','#a16207','#fde047'], 'blue' => ['#dbeafe','#1d4ed8','#93c5fd']][$mgInfo['holat_rang'] ?? ''] ?? ['#f3f4f6','#4b5563','#d1d5db'];
+                                $mgTip   = 'MyGOV ariza ' . $project->mygov_ariza_no . ': ' . $project->mygov_ariza_holat
+                                         . ($mgLast ? "\nBosqich: " . $mgLast : '')
+                                         . (!empty($mgInfo['kim']) ? "\nHozir kimda: " . $mgInfo['kim'] : '')
+                                         . (!empty($mgInfo['oxirgi']) ? "\nOxirgi o'zgarish: " . $mgInfo['oxirgi'] : '')
+                                         . "\nTekshirildi: " . $project->mygov_ariza_checked_at?->format('d.m.Y H:i');
+                            @endphp
+                            <div title="{{ $mgTip }}" style="margin-top:4px;padding:3px 7px;border-radius:7px;background:{{ $mgClr[0] }};border:1px solid {{ $mgClr[2] }};color:{{ $mgClr[1] }};font-size:10.5px;line-height:1.35;max-width:100%">
+                                <b>🏛 MyGOV: {{ $project->mygov_ariza_holat }}</b>
+                                @if($mgLast)<span style="font-weight:500"> · {{ \Illuminate\Support\Str::limit($mgLast, 40) }}</span>@endif
+                                <span style="opacity:.7;font-weight:500"> ({{ $project->mygov_ariza_checked_at?->format('d.m') }})</span>
+                            </div>
+                        @endif
                     </div>
                     @if($showMoney)
                     <div class="kbn-money">
@@ -873,6 +899,9 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                     @endif
                     @if($project->created_at->diffInHours(now()) < 24)
                     <span style="font-size:9px;font-weight:700;background:#dcfce7;color:#16a34a;border-radius:4px;padding:1px 5px;white-space:nowrap;animation:blink-new 1.5s ease-in-out infinite;flex-shrink:0">Yangi</span>
+                    @endif
+                    @if(str_contains((string) $project->description, '⚠️ TEKSHIRING'))
+                    <span style="font-size:9px;font-weight:700;background:#fee2e2;color:#b91c1c;border-radius:4px;padding:1px 5px;white-space:nowrap;flex-shrink:0" title="Izohga qarang">⚠️ TEKSHIRING</span>
                     @endif
                     @if($showUrgent)
                     {{-- Yig'ilgan kartada muddat ogohlantirishi (FISH dan keyin) --}}
@@ -1550,7 +1579,38 @@ select.kb-input{-webkit-appearance:none;-moz-appearance:none;appearance:none;bac
                        class="kb-input {{ $errors->has('owner_name') ? 'error' : '' }}"
                        placeholder="Loyiha egasi ism-familyasini kiriting...">
                 @error('owner_name')<div style="color:#ef4444;font-size:11px;margin-top:3px">{{ $message }}</div>@enderror
+
+                @if($duplicateProjects->isNotEmpty())
+                <div style="margin-top:6px;padding:8px 10px;border-radius:8px;background:#fffbeb;border:1px solid #fcd34d;font-size:12px;color:#92400e">
+                    <div style="font-weight:700;margin-bottom:4px">⚠️ Bu ism yoki telefon bilan loyiha bor — dublikat bo'lmasin:</div>
+                    @foreach($duplicateProjects as $dp)
+                    <div style="padding:2px 0">
+                        <strong>{{ $dp->number }}</strong> — {{ $dp->owner_name }}
+                        · {{ $dp->phones[0]['phone'] ?? '' }}
+                        · ochilgan {{ $dp->created_at?->format('d.m.Y') }}
+                        · {{ number_format($dp->paid_amount, 0, '.', ' ') }} / {{ number_format($dp->total_price, 0, '.', ' ') }} so'm
+                        @if($dp->deleted_at)<span style="color:#dc2626">(o'chirilgan)</span>@endif
+                    </div>
+                    @endforeach
+                </div>
+                @endif
             </div>
+
+            @if(config('app.readonly_mode'))
+            <div>
+                <label class="kb-label">Bu qanday loyiha? *</label>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    @foreach(['yangi' => '🆕 Yangi mijoz (bugun keldi)', 'qayta' => "♻️ Qayta kiritish (25.10–02.11 da ochilgan edi, Beget'da yo'qoldi)"] as $lk => $ll)
+                    <button type="button" wire:click="$set('lostEntry', '{{ $lk }}')"
+                        style="flex:1;min-width:200px;font-size:12px;padding:8px 10px;border-radius:8px;cursor:pointer;font-weight:600;text-align:left;
+                        {{ $lostEntry === $lk
+                            ? ($lk === 'qayta' ? 'background:#f59e0b;color:#fff;border:2px solid #d97706;' : 'background:#2563eb;color:#fff;border:2px solid #1d4ed8;')
+                            : 'background:#f8fafc;color:#334155;border:2px solid #e2e8f0;' }}">{{ $ll }}</button>
+                    @endforeach
+                </div>
+                @error('lostEntry')<div style="color:#ef4444;font-size:11px;margin-top:3px">{{ $message }}</div>@enderror
+            </div>
+            @endif
 
             <div>
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">

@@ -102,7 +102,7 @@ class MygovTaskChecker
         }
         $info = $this->parse($res->body());
         if (($info['holat'] ?? '') === '') {
-            throw new \RuntimeException("Ariza topilmadi yoki raqam/parol noto'g'ri");
+            throw new \RuntimeException("Ariza holati hali ko'rinmayapti — ariza endi yuborilgan/qoralama bo'lishi mumkin yoki raqam/parol noto'g'ri. Birozdan keyin qayta tekshiring.");
         }
         return $info;
     }
