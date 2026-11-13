@@ -143,7 +143,32 @@
                 </datalist>
                 <div style="font-size:10px;color:#6366f1;margin-top:4px">Ariza kim orqali kelganini yozing — statistikaga o'tadi (Oylik hisobot).</div>
             </div>
+            {{-- Arizani kuzatish (my.gov.uz/uz/task-view) --}}
+            <div style="margin-bottom:11px;padding:10px;border:1px dashed #a5b4fc;border-radius:8px;background:#fff">
+                <div style="font-size:12px;font-weight:700;color:#4338ca;margin-bottom:8px">🔍 Arizani kuzatish</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <div style="flex:1;min-width:140px">
+                        <label style="font-size:11px;font-weight:600;color:#374151;display:block;margin-bottom:4px">Ariza raqami</label>
+                        <div style="display:flex;gap:6px">
+                            <input wire:model="ei_mygovArizaNo" id="mygov-ano-{{ $editInfoId }}" type="text" inputmode="numeric" autocomplete="off" placeholder="374877661" style="flex:1;min-width:0;padding:8px 11px;border:1.5px solid #c7d2fe;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box">
+                            <button type="button" title="Nusxalash" onclick="(function(b){var i=document.getElementById('mygov-ano-{{ $editInfoId }}');if(navigator.clipboard){navigator.clipboard.writeText(i.value.replace(/\s+/g,''))}b.innerHTML='✓';setTimeout(function(){b.innerHTML='⧉'},1000)})(this)" style="padding:0 11px;border:1px solid #c7d2fe;border-radius:8px;background:#fff;cursor:pointer;font-size:14px">⧉</button>
+                        </div>
+                    </div>
+                    <div style="flex:1;min-width:140px">
+                        <label style="font-size:11px;font-weight:600;color:#374151;display:block;margin-bottom:4px">Tekshirish paroli</label>
+                        <div style="display:flex;gap:6px">
+                            <input wire:model="ei_mygovArizaParol" id="mygov-apw-{{ $editInfoId }}" type="text" autocomplete="off" placeholder="28196" style="flex:1;min-width:0;padding:8px 11px;border:1.5px solid #c7d2fe;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box">
+                            <button type="button" title="Nusxalash" onclick="(function(b){var i=document.getElementById('mygov-apw-{{ $editInfoId }}');if(navigator.clipboard){navigator.clipboard.writeText(i.value.trim())}b.innerHTML='✓';setTimeout(function(){b.innerHTML='⧉'},1000)})(this)" style="padding:0 11px;border:1px solid #c7d2fe;border-radius:8px;background:#fff;cursor:pointer;font-size:14px">⧉</button>
+                        </div>
+                    </div>
+                </div>
+                <a href="https://my.gov.uz/uz/task-view#site/task-view" target="_blank" rel="noopener"
+                   onclick="(function(){var n=document.getElementById('mygov-ano-{{ $editInfoId }}');if(n&&n.value&&navigator.clipboard){navigator.clipboard.writeText(n.value.replace(/\s+/g,''))}})()"
+                   style="display:inline-block;margin-top:9px;padding:7px 14px;border-radius:8px;background:#16a34a;color:#fff;font-size:12px;font-weight:700;text-decoration:none">🔍 MyGOV'da tekshirish ↗</a>
+                <div style="font-size:10px;color:#6366f1;margin-top:6px">Tugma my.gov.uz'ni ochadi va ariza raqamini nusxalaydi (Ctrl+V). Parolni ⧉ bilan nusxalang, himoya kodini o'zingiz yozing.</div>
+            </div>
             <button type="button" wire:click="eiSaveMygov" style="padding:8px 16px;border-radius:8px;border:none;background:#4338ca;color:#fff;font-size:13px;font-weight:700;cursor:pointer">💾 MyGOV saqlash</button>
+            <div style="font-size:10px;color:#b45309;margin-top:6px">Ariza raqami/parolni yozgach "MyGOV saqlash"ni bosing.</div>
             <div style="font-size:10px;color:#6366f1;margin-top:8px">🔒 Parol bazada shifrlangan holda saqlanadi.</div>
         </div>
         @endif

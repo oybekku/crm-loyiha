@@ -59,6 +59,8 @@ class ProjectEditModal extends Component
     public string $ei_mygovLogin     = '';
     public string $ei_mygovPassword  = '';
     public string $ei_mygovFish      = '';
+    public string $ei_mygovArizaNo   = '';
+    public string $ei_mygovArizaParol = '';
     public bool   $ei_showMygov      = false;
     public string $ei_newSvcType     = '';
     public string $ei_newSvcPrice    = '';
@@ -121,6 +123,8 @@ class ProjectEditModal extends Component
         $this->ei_mygovLogin    = $this->canMygov($p) ? ($p->mygov_login ?? '') : '';
         $this->ei_mygovPassword = $this->canMygov($p) ? ($p->mygov_password ?? '') : '';
         $this->ei_mygovFish     = $this->canMygov($p) ? ($p->mygov_fish ?? '') : '';
+        $this->ei_mygovArizaNo    = $this->canMygov($p) ? ($p->mygov_ariza_no ?? '') : '';
+        $this->ei_mygovArizaParol = $this->canMygov($p) ? ($p->mygov_ariza_parol ?? '') : '';
         $this->ei_showMygov     = false;
         $this->showEditInfoModal = true;
     }
@@ -340,6 +344,8 @@ class ProjectEditModal extends Component
             'mygov_login'    => trim($this->ei_mygovLogin) ?: null,
             'mygov_password' => $this->ei_mygovPassword !== '' ? $this->ei_mygovPassword : null,
             'mygov_fish'     => trim($this->ei_mygovFish) ?: null,
+            'mygov_ariza_no'    => preg_replace('/\s+/', '', $this->ei_mygovArizaNo) ?: null,
+            'mygov_ariza_parol' => trim($this->ei_mygovArizaParol) ?: null,
         ]);
         $this->dispatch('notify', type: 'success', message: "MyGOV login/parol saqlandi");
     }
